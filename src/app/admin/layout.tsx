@@ -1,0 +1,33 @@
+// src/app/admin/layout.tsx
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import "./admin.css";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, full_name")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "ADMIN") redirect("/");
+
+  return (
+    <div className="admin-panel">
+      <AdminSidebar adminName={profile.full_name} />
+      <main className="admin-main">{children}</main>
+    </div>
+  );
+}

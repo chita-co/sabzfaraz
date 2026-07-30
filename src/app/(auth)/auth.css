@@ -1,0 +1,425 @@
+/* src/app/(auth)/auth.css */
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: transparent;
+  direction: rtl;
+  padding: 20px;
+}
+
+.auth-page * {
+  box-sizing: border-box;
+  font-family: "Vazirmatn", "Tahoma", "Arial", sans-serif;
+  color: #fff;
+}
+
+.auth-page .container {
+  position: relative;
+  width: 750px;
+  height: 520px;
+  border: 2px solid #4a9eff;
+  box-shadow: 0 0 25px #4a9eff;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.auth-page .container .form-box {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 110%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.auth-page .form-box.Login {
+  left: 0;
+  padding: 0 40px;
+}
+
+.auth-page .form-box.Login .animation {
+  transform: translateX(0%);
+  transition: 0.7s;
+  opacity: 1;
+  transition-delay: calc(0.1s * var(--S));
+}
+
+.auth-page .container.active .form-box.Login .animation {
+  transform: translateX(-120%);
+  opacity: 0;
+  transition-delay: calc(0.1s * var(--D));
+}
+
+.auth-page .form-box.Register {
+  right: 0;
+  padding: 0 40px;
+  width: 55%;
+  background: transparent;
+}
+
+.auth-page .form-box.Register .animation {
+  transform: translateX(120%);
+  transition: 0.7s ease;
+  opacity: 0;
+  filter: blur(10px);
+  transition-delay: calc(0.1s * var(--S));
+}
+
+.auth-page .container.active .form-box.Register .animation {
+  transform: translateX(0%);
+  opacity: 1;
+  filter: blur(0px);
+  transition-delay: calc(0.1s * var(--li));
+}
+
+.auth-page .form-box h2,
+.auth-page .single-box h2 {
+  font-size: 30px;
+  text-align: center;
+}
+
+.auth-page .single-box .subtitle {
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.7;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+
+.auth-page .form-box .input-box,
+.auth-page .single-box .input-box {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin-top: 22px;
+}
+
+.auth-page .input-box input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #fff;
+  font-weight: 600;
+  border-bottom: 2px solid #fff;
+  padding-right: 23px;
+  padding-left: 23px;
+  text-align: right;
+  direction: rtl;
+  transition: 0.5s;
+}
+
+.auth-page .input-box input:focus,
+.auth-page .input-box input:valid {
+  border-bottom: 2px solid #4a9eff;
+}
+
+.auth-page .input-box label {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #fff;
+  transition: 0.5s;
+  pointer-events: none;
+}
+
+.auth-page .input-box input:focus ~ label,
+.auth-page .input-box input:valid ~ label {
+  top: -5px;
+  color: #4a9eff;
+}
+
+/* آیکون‌های تزئینی (ایمیل، نام) */
+.auth-page .input-box svg {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  color: #fff;
+  transition: 0.5s;
+  pointer-events: none;
+}
+
+.auth-page .input-box input:focus ~ svg,
+.auth-page .input-box input:valid ~ svg {
+  color: #4a9eff;
+}
+
+/* ========== استایل جدید دکمه نمایش/پنهان رمز ========== */
+.auth-page .input-box .password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  left: 0;                      /* سمت چپ فیلد (در RTL همان سمت راست کاربر می‌شود) */
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: #fff;
+  z-index: 2;                   /* بالاتر از input */
+  transition: color 0.5s;
+}
+
+/* تغییر رنگ دکمه هنگام فوکوس یا پر شدن فیلد */
+.auth-page .input-box input:focus ~ .password-toggle-btn,
+.auth-page .input-box input:valid ~ .password-toggle-btn {
+  color: #4a9eff;
+}
+
+/* ========== پایان استایل دکمه ========== */
+
+.auth-page .forgot-link {
+  text-align: left;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.auth-page .forgot-link a {
+  color: #4a9eff;
+  text-decoration: none;
+}
+
+.auth-page .forgot-link a:hover {
+  text-decoration: underline;
+}
+
+.auth-page .error-message {
+  color: #ff8080 !important;
+  font-size: 13px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.auth-page .btn {
+  position: relative;
+  width: 100%;
+  height: 45px;
+  background: transparent;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #4a9eff;
+  overflow: hidden;
+  z-index: 1;
+  margin-top: 22px;
+  color: #fff;
+}
+
+.auth-page .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-page .btn::before {
+  content: "";
+  position: absolute;
+  height: 300%;
+  width: 100%;
+  background: linear-gradient(#1a1a2e, #4a9eff, #1a1a2e, #4a9eff);
+  top: -100%;
+  left: 0;
+  z-index: -1;
+  transition: 0.5s;
+}
+
+.auth-page .btn:hover::before {
+  top: 0;
+}
+
+.auth-page .regi-link {
+  font-size: 14px;
+  text-align: center;
+  margin: 20px 0 10px;
+}
+
+.auth-page .regi-link button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  color: #4a9eff;
+  font-weight: 600;
+}
+
+.auth-page .regi-link button:hover {
+  text-decoration: underline;
+}
+
+.auth-page .regi-link a {
+  color: #4a9eff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-page .regi-link a:hover {
+  text-decoration: underline;
+}
+
+.auth-page .single-box {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  border: 2px solid #4a9eff;
+  box-shadow: 0 0 25px #4a9eff;
+  border-radius: 15px;
+  padding: 40px 36px;
+}
+
+.auth-page .info-content {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.auth-page .info-content.Login {
+  right: 0;
+  text-align: right;
+  padding: 0 40px 60px 150px;
+}
+
+.auth-page .info-content.Login .animation {
+  transform: translateX(0);
+  transition: 0.7s ease;
+  transition-delay: calc(0.1s * var(--S));
+  opacity: 1;
+  filter: blur(0px);
+}
+
+.auth-page .container.active .info-content.Login .animation {
+  transform: translateX(120%);
+  opacity: 0;
+  filter: blur(10px);
+  transition-delay: calc(0.1s * var(--D));
+}
+
+.auth-page .info-content.Register {
+  left: 0;
+  text-align: left;
+  padding: 0 150px 60px 38px;
+  pointer-events: none;
+}
+
+.auth-page .info-content.Register .animation {
+  transform: translateX(-120%);
+  transition: 0.7s ease;
+  opacity: 0;
+  filter: blur(10px);
+  transition-delay: calc(0.1s * var(--S));
+}
+
+.auth-page .container.active .info-content.Register .animation {
+  transform: translateX(0%);
+  opacity: 1;
+  filter: blur(0);
+  transition-delay: calc(0.1s * var(--li));
+}
+
+.auth-page .info-content h2 {
+  font-size: 28px;
+  line-height: 1.4;
+}
+
+.auth-page .info-content p {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.auth-page .curved-shape {
+  position: absolute;
+  right: 0;
+  top: -5px;
+  height: 750px;
+  width: 1050px;
+  background: linear-gradient(45deg, #1a1a2e 12%, #4a9eff 60%);
+  transform: rotate(10deg) skewY(46deg);
+  transform-origin: bottom right;
+  transition: 1.5s ease;
+  transition-delay: 1.6s;
+}
+
+.auth-page .container.active .curved-shape {
+  right: auto;
+  left: -150px;
+  width: 1000px;
+  transform: rotate(-10deg) skewY(-40deg);
+  transform-origin: bottom left;
+  transition-delay: 0.5s;
+}
+
+.auth-page .curved-shape2 {
+  position: absolute;
+  left: 250px;
+  top: 100%;
+  height: 700px;
+  width: 950px;
+  background: transparent;
+  border-top: 3px solid transparent;
+  transform: rotate(0deg) skewY(0deg);
+  transform-origin: bottom left;
+  transition: 1.5s ease;
+  transition-delay: 0.5s;
+}
+
+.auth-page .container.active .curved-shape2 {
+  transform: rotate(-11deg) skewY(-41deg);
+  transition-delay: 1.2s;
+}
+
+/* ============ حالت موبایل (واکنش‌گرا) ============ */
+@media (max-width: 850px) {
+  .auth-page .container {
+    width: 100% !important;
+    max-width: 400px !important;
+    height: auto !important;
+    min-height: 480px !important;
+  }
+
+  .auth-page .curved-shape,
+  .auth-page .curved-shape2,
+  .auth-page .info-content {
+    display: none !important;
+  }
+
+  .auth-page .container .form-box {
+    position: relative !important;
+    width: 100% !important;
+    left: auto !important;
+    right: auto !important;
+    padding: 40px 28px !important;
+    display: none !important;
+  }
+
+  .auth-page .container .form-box.Login {
+    display: flex !important;
+  }
+
+  .auth-page .container.active .form-box.Login {
+    display: none !important;
+  }
+
+  .auth-page .container.active .form-box.Register {
+    display: flex !important;
+  }
+
+  .auth-page .form-box .animation {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}
