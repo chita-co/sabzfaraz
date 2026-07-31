@@ -7,13 +7,15 @@ import { useRouter } from "next/navigation";
 import { Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 
-export default function CartClient({ isLoggedIn }: { isLoggedIn: boolean }) {
+export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const router = useRouter();
 
   const totalPrice = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
+  const isBelowMinimum = totalPrice < minOrderAmount;
+  const remainingAmount = minOrderAmount - totalPrice;
 
   function handleCheckout() {
     router.push(isLoggedIn ? "/checkout" : "/login?redirect=/checkout");
@@ -88,14 +90,25 @@ export default function CartClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         ))}
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-white/70">مبلغ قابل پرداخت</p>
-          <p className="text-xl font-bold text-white">{totalPrice.toLocaleString("fa-IR")} تومان</p>
+      <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500">مبلغ قابل پرداخت</p>
+            <p className="text-xl font-bold text-gray-900">{totalPrice.toLocaleString("fa-IR")} تومان</p>
+          </div>
+          <button
+            onClick={handleCheckout}
+            disabled={isBelowMinimum}
+            className="rounded-full bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ادامه فرآیند خرید
+          </button>
         </div>
-        <button onClick={handleCheckout} className="rounded-full bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700">
-          ادامه فرآیند خرید
-        </button>
+        {isBelowMinimum && (
+          <p className="mt-3 text-xs text-red-600 text-center sm:text-right">
+            حداقل مبلغ سفارش {minOrderAmount.toLocaleString("fa-IR")} تومان است — {remainingAmount.toLocaleString("fa-IR")} تومان دیگر تا رسیدن به حداقل باقی مانده.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -2,52 +2,42 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { useCartStore } from "@/store/cart-store";
+import { useCartStore, useCartWeight } from "@/store/cart-store";
 import { createOrderAndPay } from "@/app/(shop)/checkout/actions";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
   province: string; city: string; postal_code: string; address_line: string;
 }
-interface ShippingRate { id: string; province: string; city: string | null; cost: number; }
+interface ShippingMethod { id: string; name: string; }
+interface ShippingTier { id: string; method_id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
 
 export default function CheckoutClient({
-  addresses,
-  shippingRates,
-  defaultShippingCost,
-}: {
-  addresses: AddressRow[];
-  shippingRates: ShippingRate[];
-  defaultShippingCost: number;
-}) {
+  addresses, shippingMethods, shippingTiers,
+}: { addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[] }) {
   const items = useCartStore((s) => s.items);
+  const cartWeightGrams = useCartWeight();
+
   const [selectedAddress, setSelectedAddress] = useState(addresses[0]?.id ?? "");
+  const [selectedMethodId, setSelectedMethodId] = useState(shippingMethods[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
 
   const shippingCost = useMemo(() => {
-    const addr = addresses.find((a) => a.id === selectedAddress);
-    if (!addr) return defaultShippingCost;
+    const methodTiers = shippingTiers.filter((t) => t.method_id === selectedMethodId).sort((a, b) => a.min_weight_grams - b.min_weight_grams);
+    if (methodTiers.length === 0) return 0;
+    const matched = methodTiers.find((t) => cartWeightGrams >= t.min_weight_grams && cartWeightGrams <= t.max_weight_grams);
+    if (matched) return matched.cost;
+    return methodTiers[methodTiers.length - 1].cost;
+  }, [selectedMethodId, shippingTiers, cartWeightGrams]);
 
-    const cityRate = shippingRates.find(
-      (r) => r.province === addr.province && r.city === addr.city
-    );
-    if (cityRate) return cityRate.cost;
-
-    const provinceRate = shippingRates.find(
-      (r) => r.province === addr.province && !r.city
-    );
-    if (provinceRate) return provinceRate.cost;
-
-    return defaultShippingCost;
-  }, [selectedAddress, addresses, shippingRates, defaultShippingCost]);
-  
   const total = subtotal + shippingCost;
 
   async function handlePay() {
     if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
+    if (!selectedMethodId) { setError("لطفاً یک روش ارسال انتخاب کنید."); return; }
     setLoading(true);
     setError(null);
 
@@ -60,7 +50,6 @@ export default function CheckoutClient({
       selectedAddress,
       shippingCost
     );
-
     if (result?.error) { setError(result.error); setLoading(false); }
   }
 
@@ -72,14 +61,11 @@ export default function CheckoutClient({
       </div>
     );
   }
-
   if (addresses.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
         <p className="text-gray-500 mb-4">برای ثبت سفارش، ابتدا باید یک آدرس در پروفایل خود ثبت کنید.</p>
-        <Link href="/profile" className="rounded-full bg-green-600 px-6 py-2 text-sm text-white hover:bg-green-700">
-          افزودن آدرس
-        </Link>
+        <Link href="/profile" className="rounded-full bg-green-600 px-6 py-2 text-sm text-white hover:bg-green-700">افزودن آدرس</Link>
       </div>
     );
   }
@@ -106,6 +92,20 @@ export default function CheckoutClient({
         <Link href="/profile" className="inline-block mt-3 text-sm text-green-600 hover:underline">+ افزودن آدرس جدید</Link>
       </div>
 
+      {shippingMethods.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h2 className="font-bold text-gray-800 mb-4">روش ارسال</h2>
+          <div className="space-y-2">
+            {shippingMethods.map((m) => (
+              <label key={m.id} className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer ${selectedMethodId === m.id ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+                <input type="radio" name="method" checked={selectedMethodId === m.id} onChange={() => setSelectedMethodId(m.id)} />
+                <span className="text-sm font-medium text-gray-800">{m.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
         <h2 className="font-bold text-gray-800 mb-4">خلاصه سفارش</h2>
         {items.map((item) => (
@@ -114,18 +114,9 @@ export default function CheckoutClient({
             <span>{((item.discountPrice ?? item.price) * item.quantity).toLocaleString("fa-IR")} تومان</span>
           </div>
         ))}
-        <div className="flex justify-between text-sm py-2 border-b">
-          <span>جمع کالاها</span>
-          <span>{subtotal.toLocaleString("fa-IR")} تومان</span>
-        </div>
-        <div className="flex justify-between text-sm py-2 border-b">
-          <span>هزینه ارسال (تیپاکس)</span>
-          <span>{shippingCost.toLocaleString("fa-IR")} تومان</span>
-        </div>
-        <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3">
-          <span>مبلغ نهایی قابل پرداخت</span>
-          <span>{total.toLocaleString("fa-IR")} تومان</span>
-        </div>
+        <div className="flex justify-between text-sm py-2 border-b"><span>جمع کالاها</span><span>{subtotal.toLocaleString("fa-IR")} تومان</span></div>
+        <div className="flex justify-between text-sm py-2 border-b"><span>هزینه ارسال و بسته‌بندی</span><span>{shippingCost.toLocaleString("fa-IR")} تومان</span></div>
+        <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3"><span>مبلغ نهایی قابل پرداخت</span><span>{total.toLocaleString("fa-IR")} تومان</span></div>
       </div>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}

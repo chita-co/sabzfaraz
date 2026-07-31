@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import ProductCard from "@/components/shop/ProductCard";
 import HeroCarousel from "@/components/shop/HeroCarousel";
 import DealsSection from "@/components/shop/DealsSection";
+import HorizontalProductSection from "@/components/shop/HorizontalProductSection";
 import { Category, Product, Banner } from "@/types";
 import {
   Truck,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
+import TopFilterBar from "@/components/shop/TopFilterBar";
 
 const categoryIcons: Record<string, React.ComponentType<{ size?: number }>> = {
   "cables-connectors": Cable,
@@ -46,6 +47,7 @@ export default async function HomePage() {
     { data: settings },
     { data: dealProducts },
     { data: popularProducts },
+    { data: stockProducts },
     { data: wishlistRows },
   ] = await Promise.all([
     supabase
@@ -60,7 +62,7 @@ export default async function HomePage() {
       .eq("is_active", true)
       .eq("show_in_newest", true)
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(12),
     supabase
       .from("banners")
       .select("*")
@@ -69,7 +71,7 @@ export default async function HomePage() {
     supabase
       .from("site_settings")
       .select(
-        "deals_enabled, deals_banner_image, deals_banner_link, new_products_banner_image, new_products_banner_link"
+        "deals_enabled, deals_banner_image, deals_banner_link, new_products_banner_image, new_products_banner_link, stock_enabled"
       )
       .eq("id", 1)
       .single(),
@@ -86,7 +88,14 @@ export default async function HomePage() {
       .eq("is_active", true)
       .eq("is_popular", true)
       .order("created_at", { ascending: false })
-      .limit(10),
+      .limit(12),
+    supabase
+      .from("products")
+      .select("*")
+      .eq("is_active", true)
+      .eq("is_stock", true)
+      .order("created_at", { ascending: false })
+      .limit(12),
     user
       ? supabase.from("wishlists").select("product_id").eq("user_id", user.id)
       : Promise.resolve({ data: [] as { product_id: string }[] }),
@@ -97,7 +106,7 @@ export default async function HomePage() {
   return (
     <>
       <GalaxyBackground />
-
+      <TopFilterBar />
       <HeroCarousel banners={(banners as Banner[]) ?? []} />
 
       {categories && categories.length > 0 && (
@@ -189,38 +198,27 @@ export default async function HomePage() {
       )}
 
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <h2 id="products" className="section-title">
-          جدیدترین محصولات
-        </h2>
-        {products && products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 mb-10">
-            {(products as Product[]).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                isWishlisted={wishlistIds.has(product.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 mb-10">هنوز محصولی ثبت نشده است.</p>
-        )}
+        <HorizontalProductSection
+          title="جدیدترین محصولات"
+          seeAllHref="/newest"
+          products={(products as Product[]) ?? []}
+          wishlistIds={wishlistIds}
+        />
 
-        <h2 className="section-title">محصولات پرطرفدار</h2>
-        {popularProducts && popularProducts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {(popularProducts as Product[]).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                isWishlisted={wishlistIds.has(product.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500">
-            هنوز محصولی به این بخش اضافه نشده است.
-          </p>
+        <HorizontalProductSection
+          title="محصولات پرطرفدار"
+          seeAllHref="/popular"
+          products={(popularProducts as Product[]) ?? []}
+          wishlistIds={wishlistIds}
+        />
+
+        {settings?.stock_enabled && (
+          <HorizontalProductSection
+            title="محصولات استوک"
+            seeAllHref="/stock"
+            products={(stockProducts as Product[]) ?? []}
+            wishlistIds={wishlistIds}
+          />
         )}
       </div>
 

@@ -14,6 +14,7 @@ export interface CartItem {
   selectedSize: string | null;
   quantity: number;
   stock: number | null;
+  weightGrams: number | null;
 }
 
 interface CartState {
@@ -69,4 +70,9 @@ export function useCartTotals() {
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalPrice = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   return { totalItems, totalPrice };
+}
+
+export function useCartWeight() {
+  const items = useCartStore((s) => s.items);
+  return items.reduce((sum, i) => sum + (i.weightGrams ?? 0) * i.quantity, 0);
 }

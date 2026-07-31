@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Share2, ShoppingCart, Check } from "lucide-react";
-import { Product } from "@/types";
+import { Product, ProductQuantityTier } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
 import { StarRatingDisplay } from "./StarRating";
@@ -13,11 +13,13 @@ export default function ProductDetail({
   isWishlisted,
   avgRating = 0,
   reviewCount = 0,
+  quantityTiers = [],
 }: {
   product: Product;
   isWishlisted: boolean;
   avgRating?: number;
   reviewCount?: number;
+  quantityTiers?: ProductQuantityTier[];
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name ?? null);
@@ -27,8 +29,9 @@ export default function ProductDetail({
 
   const addItem = useCartStore((s) => s.addItem);
 
-  const finalPrice = product.discount_price ?? product.price;
-  const hasDiscount = !!product.discount_price && product.discount_price < product.price;
+  const matchedTier = quantityTiers.find((t) => quantity >= t.min_qty && quantity <= t.max_qty);
+  const finalPrice = matchedTier ? matchedTier.unit_price : (product.discount_price ?? product.price);
+  const hasDiscount = !!product.discount_price && product.discount_price < product.price && !matchedTier;
   const discountPercent = hasDiscount
     ? Math.round(100 - (product.discount_price! / product.price) * 100)
     : 0;
@@ -44,11 +47,12 @@ export default function ProductDetail({
       slug: product.slug,
       image: product.images?.[0] ?? "",
       price: product.price,
-      discountPrice: product.discount_price,
+      discountPrice: matchedTier ? matchedTier.unit_price : product.discount_price,
       selectedColor,
       selectedSize,
       quantity,
       stock: product.stock,
+      weightGrams: product.weight_grams,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -193,6 +197,23 @@ export default function ProductDetail({
                 : "موجود در انبار"}
             </span>
           </div>
+
+          {quantityTiers.length > 0 && (
+            <div className="qty-tiers-box">
+              <h3 className="product-section-title">تخفیف پلکانی بر اساس تعداد</h3>
+              <table className="qty-tiers-table">
+                <thead><tr><th>تعداد</th><th>قیمت واحد</th></tr></thead>
+                <tbody>
+                  {quantityTiers.map((t) => (
+                    <tr key={t.id} className={matchedTier?.id === t.id ? "active" : ""}>
+                      <td>{t.min_qty.toLocaleString("fa-IR")} تا {t.max_qty.toLocaleString("fa-IR")}</td>
+                      <td>{t.unit_price.toLocaleString("fa-IR")} تومان</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <div className="product-buy-row">
             <button className="product-buy-btn" onClick={handleAddToCart} disabled={outOfStock}>

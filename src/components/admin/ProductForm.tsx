@@ -3,10 +3,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // ← اضافه شد
-import { Plus, X, Upload, Loader2 } from "lucide-react";
-import { createProduct, updateProduct } from "@/app/admin/products/actions";
-import { Category, Product, ProductColor } from "@/types";
+import Image from "next/image";
+import { Plus, X, Upload, Loader2, Layers } from "lucide-react";
+import { createProduct, updateProduct, createProductsBulk } from "@/app/admin/products/actions";
+import { Category, Product, ProductColor, ProductQuantityTier } from "@/types";
 
 const NAMED_COLORS: ProductColor[] = [
   { name: "مشکی", hex: "#111827" },
@@ -35,16 +35,29 @@ const NAMED_COLORS: ProductColor[] = [
   { name: "بژ", hex: "#e7d7c1" },
 ];
 
+interface VariantRow {
+  id: string;
+  name: string;
+  stock: string;
+}
+
 export default function ProductForm({
   mode,
   product,
   categories,
+  initialQuantityTiers = [],
 }: {
   mode: "create" | "edit";
   product?: Product;
   categories: Category[];
+  initialQuantityTiers?: ProductQuantityTier[];
 }) {
   const router = useRouter();
+
+  const [bulkMode, setBulkMode] = useState(false);
+  const [variantRows, setVariantRows] = useState<VariantRow[]>([
+    { id: crypto.randomUUID(), name: "", stock: "" },
+  ]);
 
   const [name, setName] = useState(product?.name ?? "");
   const [nameEn, setNameEn] = useState(product?.name_en ?? "");
@@ -61,6 +74,8 @@ export default function ProductForm({
   const [isDeal, setIsDeal] = useState(product?.is_deal ?? false);
   const [showInNewest, setShowInNewest] = useState(product?.show_in_newest ?? true);
   const [isPopular, setIsPopular] = useState(product?.is_popular ?? false);
+  const [isStock, setIsStock] = useState(product?.is_stock ?? false);
+  const [weightGrams, setWeightGrams] = useState(product?.weight_grams?.toString() ?? "");
 
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -72,6 +87,15 @@ export default function ProductForm({
 
   const [sizes, setSizes] = useState<string[]>(product?.sizes ?? []);
   const [sizeInput, setSizeInput] = useState("");
+
+  const [tiers, setTiers] = useState(
+    initialQuantityTiers.map((t) => ({
+      id: t.id,
+      minQty: t.min_qty.toString(),
+      maxQty: t.max_qty.toString(),
+      unitPrice: t.unit_price.toString(),
+    }))
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -142,6 +166,42 @@ export default function ProductForm({
     setSizes((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function addTier() {
+    setTiers((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), minQty: "", maxQty: "", unitPrice: "" },
+    ]);
+  }
+
+  function updateTier(id: string, field: "minQty" | "maxQty" | "unitPrice", value: string) {
+    setTiers((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, [field]: value } : t))
+    );
+  }
+
+  function removeTier(id: string) {
+    setTiers((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  function addVariantRow() {
+    setVariantRows((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name: "", stock: "" },
+    ]);
+  }
+
+  function updateVariantRow(id: string, field: "name" | "stock", value: string) {
+    setVariantRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+    );
+  }
+
+  function removeVariantRow(id: string) {
+    setVariantRows((prev) =>
+      prev.length > 1 ? prev.filter((r) => r.id !== id) : prev
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -158,8 +218,56 @@ export default function ProductForm({
       setError("برای افزودن به جشنواره تخفیف، ابتدا قیمت تخفیف را وارد کنید.");
       return;
     }
+    if (!price) {
+      setError("قیمت پایه الزامی است.");
+      return;
+    }
+
+    const parsedTiers = tiers
+      .filter((t) => t.minQty && t.maxQty && t.unitPrice)
+      .map((t) => ({
+        minQty: Number(t.minQty),
+        maxQty: Number(t.maxQty),
+        unitPrice: Number(t.unitPrice),
+      }));
 
     setSaving(true);
+
+    if (bulkMode) {
+      const validRows = variantRows.filter((r) => r.name.trim());
+      if (validRows.length === 0) {
+        setError("حداقل یک ردیف با نام معتبر وارد کنید.");
+        setSaving(false);
+        return;
+      }
+      const result = await createProductsBulk(
+        {
+          description,
+          price: Number(price),
+          discountPrice: discountPrice ? Number(discountPrice) : null,
+          brand: brand || null,
+          categoryId,
+          isActive,
+          isDeal,
+          showInNewest,
+          isPopular,
+          isStock,
+          weightGrams: weightGrams ? Number(weightGrams) : null,
+          images,
+          colors,
+          sizes,
+        },
+        validRows.map((r) => ({
+          name: r.name.trim(),
+          stock: r.stock ? Number(r.stock) : null,
+        }))
+      );
+      if (result?.error) {
+        setError(result.error);
+        setSaving(false);
+      }
+      return;
+    }
 
     const input = {
       name,
@@ -175,9 +283,12 @@ export default function ProductForm({
       isDeal,
       showInNewest,
       isPopular,
+      isStock,
+      weightGrams: weightGrams ? Number(weightGrams) : null,
       images,
       colors,
       sizes,
+      quantityTiers: parsedTiers,
     };
 
     const result =
@@ -193,41 +304,129 @@ export default function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="admin-card">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">
-        {mode === "edit" ? "ویرایش محصول" : "افزودن محصول جدید"}
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-900">
+          {mode === "edit" ? "ویرایش محصول" : "افزودن محصول جدید"}
+        </h1>
+        {mode === "create" && (
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={bulkMode}
+              onChange={(e) => setBulkMode(e.target.checked)}
+            />
+            <Layers size={15} /> افزودن گروهی چند مدل مشابه
+          </label>
+        )}
+      </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <div className="admin-form-group">
-            <label>نام محصول (فارسی)</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
+          {bulkMode ? (
+            <div className="admin-form-group">
+              <label>
+                مدل‌ها (نام + موجودی هر مدل — بقیه اطلاعات از فرم سمت
+                راست/پایین مشترک است)
+              </label>
+              <div className="space-y-2 mb-2">
+                {variantRows.map((row) => (
+                  <div key={row.id} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="نام محصول (مثلاً: مقاومت 10 اهم)"
+                      value={row.name}
+                      onChange={(e) =>
+                        updateVariantRow(row.id, "name", e.target.value)
+                      }
+                      className="admin-input flex-1"
+                    />
+                    <input
+                      type="number"
+                      placeholder="موجودی"
+                      value={row.stock}
+                      onChange={(e) =>
+                        updateVariantRow(row.id, "stock", e.target.value)
+                      }
+                      className="admin-input"
+                      style={{ width: 110 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeVariantRow(row.id)}
+                      className="admin-btn admin-btn-danger"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addVariantRow}
+                className="admin-btn admin-btn-secondary flex items-center gap-1"
+              >
+                <Plus size={14} /> افزودن ردیف مدل جدید
+              </button>
+              <p className="text-xs text-gray-400 mt-2">
+                {variantRows.length.toLocaleString("fa-IR")} مدل آماده ثبت
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="admin-form-group">
+                <label>نام محصول (فارسی)</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>
+                  نام محصول (انگلیسی — اختیاری، زیر نام فارسی نمایش داده
+                  می‌شود)
+                </label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={nameEn}
+                  onChange={(e) => setNameEn(e.target.value)}
+                  placeholder="مثلاً: HC-SR04 Ultrasonic Sensor"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>
+                  اسلاگ (انگلیسی، اختیاری — خالی بگذارید تا خودکار ساخته شود)
+                </label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="مثلاً: hc-sr04-sensor"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>موجودی (اختیاری — خالی = نامحدود)</label>
+                <input
+                  type="number"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  min={0}
+                  placeholder="مثلاً: 10"
+                />
+              </div>
+            </>
+          )}
 
           <div className="admin-form-group">
-            <label>نام محصول (انگلیسی — اختیاری، زیر نام فارسی نمایش داده می‌شود)</label>
-            <input
-              type="text"
-              dir="ltr"
-              value={nameEn}
-              onChange={(e) => setNameEn(e.target.value)}
-              placeholder="مثلاً: HC-SR04 Ultrasonic Sensor"
-            />
-          </div>
-
-          <div className="admin-form-group">
-            <label>اسلاگ (انگلیسی، اختیاری — خالی بگذارید تا خودکار ساخته شود)</label>
-            <input
-              type="text"
-              dir="ltr"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="مثلاً: hc-sr04-sensor"
-            />
-          </div>
-
-          <div className="admin-form-group">
-            <label>توضیحات محصول</label>
+            <label>
+              توضیحات محصول (Enter برای پاراگراف‌بندی — مشترک بین همه مدل‌ها)
+            </label>
             <textarea
               rows={5}
               value={description}
@@ -238,7 +437,7 @@ export default function ProductForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="admin-form-group">
-              <label>قیمت (تومان)</label>
+              <label>قیمت پایه (تومان)</label>
               <input
                 type="number"
                 value={price}
@@ -260,13 +459,13 @@ export default function ProductForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="admin-form-group">
-              <label>موجودی (اختیاری — خالی = نامحدود)</label>
+              <label>وزن هر واحد (گرم) — فقط برای هزینه ارسال</label>
               <input
                 type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                value={weightGrams}
+                onChange={(e) => setWeightGrams(e.target.value)}
                 min={0}
-                placeholder="مثلاً: 10"
+                placeholder="مثلاً: 150"
               />
             </div>
             <div className="admin-form-group">
@@ -281,7 +480,11 @@ export default function ProductForm({
 
           <div className="admin-form-group">
             <label>دسته‌بندی</label>
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              required
+            >
               <option value="">انتخاب کنید</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -330,6 +533,18 @@ export default function ProductForm({
           <div className="admin-form-group flex items-center gap-2">
             <input
               type="checkbox"
+              id="isStock"
+              checked={isStock}
+              onChange={(e) => setIsStock(e.target.checked)}
+            />
+            <label htmlFor="isStock" style={{ marginBottom: 0 }}>
+              نمایش در «محصولات استوک»
+            </label>
+          </div>
+
+          <div className="admin-form-group flex items-center gap-2">
+            <input
+              type="checkbox"
               id="isDeal"
               checked={isDeal}
               onChange={(e) => setIsDeal(e.target.checked)}
@@ -344,7 +559,7 @@ export default function ProductForm({
 
         <div>
           <div className="admin-form-group">
-            <label>تصاویر محصول</label>
+            <label>تصاویر محصول (مشترک بین همه مدل‌ها)</label>
             <div className="grid grid-cols-3 gap-2 mb-2">
               {images.map((url) => (
                 <div key={url} className="relative h-24">
@@ -387,7 +602,7 @@ export default function ProductForm({
           </div>
 
           <div className="admin-form-group">
-            <label>رنگ‌های موجود</label>
+            <label>رنگ‌های موجود (اختیاری — اگر محصول رنگ ندارد، همین‌طور خالی بگذارید)</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {colors.map((c, i) => (
                 <span
@@ -418,7 +633,11 @@ export default function ProductForm({
                 ))}
                 <option value="custom">رنگ سفارشی...</option>
               </select>
-              <button type="button" onClick={addColor} className="admin-btn admin-btn-secondary">
+              <button
+                type="button"
+                onClick={addColor}
+                className="admin-btn admin-btn-secondary"
+              >
                 <Plus size={14} />
               </button>
             </div>
@@ -470,19 +689,84 @@ export default function ProductForm({
                 }}
                 className="admin-input flex-1"
               />
-              <button type="button" onClick={addSize} className="admin-btn admin-btn-secondary">
+              <button
+                type="button"
+                onClick={addSize}
+                className="admin-btn admin-btn-secondary"
+              >
                 <Plus size={14} />
               </button>
             </div>
           </div>
+
+          {!bulkMode && (
+            <div className="admin-form-group">
+              <label>تخفیف پلکانی بر اساس تعداد (اختیاری)</label>
+              <div className="space-y-2 mb-2">
+                {tiers.map((t) => (
+                  <div key={t.id} className="grid grid-cols-4 gap-2">
+                    <input
+                      type="number"
+                      placeholder="از"
+                      value={t.minQty}
+                      onChange={(e) =>
+                        updateTier(t.id, "minQty", e.target.value)
+                      }
+                      className="admin-input"
+                    />
+                    <input
+                      type="number"
+                      placeholder="تا"
+                      value={t.maxQty}
+                      onChange={(e) =>
+                        updateTier(t.id, "maxQty", e.target.value)
+                      }
+                      className="admin-input"
+                    />
+                    <input
+                      type="number"
+                      placeholder="قیمت واحد"
+                      value={t.unitPrice}
+                      onChange={(e) =>
+                        updateTier(t.id, "unitPrice", e.target.value)
+                      }
+                      className="admin-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeTier(t.id)}
+                      className="admin-btn admin-btn-danger"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addTier}
+                className="admin-btn admin-btn-secondary flex items-center gap-1"
+              >
+                <Plus size={14} /> افزودن بازه تعداد
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
 
       <div className="flex gap-3 mt-6">
-        <button type="submit" disabled={saving || uploading} className="admin-btn admin-btn-primary">
-          {saving ? "در حال ذخیره..." : "ذخیره محصول"}
+        <button
+          type="submit"
+          disabled={saving || uploading}
+          className="admin-btn admin-btn-primary"
+        >
+          {saving
+            ? "در حال ذخیره..."
+            : bulkMode
+            ? `ثبت ${variantRows.filter((r) => r.name.trim()).length.toLocaleString("fa-IR")} محصول`
+            : "ذخیره محصول"}
         </button>
         <button
           type="button"

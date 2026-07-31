@@ -46,9 +46,19 @@ export interface Product {
   name_en: string | null;
   rating_avg: number;
   rating_count: number;
+  weight_grams: number | null;
+  is_stock: boolean;
   category_id: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProductQuantityTier {
+  id: string;
+  product_id: string;
+  min_qty: number;
+  max_qty: number;
+  unit_price: number;
 }
 
 export interface Wishlist {

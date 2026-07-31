@@ -37,7 +37,7 @@ export default async function ProductPage({
     isWishlisted = !!wish;
   }
 
-  const [{ data: relatedProducts }, { data: reviews }] = await Promise.all([
+  const [{ data: relatedProducts }, { data: reviews }, { data: quantityTiers }] = await Promise.all([
     supabase
       .from("products")
       .select("*")
@@ -52,6 +52,11 @@ export default async function ProductPage({
       .eq("product_id", product.id)
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase
+      .from("product_quantity_tiers")
+      .select("*")
+      .eq("product_id", product.id)
+      .order("min_qty", { ascending: true }),
   ]);
 
   const relatedIds = (relatedProducts ?? []).map((p) => p.id);
@@ -73,6 +78,7 @@ export default async function ProductPage({
         isWishlisted={isWishlisted}
         avgRating={product.rating_avg}
         reviewCount={product.rating_count}
+        quantityTiers={quantityTiers ?? []}
       />
 
       <div className="mx-auto max-w-7xl px-4">

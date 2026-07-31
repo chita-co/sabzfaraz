@@ -66,6 +66,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/deals", label: "جشنواره تخفیف" },
       { href: "/admin/banners", label: "بنرهای اسلایدی" },
       { href: "/admin/reviews", label: "نظرات و امتیازها" },
+      { href: "/admin/stock", label: "محصولات استوک" },
     ],
   },
   {
@@ -94,6 +95,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/settings/general", label: "تنظیمات عمومی" },
       { href: "/admin/shipping", label: "هزینه ارسال" },
       { href: "/admin/tracking-settings", label: "پیام‌های پیگیری" },
+      { href: "/admin/shipping-methods", label: "روش‌های ارسال (وزنی)" },
       { href: "/admin/site-settings", label: "لوگو و بنر سایت" },
       { href: "/admin/settings/backup", label: "پشتیبان‌گیری" },
     ],

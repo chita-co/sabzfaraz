@@ -24,6 +24,7 @@ export default function QuickAddButton({ product }: { product: Product }) {
       selectedSize: product.sizes?.[0] ?? null,
       quantity: 1,
       stock: product.stock,
+      weightGrams: product.weight_grams,
     });
 
     setAdded(true);

@@ -13,6 +13,7 @@ export async function updateGeneralSettings(formData: FormData) {
       support_email: formData.get("supportEmail") as string,
       store_address: formData.get("storeAddress") as string,
       about_content: formData.get("aboutContent") as string,
+      min_order_amount: Number(formData.get("minOrderAmount")) || 0,
     })
     .eq("id", 1);
 

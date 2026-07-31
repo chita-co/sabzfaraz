@@ -25,21 +25,26 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
   return (
     <div style={{ position: "relative", width: "100%", height: 380, overflow: "hidden", background: "#0f0f0f" }}>
       {banners.map((b, i) => {
-        const content = (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={b.image_url}
-            alt=""
-            loading={i === 0 ? "eager" : "lazy"}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
+        const inner = (
+          <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
+            {/* تصویر اصلی، کامل و بدون بریدگی، متناسب با ابعاد خودش */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={b.image_url}
+              alt=""
+              loading={i === 0 ? "eager" : "lazy"}
+              style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </div>
         );
         return (
           <div
             key={b.id}
             style={{
-              position: "absolute",
-              inset: 0,
+              position: "absolute", inset: 0,
               opacity: i === index ? 1 : 0,
               transition: "opacity 0.7s ease",
               pointerEvents: i === index ? "auto" : "none",
@@ -48,10 +53,10 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
           >
             {b.link_url ? (
               <Link href={b.link_url} style={{ display: "block", width: "100%", height: "100%" }}>
-                {content}
+                {inner}
               </Link>
             ) : (
-              content
+              inner
             )}
           </div>
         );

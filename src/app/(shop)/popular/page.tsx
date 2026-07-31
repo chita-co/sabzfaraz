@@ -7,7 +7,7 @@ import { Product } from "@/types";
 
 const PAGE_SIZE = 20;
 
-export default async function AllProductsPage({
+export default async function PopularProductsPage({
   searchParams,
 }: { searchParams: Promise<{ sort?: string; page?: string }> }) {
   const { sort = "newest", page: pageParam } = await searchParams;
@@ -16,7 +16,9 @@ export default async function AllProductsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase.from("products").select("*", { count: "exact" }).eq("is_active", true);
+  let query = supabase.from("products").select("*", { count: "exact" })
+    .eq("is_active", true).eq("is_popular", true);
+
   if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
   else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
   else if (sort === "popular") query = query.order("rating_avg", { ascending: false });
@@ -38,7 +40,7 @@ export default async function AllProductsPage({
       <GalaxyBackground />
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
-          <h1 className="text-xl font-bold text-white">همه محصولات</h1>
+          <h1 className="text-xl font-bold text-white">محصولات پرطرفدار</h1>
           <ProductSortSelect />
         </div>
         <p className="text-sm text-gray-300 mb-6">{(count ?? 0).toLocaleString("fa-IR")} محصول</p>
@@ -50,10 +52,10 @@ export default async function AllProductsPage({
                 <ProductCard key={product.id} product={product} isWishlisted={wishlistIds.has(product.id)} />
               ))}
             </div>
-            <Pagination basePath="/products" currentPage={page} totalPages={totalPages} extraParams={{ sort }} />
+            <Pagination basePath="/popular" currentPage={page} totalPages={totalPages} extraParams={{ sort }} />
           </>
         ) : (
-          <p className="text-gray-300">محصولی یافت نشد.</p>
+          <p className="text-gray-300">هنوز محصولی به این بخش اضافه نشده است.</p>
         )}
       </div>
     </>

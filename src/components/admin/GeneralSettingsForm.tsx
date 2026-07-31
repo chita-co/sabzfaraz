@@ -6,7 +6,7 @@ import { updateGeneralSettings } from "@/app/admin/settings/actions";
 export default function GeneralSettingsForm({
   initial,
 }: {
-  initial: { store_name: string; support_phone: string | null; support_email: string | null; store_address: string | null; about_content: string | null };
+  initial: { store_name: string; support_phone: string | null; support_email: string | null; store_address: string | null; about_content: string | null; min_order_amount: number };
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -41,6 +41,18 @@ export default function GeneralSettingsForm({
         <label>آدرس فروشگاه</label>
         <textarea name="storeAddress" rows={3} defaultValue={initial.store_address ?? ""} placeholder="ایران، تهران" />
       </div>
+
+      <div className="admin-form-group">
+        <label>حداقل مبلغ سبد خرید (تومان)</label>
+        <input
+          type="number"
+          name="minOrderAmount"
+          defaultValue={initial.min_order_amount}
+          min={0}
+          placeholder="مثلاً: 500000"
+        />
+      </div>
+
       <div className="admin-form-group">
         <label>متن صفحه‌ی «درباره ما»</label>
         <textarea
