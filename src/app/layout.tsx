@@ -4,9 +4,12 @@ import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.vercel.app"
+  ),
   title: "سبزفراز | فروشگاه اینترنتی",
   description: "خرید آنلاین انواع کالا از سبزفراز",
 };
@@ -18,6 +21,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" className={cn("font-sans", geist.variable)}>
+      <head>
+        <meta
+          name="google-site-verification"
+          content="BI5RoL6RuvmrwnG5vgJndjwmWQf6Pa9R5ks6E8YSYBw"
+        />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

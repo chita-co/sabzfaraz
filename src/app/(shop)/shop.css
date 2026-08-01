@@ -1331,3 +1331,5 @@
 .subcategory-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .subcategory-placeholder-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.3); }
 .subcategory-card-name { padding: 10px 8px; text-align: center; font-size: 13px; font-weight: 700; color: #fff; }
+
+.card-stock-badge { display: inline-block; margin-bottom: 4px; }

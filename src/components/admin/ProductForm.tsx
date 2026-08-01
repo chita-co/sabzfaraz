@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus, X, Upload, Loader2, Layers } from "lucide-react";
+import { Plus, X, Upload, Loader2, Layers, GripVertical } from "lucide-react";
 import { createProduct, updateProduct, createProductsBulk } from "@/app/admin/products/actions";
 import { Category, Product, ProductColor, ProductQuantityTier } from "@/types";
 
@@ -38,6 +38,7 @@ const NAMED_COLORS: ProductColor[] = [
 interface VariantRow {
   id: string;
   name: string;
+  nameEn: string;
   stock: string;
 }
 
@@ -56,7 +57,7 @@ export default function ProductForm({
 
   const [bulkMode, setBulkMode] = useState(false);
   const [variantRows, setVariantRows] = useState<VariantRow[]>([
-    { id: crypto.randomUUID(), name: "", stock: "" },
+    { id: crypto.randomUUID(), name: "", nameEn: "", stock: "" },
   ]);
 
   const [name, setName] = useState(product?.name ?? "");
@@ -79,6 +80,9 @@ export default function ProductForm({
 
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
+  const [descImages, setDescImages] = useState<string[]>(product?.description_images ?? []);
+  const [descUploading, setDescUploading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const [colors, setColors] = useState<ProductColor[]>(product?.colors ?? []);
   const [colorChoice, setColorChoice] = useState("0");
@@ -100,28 +104,63 @@ export default function ProductForm({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  async function uploadOne(file: File): Promise<string | null> {
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok) return data.url;
+      alert(data.error || "خطا در آپلود تصویر");
+      return null;
+    } catch {
+      alert("خطا در ارتباط با سرور برای آپلود تصویر");
+      return null;
+    }
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     setUploading(true);
     for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      try {
-        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        if (res.ok) {
-          setImages((prev) => [...prev, data.url]);
-        } else {
-          alert(data.error || "خطا در آپلود تصویر");
-        }
-      } catch {
-        alert("خطا در ارتباط با سرور برای آپلود تصویر");
-      }
+      const url = await uploadOne(file);
+      if (url) setImages((prev) => [...prev, url]);
     }
     setUploading(false);
     e.target.value = "";
   }
+
+  async function handleDescFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setDescUploading(true);
+    for (const file of files) {
+      const url = await uploadOne(file);
+      if (url) setDescImages((prev) => [...prev, url]);
+    }
+    setDescUploading(false);
+    e.target.value = "";
+  }
+
+  async function handleRemoveDescImage(url: string) {
+    setDescImages((prev) => prev.filter((u) => u !== url));
+    try { await fetch("/api/admin/upload", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }); } catch {}
+  }
+
+  function handleImageDragStart(index: number) { setDraggedIndex(index); }
+  function handleImageDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    setImages((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(draggedIndex, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    setDraggedIndex(index);
+  }
+  function handleImageDragEnd() { setDraggedIndex(null); }
 
   async function handleRemoveImage(url: string) {
     setImages((prev) => prev.filter((u) => u !== url));
@@ -135,6 +174,8 @@ export default function ProductForm({
       // best-effort
     }
   }
+
+
 
   function addColor() {
     let newColor: ProductColor;
@@ -186,11 +227,11 @@ export default function ProductForm({
   function addVariantRow() {
     setVariantRows((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: "", stock: "" },
+      { id: crypto.randomUUID(), name: "", nameEn: "", stock: "" },
     ]);
   }
 
-  function updateVariantRow(id: string, field: "name" | "stock", value: string) {
+  function updateVariantRow(id: string, field: "name" | "nameEn" | "stock", value: string) {
     setVariantRows((prev) =>
       prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
     );
@@ -254,18 +295,24 @@ export default function ProductForm({
           isStock,
           weightGrams: weightGrams ? Number(weightGrams) : null,
           images,
+          descriptionImages: descImages,
           colors,
           sizes,
+          quantityTiers: parsedTiers,
         },
         validRows.map((r) => ({
           name: r.name.trim(),
+          nameEn: r.nameEn.trim() || null,
           stock: r.stock ? Number(r.stock) : null,
         }))
       );
-      if (result?.error) {
-        setError(result.error);
-        setSaving(false);
+      setSaving(false);
+      if (result.failures && result.failures.length > 0) {
+        alert(`${result.successCount.toLocaleString("fa-IR")} محصول با موفقیت ثبت شد.\n${result.failures.length.toLocaleString("fa-IR")} مورد خطا داشت:\n${result.failures.join("\n")}`);
+      } else if (result.successCount > 0) {
+        alert(`${result.successCount.toLocaleString("fa-IR")} محصول با موفقیت ثبت شد.`);
       }
+      if (result.successCount > 0) router.push("/admin/products");
       return;
     }
 
@@ -289,6 +336,7 @@ export default function ProductForm({
       colors,
       sizes,
       quantityTiers: parsedTiers,
+      descriptionImages: descImages,
     };
 
     const result =
@@ -330,15 +378,25 @@ export default function ProductForm({
               </label>
               <div className="space-y-2 mb-2">
                 {variantRows.map((row) => (
-                  <div key={row.id} className="flex gap-2">
+                  <div key={row.id} className="variant-row-grid">
                     <input
                       type="text"
-                      placeholder="نام محصول (مثلاً: مقاومت 10 اهم)"
+                      placeholder="نام فارسی (مثلاً: مقاومت 10 اهم)"
                       value={row.name}
                       onChange={(e) =>
                         updateVariantRow(row.id, "name", e.target.value)
                       }
-                      className="admin-input flex-1"
+                      className="admin-input"
+                    />
+                    <input
+                      type="text"
+                      dir="ltr"
+                      placeholder="نام انگلیسی (اختیاری)"
+                      value={row.nameEn}
+                      onChange={(e) =>
+                        updateVariantRow(row.id, "nameEn", e.target.value)
+                      }
+                      className="admin-input"
                     />
                     <input
                       type="number"
@@ -348,7 +406,6 @@ export default function ProductForm({
                         updateVariantRow(row.id, "stock", e.target.value)
                       }
                       className="admin-input"
-                      style={{ width: 110 }}
                     />
                     <button
                       type="button"
@@ -433,6 +490,22 @@ export default function ProductForm({
               onChange={(e) => setDescription(e.target.value)}
               required
             />
+          </div>
+
+          <div className="admin-form-group">
+            <label>تصاویر داخل بخش «توضیحات محصول» (اختیاری — برای نمودار/جدول/راهنمای سیم‌کشی و...)</label>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {descImages.map((url) => (
+                <div key={url} className="relative h-24">
+                  <Image src={url} alt="" fill className="object-cover rounded-lg border border-gray-200" sizes="(max-width: 768px) 33vw, 150px" />
+                  <button type="button" onClick={() => handleRemoveDescImage(url)} className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"><X size={12} /></button>
+                </div>
+              ))}
+            </div>
+            <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg py-3 cursor-pointer text-sm text-gray-500 hover:border-green-500 hover:text-green-600">
+              {descUploading ? <><Loader2 size={16} className="animate-spin" /> در حال آپلود...</> : <><Upload size={16} /> افزودن تصویر به توضیحات</>}
+              <input type="file" accept="image/*" multiple onChange={handleDescFileChange} disabled={descUploading} className="hidden" />
+            </label>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -561,8 +634,16 @@ export default function ProductForm({
           <div className="admin-form-group">
             <label>تصاویر محصول (مشترک بین همه مدل‌ها)</label>
             <div className="grid grid-cols-3 gap-2 mb-2">
-              {images.map((url) => (
-                <div key={url} className="relative h-24">
+              {images.map((url, i) => (
+                <div
+                  key={url}
+                  className="relative h-24 image-drag-item"
+                  draggable
+                  onDragStart={() => handleImageDragStart(i)}
+                  onDragOver={(e) => handleImageDragOver(e, i)}
+                  onDragEnd={handleImageDragEnd}
+                >
+                  <span className="image-drag-handle"><GripVertical size={13} /></span>
                   <Image
                     src={url}
                     alt=""
@@ -759,7 +840,7 @@ export default function ProductForm({
       <div className="flex gap-3 mt-6">
         <button
           type="submit"
-          disabled={saving || uploading}
+          disabled={saving || uploading || descUploading}
           className="admin-btn admin-btn-primary"
         >
           {saving

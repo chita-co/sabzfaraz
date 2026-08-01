@@ -7,6 +7,18 @@ import { Product } from "@/types";
 import "./product-detail.css";
 import SilkBackground from "@/components/backgrounds/SilkBackground";
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: product } = await supabase.from("products").select("name, description, images").eq("slug", slug).single();
+  if (!product) return {};
+  return {
+    title: `${product.name} | سبزفراز`,
+    description: product.description?.slice(0, 160),
+    openGraph: { images: product.images?.[0] ? [product.images[0]] : [] },
+  };
+}
+
 export default async function ProductPage({
   params,
 }: {
@@ -70,8 +82,37 @@ export default async function ProductPage({
     relatedWishlistIds = new Set((wishRows ?? []).map((w) => w.product_id));
   }
 
+  // ساخت Schema.org برای سئو و ترب — قیمت‌ها به ریال تبدیل می‌شوند
+  const tierPrices = (quantityTiers ?? []).map((t) => t.unit_price);
+  const basePriceForSchema = product.discount_price ?? product.price;
+  const allPrices = tierPrices.length > 0 ? [...tierPrices, basePriceForSchema] : [basePriceForSchema];
+  const lowPrice = Math.min(...allPrices) * 10;
+  const highPrice = Math.max(...allPrices) * 10;
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: product.images,
+    description: product.description,
+    sku: product.sku,
+    ...(product.brand && { brand: { "@type": "Brand", name: product.brand } }),
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "IRR",
+      lowPrice,
+      highPrice,
+      offerCount: allPrices.length,
+      availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    },
+    ...(product.rating_count > 0 && {
+      aggregateRating: { "@type": "AggregateRating", ratingValue: product.rating_avg, reviewCount: product.rating_count },
+    }),
+  };
+
   return (
     <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
     <SilkBackground />
       <ProductDetail
         product={product}
@@ -82,11 +123,7 @@ export default async function ProductPage({
       />
 
       <div className="mx-auto max-w-7xl px-4">
-        <RelatedProducts
-          products={(relatedProducts as Product[]) ?? []}
-          wishlistIds={relatedWishlistIds}
-          categoryHref={`/category/${product.category?.slug}`}
-        />
+        <RelatedProducts products={(relatedProducts as Product[]) ?? []} wishlistIds={relatedWishlistIds} categoryHref={`/category/${product.category?.slug}`} />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 pb-12">

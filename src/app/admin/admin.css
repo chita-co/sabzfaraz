@@ -519,3 +519,34 @@
   display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
 }
 .support-closed-note { text-align: center; padding: 14px; font-size: 13px; color: #9ca3af; background: #fff; border-top: 1px solid #e5e7eb; }
+
+.bulk-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: #14532d;
+}
+.bulk-field-row { opacity: 0.5; transition: opacity 0.2s; }
+.bulk-field-row.active { opacity: 1; }
+
+.variant-row-grid { display: grid; grid-template-columns: 1fr 1fr 90px auto; gap: 8px; align-items: center; }
+@media (max-width: 640px) { .variant-row-grid { grid-template-columns: 1fr; } }
+
+.image-drag-item { cursor: grab; }
+.image-drag-item:active { cursor: grabbing; }
+.image-drag-handle {
+  position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: #fff;
+  border-radius: 4px; padding: 2px; display: flex; align-items: center; justify-content: center;
+}
+
+.admin-filters-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.admin-filters-search { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 220px; }
+.admin-filters-search input { border: none; outline: none; font-family: inherit; font-size: 13.5px; width: 100%; }
+.inline-edit-cell { cursor: pointer; }
+.inline-edit-cell:hover { background: #f9fafb; }
+
+.pagination-bar { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 20px; }
+.pagination-page, .pagination-arrow { min-width: 36px; height: 36px; padding: 0 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #374151; border: 1px solid #e5e7eb; font-size: 13px; }
+.pagination-page:hover, .pagination-arrow:hover { border-color: #16a34a; color: #16a34a; }
+.pagination-page.active { background: #16a34a; color: #fff; border-color: #16a34a; }
+.pagination-arrow.disabled { opacity: 0.4; pointer-events: none; }
+.pagination-dots { color: #9ca3af; padding: 0 2px; }

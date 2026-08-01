@@ -48,6 +48,7 @@ export interface Product {
   rating_count: number;
   weight_grams: number | null;
   is_stock: boolean;
+  description_images: string[];
   category_id: string;
   created_at: string;
   updated_at: string;

@@ -2,9 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProductForm from "@/components/admin/ProductForm";
 
-export default async function EditProductPage({
-  params,
-}: { params: Promise<{ id: string }> }) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -16,12 +14,5 @@ export default async function EditProductPage({
 
   if (!product) notFound();
 
-  return (
-    <ProductForm
-      mode="edit"
-      product={product}
-      categories={categories ?? []}
-      initialQuantityTiers={tiers ?? []}
-    />
-  );
+  return <ProductForm mode="edit" product={product} categories={categories ?? []} initialQuantityTiers={tiers ?? []} />;
 }

@@ -39,6 +39,9 @@ export default function ProductCard({
         </div>
       </div>
       <div className="p-3">
+        {product.is_stock && (
+          <span className="badge badge-warning card-stock-badge">استوک</span>
+        )}
         <div className="flex items-start justify-between gap-2 mb-0.5">
           <h3 className="line-clamp-2 text-sm text-gray-800 flex-1">{product.name}</h3>
            {product.rating_count > 0 && (

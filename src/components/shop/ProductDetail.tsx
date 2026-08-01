@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Share2, ShoppingCart, Check } from "lucide-react";
+import { Share2, ShoppingCart, Check, ChevronDown } from "lucide-react";
 import { Product, ProductQuantityTier } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
@@ -26,6 +26,7 @@ export default function ProductDetail({
   const [selectedSize, setSelectedSize] = useState<string | null>(product.sizes?.[0] ?? null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [showTiersTable, setShowTiersTable] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -35,6 +36,11 @@ export default function ProductDetail({
   const discountPercent = hasDiscount
     ? Math.round(100 - (product.discount_price! / product.price) * 100)
     : 0;
+
+  const basePrice = product.discount_price ?? product.price;
+  const lowestTier = quantityTiers.length > 0
+    ? [...quantityTiers].sort((a, b) => a.unit_price - b.unit_price)[0]
+    : null;
 
   const activeColor = product.colors?.find((c) => c.name === selectedColor);
   const accentColor = activeColor?.hex ?? "#2175f5";
@@ -126,6 +132,7 @@ export default function ProductDetail({
                 </p>
               )}
               <span className="product-badge-new">جدید</span>
+              {product.is_stock && <span className="product-badge-stock">استوک</span>}
             </div>
             <p className="product-sku">کد محصول: <span dir="ltr">{product.sku}</span></p>
             {reviewCount > 0 && (
@@ -135,11 +142,6 @@ export default function ProductDetail({
               </div>
             )}
             {product.brand && <h3 className="product-brand">{product.brand}</h3>}
-          </div>
-
-          <div className="product-description">
-            <h3 className="product-section-title">اطلاعات محصول</h3>
-            <p className="product-description-text">{product.description}</p>
           </div>
 
           {product.colors && product.colors.length > 0 && (
@@ -177,6 +179,41 @@ export default function ProductDetail({
             </div>
           )}
 
+          {/* بخش قیمت پیش از انتخاب رنگ/سایز/تعداد — کمترین و بیشترین قیمت */}
+          <div className="product-price-block">
+            {lowestTier ? (
+              <>
+                <div className="price-lowest">
+                  <h1>{lowestTier.unit_price.toLocaleString("fa-IR")} <span>تومان</span></h1>
+                </div>
+                <p className="price-lowest-note">برای سفارش بالای {lowestTier.min_qty.toLocaleString("fa-IR")} عدد</p>
+                <p className="price-reference">{basePrice.toLocaleString("fa-IR")} تومان — برای تعداد ۱ عدد</p>
+                <button type="button" className="qty-tiers-toggle" onClick={() => setShowTiersTable((v) => !v)}>
+                  مشاهده قیمت عمده (تخفیف در تعداد)
+                  <ChevronDown size={14} style={{ transform: showTiersTable ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+                </button>
+                {showTiersTable && (
+                  <table className="qty-tiers-table">
+                    <thead><tr><th>تعداد</th><th>قیمت واحد</th></tr></thead>
+                    <tbody>
+                      {[...quantityTiers].sort((a, b) => a.min_qty - b.min_qty).map((t) => (
+                        <tr key={t.id} className={matchedTier?.id === t.id ? "active" : ""}>
+                          <td>{t.min_qty.toLocaleString("fa-IR")} تا {t.max_qty.toLocaleString("fa-IR")}</td>
+                          <td>{t.unit_price.toLocaleString("fa-IR")} تومان</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </>
+            ) : (
+              <div className="price-lowest">
+                {hasDiscount && <span className="price-reference" style={{ marginLeft: 8 }}>{product.price.toLocaleString("fa-IR")}</span>}
+                <h1>{finalPrice.toLocaleString("fa-IR")} <span>تومان</span></h1>
+              </div>
+            )}
+          </div>
+
           <div className="product-qty-row">
             <h3 className="product-section-title">تعداد</h3>
             <div className="product-qty-control">
@@ -198,23 +235,6 @@ export default function ProductDetail({
             </span>
           </div>
 
-          {quantityTiers.length > 0 && (
-            <div className="qty-tiers-box">
-              <h3 className="product-section-title">تخفیف پلکانی بر اساس تعداد</h3>
-              <table className="qty-tiers-table">
-                <thead><tr><th>تعداد</th><th>قیمت واحد</th></tr></thead>
-                <tbody>
-                  {quantityTiers.map((t) => (
-                    <tr key={t.id} className={matchedTier?.id === t.id ? "active" : ""}>
-                      <td>{t.min_qty.toLocaleString("fa-IR")} تا {t.max_qty.toLocaleString("fa-IR")}</td>
-                      <td>{t.unit_price.toLocaleString("fa-IR")} تومان</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
           <div className="product-buy-row">
             <button className="product-buy-btn" onClick={handleAddToCart} disabled={outOfStock}>
               {added ? (
@@ -233,6 +253,26 @@ export default function ProductDetail({
               <h1>{finalPrice.toLocaleString("fa-IR")}</h1>
               <span className="product-price-unit">تومان</span>
             </div>
+          </div>
+
+          <div className="product-description">
+            <h3 className="product-section-title">اطلاعات محصول</h3>
+            <p className="product-description-text">{product.description}</p>
+            {product.description_images && product.description_images.length > 0 && (
+              <div className="description-images-grid">
+                {product.description_images.map((img, i) => (
+                  <div key={i} className="relative w-full h-48 cursor-pointer" onClick={() => window.open(img, "_blank")}>
+                    <Image
+                      src={img}
+                      alt=""
+                      fill
+                      className="object-cover rounded-lg"
+                      sizes="(max-width: 768px) 100vw, 300px"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
