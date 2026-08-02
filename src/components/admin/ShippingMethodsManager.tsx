@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import {
   createShippingMethod, toggleShippingMethodActive, deleteShippingMethod,
-  addWeightTier, deleteWeightTier,
+  addWeightTier, deleteWeightTier, updateWeightTier,
 } from "@/app/admin/shipping-methods/actions";
 import AdminSwitch from "./AdminSwitch";
 
@@ -63,6 +63,11 @@ function MethodCard({
   const [maxKg, setMaxKg] = useState("");
   const [cost, setCost] = useState("");
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editMinKg, setEditMinKg] = useState("");
+  const [editMaxKg, setEditMaxKg] = useState("");
+  const [editCost, setEditCost] = useState("");
+
   async function handleAddTier() {
     if (!minKg || !maxKg || !cost) return;
     const minGrams = Math.round(Number(minKg) * 1000);
@@ -77,6 +82,24 @@ function MethodCard({
   async function handleDeleteTier(id: string) {
     setTiers((prev) => prev.filter((t) => t.id !== id));
     await deleteWeightTier(id);
+  }
+
+  function startEdit(t: Tier) {
+    setEditingId(t.id);
+    setEditMinKg((t.min_weight_grams / 1000).toString());
+    setEditMaxKg((t.max_weight_grams / 1000).toString());
+    setEditCost(t.cost.toString());
+  }
+
+  async function saveEdit(id: string) {
+    if (!editMinKg || !editMaxKg || !editCost) return;
+    const minGrams = Math.round(Number(editMinKg) * 1000);
+    const maxGrams = Math.round(Number(editMaxKg) * 1000);
+    const result = await updateWeightTier(id, minGrams, maxGrams, Number(editCost));
+    if (!result?.error) {
+      setTiers((prev) => prev.map((t) => (t.id === id ? { ...t, min_weight_grams: minGrams, max_weight_grams: maxGrams, cost: Number(editCost) } : t)));
+      setEditingId(null);
+    }
   }
 
   return (
@@ -94,10 +117,31 @@ function MethodCard({
         <tbody>
           {[...tiers].sort((a, b) => a.min_weight_grams - b.min_weight_grams).map((t) => (
             <tr key={t.id}>
-              <td>{(t.min_weight_grams / 1000).toLocaleString("fa-IR")}</td>
-              <td>{(t.max_weight_grams / 1000).toLocaleString("fa-IR")}</td>
-              <td>{t.cost.toLocaleString("fa-IR")}</td>
-              <td><button onClick={() => handleDeleteTier(t.id)} className="admin-btn admin-btn-danger"><Trash2 size={12} /></button></td>
+              {editingId === t.id ? (
+                <>
+                  <td><input type="number" step="0.1" value={editMinKg} onChange={(e) => setEditMinKg(e.target.value)} className="admin-input" style={{ width: 90 }} /></td>
+                  <td><input type="number" step="0.1" value={editMaxKg} onChange={(e) => setEditMaxKg(e.target.value)} className="admin-input" style={{ width: 90 }} /></td>
+                  <td><input type="number" value={editCost} onChange={(e) => setEditCost(e.target.value)} className="admin-input" style={{ width: 110 }} /></td>
+                  <td>
+                    <div className="flex gap-1">
+                      <button onClick={() => saveEdit(t.id)} className="admin-btn admin-btn-primary"><Check size={12} /></button>
+                      <button onClick={() => setEditingId(null)} className="admin-btn admin-btn-secondary"><X size={12} /></button>
+                    </div>
+                  </td>
+                </>
+              ) : (
+                <>
+                  <td>{(t.min_weight_grams / 1000).toLocaleString("fa-IR")}</td>
+                  <td>{(t.max_weight_grams / 1000).toLocaleString("fa-IR")}</td>
+                  <td>{t.cost.toLocaleString("fa-IR")}</td>
+                  <td>
+                    <div className="flex gap-1">
+                      <button onClick={() => startEdit(t)} className="admin-btn admin-btn-secondary"><Pencil size={12} /></button>
+                      <button onClick={() => handleDeleteTier(t.id)} className="admin-btn admin-btn-danger"><Trash2 size={12} /></button>
+                    </div>
+                  </td>
+                </>
+              )}
             </tr>
           ))}
         </tbody>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Share2, ShoppingCart, Check, ChevronDown } from "lucide-react";
 import { Product, ProductQuantityTier } from "@/types";
 import { useCartStore } from "@/store/cart-store";
@@ -25,6 +24,7 @@ export default function ProductDetail({
   const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name ?? null);
   const [selectedSize, setSelectedSize] = useState<string | null>(product.sizes?.[0] ?? null);
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState("1");
   const [added, setAdded] = useState(false);
   const [showTiersTable, setShowTiersTable] = useState(false);
 
@@ -80,18 +80,17 @@ export default function ProductDetail({
     <div className="product-page" style={{ "--primary": accentColor } as React.CSSProperties}>
       <div className="product-card">
         <div className="product-gallery">
-          <div className="product-gallery-main relative">
+          <div className="product-gallery-main">
             {product.images?.[activeImage] ? (
-              <Image
-                src={product.images[activeImage]}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.images[activeImage]} alt={product.name} />
             ) : (
               <div className="product-no-image">بدون تصویر</div>
+            )}
+            {product.is_stock && (
+              <div className="stock-ribbon-wrap">
+                <span className="stock-ribbon">استوک</span>
+              </div>
             )}
             <button className="product-share-btn" onClick={handleShare}>
               <Share2 size={16} />
@@ -106,16 +105,11 @@ export default function ProductDetail({
               {product.images.map((img, i) => (
                 <button
                   key={i}
-                  className={`product-thumb relative${i === activeImage ? " active" : ""}`}
+                  className={`product-thumb${i === activeImage ? " active" : ""}`}
                   onClick={() => setActiveImage(i)}
                 >
-                  <Image
-                    src={img}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="60px"
-                  />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt="" />
                 </button>
               ))}
             </div>
@@ -132,7 +126,6 @@ export default function ProductDetail({
                 </p>
               )}
               <span className="product-badge-new">جدید</span>
-              {product.is_stock && <span className="product-badge-stock">استوک</span>}
             </div>
             <p className="product-sku">کد محصول: <span dir="ltr">{product.sku}</span></p>
             {reviewCount > 0 && (
@@ -217,10 +210,45 @@ export default function ProductDetail({
           <div className="product-qty-row">
             <h3 className="product-section-title">تعداد</h3>
             <div className="product-qty-control">
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1}>−</button>
-              <span>{quantity}</span>
               <button
-                onClick={() => setQuantity((q) => (product.stock !== null ? Math.min(product.stock, q + 1) : q + 1))}
+                onClick={() => {
+                  const next = Math.max(1, quantity - 1);
+                  setQuantity(next);
+                  setQuantityInput(next.toString());
+                }}
+                disabled={quantity <= 1}
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={quantityInput}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setQuantityInput(raw);
+                  const val = parseInt(raw, 10);
+                  if (!isNaN(val) && val >= 1) {
+                    const clamped = product.stock !== null ? Math.min(val, product.stock) : val;
+                    setQuantity(clamped);
+                  }
+                }}
+                onBlur={() => {
+                  let val = parseInt(quantityInput, 10);
+                  if (isNaN(val) || val < 1) val = 1;
+                  if (product.stock !== null && val > product.stock) val = product.stock;
+                  setQuantity(val);
+                  setQuantityInput(val.toString());
+                }}
+                className="qty-input"
+                min={1}
+                max={product.stock ?? undefined}
+              />
+              <button
+                onClick={() => {
+                  const next = product.stock !== null ? Math.min(product.stock, quantity + 1) : quantity + 1;
+                  setQuantity(next);
+                  setQuantityInput(next.toString());
+                }}
                 disabled={product.stock !== null && quantity >= product.stock}
               >
                 +
@@ -234,6 +262,7 @@ export default function ProductDetail({
                 : "موجود در انبار"}
             </span>
           </div>
+
 
           <div className="product-buy-row">
             <button className="product-buy-btn" onClick={handleAddToCart} disabled={outOfStock}>
@@ -261,15 +290,8 @@ export default function ProductDetail({
             {product.description_images && product.description_images.length > 0 && (
               <div className="description-images-grid">
                 {product.description_images.map((img, i) => (
-                  <div key={i} className="relative w-full h-48 cursor-pointer" onClick={() => window.open(img, "_blank")}>
-                    <Image
-                      src={img}
-                      alt=""
-                      fill
-                      className="object-cover rounded-lg"
-                      sizes="(max-width: 768px) 100vw, 300px"
-                    />
-                  </div>
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={img} alt="" onClick={() => window.open(img, "_blank")} />
                 ))}
               </div>
             )}

@@ -36,6 +36,17 @@ export async function addWeightTier(methodId: string, minGrams: number, maxGrams
   return { success: true };
 }
 
+export async function updateWeightTier(id: string, minGrams: number, maxGrams: number, cost: number) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("shipping_weight_tiers")
+    .update({ min_weight_grams: minGrams, max_weight_grams: maxGrams, cost })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/shipping-methods");
+  return { success: true };
+}
+
 export async function deleteWeightTier(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_weight_tiers").delete().eq("id", id);

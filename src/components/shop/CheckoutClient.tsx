@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useCartStore, useCartWeight } from "@/store/cart-store";
 import { createOrderAndPay } from "@/app/(shop)/checkout/actions";
+import ProformaInvoiceButton from "./ProformaInvoiceButton";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
@@ -13,8 +14,11 @@ interface ShippingMethod { id: string; name: string; }
 interface ShippingTier { id: string; method_id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
 
 export default function CheckoutClient({
-  addresses, shippingMethods, shippingTiers,
-}: { addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[] }) {
+  addresses, shippingMethods, shippingTiers, storeInfo,
+}: {
+  addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
+  storeInfo: { name: string; phone: string; address: string; logoUrl: string | null };
+}) {
   const items = useCartStore((s) => s.items);
   const cartWeightGrams = useCartWeight();
 
@@ -118,6 +122,21 @@ export default function CheckoutClient({
         <div className="flex justify-between text-sm py-2 border-b"><span>هزینه ارسال و بسته‌بندی</span><span>{shippingCost.toLocaleString("fa-IR")} تومان</span></div>
         <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3"><span>مبلغ نهایی قابل پرداخت</span><span>{total.toLocaleString("fa-IR")} تومان</span></div>
       </div>
+
+      {selectedAddress && (
+        <div className="mb-6">
+          <ProformaInvoiceButton
+            items={items}
+            subtotal={subtotal}
+            shippingCost={shippingCost}
+            storeInfo={storeInfo}
+            buyer={(() => {
+              const addr = addresses.find((a) => a.id === selectedAddress)!;
+              return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line };
+            })()}
+          />
+        </div>
+      )}
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 

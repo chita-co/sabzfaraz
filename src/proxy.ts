@@ -40,6 +40,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // مسیرهای API، فایل‌های استاتیک، sitemap و robots را نادیده می‌گیرد
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|_rsc|product-detail|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

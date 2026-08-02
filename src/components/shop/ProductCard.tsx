@@ -24,6 +24,20 @@ export default function ProductCard({
       className="group block overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:shadow-md"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+        {product.is_stock && (
+  <div className="absolute bottom-2 left-2 z-10" style={{ transform: 'rotate(0deg)' }}>
+    <span 
+      className="stock-ribbon" 
+      style={{ 
+        transform: 'rotate(0deg)',
+        display: 'inline-block',
+        position: 'static'
+      }}
+    >
+      استوک
+    </span>
+  </div>
+)}
         {product.images?.[0] ? (
           <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-cover transition group-hover:scale-105" />
         ) : (
@@ -39,9 +53,6 @@ export default function ProductCard({
         </div>
       </div>
       <div className="p-3">
-        {product.is_stock && (
-          <span className="badge badge-warning card-stock-badge">استوک</span>
-        )}
         <div className="flex items-start justify-between gap-2 mb-0.5">
           <h3 className="line-clamp-2 text-sm text-gray-800 flex-1">{product.name}</h3>
            {product.rating_count > 0 && (

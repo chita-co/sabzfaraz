@@ -6,7 +6,7 @@ import ProductsTable from "@/components/admin/ProductsTable";
 import AdminProductFilters from "@/components/admin/AdminProductFilters";
 import Pagination from "@/components/shop/Pagination";
 
-const PAGE_SIZE = 20;
+const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
 export default async function AdminProductsPage({
   searchParams,
@@ -16,9 +16,11 @@ export default async function AdminProductsPage({
     category?: string;
     status?: string;
     page?: string;
+    pageSize?: string;
   }>;
 }) {
-  const { q, category, status, page: pageParam } = await searchParams;
+  const { q, category, status, page: pageParam, pageSize: pageSizeParam } = await searchParams;
+  const pageSize = ALLOWED_PAGE_SIZES.includes(Number(pageSizeParam)) ? Number(pageSizeParam) : 20;
   const page = Math.max(1, Number(pageParam) || 1);
 
   const supabase = await createClient();
@@ -35,8 +37,8 @@ export default async function AdminProductsPage({
   else if (status === "low-stock")
     query = query.not("stock", "is", null).lt("stock", 5);
 
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
   query = query.order("created_at", { ascending: false }).range(from, to);
 
   const [{ data: products, count }, { data: categories }] = await Promise.all([
@@ -44,11 +46,12 @@ export default async function AdminProductsPage({
     supabase.from("categories").select("*").order("name"),
   ]);
 
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / pageSize));
   const extraParams: Record<string, string> = {};
   if (q) extraParams.q = q;
   if (category) extraParams.category = category;
   if (status) extraParams.status = status;
+  if (pageSizeParam) extraParams.pageSize = pageSizeParam;
 
   return (
     <div>
