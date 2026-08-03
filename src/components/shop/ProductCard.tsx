@@ -17,6 +17,7 @@ export default function ProductCard({
   const discountPercent = hasDiscount
     ? Math.round(100 - (product.discount_price! / product.price) * 100)
     : 0;
+  const isOutOfStock = product.stock !== null && product.stock <= 0;
 
   return (
     <Link
@@ -24,20 +25,26 @@ export default function ProductCard({
       className="group block overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:shadow-md"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
-        {product.is_stock && (
-  <div className="absolute bottom-2 left-2 z-10" style={{ transform: 'rotate(0deg)' }}>
-    <span 
-      className="stock-ribbon" 
-      style={{ 
-        transform: 'rotate(0deg)',
-        display: 'inline-block',
-        position: 'static'
-      }}
-    >
-      استوک
-    </span>
-  </div>
-)}
+        {isOutOfStock ? (
+          <div className="out-of-stock-stamp">
+            <div className="out-of-stock-stamp-inner">
+              <span className="out-of-stock-stamp-text">متاسفانه موجودی<br />محصول تمام شد</span>
+            </div>
+          </div>
+        ) : product.is_stock ? (
+          <div className="absolute bottom-2 left-2 z-10" style={{ transform: 'rotate(0deg)' }}>
+            <span
+              className="stock-ribbon"
+              style={{
+                transform: 'rotate(0deg)',
+                display: 'inline-block',
+                position: 'static'
+              }}
+            >
+              استوک
+            </span>
+          </div>
+        ) : null}
         {product.images?.[0] ? (
           <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-cover transition group-hover:scale-105" />
         ) : (

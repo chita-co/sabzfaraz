@@ -23,6 +23,7 @@ interface CartState {
   removeItem: (productId: string, color: string | null, size: string | null) => void;
   updateQuantity: (productId: string, color: string | null, size: string | null, quantity: number) => void;
   clearCart: () => void;
+  restoreItems: (items: CartItem[]) => void;
 }
 
 function sameLine(a: CartItem, productId: string, color: string | null, size: string | null) {
@@ -60,6 +61,7 @@ export const useCartStore = create<CartState>()(
         });
       },
       clearCart: () => set({ items: [] }),
+      restoreItems: (items) => set({ items: [...get().items, ...items] }),
     }),
     { name: "sabzfaraz-cart" }
   )

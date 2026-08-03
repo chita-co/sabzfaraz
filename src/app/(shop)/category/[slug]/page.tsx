@@ -1,12 +1,10 @@
 import Link from "next/link";
+import { Product } from "@/types";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import ProductCard from "@/components/shop/ProductCard";
 import ProductSortSelect from "@/components/shop/ProductSortSelect";
-import Pagination from "@/components/shop/Pagination";
-import PageSizeSelect from "@/components/shop/PageSizeSelect";
+import ProductListClient from "@/components/shop/ProductListClient";
 import ParticlesBackground from "@/components/backgrounds/ParticlesBackground";
-import { Product } from "@/types";
 import { LayoutGrid } from "lucide-react";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
@@ -34,8 +32,7 @@ export default async function CategoryPage({
 
   let products: Product[] = [];
   let count = 0;
-  let totalPages = 1;
-  let wishlistIds = new Set<string>();
+  let wishlistIds: string[] = [];
 
   if (!hasSubCategories) {
     let query = supabase.from("products").select("*", { count: "exact" }).eq("category_id", category.id).eq("is_active", true);
@@ -47,13 +44,12 @@ export default async function CategoryPage({
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     const { data, count: c } = await query.range(from, to);
-    products = (data as Product[]) ?? [];
+    products = data ?? [];
     count = c ?? 0;
-    totalPages = Math.max(1, Math.ceil(count / pageSize));
 
-    if (user) {
-      const { data: wishRows } = await supabase.from("wishlists").select("product_id").eq("user_id", user.id);
-      wishlistIds = new Set((wishRows ?? []).map((w) => w.product_id));
+    if (user && products.length > 0) {
+      const { data: wishRows } = await supabase.from("wishlists").select("product_id").eq("user_id", user.id).in("product_id", products.map((p) => p.id));
+      wishlistIds = (wishRows ?? []).map((w) => w.product_id);
     }
   }
 
@@ -86,21 +82,7 @@ export default async function CategoryPage({
               <p className="text-sm text-gray-300">{count.toLocaleString("fa-IR")} محصول</p>
               <ProductSortSelect />
             </div>
-            {products.length > 0 ? (
-              <>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} isWishlisted={wishlistIds.has(product.id)} />
-                  ))}
-                </div>
-                <div className="flex items-center justify-between flex-wrap gap-3 mt-6">
-                  <PageSizeSelect theme="dark" />
-                  <Pagination basePath={`/category/${slug}`} currentPage={page} totalPages={totalPages} extraParams={{ sort, pageSize: String(pageSize) }} theme="dark" />
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-300">محصولی در این دسته‌بندی یافت نشد.</p>
-            )}
+            <ProductListClient mode="category" categoryId={category.id} sort={sort} initialProducts={products} initialCount={count} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath={`/category/${slug}`} />
           </>
         )}
       </div>

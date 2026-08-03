@@ -1370,36 +1370,73 @@
   100% { background-position: 200% center; }
 }
 
-.out-of-stock-badge {
-  display: inline-block;
-  border: 1.5px solid #f97316;
-  background: rgba(255, 255, 255, 0.9);
-  color: #f97316;
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 3px 10px;
-  border-radius: 6px;
-  letter-spacing: 0.3px;
-  animation: outOfStockPulse 1.8s ease-in-out infinite;
-}
-.out-of-stock-ribbon {
+.out-of-stock-stamp {
   position: absolute;
-  top: 22px;
-  left: -30px;
-  width: 140px;
-  transform: rotate(-45deg);
-  border-top: 2px solid #f97316;
-  border-bottom: 2px solid #f97316;
-  background: rgba(255, 255, 255, 0.85);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 8;
+  padding: 10%;
+}
+.out-of-stock-stamp-inner {
+  border: 3px solid #f97316;
+  border-radius: 10px;
+  padding: 8px 14px;
+  position: relative;
+  transform: rotate(-14deg);
+  animation: stampPulse 2.2s ease-in-out infinite;
+  background: transparent;
+}
+.out-of-stock-stamp-inner::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1.5px solid #f97316;
+  border-radius: 6px;
+}
+.out-of-stock-stamp-text {
   color: #f97316;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 800;
   text-align: center;
-  padding: 4px 0;
-  letter-spacing: 0.5px;
-  animation: outOfStockPulse 1.8s ease-in-out infinite;
+  line-height: 1.5;
+  white-space: nowrap;
 }
-@keyframes outOfStockPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+@media (max-width: 480px) {
+  .out-of-stock-stamp-text { font-size: 9.5px; }
+}
+@keyframes stampPulse {
+  0%, 100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+  50% { opacity: 0.7; transform: rotate(-14deg) scale(1.04); }
+}
+
+.pagination-bar-dark .pagination-page,
+.pagination-bar-dark .pagination-arrow {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+}
+.pagination-bar-dark .pagination-page:hover,
+.pagination-bar-dark .pagination-arrow:hover {
+  border-color: #4ade80;
+  color: #4ade80;
+}
+.pagination-bar-dark .pagination-page.active {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
+.pagination-bar-dark .pagination-dots { color: rgba(255, 255, 255, 0.6); }
+
+.page-size-select {
+  border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 12px;
+  font-family: inherit; font-size: 13px; background: #fff; color: #374151;
+}
+.page-size-select-dark {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
 }

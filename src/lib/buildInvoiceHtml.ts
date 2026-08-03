@@ -100,23 +100,38 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
         }
       </p>
 
-      <div style="margin-top:30px; padding-top:14px; border-top:2px dashed #9ca3af; position:relative;">
-        <span style="position:absolute; top:-11px; right:50%; transform:translateX(50%); background:#ffffff; padding:0 10px; font-size:10px; color:#9ca3af;">✂ از این خط جدا کنید — برچسب مرسوله</span>
-        <div style="display:flex; justify-content:space-between; gap:20px; font-size:11.5px; margin-top:12px;">
-          <div style="text-align:right; line-height:1.9;">
-            <p style="margin:0 0 4px; font-weight:700; color:#374151;">گیرنده</p>
-            <p style="margin:1px 0;">${p.buyerName}</p>
-            <p style="margin:1px 0;" dir="ltr">${p.buyerPhone}</p>
-            <p style="margin:1px 0;">${p.buyerAddress}</p>
-          </div>
-          <div style="text-align:left; line-height:1.9;">
-            <p style="margin:0 0 4px; font-weight:700; color:#374151;">فرستنده</p>
-            <p style="margin:1px 0;">${p.storeName}</p>
-            <p style="margin:1px 0;" dir="ltr">${p.storePhones[0] ?? ""}</p>
-            <p style="margin:1px 0;">${p.storeAddress}</p>
-          </div>
+    </div>
+  `;
+}
+
+export interface ShippingLabelParams {
+  orderNumber: string;
+  date: string;
+  storeName: string;
+  storePhone: string;
+  storeAddress: string;
+  buyerName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+}
+
+export function buildShippingLabelHtml(p: ShippingLabelParams): string {
+  return `
+    <div style="width:400px; padding:24px; background:#ffffff; font-family:Tahoma, Arial, sans-serif; color:#111827; direction:rtl; box-sizing:border-box; border:2px dashed #9ca3af; border-radius:12px;">
+      <p style="text-align:center; font-size:11px; color:#9ca3af; margin:0 0 12px;">برچسب مرسوله — سفارش <span dir="ltr" style="font-weight:700; color:#111827;">${p.orderNumber}</span> — ${p.date}</p>
+      <div style="display:flex; justify-content:space-between; gap:16px; font-size:13px; line-height:2;">
+        <div style="text-align:right;">
+          <p style="margin:0 0 4px; font-weight:800; color:#15803d;">گیرنده</p>
+          <p style="margin:1px 0;">${p.buyerName}</p>
+          <p style="margin:1px 0;" dir="ltr">${p.buyerPhone}</p>
+          <p style="margin:1px 0;">${p.buyerAddress}</p>
         </div>
-        <p style="text-align:center; font-size:10px; color:#9ca3af; margin-top:10px;" dir="ltr">Order: ${p.invoiceNumber}</p>
+        <div style="text-align:left;">
+          <p style="margin:0 0 4px; font-weight:800; color:#15803d;">فرستنده</p>
+          <p style="margin:1px 0;">${p.storeName}</p>
+          <p style="margin:1px 0;" dir="ltr">${p.storePhone}</p>
+          <p style="margin:1px 0;">${p.storeAddress}</p>
+        </div>
       </div>
     </div>
   `;

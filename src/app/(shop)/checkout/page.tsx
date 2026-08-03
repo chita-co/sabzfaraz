@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "@/components/shop/CheckoutClient";
+import { getActivePendingCheckout } from "./pending-actions";
 
 export default async function CheckoutPage() {
   const supabase = await createClient();
@@ -16,6 +17,8 @@ export default async function CheckoutPage() {
 
   const phones = [settings?.support_phone, settings?.support_phone_2].filter(Boolean) as string[];
 
+  const pendingResult = await getActivePendingCheckout();
+
   return (
     <CheckoutClient
       addresses={addresses ?? []}
@@ -27,6 +30,8 @@ export default async function CheckoutPage() {
         address: settings?.store_address ?? "",
         logoUrl: settings?.logo_url ?? null,
       }}
+      pendingCheckout={pendingResult?.expired === false ? pendingResult.pending : null}
+      itemsToRestore={pendingResult?.expired === true ? pendingResult.items : null}
     />
   );
 }

@@ -41,14 +41,24 @@ export default async function AdminOrderDetailPage({
         <h1 className="text-xl font-bold text-gray-900">
           سفارش {order.order_number}
         </h1>
-        <Link
-          href={`/admin/orders/${id}/invoice`}
-          target="_blank"
-          className="admin-btn admin-btn-primary flex items-center gap-2"
-        >
-          <Printer size={16} />
-          چاپ فاکتور
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/admin/orders/${id}/invoice`}
+            target="_blank"
+            className="admin-btn admin-btn-primary flex items-center gap-2"
+          >
+            <Printer size={16} />
+            چاپ فاکتور
+          </Link>
+          <Link
+            href={`/admin/orders/${id}/shipping-label`}
+            target="_blank"
+            className="admin-btn admin-btn-secondary flex items-center gap-2"
+          >
+            <Printer size={16} />
+            چاپ برچسب مرسوله
+          </Link>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">

@@ -87,11 +87,17 @@ export default function ProductDetail({
             ) : (
               <div className="product-no-image">بدون تصویر</div>
             )}
-            {product.is_stock && (
+            {product.stock !== null && product.stock <= 0 ? (
+              <div className="out-of-stock-stamp">
+                <div className="out-of-stock-stamp-inner">
+                  <span className="out-of-stock-stamp-text">متاسفانه موجودی<br />محصول تمام شد</span>
+                </div>
+              </div>
+            ) : product.is_stock ? (
               <div className="stock-ribbon-wrap">
                 <span className="stock-ribbon">استوک</span>
               </div>
-            )}
+            ) : null}
             <button className="product-share-btn" onClick={handleShare}>
               <Share2 size={16} />
             </button>

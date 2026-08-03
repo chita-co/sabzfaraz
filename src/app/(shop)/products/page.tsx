@@ -1,10 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import ProductCard from "@/components/shop/ProductCard";
 import ProductSortSelect from "@/components/shop/ProductSortSelect";
-import Pagination from "@/components/shop/Pagination";
-import PageSizeSelect from "@/components/shop/PageSizeSelect";
+import ProductListClient from "@/components/shop/ProductListClient";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
-import { Product } from "@/types";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -27,12 +24,11 @@ export default async function AllProductsPage({
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   const { data: products, count } = await query.range(from, to);
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / pageSize));
 
-  let wishlistIds = new Set<string>();
-  if (user) {
-    const { data: wishRows } = await supabase.from("wishlists").select("product_id").eq("user_id", user.id);
-    wishlistIds = new Set((wishRows ?? []).map((w) => w.product_id));
+  let wishlistIds: string[] = [];
+  if (user && products && products.length > 0) {
+    const { data: wishRows } = await supabase.from("wishlists").select("product_id").eq("user_id", user.id).in("product_id", products.map((p) => p.id));
+    wishlistIds = (wishRows ?? []).map((w) => w.product_id);
   }
 
   return (
@@ -45,21 +41,7 @@ export default async function AllProductsPage({
         </div>
         <p className="text-sm text-gray-300 mb-6">{(count ?? 0).toLocaleString("fa-IR")} محصول</p>
 
-        {products && products.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {(products as Product[]).map((product) => (
-                <ProductCard key={product.id} product={product} isWishlisted={wishlistIds.has(product.id)} />
-              ))}
-            </div>
-            <div className="flex items-center justify-between flex-wrap gap-3 mt-6">
-              <PageSizeSelect theme="dark" />
-              <Pagination basePath="/products" currentPage={page} totalPages={totalPages} extraParams={{ sort, pageSize: String(pageSize) }} theme="dark" />
-            </div>
-          </>
-        ) : (
-          <p className="text-gray-300">محصولی یافت نشد.</p>
-        )}
+        <ProductListClient mode="all" sort={sort} initialProducts={products ?? []} initialCount={count ?? 0} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath="/products" />
       </div>
     </>
   );
