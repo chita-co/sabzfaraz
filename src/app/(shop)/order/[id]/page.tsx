@@ -38,7 +38,7 @@ export default async function OrderResultPage({
       .eq("id", id)
       .eq("user_id", user.id)
       .single(),
-    supabase.from("site_settings").select("logo_url").eq("id", 1).single(),
+    supabase.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address").eq("id", 1).single(),
   ]);
   if (!order) notFound();
 
@@ -114,6 +114,9 @@ export default async function OrderResultPage({
               shippingCost={order.shipping_cost}
               total={order.total_amount}
               logoUrl={settings?.logo_url ?? null}
+              storeName={settings?.store_name ?? "سبزفراز"}
+              storePhones={[settings?.support_phone, settings?.support_phone_2].filter(Boolean) as string[]}
+              storeAddress={settings?.store_address ?? ""}
             />
           </div>
         </>

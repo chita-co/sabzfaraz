@@ -67,6 +67,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/banners", label: "بنرهای اسلایدی" },
       { href: "/admin/reviews", label: "نظرات و امتیازها" },
       { href: "/admin/stock", label: "محصولات استوک" },
+      { href: "/admin/out-of-stock", label: "محصولات تمام‌شده" },
     ],
   },
   {
@@ -75,7 +76,7 @@ const navConfig: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { href: "/admin/orders", label: "همه سفارش‌ها" },
-      { href: "/admin/finance/invoices", label: "صورتحساب‌ها" },
+      { href: "/admin/finance/invoices", label: "مدیریت فاکتورها" },
     ],
   },
   {

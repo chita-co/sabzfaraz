@@ -6,11 +6,13 @@ export default function Pagination({
   currentPage,
   totalPages,
   extraParams = {},
+  theme = "light",
 }: {
   basePath: string;
   currentPage: number;
   totalPages: number;
   extraParams?: Record<string, string>;
+  theme?: "light" | "dark";
 }) {
   if (totalPages <= 1) return null;
 
@@ -25,11 +27,8 @@ export default function Pagination({
   );
 
   return (
-    <div className="pagination-bar">
-      <Link
-        href={buildUrl(Math.max(1, currentPage - 1))}
-        className={`pagination-arrow${currentPage <= 1 ? " disabled" : ""}`}
-      >
+    <div className={`pagination-bar${theme === "dark" ? " pagination-bar-dark" : ""}`}>
+      <Link href={buildUrl(Math.max(1, currentPage - 1))} className={`pagination-arrow${currentPage <= 1 ? " disabled" : ""}`}>
         <ChevronRight size={16} />
       </Link>
 
@@ -42,10 +41,7 @@ export default function Pagination({
         </span>
       ))}
 
-      <Link
-        href={buildUrl(Math.min(totalPages, currentPage + 1))}
-        className={`pagination-arrow${currentPage >= totalPages ? " disabled" : ""}`}
-      >
+      <Link href={buildUrl(Math.min(totalPages, currentPage + 1))} className={`pagination-arrow${currentPage >= totalPages ? " disabled" : ""}`}>
         <ChevronLeft size={16} />
       </Link>
     </div>

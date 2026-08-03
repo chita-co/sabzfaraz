@@ -11,8 +11,10 @@ export default async function CheckoutPage() {
     supabase.from("addresses").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("shipping_methods").select("*").eq("is_active", true).order("sort_order"),
     supabase.from("shipping_weight_tiers").select("*"),
-    supabase.from("site_settings").select("store_name, support_phone, store_address, logo_url").eq("id", 1).single(),
+    supabase.from("site_settings").select("store_name, support_phone, support_phone_2, store_address, logo_url").eq("id", 1).single(),
   ]);
+
+  const phones = [settings?.support_phone, settings?.support_phone_2].filter(Boolean) as string[];
 
   return (
     <CheckoutClient
@@ -21,7 +23,7 @@ export default async function CheckoutPage() {
       shippingTiers={tiers ?? []}
       storeInfo={{
         name: settings?.store_name ?? "سبزفراز",
-        phone: settings?.support_phone ?? "",
+        phones: phones.length > 0 ? phones : ["—"],
         address: settings?.store_address ?? "",
         logoUrl: settings?.logo_url ?? null,
       }}

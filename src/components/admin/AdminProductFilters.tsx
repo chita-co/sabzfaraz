@@ -16,6 +16,7 @@ export default function AdminProductFilters({ categories }: { categories: Catego
     if (value) params.set(key, value); else params.delete(key);
     params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
+    router.refresh();
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -24,13 +25,13 @@ export default function AdminProductFilters({ categories }: { categories: Catego
   }
 
   return (
-    <div className="admin-filters-bar">
+    <div className="admin-filters-bar" key={searchParams.toString()}>
       <form onSubmit={handleSearchSubmit} className="admin-filters-search">
         <Search size={15} />
         <input
           type="text"
           placeholder="جستجو در نام یا کد محصول..."
-          value={q}
+          defaultValue={q}
           onChange={(e) => setQ(e.target.value)}
         />
         <button type="submit" className="admin-filters-apply-btn">اعمال</button>

@@ -4,33 +4,32 @@ import { createClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductSortSelect from "@/components/shop/ProductSortSelect";
 import Pagination from "@/components/shop/Pagination";
+import PageSizeSelect from "@/components/shop/PageSizeSelect";
 import ParticlesBackground from "@/components/backgrounds/ParticlesBackground";
 import { Product } from "@/types";
 import { LayoutGrid } from "lucide-react";
 
-const PAGE_SIZE = 20;
+const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
 export default async function CategoryPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ sort?: string; page?: string }>;
+  searchParams: Promise<{ sort?: string; page?: string; pageSize?: string }>;
 }) {
   const { slug } = await params;
-  const { sort = "newest", page: pageParam } = await searchParams;
+  const { sort = "newest", page: pageParam, pageSize: pageSizeParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
+  const pageSize = ALLOWED_PAGE_SIZES.includes(Number(pageSizeParam)) ? Number(pageSizeParam) : 20;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: category } = await supabase
-    .from("categories").select("*").eq("slug", slug).eq("is_active", true).single();
+  const { data: category } = await supabase.from("categories").select("*").eq("slug", slug).eq("is_active", true).single();
   if (!category) notFound();
 
-  const { data: subCategories } = await supabase
-    .from("categories").select("*").eq("parent_id", category.id).eq("is_active", true).order("name");
-
+  const { data: subCategories } = await supabase.from("categories").select("*").eq("parent_id", category.id).eq("is_active", true).order("name");
   const hasSubCategories = !!subCategories && subCategories.length > 0;
 
   let products: Product[] = [];
@@ -39,20 +38,18 @@ export default async function CategoryPage({
   let wishlistIds = new Set<string>();
 
   if (!hasSubCategories) {
-    let query = supabase.from("products").select("*", { count: "exact" })
-      .eq("category_id", category.id).eq("is_active", true);
-
+    let query = supabase.from("products").select("*", { count: "exact" }).eq("category_id", category.id).eq("is_active", true);
     if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
     else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
     else if (sort === "popular") query = query.order("rating_avg", { ascending: false });
     else query = query.order("created_at", { ascending: false });
 
-    const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
     const { data, count: c } = await query.range(from, to);
     products = (data as Product[]) ?? [];
     count = c ?? 0;
-    totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+    totalPages = Math.max(1, Math.ceil(count / pageSize));
 
     if (user) {
       const { data: wishRows } = await supabase.from("wishlists").select("product_id").eq("user_id", user.id);
@@ -96,7 +93,10 @@ export default async function CategoryPage({
                     <ProductCard key={product.id} product={product} isWishlisted={wishlistIds.has(product.id)} />
                   ))}
                 </div>
-                <Pagination basePath={`/category/${slug}`} currentPage={page} totalPages={totalPages} extraParams={{ sort }} />
+                <div className="flex items-center justify-between flex-wrap gap-3 mt-6">
+                  <PageSizeSelect theme="dark" />
+                  <Pagination basePath={`/category/${slug}`} currentPage={page} totalPages={totalPages} extraParams={{ sort, pageSize: String(pageSize) }} theme="dark" />
+                </div>
               </>
             ) : (
               <p className="text-gray-300">محصولی در این دسته‌بندی یافت نشد.</p>

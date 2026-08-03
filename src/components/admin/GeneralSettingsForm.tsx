@@ -6,7 +6,7 @@ import { updateGeneralSettings } from "@/app/admin/settings/actions";
 export default function GeneralSettingsForm({
   initial,
 }: {
-  initial: { store_name: string; support_phone: string | null; support_email: string | null; store_address: string | null; about_content: string | null; min_order_amount: number };
+  initial: { store_name: string; support_phone: string | null; support_phone_2: string | null; support_email: string | null; store_address: string | null; about_content: string | null; min_order_amount: number };
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -29,6 +29,11 @@ export default function GeneralSettingsForm({
         <label>نام فروشگاه</label>
         <input type="text" name="storeName" defaultValue={initial.store_name} required />
       </div>
+      <div className="admin-form-group">
+        <label>تلفن دوم (اختیاری — روی فاکتور و پیش‌فاکتور هم نمایش داده می‌شود)</label>
+        <input type="text" name="supportPhone2" dir="ltr" defaultValue={initial.support_phone_2 ?? ""} placeholder="021-11111111" />
+      </div>
+
       <div className="admin-form-group">
         <label>تلفن پشتیبانی</label>
         <input type="text" name="supportPhone" dir="ltr" defaultValue={initial.support_phone ?? ""} placeholder="021-00000000" />

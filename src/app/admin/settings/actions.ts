@@ -14,6 +14,7 @@ export async function updateGeneralSettings(formData: FormData) {
       store_address: formData.get("storeAddress") as string,
       about_content: formData.get("aboutContent") as string,
       min_order_amount: Number(formData.get("minOrderAmount")) || 0,
+      support_phone_2: (formData.get("supportPhone2") as string) || null,
     })
     .eq("id", 1);
 

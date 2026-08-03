@@ -35,6 +35,21 @@ export async function GET(request: NextRequest) {
         zarinpal_ref_id: String(result.refId ?? ""),
       }).eq("id", orderId);
 
+      // کسر موجودی بر اساس اقلام سفارش
+      const { data: orderItemsForStock } = await supabase
+        .from("order_items")
+        .select("product_id, quantity")
+        .eq("order_id", orderId);
+
+      if (orderItemsForStock) {
+        for (const item of orderItemsForStock) {
+          await supabase.rpc("decrement_product_stock", {
+            p_product_id: item.product_id,
+            p_qty: item.quantity,
+          });
+        }
+      }
+
       const phone = order.address?.phone;
       if (phone) {
         try {

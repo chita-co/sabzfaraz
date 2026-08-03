@@ -17,7 +17,7 @@ export default function CheckoutClient({
   addresses, shippingMethods, shippingTiers, storeInfo,
 }: {
   addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
-  storeInfo: { name: string; phone: string; address: string; logoUrl: string | null };
+  storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null };
 }) {
   const items = useCartStore((s) => s.items);
   const cartWeightGrams = useCartWeight();
