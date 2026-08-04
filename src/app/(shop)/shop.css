@@ -1397,12 +1397,14 @@
   border-radius: 6px;
 }
 .out-of-stock-stamp-text {
+  display: block;
+  width: 100%;
   color: #f97316;
   font-size: 11px;
   font-weight: 800;
   text-align: center;
   line-height: 1.5;
-  white-space: nowrap;
+  white-space: normal;   /* اجازه شکستن خط */
 }
 @media (max-width: 480px) {
   .out-of-stock-stamp-text { font-size: 9.5px; }
