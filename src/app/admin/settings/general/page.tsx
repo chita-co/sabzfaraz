@@ -5,7 +5,7 @@ export default async function AdminGeneralSettingsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("site_settings")
-    .select("store_name, support_phone, support_phone_2, support_email, store_address, about_content, min_order_amount")
+    .select("store_name, support_phone, support_phone_2, support_email, store_address, about_content, min_order_amount, store_postal_code")
     .eq("id", 1)
     .single();
 
@@ -18,6 +18,7 @@ export default async function AdminGeneralSettingsPage() {
           support_phone_2: null,
           support_email: null,
           store_address: null,
+          store_postal_code: null,
           about_content: null,
           min_order_amount: 500000,
         }

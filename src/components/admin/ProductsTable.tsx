@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Pencil, Trash2, Layers, Copy, Check, X as XIcon, History } from "lucide-react";
 import { deleteProduct, copyProduct, quickUpdateProduct, getProductPriceHistory } from "@/app/admin/products/actions";
 import BulkEditModal from "./BulkEditModal";
@@ -38,6 +38,16 @@ export default function ProductsTable({
   const [editValue, setEditValue] = useState("");
   const [historyProductId, setHistoryProductId] = useState<string | null>(null);
   const [historyRows, setHistoryRows] = useState<{ id: string; price: number; discount_price: number | null; changed_at: string }[]>([]);
+
+  const initialized = useRef(false);
+
+  // فقط بار اول rows را با products هماهنگ کن
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      setRows(products);
+    }
+  }, [products]);
 
   async function handleDelete(p: Row) {
     if (!confirm(`آیا از حذف محصول "${p.name}" مطمئن هستید؟`)) return;

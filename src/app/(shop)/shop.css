@@ -1440,3 +1440,7 @@
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
 }
+.page-size-select-dark option {
+  background-color: rgba(15, 23, 42, 0.97);
+  color: #ffffff;
+}

@@ -23,6 +23,7 @@
     "face-api.js": "^0.22.2",
     "html2canvas": "^1.4.1",
     "html2canvas-pro": "^2.3.3",
+    "jsbarcode": "^3.12.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.25.0",

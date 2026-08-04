@@ -1,0 +1,52 @@
+.shipping-label-page { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.shipping-label-form { flex: 1; min-width: 280px; }
+.shipping-label-preview-wrap { background: #e5e7eb; padding: 20px; border-radius: 12px; }
+
+.shipping-label {
+  width: 100mm;
+  height: 150mm;
+  background: #fff;
+  padding: 5mm;
+  box-sizing: border-box;
+  font-family: Tahoma, Arial, sans-serif;
+  direction: rtl;
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+  border: 1px solid #000;
+}
+.shipping-label-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 2mm; }
+.shipping-label-title { font-size: 14px; font-weight: 800; }
+.shipping-label-type-badge { border: 1.5px solid #000; border-radius: 4px; padding: 1mm 3mm; font-size: 10px; font-weight: 700; }
+
+.shipping-label-barcode { text-align: center; }
+.shipping-label-barcode canvas { max-width: 100%; }
+.shipping-label-tracking-text { font-size: 10px; text-align: center; letter-spacing: 1px; margin-top: -2mm; }
+
+.shipping-label-parties { display: flex; gap: 2mm; }
+.shipping-label-party { flex: 1; border: 1px solid #9ca3af; border-radius: 3px; padding: 2mm; font-size: 9.5px; line-height: 1.6; }
+.shipping-label-party-title { font-weight: 800; font-size: 10px; margin-bottom: 1mm; border-bottom: 1px dashed #9ca3af; padding-bottom: 1mm; }
+
+.shipping-label-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5mm; font-size: 9.5px; border: 1px solid #9ca3af; border-radius: 3px; padding: 2mm; }
+.shipping-label-meta-item { display: flex; justify-content: space-between; }
+.shipping-label-meta-item b { font-weight: 700; }
+
+.shipping-label-services { display: flex; gap: 4mm; font-size: 9.5px; }
+.shipping-label-service { display: flex; align-items: center; gap: 1.5mm; }
+.shipping-label-checkbox { width: 3mm; height: 3mm; border: 1.3px solid #000; display: inline-block; }
+.shipping-label-checkbox.checked { background: #000; }
+
+.shipping-label-content-table { width: 100%; border-collapse: collapse; font-size: 8.5px; }
+.shipping-label-content-table th, .shipping-label-content-table td { border: 1px solid #9ca3af; padding: 1mm 1.5mm; text-align: center; }
+.shipping-label-content-table th { background: #f3f4f6; }
+
+.shipping-label-footer { font-size: 8.5px; color: #4b5563; text-align: center; margin-top: auto; border-top: 1px dashed #9ca3af; padding-top: 1.5mm; }
+
+@media print {
+  @page { size: 100mm 150mm; margin: 0; }
+  body * { visibility: hidden; }
+  .shipping-label-print, .shipping-label-print * { visibility: visible; }
+  .shipping-label-print { position: fixed; top: 0; left: 0; margin: 0; }
+  .no-print { display: none !important; }
+}
