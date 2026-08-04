@@ -28,7 +28,7 @@ export default function ProductCard({
         {isOutOfStock ? (
           <div className="out-of-stock-stamp">
             <div className="out-of-stock-stamp-inner">
-              <span className="out-of-stock-stamp-text">متاسفانه <br />محصول تمام شد</span>
+              <span className="out-of-stock-stamp-text">متاسفانه <br />این محصول تمام شد</span>
             </div>
           </div>
         ) : product.is_stock ? (
