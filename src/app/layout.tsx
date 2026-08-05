@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.vercel.app"
   ),
-  title: "17737796",   // ← برگردوندن به حالت عادی
+  title: "سبزفراز | فروشگاه اینترنتی",
   description: "خرید آنلاین انواع کالا از سبزفراز",
   icons: { icon: "/icon.png" },
   verification: {
