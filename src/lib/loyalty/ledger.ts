@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getLoyaltySettings, calculatePointsToEarn } from "./settings";
+import { getLoyaltySettings } from "./settings";
+import { calculatePointsToEarn } from "./points-utils";
 import { createNotification } from "@/lib/notifications";
 
 async function recalculateTier(admin: ReturnType<typeof createAdminClient>, userId: string) {

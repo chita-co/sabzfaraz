@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { getLoyaltySettings, calculateMaxRedeemablePoints, calculatePointsToEarn } from "@/lib/loyalty/settings";
+import { getLoyaltySettings, calculateMaxRedeemablePoints } from "@/lib/loyalty/settings";
+import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
 import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 
 export async function getLoyaltyPreview(subtotal: number) {
