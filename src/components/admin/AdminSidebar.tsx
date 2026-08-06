@@ -86,6 +86,7 @@ const navConfig: NavItem[] = [
     children: [
       { href: "/admin/finance/transactions", label: "تراکنش‌ها" },
       { href: "/admin/analytics", label: "گزارش فروش" },
+      { href: "/admin/analytics-visitors", label: "آمار بازدیدکنندگان" },
     ],
   },
   {

@@ -1,4 +1,6 @@
 // src/app/layout.tsx
+import { Suspense } from "react";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
@@ -31,6 +33,9 @@ export default function RootLayout({
     <html lang="fa" dir="rtl" className={cn("font-sans", geist.variable)}>
       <body className="antialiased">
         <Analytics />
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
         {children}
       </body>
     </html>

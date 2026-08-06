@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyPayment } from "@/lib/zarinpal";
 import { sendSms } from "@/lib/sms";
+import { logConversion } from "@/lib/analytics/logConversion";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -57,6 +58,13 @@ export async function GET(request: NextRequest) {
         } catch (e) {
           console.error("خطا در ارسال پیامک تایید سفارش:", e);
         }
+      }
+
+      const sessionKeyCookie = request.cookies.get("sf_analytics_session")?.value ?? null;
+      try {
+        await logConversion(sessionKeyCookie, orderId, order.total_amount);
+      } catch (e) {
+        console.error("خطا در ثبت تبدیل آماری:", e);
       }
 
       return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
