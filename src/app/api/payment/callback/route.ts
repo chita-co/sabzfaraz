@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyPayment } from "@/lib/zarinpal";
 import { sendSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
+import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
 
   if (status !== "OK") {
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
+    try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   }
 
@@ -35,8 +37,7 @@ export async function GET(request: NextRequest) {
         status: "PROCESSING",
         zarinpal_ref_id: String(result.refId ?? ""),
       }).eq("id", orderId);
-
-      // کسر موجودی بر اساس اقلام سفارش
+      
       const { data: orderItemsForStock } = await supabase
         .from("order_items")
         .select("product_id, quantity")
@@ -70,6 +71,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
     }
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
+    try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   } catch {
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=error`);

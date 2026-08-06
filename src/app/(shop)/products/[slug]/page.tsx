@@ -6,6 +6,8 @@ import ProductReviewsDisplay from "@/components/shop/ProductReviewsDisplay";
 import { Product } from "@/types";
 import "./product-detail.css";
 import SilkBackground from "@/components/backgrounds/SilkBackground";
+import { getLoyaltySettings } from "@/lib/loyalty/settings";
+import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -37,6 +39,11 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const { data: { user } } = await supabase.auth.getUser();
+
+  const [loyaltySettings, loyaltyMultiplier] = await Promise.all([
+    getLoyaltySettings(),
+    getUserTierMultiplier(user?.id ?? null),
+  ]);
 
   let isWishlisted = false;
   if (user) {
@@ -120,6 +127,9 @@ export default async function ProductPage({
         avgRating={product.rating_avg}
         reviewCount={product.rating_count}
         quantityTiers={quantityTiers ?? []}
+        tomanPerPoint={loyaltySettings.tomanPerPoint}
+        pointsMultiplier={loyaltyMultiplier}
+        pointValueToman={loyaltySettings.pointValueToman}
       />
 
       <div className="mx-auto max-w-7xl px-4">

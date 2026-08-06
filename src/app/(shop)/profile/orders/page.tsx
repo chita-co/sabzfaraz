@@ -97,6 +97,14 @@ export default async function MyOrdersPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 relative z-10">
         <h1 className="text-xl font-bold text-white mb-6">سفارشات من</h1>
 
+        <a href="/profile/loyalty" className="profile-orders-banner mb-6">
+        <div className="profile-orders-icon" style={{ background: "#f59e0b" }}>🎁</div>
+        <div>
+          <p className="profile-orders-title">باشگاه مشتریان</p>
+          <p className="profile-orders-subtitle">امتیاز و سطح عضویتت رو ببین</p>
+        </div>
+      </a>
+      
         <ProductReviewsSection
           products={productsForReview}
           defaultReviewerName={profile?.full_name ?? ""}

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requestPayment } from "@/lib/zarinpal";
 import { redirect } from "next/navigation";
-
+import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
 interface CheckoutItem {
   productId: string;
   name: string;
@@ -18,7 +18,8 @@ interface CheckoutItem {
 export async function createOrderAndPay(
   items: CheckoutItem[],
   addressId: string,
-  shippingCost: number
+  shippingCost: number,
+  loyaltyPointsToRedeem: number = 0, // ← پارامتر جدید با مقدار پیش‌فرض
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -63,12 +64,26 @@ export async function createOrderAndPay(
   );
   if (itemsError) return { error: "خطا در ثبت اقلام سفارش: " + itemsError.message };
 
+  let finalAmount = totalAmount; // totalAmount همان مبلغ اولیه سفارش است
+
+if (loyaltyPointsToRedeem > 0) {
+  const redemption = await redeemPointsForOrder(user.id, order.id, loyaltyPointsToRedeem);
+  if (redemption?.error) {
+    return { error: redemption.error };
+  }
+  finalAmount = order.total_amount - (redemption.discountAmount ?? 0);
+  if (finalAmount < 0) finalAmount = 0;
+
+  // به‌روزرسانی مبلغ نهایی سفارش
+  await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+}
+
   const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback?orderId=${order.id}`;
 
   let payment;
   try {
     payment = await requestPayment({
-      amount: totalAmount,
+      amount: finalAmount,
       description: `پرداخت سفارش ${orderNumber}`,
       callbackUrl,
       mobile: address.phone,

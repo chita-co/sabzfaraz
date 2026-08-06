@@ -6,19 +6,14 @@ import { Product, ProductQuantityTier } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
 import { StarRatingDisplay } from "./StarRating";
+import { calculatePointsToEarn } from "@/lib/loyalty/settings";
 
 export default function ProductDetail({
-  product,
-  isWishlisted,
-  avgRating = 0,
-  reviewCount = 0,
-  quantityTiers = [],
+  product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [],
+  tomanPerPoint = 1000, pointsMultiplier = 1, pointValueToman = 100,
 }: {
-  product: Product;
-  isWishlisted: boolean;
-  avgRating?: number;
-  reviewCount?: number;
-  quantityTiers?: ProductQuantityTier[];
+  product: Product; isWishlisted: boolean; avgRating?: number; reviewCount?: number; quantityTiers?: ProductQuantityTier[];
+  tomanPerPoint?: number; pointsMultiplier?: number; pointValueToman?: number;
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name ?? null);
@@ -41,7 +36,7 @@ export default function ProductDetail({
   const lowestTier = quantityTiers.length > 0
     ? [...quantityTiers].sort((a, b) => a.unit_price - b.unit_price)[0]
     : null;
-
+  const pointsToEarn = calculatePointsToEarn(finalPrice * quantity, tomanPerPoint, pointsMultiplier);
   const activeColor = product.colors?.find((c) => c.name === selectedColor);
   const accentColor = activeColor?.hex ?? "#2175f5";
   const outOfStock = product.stock !== null && product.stock <= 0;
@@ -268,6 +263,15 @@ export default function ProductDetail({
                 : "موجود در انبار"}
             </span>
           </div>
+
+          {pointsToEarn > 0 && (
+            <div className="points-earn-badge">
+              🎁 با خرید این محصول <b>{pointsToEarn.toLocaleString("fa-IR")} امتیاز</b> می‌گیری!
+              <span>(معادل {(pointsToEarn * pointValueToman).toLocaleString("fa-IR")} تومان اعتبار برای خرید بعدی)</span>
+            </div>
+          )}
+
+          <div className="product-buy-row"></div>
 
 
           <div className="product-buy-row">

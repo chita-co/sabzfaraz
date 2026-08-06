@@ -12,6 +12,7 @@ import { useCartTotals } from "@/store/cart-store";
 import { usePathname } from "next/navigation";
 import ShinyText from "@/components/ShinyText";
 import GooeyNav from "@/components/GooeyNav";
+import NotificationBell from "@/components/shop/NotificationBell";
 
 interface CategoryLite { id: string; name: string; slug: string; }
 
@@ -89,8 +90,12 @@ export default function HeaderNav({
           <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </form>
 
+        {/* ===== بخش اصلی دکمه‌های هدر (دسکتاپ) ===== */}
         <div className="site-actions">
           <Link href="/wishlist" className="site-icon-btn"><Heart size={20} /></Link>
+          <NotificationBell />
+          
+          {/* فقط یک لینک سبد خرید باید وجود داشته باشد */}
           <Link href="/cart" className="site-icon-btn cart-icon-wrap">
             <ShoppingCart size={20} />
             {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -129,6 +134,7 @@ export default function HeaderNav({
         </div>
       </div>
 
+      {/* ===== منوی موبایل ===== */}
       {mobileOpen && (
         <div className="site-mobile-overlay" onClick={() => setMobileOpen(false)}>
           <div className="site-mobile-panel" onClick={(e) => e.stopPropagation()}>
@@ -144,6 +150,10 @@ export default function HeaderNav({
             <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
             <Link href="/support" onClick={() => setMobileOpen(false)}>پشتیبانی</Link>
+            
+            {/* NotificationBell به‌عنوان یک آیتم مستقل در موبایل */}
+            <NotificationBell />
+            
             <Link href="/cart" onClick={() => setMobileOpen(false)}>سبد خرید</Link>
             <Link href="/wishlist" onClick={() => setMobileOpen(false)}>علاقه‌مندی‌ها</Link>
             {isLoggedIn ? (

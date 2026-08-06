@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCartStore, useCartWeight } from "@/store/cart-store";
 import { createOrderAndPay } from "@/app/(shop)/checkout/actions";
 import ProformaInvoiceButton from "./ProformaInvoiceButton";
+import LoyaltyRedemptionBox from "./LoyaltyRedemptionBox";
 import { CartItem } from "@/store/cart-store";
 
 interface AddressRow {
@@ -39,6 +40,8 @@ export default function CheckoutClient({
   const [selectedMethodId, setSelectedMethodId] = useState(shippingMethods[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);;
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
 
   // برگرداندن آیتم‌های پیش‌فاکتور منقضی‌شده به سبد خرید
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function CheckoutClient({
     return methodTiers[methodTiers.length - 1].cost;
   }, [selectedMethodId, shippingTiers, cartWeightGrams, pendingCheckout]);
 
-  const total = subtotal + shippingCost;
+  const total = subtotal + shippingCost - loyaltyDiscount;
 
   async function handlePay() {
     if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
@@ -83,7 +86,8 @@ export default function CheckoutClient({
         selectedSize: i.selectedSize, quantity: i.quantity,
       })),
       selectedAddress,
-      shippingCost
+      shippingCost,
+      loyaltyPoints, 
     );
     if (result?.error) { setError(result.error); setLoading(false); }
   }
@@ -183,6 +187,18 @@ export default function CheckoutClient({
       )}
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+      {!isLocked && (
+  <div className="mb-6">
+    <LoyaltyRedemptionBox
+      subtotal={subtotal}
+      onChange={(points, discount) => {
+        setLoyaltyPoints(points);
+        setLoyaltyDiscount(discount);
+      }}
+    />
+  </div>
+)}
 
       <button onClick={handlePay} disabled={loading} className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50">
         {loading ? "در حال اتصال به درگاه پرداخت..." : isLocked ? "پرداخت نهایی (پیش‌فاکتور فعال)" : "پرداخت و ثبت نهایی سفارش"}

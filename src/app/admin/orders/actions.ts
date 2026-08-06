@@ -3,11 +3,30 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { earnPointsForOrder, refundRedeemedPoints, reverseEarnedPoints } from "@/lib/loyalty/ledger";
 
 export async function updateOrderStatus(orderId: string, status: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
   if (error) return { error: "خطا در تغییر وضعیت: " + error.message };
+
+  if (status === "DELIVERED") {
+    try {
+      await earnPointsForOrder(orderId);
+    } catch (e) {
+      console.error("خطا در ثبت امتیاز وفاداری:", e);
+    }
+  }
+
+  if (status === "CANCELLED") {
+    try {
+      await refundRedeemedPoints(orderId);
+      await reverseEarnedPoints(orderId);
+    } catch (e) {
+      console.error("خطا در بازگشت امتیاز وفاداری:", e);
+    }
+  }
+
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   return { success: true };

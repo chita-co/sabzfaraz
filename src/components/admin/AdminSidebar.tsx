@@ -15,6 +15,7 @@ import {
   Crown,
   ChevronDown,
   MessageCircle,
+  Gift,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 
@@ -90,10 +91,20 @@ const navConfig: NavItem[] = [
     ],
   },
   {
-    id: "settings",
+    id: "loyalty",
+    label: "باشگاه مشتریان",
+    icon: Gift,
+    children: [
+      { href: "/admin/loyalty/settings", label: "تنظیمات امتیازدهی" },
+      { href: "/admin/loyalty/tiers", label: "سطوح مشتریان" },
+      { href: "/admin/loyalty/transactions", label: "دفتر کل امتیازها" },
+    ],
+  },
+  {
+    id: "settings", // <-- این بخش اصلاح شد
     label: "تنظیمات",
     icon: Settings,
-    children: [
+    children: [ // <-- children به صورت آرایه اضافه شد
       { href: "/admin/settings/general", label: "تنظیمات عمومی" },
       { href: "/admin/shipping", label: "هزینه ارسال" },
       { href: "/admin/tracking-settings", label: "پیام‌های پیگیری" },
