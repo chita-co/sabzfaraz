@@ -1,3 +1,4 @@
+// src/lib/loyalty/settings.ts
 import { createClient } from "@/lib/supabase/server";
 
 export interface LoyaltySettings {
@@ -26,9 +27,4 @@ export function calculateMaxRedeemablePoints(subtotal: number, userBalance: numb
   if (subtotal < settings.minOrderForRedemption) return 0;
   const maxByPercent = Math.floor((subtotal * settings.maxRedemptionPercent) / 100 / settings.pointValueToman);
   return Math.max(0, Math.min(userBalance, maxByPercent));
-}
-
-export function calculatePointsToEarn(amount: number, tomanPerPoint: number, multiplier = 1): number {
-  if (tomanPerPoint <= 0) return 0;
-  return Math.floor((amount / tomanPerPoint) * multiplier);
 }

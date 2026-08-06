@@ -6,7 +6,7 @@ import { Product, ProductQuantityTier } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
 import { StarRatingDisplay } from "./StarRating";
-import { calculatePointsToEarn } from "@/lib/loyalty/settings";
+import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
 
 export default function ProductDetail({
   product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [],
