@@ -1496,3 +1496,61 @@
 .notif-item-title { font-size: 12.5px; font-weight: 700; color: #111827; }
 .notif-item-message { font-size: 11.5px; color: #4b5563; margin-top: 2px; line-height: 1.6; }
 .notif-item-date { font-size: 10px; color: #9ca3af; margin-top: 4px; }
+
+.unboxing-hero { text-align: center; margin-bottom: 24px; }
+.unboxing-hero h1 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.unboxing-hero p { color: rgba(255,255,255,0.75); font-size: 14px; }
+
+.unboxing-rules-box {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 22px; margin-bottom: 24px;
+}
+.unboxing-rules-box h2 { color: #4ade80; font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+.unboxing-rules-box p { color: rgba(255,255,255,0.75); font-size: 13px; line-height: 2; }
+
+.unboxing-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 30px; }
+.unboxing-channel-btn {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px;
+  text-decoration: none; color: #fff; transition: transform 0.2s;
+}
+.unboxing-channel-btn:hover { transform: translateY(-2px); }
+.unboxing-channel-btn b { display: block; font-size: 13.5px; }
+.unboxing-channel-btn span { display: block; font-size: 11px; opacity: 0.85; }
+.unboxing-channel-btn.whatsapp { background: linear-gradient(135deg, #25d366, #128c7e); }
+.unboxing-channel-btn.telegram { background: linear-gradient(135deg, #34aadf, #1c8adb); }
+.unboxing-channel-btn.instagram { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); }
+
+.unboxing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+.unboxing-card {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; overflow: hidden; cursor: pointer; text-align: right; padding: 0;
+}
+.unboxing-card-thumb { position: relative; aspect-ratio: 16/9; background: #111; overflow: hidden; }
+.unboxing-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.unboxing-card-thumb-fallback { width: 100%; height: 100%; background: #1f2937; }
+.unboxing-play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); }
+.unboxing-featured-badge {
+  position: absolute; top: 8px; right: 8px; background: #f59e0b; color: #fff;
+  font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px;
+}
+.unboxing-card-body { padding: 12px 14px; }
+.unboxing-card-title { font-size: 13px; font-weight: 700; color: #fff; }
+.unboxing-card-customer { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 3px; }
+
+.unboxing-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.unboxing-modal { width: 100%; max-width: 720px; }
+.unboxing-modal-player { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
+.unboxing-modal-close { color: #fff; background: none; border: none; margin-bottom: 8px; cursor: pointer; }
+.unboxing-modal-share { display: flex; gap: 10px; margin-top: 12px; }
+.unboxing-modal-share a { color: #4ade80; font-size: 12.5px; text-decoration: underline; }
+
+.unboxing-mobile-sticky { display: none; }
+@media (max-width: 640px) {
+  .unboxing-mobile-sticky {
+    display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    background: rgba(15,23,42,0.97); padding: 10px; border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .unboxing-mobile-sticky .unboxing-channels { grid-template-columns: repeat(3, 1fr); margin-bottom: 0; }
+  .unboxing-mobile-sticky .unboxing-channel-btn span { display: none; }
+  .unboxing-mobile-sticky .unboxing-channel-btn { flex-direction: column; text-align: center; padding: 8px; }
+}

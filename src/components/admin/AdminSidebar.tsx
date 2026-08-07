@@ -16,6 +16,7 @@ import {
   ChevronDown,
   MessageCircle,
   Gift,
+  Film,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 
@@ -100,10 +101,9 @@ const navConfig: NavItem[] = [
       { href: "/admin/loyalty/transactions", label: "دفتر کل امتیازها" },
     ],
   },
+  { href: "/admin/unboxing", label: "ویدیوهای آنباکس", icon: Film },
   {
-    id: "settings", // <-- این بخش اصلاح شد
-    label: "تنظیمات",
-    icon: Settings,
+    id: "settings", label: "تنظیمات", icon: Settings,
     children: [ // <-- children به صورت آرایه اضافه شد
       { href: "/admin/settings/general", label: "تنظیمات عمومی" },
       { href: "/admin/shipping", label: "هزینه ارسال" },

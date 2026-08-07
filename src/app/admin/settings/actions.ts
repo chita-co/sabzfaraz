@@ -16,6 +16,9 @@ export async function updateGeneralSettings(formData: FormData) {
       min_order_amount: Number(formData.get("minOrderAmount")) || 0,
       support_phone_2: (formData.get("supportPhone2") as string) || null,
       store_postal_code: (formData.get("storePostalCode") as string) || null,
+      unboxing_whatsapp_number: (formData.get("unboxingWhatsapp") as string) || null,
+      unboxing_telegram_id: (formData.get("unboxingTelegram") as string) || null,
+      unboxing_instagram_handle: (formData.get("unboxingInstagram") as string) || null,
     })
     .eq("id", 1);
 

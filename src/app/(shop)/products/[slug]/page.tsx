@@ -8,6 +8,7 @@ import "./product-detail.css";
 import SilkBackground from "@/components/backgrounds/SilkBackground";
 import { getLoyaltySettings } from "@/lib/loyalty/settings";
 import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
+import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -56,7 +57,7 @@ export default async function ProductPage({
     isWishlisted = !!wish;
   }
 
-  const [{ data: relatedProducts }, { data: reviews }, { data: quantityTiers }] = await Promise.all([
+  const [{ data: relatedProducts }, { data: reviews }, { data: quantityTiers }, { data: unboxingVideos }] = await Promise.all([
     supabase
       .from("products")
       .select("*")
@@ -76,6 +77,12 @@ export default async function ProductPage({
       .select("*")
       .eq("product_id", product.id)
       .order("min_qty", { ascending: true }),
+    supabase
+      .from("unboxing_videos")
+      .select("*")
+      .eq("product_id", product.id)
+      .eq("status", "PUBLISHED")
+      .order("published_at", { ascending: false }),
   ]);
 
   const relatedIds = (relatedProducts ?? []).map((p) => p.id);
@@ -134,6 +141,10 @@ export default async function ProductPage({
 
       <div className="mx-auto max-w-7xl px-4">
         <RelatedProducts products={(relatedProducts as Product[]) ?? []} wishlistIds={relatedWishlistIds} categoryHref={`/category/${product.category?.slug}`} />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4">
+        <ProductUnboxingSection videos={unboxingVideos ?? []} />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 pb-12">

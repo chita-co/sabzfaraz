@@ -564,3 +564,5 @@
 .admin-pagination-page:hover, .admin-pagination-arrow:hover { border-color: #16a34a; color: #16a34a; }
 .admin-pagination-page.active { background: #16a34a; color: #fff; border-color: #16a34a; }
 .admin-pagination-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.unboxing-approve-inline { display: flex; gap: 6px; flex-wrap: wrap; }

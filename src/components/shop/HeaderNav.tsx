@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Search, ShoppingCart, Heart, User, Menu, X, ChevronDown,
-  LayoutDashboard, LogOut, Package,
+  LayoutDashboard, LogOut, Package, Gift,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { useCartTotals } from "@/store/cart-store";
@@ -112,6 +112,9 @@ export default function HeaderNav({
                     <Link href="/profile/orders">
                       <Package size={14} /> سفارشات من
                     </Link>
+                    <Link href="/profile/loyalty">
+                      <Gift size={14} /> باشگاه مشتریان
+                    </Link>
                     {isAdmin && (
                       <Link href="/admin" className="site-dropdown-admin">
                         <LayoutDashboard size={14} /> پنل مدیریت
@@ -160,6 +163,7 @@ export default function HeaderNav({
               <>
                 <Link href="/profile" onClick={() => setMobileOpen(false)}>پروفایل من</Link>
                 <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>سفارشات من</Link>
+                <Link href="/profile/loyalty" onClick={() => setMobileOpen(false)}>باشگاه مشتریان</Link>
                 {isAdmin && <Link href="/admin" onClick={() => setMobileOpen(false)}>پنل مدیریت</Link>}
                 <form action={signOut}><button type="submit">خروج</button></form>
               </>

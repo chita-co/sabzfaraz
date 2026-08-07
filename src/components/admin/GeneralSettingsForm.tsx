@@ -6,7 +6,20 @@ import { updateGeneralSettings } from "@/app/admin/settings/actions";
 export default function GeneralSettingsForm({
   initial,
 }: {
-  initial: { store_name: string; support_phone: string | null; support_phone_2: string | null; support_email: string | null; store_address: string | null; about_content: string | null; min_order_amount: number; store_postal_code: string | null };
+
+  initial: {
+    store_name: string;
+    support_phone: string | null;
+    support_phone_2: string | null;
+    support_email: string | null;
+    store_address: string | null;
+    about_content: string | null;
+    min_order_amount: number;
+    store_postal_code: string | null;
+    unboxing_whatsapp_number: string | null;
+    unboxing_telegram_id: string | null;
+    unboxing_instagram_handle: string | null;
+  };
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -61,6 +74,19 @@ export default function GeneralSettingsForm({
           min={0}
           placeholder="مثلاً: 500000"
         />
+      </div>
+
+      <div className="admin-form-group">
+        <label>شماره واتساپ برنامه آنباکس (با کد کشور، بدون + یا صفر اول، مثلاً 989123456789)</label>
+        <input type="text" name="unboxingWhatsapp" dir="ltr" defaultValue={initial.unboxing_whatsapp_number ?? ""} />
+      </div>
+      <div className="admin-form-group">
+        <label>آیدی تلگرام برنامه آنباکس</label>
+        <input type="text" name="unboxingTelegram" dir="ltr" defaultValue={initial.unboxing_telegram_id ?? ""} placeholder="@SabzFaraz_Unbox" />
+      </div>
+      <div className="admin-form-group">
+        <label>آیدی اینستاگرام برنامه آنباکس</label>
+        <input type="text" name="unboxingInstagram" dir="ltr" defaultValue={initial.unboxing_instagram_handle ?? ""} placeholder="@SabzFaraz" />
       </div>
 
       <div className="admin-form-group">

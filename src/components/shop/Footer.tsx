@@ -57,6 +57,7 @@ export default async function Footer() {
             <h4>بخش‌های فروشگاه</h4>
             <Link href="/">صفحه اصلی</Link>
             <Link href="/deals">جشنواره تخفیف</Link>
+            <Link href="/unboxing">آنباکس مشتریان</Link>
             <Link href="/cart">سبد خرید</Link>
             <Link href="/wishlist">علاقه‌مندی‌ها</Link>
           </div>
