@@ -9,6 +9,7 @@ interface VideoRow {
   id: string; title: string; platform: string; thumbnail_url: string | null;
   customer_name: string | null; order_number: string | null; status: string;
   reward_amount: number; reward_paid: boolean; is_featured: boolean;
+  aparat_video_id: string | null; youtube_video_id: string | null; instagram_url: string | null;
   product: { name: string } | null;
 }
 
@@ -66,7 +67,14 @@ export default function UnboxingVideosTable({ videos }: { videos: VideoRow[] }) 
                   <div className="w-16 h-10 bg-gray-100 rounded-lg" />
                 )}
               </td>
-              <td>{v.title} {v.is_featured && <span className="badge badge-warning" style={{ marginRight: 6 }}>برتر ماه</span>}</td>
+              <td>
+                {v.title} {v.is_featured && <span className="badge badge-warning" style={{ marginRight: 6 }}>برتر ماه</span>}
+                <div className="flex gap-1 mt-1">
+                  {v.aparat_video_id && <span className="badge badge-info">آپارات</span>}
+                  {v.youtube_video_id && <span className="badge badge-danger">یوتیوب</span>}
+                  {v.instagram_url && <span className="badge badge-warning">اینستاگرام</span>}
+                </div>
+              </td>
               <td>{v.customer_name ?? "—"} {v.order_number && <div className="text-xs text-gray-400" dir="ltr">{v.order_number}</div>}</td>
               <td>{v.product?.name ?? "—"}</td>
               <td><span className={statusBadge[v.status]}>{statusLabels[v.status]}</span></td>

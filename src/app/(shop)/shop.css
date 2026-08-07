@@ -1554,3 +1554,36 @@
   .unboxing-mobile-sticky .unboxing-channel-btn span { display: none; }
   .unboxing-mobile-sticky .unboxing-channel-btn { flex-direction: column; text-align: center; padding: 8px; }
 }
+
+.unboxing-search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px; padding: 10px 16px; margin-bottom: 16px; max-width: 480px;
+}
+.unboxing-search-box svg { color: rgba(255,255,255,0.6); flex-shrink: 0; }
+.unboxing-search-box input {
+  border: none; background: none; outline: none; width: 100%;
+  font-family: inherit; font-size: 13.5px; color: #fff;
+}
+.unboxing-search-box input::placeholder { color: rgba(255,255,255,0.5); }
+
+.unboxing-card-platforms { position: absolute; bottom: 8px; left: 8px; display: flex; gap: 4px; }
+.unboxing-platform-dot { width: 9px; height: 9px; border-radius: 50%; display: block; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.5); }
+.unboxing-platform-dot.aparat { background: #ff5722; }
+.unboxing-platform-dot.youtube { background: #ff0000; }
+.unboxing-platform-dot.instagram { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); }
+
+.unboxing-card-order { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+.unboxing-modal-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.unboxing-tab-btn {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;
+  border-radius: 999px; padding: 6px 14px; font-size: 12px; font-family: inherit; cursor: pointer;
+}
+.unboxing-tab-btn.active { background: #16a34a; border-color: #16a34a; }
+.unboxing-instagram-fallback {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; color: #fff; text-align: center; padding: 20px;
+  background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+}
+.unboxing-instagram-fallback a { color: #fff; font-weight: 700; text-decoration: underline; }

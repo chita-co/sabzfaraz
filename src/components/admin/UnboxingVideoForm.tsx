@@ -9,8 +9,9 @@ interface ProductLite { id: string; name: string; }
 export default function UnboxingVideoForm({ products }: { products: ProductLite[] }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [platform, setPlatform] = useState<"aparat" | "youtube">("aparat");
-  const [videoInput, setVideoInput] = useState("");
+  const [aparatInput, setAparatInput] = useState("");
+  const [youtubeInput, setYoutubeInput] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [productFilter, setProductFilter] = useState("");
@@ -26,7 +27,7 @@ export default function UnboxingVideoForm({ products }: { products: ProductLite[
     setError(null);
     setSaving(true);
     const result = await createUnboxingVideo({
-      title, platform, videoInput,
+      title, aparatInput, youtubeInput, instagramUrl,
       customerName: customerName || null,
       orderNumber: orderNumber || null,
       productId: productId || null,
@@ -38,7 +39,7 @@ export default function UnboxingVideoForm({ products }: { products: ProductLite[
   }
 
   return (
-    <form onSubmit={handleSubmit} className="admin-card" style={{ maxWidth: 520 }}>
+    <form onSubmit={handleSubmit} className="admin-card" style={{ maxWidth: 560 }}>
       <h1 className="text-xl font-bold text-gray-900 mb-6">افزودن ویدیوی آنباکس</h1>
 
       <div className="admin-form-group">
@@ -46,22 +47,28 @@ export default function UnboxingVideoForm({ products }: { products: ProductLite[
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثلاً: آنباکس آردوینو Uno" required />
       </div>
 
+      <p className="text-xs text-gray-500 mb-2">
+        حداقل یکی از سه لینک زیر الزامی است — پیشنهاد می‌شود ویدیو را روی هر سه پلتفرم آپلود کنید تا کاربران با هر نوع اینترنتی بتوانند آن را ببینند.
+      </p>
+
       <div className="admin-form-group">
-        <label>پلتفرم</label>
-        <select value={platform} onChange={(e) => setPlatform(e.target.value as "aparat" | "youtube")}>
-          <option value="aparat">آپارات</option>
-          <option value="youtube">یوتیوب</option>
-        </select>
+        <label>لینک یا شناسه ویدیو در آپارات (اولویت اول برای کاربران داخل ایران)</label>
+        <input type="text" dir="ltr" value={aparatInput} onChange={(e) => setAparatInput(e.target.value)} placeholder="لینک embed یا شناسه ویدیو" />
       </div>
 
       <div className="admin-form-group">
-        <label>لینک یا شناسه ویدیو</label>
-        <input type="text" dir="ltr" value={videoInput} onChange={(e) => setVideoInput(e.target.value)} placeholder="لینک کامل یا فقط شناسه ویدیو" required />
+        <label>لینک یا شناسه ویدیو در یوتیوب</label>
+        <input type="text" dir="ltr" value={youtubeInput} onChange={(e) => setYoutubeInput(e.target.value)} placeholder="لینک کامل یا شناسه ویدیو" />
+      </div>
+
+      <div className="admin-form-group">
+        <label>لینک پست/ریلز اینستاگرام</label>
+        <input type="text" dir="ltr" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..." />
       </div>
 
       <div className="admin-form-group">
         <label>نام مشتری (اختیاری)</label>
-        <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+        <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="مثلاً: علی محمدی" />
       </div>
 
       <div className="admin-form-group">

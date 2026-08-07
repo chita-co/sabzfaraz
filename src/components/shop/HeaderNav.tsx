@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Search, ShoppingCart, Heart, User, Menu, X, ChevronDown,
-  LayoutDashboard, LogOut, Package, Gift,
+  LayoutDashboard, LogOut, Package, Gift, Clapperboard,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { useCartTotals } from "@/store/cart-store";
@@ -31,6 +31,7 @@ export default function HeaderNav({
 
   const gooeyItems = [
     { label: "خانه", href: "/" },
+    { label: "آنباکس", href: "/unboxing" },
     { label: "درباره ما", href: "/about" },
     { label: "تماس با ما", href: "/contact" },
     { label: "پشتیبانی", href: "/support" },
@@ -115,6 +116,9 @@ export default function HeaderNav({
                     <Link href="/profile/loyalty">
                       <Gift size={14} /> باشگاه مشتریان
                     </Link>
+                    <Link href="/unboxing">
+                      <Clapperboard size={14} /> آنباکس محصولات
+                    </Link>
                     {isAdmin && (
                       <Link href="/admin" className="site-dropdown-admin">
                         <LayoutDashboard size={14} /> پنل مدیریت
@@ -147,6 +151,9 @@ export default function HeaderNav({
               <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </form>
             <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
+            <Link href="/unboxing" onClick={() => setMobileOpen(false)}>
+              <Clapperboard size={16} style={{ display: "inline", marginLeft: 6 }} /> آنباکس مشتریان
+            </Link>
             {categories.map((c) => (
               <Link key={c.id} href={`/category/${c.slug}`} onClick={() => setMobileOpen(false)}>{c.name}</Link>
             ))}
@@ -164,6 +171,7 @@ export default function HeaderNav({
                 <Link href="/profile" onClick={() => setMobileOpen(false)}>پروفایل من</Link>
                 <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>سفارشات من</Link>
                 <Link href="/profile/loyalty" onClick={() => setMobileOpen(false)}>باشگاه مشتریان</Link>
+                <Link href="/unboxing" onClick={() => setMobileOpen(false)}>آنباکس محصولات</Link>
                 {isAdmin && <Link href="/admin" onClick={() => setMobileOpen(false)}>پنل مدیریت</Link>}
                 <form action={signOut}><button type="submit">خروج</button></form>
               </>

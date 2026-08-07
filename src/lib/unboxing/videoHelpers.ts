@@ -1,4 +1,4 @@
-export type VideoPlatform = "aparat" | "youtube";
+export type VideoPlatform = "aparat" | "youtube" | "instagram";
 
 export function extractVideoId(platform: VideoPlatform, rawInput: string): string | null {
   const input = rawInput.trim();

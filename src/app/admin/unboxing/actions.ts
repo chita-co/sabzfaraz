@@ -10,8 +10,9 @@ import { sendSms } from "@/lib/sms";
 
 interface CreateVideoInput {
   title: string;
-  platform: "aparat" | "youtube";
-  videoInput: string;
+  aparatInput: string;
+  youtubeInput: string;
+  instagramUrl: string;
   customerName: string | null;
   orderNumber: string | null;
   productId: string | null;
@@ -20,8 +21,20 @@ interface CreateVideoInput {
 
 export async function createUnboxingVideo(input: CreateVideoInput) {
   const supabase = await createClient();
-  const videoId = extractVideoId(input.platform, input.videoInput);
-  if (!videoId) return { error: "لینک یا شناسه ویدیو نامعتبر است." };
+
+  const aparatId = input.aparatInput ? extractVideoId("aparat", input.aparatInput) : null;
+  const youtubeId = input.youtubeInput ? extractVideoId("youtube", input.youtubeInput) : null;
+  const instagramUrl = input.instagramUrl?.trim() || null;
+
+  if (!aparatId && !youtubeId && !instagramUrl) {
+    return { error: "حداقل یک لینک ویدیو (آپارات، یوتیوب یا اینستاگرام) الزامی است." };
+  }
+
+  const thumbnailUrl = aparatId
+    ? buildThumbnailUrl("aparat", aparatId)
+    : youtubeId
+    ? buildThumbnailUrl("youtube", youtubeId)
+    : null;
 
   let orderId: string | null = null;
   let userId: string | null = null;
@@ -34,9 +47,12 @@ export async function createUnboxingVideo(input: CreateVideoInput) {
 
   const { error } = await supabase.from("unboxing_videos").insert({
     title: input.title,
-    platform: input.platform,
-    video_id: videoId,
-    thumbnail_url: buildThumbnailUrl(input.platform, videoId),
+    platform: aparatId ? "aparat" : youtubeId ? "youtube" : "instagram",
+    video_id: aparatId ?? youtubeId ?? "",
+    aparat_video_id: aparatId,
+    youtube_video_id: youtubeId,
+    instagram_url: instagramUrl,
+    thumbnail_url: thumbnailUrl,
     customer_name: input.customerName,
     order_number: input.orderNumber,
     order_id: orderId,
