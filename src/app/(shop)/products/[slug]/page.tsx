@@ -9,6 +9,7 @@ import SilkBackground from "@/components/backgrounds/SilkBackground";
 import { getLoyaltySettings } from "@/lib/loyalty/settings";
 import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -125,31 +126,40 @@ export default async function ProductPage({
   };
 
   return (
-    <>
+  <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
     <SilkBackground />
-      <ProductDetail
-        product={product}
-        isWishlisted={isWishlisted}
-        avgRating={product.rating_avg}
-        reviewCount={product.rating_count}
-        quantityTiers={quantityTiers ?? []}
-        tomanPerPoint={loyaltySettings.tomanPerPoint}
-        pointsMultiplier={loyaltyMultiplier}
-        pointValueToman={loyaltySettings.pointValueToman}
+    <div className="mx-auto max-w-7xl px-4 pt-8">
+      <Breadcrumb
+        theme="dark"
+        items={[
+          { label: product.category?.name ?? "دسته‌بندی", href: `/category/${product.category?.slug}` },
+          { label: product.name }, // صفحه فعلی (بدون href)
+        ]}
       />
+    </div>
+    <ProductDetail
+      product={product}
+      isWishlisted={isWishlisted}
+      avgRating={product.rating_avg}
+      reviewCount={product.rating_count}
+      quantityTiers={quantityTiers ?? []}
+      tomanPerPoint={loyaltySettings.tomanPerPoint}
+      pointsMultiplier={loyaltyMultiplier}
+      pointValueToman={loyaltySettings.pointValueToman}
+    />
 
-      <div className="mx-auto max-w-7xl px-4">
-        <RelatedProducts products={(relatedProducts as Product[]) ?? []} wishlistIds={relatedWishlistIds} categoryHref={`/category/${product.category?.slug}`} />
-      </div>
+    <div className="mx-auto max-w-7xl px-4">
+      <RelatedProducts products={(relatedProducts as Product[]) ?? []} wishlistIds={relatedWishlistIds} categoryHref={`/category/${product.category?.slug}`} />
+    </div>
 
-      <div className="mx-auto max-w-7xl px-4">
-        <ProductUnboxingSection videos={unboxingVideos ?? []} />
-      </div>
+    <div className="mx-auto max-w-7xl px-4">
+      <ProductUnboxingSection videos={unboxingVideos ?? []} />
+    </div>
 
-      <div className="mx-auto max-w-7xl px-4 pb-12">
-        <ProductReviewsDisplay reviews={reviews ?? []} avgRating={product.rating_avg} reviewCount={product.rating_count} />
-      </div>
-    </>
-  );
+    <div className="mx-auto max-w-7xl px-4 pb-12">
+      <ProductReviewsDisplay reviews={reviews ?? []} avgRating={product.rating_avg} reviewCount={product.rating_count} />
+    </div>
+  </>
+);
 }

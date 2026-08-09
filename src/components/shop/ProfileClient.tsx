@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trash2, Plus, Pencil, Package, X } from "lucide-react";
 import { updateProfile, addAddress, updateAddress, deleteAddress } from "@/app/(shop)/profile/actions";
 import ProvinceCitySelect from "@/components/shared/ProvinceCitySelect";
+import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
 
 interface AddressRow {
   id: string;
@@ -91,6 +92,9 @@ export default function ProfileClient({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
+      {/* Breadcrumb یکپارچه شده */}
+      <Breadcrumb theme="light" items={[{ label: "پروفایل من" }]} />
+
       <h1 className="text-xl font-bold text-gray-900">پروفایل من</h1>
 
       <Link href="/profile/orders" className="profile-orders-banner">

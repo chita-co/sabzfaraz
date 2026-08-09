@@ -1,3 +1,5 @@
+import Breadcrumb from "@/components/shop/Breadcrumb";
+
 const faqs = [
   {
     q: "چطور می‌توانم سفارش ثبت کنم؟",
@@ -28,6 +30,8 @@ const faqs = [
 export default function FaqPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumb theme="light" items={[{ label: "سوالات متداول" }]} />
+
       <h1 className="text-2xl font-bold text-gray-900 mb-8">سوالات متداول</h1>
       <div className="space-y-4">
         {faqs.map((f, i) => (

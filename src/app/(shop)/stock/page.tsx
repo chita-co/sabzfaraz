@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/shop/ProductCard";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import { Product } from "@/types";
 
@@ -17,6 +18,8 @@ export default async function StockPage() {
     <>
       <GalaxyBackground />
       <div className="mx-auto max-w-7xl px-4 py-8">
+        <Breadcrumb theme="dark" items={[{ label: "محصولات استوک" }]} />
+
         <h1 className="mb-6 text-xl font-bold text-white">محصولات استوک</h1>
         {products && products.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">

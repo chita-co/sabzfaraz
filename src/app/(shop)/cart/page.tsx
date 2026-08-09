@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import CartClient from "@/components/shop/CartClient";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 import AuroraBackground from "@/components/backgrounds/AuroraBackground";
 
 export default async function CartPage() {
@@ -11,6 +12,9 @@ export default async function CartPage() {
     <>
       <AuroraBackground />
       <div className="relative z-10">
+        <div className="mx-auto max-w-4xl px-4 pt-8">
+          <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
+        </div>
         <CartClient isLoggedIn={!!user} minOrderAmount={settings?.min_order_amount ?? 500000} />
       </div>
     </>

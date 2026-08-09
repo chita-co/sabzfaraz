@@ -1587,3 +1587,43 @@
   background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
 }
 .unboxing-instagram-fallback a { color: #fff; font-weight: 700; text-decoration: underline; }
+
+.breadcrumb-nav { margin-bottom: 16px; }
+.breadcrumb-list { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; list-style: none; padding: 0; margin: 0; font-size: 12.5px; }
+.breadcrumb-item { display: flex; align-items: center; gap: 4px; }
+.breadcrumb-link { display: flex; align-items: center; gap: 4px; color: #6b7280; text-decoration: none; transition: color 0.2s; }
+.breadcrumb-link:hover { color: #16a34a; }
+.breadcrumb-current { color: #111827; font-weight: 600; }
+.breadcrumb-sep { color: #9ca3af; flex-shrink: 0; }
+
+.breadcrumb-nav-dark .breadcrumb-link { color: rgba(255, 255, 255, 0.65); }
+.breadcrumb-nav-dark .breadcrumb-link:hover { color: #4ade80; }
+.breadcrumb-nav-dark .breadcrumb-current { color: #ffffff; }
+.breadcrumb-nav-dark .breadcrumb-sep { color: rgba(255, 255, 255, 0.4); }
+
+.description-trigger-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-family: inherit; cursor: pointer;
+  transition: 0.2s; margin-right: 8px; vertical-align: middle;
+}
+.description-trigger-btn:hover { background: rgba(74, 222, 128, 0.2); border-color: #4ade80; }
+
+.description-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 150;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.description-modal {
+  position: relative; width: 100%; max-width: 560px; height: 420px;
+  background: #fff; border-radius: 16px; padding: 24px; display: flex; flex-direction: column;
+}
+.description-modal-close {
+  position: absolute; top: 14px; left: 14px; background: #f3f4f6; border: none;
+  width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #374151; cursor: pointer;
+}
+.description-modal-title { font-size: 16px; font-weight: 800; color: #111827; margin-bottom: 14px; padding-left: 40px; }
+.description-modal-body { flex: 1; overflow-y: auto; font-size: 13.5px; color: #4b5563; line-height: 2; padding-left: 4px; }
+@media (max-width: 480px) {
+  .description-modal { height: 70vh; max-width: 100%; }
+}

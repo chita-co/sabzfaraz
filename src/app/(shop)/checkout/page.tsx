@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "@/components/shop/CheckoutClient";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 import { getActivePendingCheckout } from "./pending-actions";
 
 export default async function CheckoutPage() {
@@ -20,18 +21,23 @@ export default async function CheckoutPage() {
   const pendingResult = await getActivePendingCheckout();
 
   return (
-    <CheckoutClient
-      addresses={addresses ?? []}
-      shippingMethods={methods ?? []}
-      shippingTiers={tiers ?? []}
-      storeInfo={{
-        name: settings?.store_name ?? "سبزفراز",
-        phones: phones.length > 0 ? phones : ["—"],
-        address: settings?.store_address ?? "",
-        logoUrl: settings?.logo_url ?? null,
-      }}
-      pendingCheckout={pendingResult?.expired === false ? pendingResult.pending : null}
-      itemsToRestore={pendingResult?.expired === true ? pendingResult.items : null}
-    />
+    <>
+      <div className="mx-auto max-w-3xl px-4 pt-8">
+        <Breadcrumb theme="dark" items={[{ label: "سبد خرید", href: "/cart" }, { label: "تکمیل خرید" }]} />
+      </div>
+      <CheckoutClient
+        addresses={addresses ?? []}
+        shippingMethods={methods ?? []}
+        shippingTiers={tiers ?? []}
+        storeInfo={{
+          name: settings?.store_name ?? "سبزفراز",
+          phones: phones.length > 0 ? phones : ["—"],
+          address: settings?.store_address ?? "",
+          logoUrl: settings?.logo_url ?? null,
+        }}
+        pendingCheckout={pendingResult?.expired === false ? pendingResult.pending : null}
+        itemsToRestore={pendingResult?.expired === true ? pendingResult.items : null}
+      />
+    </>
   );
 }

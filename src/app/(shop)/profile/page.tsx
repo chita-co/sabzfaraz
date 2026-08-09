@@ -21,14 +21,14 @@ export default async function ProfilePage() {
   ]);
 
   return (
-  <>
-    <GrainientBackground />
-    <ProfileClient
-      email={user.email ?? ""}
-      fullName={profile?.full_name ?? null}
-      phone={profile?.phone ?? null}
-      addresses={addresses ?? []}
-    />
-  </>  // 👈 حتما اضافه کن
-);
+    <>
+      <GrainientBackground />
+      <ProfileClient
+        email={user.email ?? ""}
+        fullName={profile?.full_name ?? null}
+        phone={profile?.phone ?? null}
+        addresses={addresses ?? []}
+      />
+    </>
+  );
 }

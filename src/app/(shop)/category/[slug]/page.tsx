@@ -6,6 +6,8 @@ import ProductSortSelect from "@/components/shop/ProductSortSelect";
 import ProductListClient from "@/components/shop/ProductListClient";
 import ParticlesBackground from "@/components/backgrounds/ParticlesBackground";
 import { LayoutGrid } from "lucide-react";
+import Breadcrumb from "@/components/shop/Breadcrumb";
+import DescriptionModal from "@/components/shop/DescriptionModal";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -24,10 +26,31 @@ export default async function CategoryPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: category } = await supabase.from("categories").select("*").eq("slug", slug).eq("is_active", true).single();
+  const { data: category } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .single();
   if (!category) notFound();
 
-  const { data: subCategories } = await supabase.from("categories").select("*").eq("parent_id", category.id).eq("is_active", true).order("name");
+  // دریافت اطلاعات دسته والد (اگر وجود داشته باشد)
+  let parentCategory: { name: string; slug: string } | null = null;
+  if (category.parent_id) {
+    const { data: parent } = await supabase
+      .from("categories")
+      .select("name, slug")
+      .eq("id", category.parent_id)
+      .single();
+    parentCategory = parent;
+  }
+
+  const { data: subCategories } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("parent_id", category.id)
+    .eq("is_active", true)
+    .order("name");
   const hasSubCategories = !!subCategories && subCategories.length > 0;
 
   let products: Product[] = [];
@@ -35,7 +58,11 @@ export default async function CategoryPage({
   let wishlistIds: string[] = [];
 
   if (!hasSubCategories) {
-    let query = supabase.from("products").select("*", { count: "exact" }).eq("category_id", category.id).eq("is_active", true);
+    let query = supabase
+      .from("products")
+      .select("*", { count: "exact" })
+      .eq("category_id", category.id)
+      .eq("is_active", true);
     if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
     else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
     else if (sort === "popular") query = query.order("rating_avg", { ascending: false });
@@ -48,7 +75,11 @@ export default async function CategoryPage({
     count = c ?? 0;
 
     if (user && products.length > 0) {
-      const { data: wishRows } = await supabase.from("wishlists").select("product_id").eq("user_id", user.id).in("product_id", products.map((p) => p.id));
+      const { data: wishRows } = await supabase
+        .from("wishlists")
+        .select("product_id")
+        .eq("user_id", user.id)
+        .in("product_id", products.map((p) => p.id));
       wishlistIds = (wishRows ?? []).map((w) => w.product_id);
     }
   }
@@ -57,8 +88,23 @@ export default async function CategoryPage({
     <>
       <ParticlesBackground />
       <div className="mx-auto max-w-7xl px-4 py-8">
-        <h1 className="mb-2 text-xl font-bold text-white">{category.name}</h1>
-        {category.description && <p className="mb-6 text-sm text-gray-300">{category.description}</p>}
+        <Breadcrumb
+          theme="dark"
+          items={[
+            // اگر والد وجود داشت، آن را قبل از دسته فعلی قرار بده
+            ...(parentCategory
+              ? [{ label: parentCategory.name, href: `/category/${parentCategory.slug}` }]
+              : []),
+            { label: category.name }, // صفحه فعلی (بدون href)
+          ]}
+        />
+
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-xl font-bold text-white">{category.name}</h1>
+          {category.description && (
+            <DescriptionModal title={category.name} description={category.description} />
+          )}
+        </div>
 
         {hasSubCategories ? (
           <div className="subcategory-grid">
@@ -69,7 +115,9 @@ export default async function CategoryPage({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={sc.image} alt={sc.name} loading="lazy" />
                   ) : (
-                    <div className="subcategory-placeholder-icon"><LayoutGrid size={28} /></div>
+                    <div className="subcategory-placeholder-icon">
+                      <LayoutGrid size={28} />
+                    </div>
                   )}
                 </div>
                 <span className="subcategory-card-name">{sc.name}</span>
@@ -79,10 +127,22 @@ export default async function CategoryPage({
         ) : (
           <>
             <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-gray-300">{count.toLocaleString("fa-IR")} محصول</p>
+              <p className="text-sm text-gray-300">
+                {count.toLocaleString("fa-IR")} محصول
+              </p>
               <ProductSortSelect />
             </div>
-            <ProductListClient mode="category" categoryId={category.id} sort={sort} initialProducts={products} initialCount={count} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath={`/category/${slug}`} />
+            <ProductListClient
+              mode="category"
+              categoryId={category.id}
+              sort={sort}
+              initialProducts={products}
+              initialCount={count}
+              initialPage={page}
+              initialPageSize={pageSize}
+              initialWishlistIds={wishlistIds}
+              basePath={`/category/${slug}`}
+            />
           </>
         )}
       </div>

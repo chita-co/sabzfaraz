@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
+import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
 
 export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
   const items = useCartStore((s) => s.items);
@@ -27,14 +28,17 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
         <ShoppingBag size={48} className="mx-auto text-gray-300 mb-4" />
         <h1 className="text-lg font-bold text-white mb-2">سبد خرید شما خالی است</h1>
         <Link href="/" className="text-green-400 hover:underline text-sm">
-  بازگشت به فروشگاه و انتخاب محصول
-</Link>
+          بازگشت به فروشگاه و انتخاب محصول
+        </Link>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
+      {/* Breadcrumb هماهنگ با عرض داخلی */}
+      <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
+
       <h1 className="text-xl font-bold text-white mb-6">سبد خرید</h1>
 
       <div className="space-y-4 mb-8">

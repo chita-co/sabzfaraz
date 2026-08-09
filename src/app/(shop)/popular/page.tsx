@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ProductSortSelect from "@/components/shop/ProductSortSelect";
 import ProductListClient from "@/components/shop/ProductListClient";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
@@ -35,6 +36,8 @@ export default async function PopularProductsPage({
     <>
       <GalaxyBackground />
       <div className="mx-auto max-w-7xl px-4 py-8">
+        <Breadcrumb theme="dark" items={[{ label: "محصولات پرطرفدار" }]} />
+
         <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
           <h1 className="text-xl font-bold text-white">محصولات پرطرفدار</h1>
           <ProductSortSelect />

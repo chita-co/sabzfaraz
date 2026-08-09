@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/shop/ProductCard";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 import { Product } from "@/types";
 import { Heart } from "lucide-react";
-import FloatingLinesBackground from "@/components/backgrounds/FloatingLinesBackground"; // ← افزوده شد
+import FloatingLinesBackground from "@/components/backgrounds/FloatingLinesBackground";
 
 type WishlistRow = {
   product_id: string;
@@ -26,8 +27,10 @@ export default async function WishlistPage() {
 
   return (
     <>
-      <FloatingLinesBackground />   {/* ← پس‌زمینه اضافه شد */}
+      <FloatingLinesBackground />
       <div className="mx-auto max-w-7xl px-4 py-8">
+        <Breadcrumb theme="dark" items={[{ label: "علاقه‌مندی‌های من" }]} />
+
         <h1 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-900">
           <Heart size={20} className="text-red-500" />
           علاقه‌مندی‌های من
