@@ -28,12 +28,35 @@ export default async function AdminOrderDetailPage({
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*)"
+      "*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*), bank_account:bank_accounts(bank_name, card_number, sheba_number, logo_slug)"
     )
     .eq("id", id)
     .single();
 
   if (!order) notFound();
+
+  const isOfflinePayment =
+    order.payment_method === "CARD_TO_CARD" || order.payment_method === "SHEBA";
+
+  // ترجمهٔ وضعیت پرداخت
+  const paymentStatusLabel = (() => {
+    switch (order.payment_status) {
+      case "PAID":
+        return "پرداخت‌شده";
+      case "AWAITING_CONFIRMATION":
+        return "در انتظار تأیید (پرداخت آفلاین)";
+      case "PENDING":
+      default:
+        return "پرداخت‌نشده";
+    }
+  })();
+
+  const bankInfo = order.bank_account as {
+    bank_name?: string;
+    card_number?: string | null;
+    sheba_number?: string | null;
+    logo_slug?: string;
+  } | null;
 
   return (
     <div>
@@ -133,17 +156,47 @@ export default async function AdminOrderDetailPage({
             </p>
           </div>
 
+          {/* اطلاعات پرداخت */}
+          <div className="admin-card">
+            <h2 className="font-bold text-gray-800 mb-3">پرداخت</h2>
+            <p className="text-sm text-gray-600 mb-1">
+              وضعیت: {paymentStatusLabel}
+            </p>
+            {isOfflinePayment && bankInfo && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm space-y-2">
+                <p className="text-gray-700">
+                  روش پرداخت:{" "}
+                  {order.payment_method === "CARD_TO_CARD"
+                    ? "کارت به کارت"
+                    : "واریز به شبا"}
+                </p>
+                <p className="text-gray-700">بانک: {bankInfo.bank_name}</p>
+                {order.payment_method === "CARD_TO_CARD" &&
+                  bankInfo.card_number && (
+                    <p className="text-gray-700" dir="ltr">
+                      شماره کارت: {bankInfo.card_number}
+                    </p>
+                  )}
+                {order.payment_method === "SHEBA" &&
+                  bankInfo.sheba_number && (
+                    <p className="text-gray-700" dir="ltr">
+                      شماره شبا: {bankInfo.sheba_number}
+                    </p>
+                  )}
+              </div>
+            )}
+            {!isOfflinePayment && (
+              <p className="text-sm text-gray-600 mt-2">
+                پرداخت آنلاین (درگاه زرین‌پال)
+              </p>
+            )}
+          </div>
+
           <div className="admin-card">
             <OrderStatusControl
               orderId={order.id}
               currentStatus={order.status}
             />
-            <p className="text-sm text-gray-600 mt-2 mb-3">
-              وضعیت پرداخت:{" "}
-              {order.payment_status === "PAID"
-                ? "پرداخت‌شده"
-                : "پرداخت‌نشده"}
-            </p>
             {order.payment_status === "PAID" && (
               <StartTrackingButton
                 orderId={order.id}

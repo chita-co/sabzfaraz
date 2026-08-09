@@ -29,6 +29,8 @@ interface ProductInput {
   isPopular: boolean;
   isStock: boolean;
   weightGrams: number | null;
+  isSoldByUnit?: boolean;
+  unitLabel?: string | null;
   images: string[];
   descriptionImages: string[];
   colors: { name: string; hex: string }[];
@@ -127,6 +129,8 @@ export async function createProduct(input: ProductInput) {
       is_popular: input.isPopular,
       is_stock: input.isStock,
       weight_grams: input.weightGrams,
+      is_sold_by_unit: input.isSoldByUnit,
+      unit_label: input.unitLabel,
       images: input.images,
       description_images: input.descriptionImages,
       colors: input.colors,
@@ -174,6 +178,8 @@ export async function updateProduct(id: string, input: ProductInput) {
       is_popular: input.isPopular,
       is_stock: input.isStock,
       weight_grams: input.weightGrams,
+      is_sold_by_unit: input.isSoldByUnit,
+      unit_label: input.unitLabel,
       images: input.images,
       description_images: input.descriptionImages,
       colors: input.colors,
@@ -234,6 +240,8 @@ interface BulkProductInput {
   isPopular: boolean;
   isStock: boolean;
   weightGrams: number | null;
+  isSoldByUnit?: boolean; 
+  unitLabel?: string | null
   images: string[];
   descriptionImages: string[];
   colors: { name: string; hex: string }[];

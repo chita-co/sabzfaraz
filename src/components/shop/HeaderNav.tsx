@@ -32,6 +32,7 @@ export default function HeaderNav({
   const gooeyItems = [
     { label: "خانه", href: "/" },
     { label: "آنباکس", href: "/unboxing" },
+    { label: "سفارش جمعی", href: "/bulk-order" },
     { label: "درباره ما", href: "/about" },
     { label: "تماس با ما", href: "/contact" },
     { label: "پشتیبانی", href: "/support" },

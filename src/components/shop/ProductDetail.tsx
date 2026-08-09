@@ -37,6 +37,7 @@ export default function ProductDetail({
     ? [...quantityTiers].sort((a, b) => a.unit_price - b.unit_price)[0]
     : null;
   const pointsToEarn = calculatePointsToEarn(finalPrice * quantity, tomanPerPoint, pointsMultiplier);
+  const unitLabel = product.is_sold_by_unit && product.unit_label ? product.unit_label : "عدد";
   const activeColor = product.colors?.find((c) => c.name === selectedColor);
   const accentColor = activeColor?.hex ?? "#2175f5";
   const outOfStock = product.stock !== null && product.stock <= 0;
@@ -54,6 +55,7 @@ export default function ProductDetail({
       quantity,
       stock: product.stock,
       weightGrams: product.weight_grams,
+      unitLabel: product.is_sold_by_unit ? unitLabel : null,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -223,27 +225,30 @@ export default function ProductDetail({
               </button>
               <input
                 type="number"
+                step={product.is_sold_by_unit ? "0.1" : "1"}
                 value={quantityInput}
                 onChange={(e) => {
                   const raw = e.target.value;
                   setQuantityInput(raw);
-                  const val = parseInt(raw, 10);
-                  if (!isNaN(val) && val >= 1) {
+                  const val = product.is_sold_by_unit ? parseFloat(raw) : parseInt(raw, 10);
+                  if (!isNaN(val) && val > 0) {
                     const clamped = product.stock !== null ? Math.min(val, product.stock) : val;
                     setQuantity(clamped);
                   }
                 }}
                 onBlur={() => {
-                  let val = parseInt(quantityInput, 10);
-                  if (isNaN(val) || val < 1) val = 1;
+                  let val = product.is_sold_by_unit ? parseFloat(quantityInput) : parseInt(quantityInput, 10);
+                  const minVal = product.is_sold_by_unit ? 0.1 : 1;
+                  if (isNaN(val) || val < minVal) val = minVal;
                   if (product.stock !== null && val > product.stock) val = product.stock;
                   setQuantity(val);
                   setQuantityInput(val.toString());
                 }}
                 className="qty-input"
-                min={1}
+                min={product.is_sold_by_unit ? 0.1 : 1}
                 max={product.stock ?? undefined}
               />
+              {product.is_sold_by_unit && <span className="qty-unit-label">{unitLabel}</span>}
               <button
                 onClick={() => {
                   const next = product.stock !== null ? Math.min(product.stock, quantity + 1) : quantity + 1;
@@ -290,7 +295,7 @@ export default function ProductDetail({
             <div className="product-price">
               {hasDiscount && <span className="product-price-old">{product.price.toLocaleString("fa-IR")}</span>}
               <h1>{finalPrice.toLocaleString("fa-IR")}</h1>
-              <span className="product-price-unit">تومان</span>
+              <span className="product-price-unit">تومان {product.is_sold_by_unit ? `/ هر ${unitLabel}` : ""}</span>
             </div>
           </div>
 

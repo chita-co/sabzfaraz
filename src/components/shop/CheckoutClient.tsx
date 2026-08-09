@@ -3,9 +3,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useCartStore, useCartWeight } from "@/store/cart-store";
-import { createOrderAndPay } from "@/app/(shop)/checkout/actions";
+import { createOrderAndPay, createOfflineOrder } from "@/app/(shop)/checkout/actions";
 import ProformaInvoiceButton from "./ProformaInvoiceButton";
 import LoyaltyRedemptionBox from "./LoyaltyRedemptionBox";
+import PaymentMethodSelector, { type PaymentMethod } from "./PaymentMethodSelector";
+import type { BankAccountInfo } from "./BankAccountDisplay";
 import { CartItem } from "@/store/cart-store";
 
 interface AddressRow {
@@ -26,11 +28,13 @@ export default function CheckoutClient({
   addresses, shippingMethods, shippingTiers, storeInfo,
   pendingCheckout,
   itemsToRestore,
+  bankAccounts,
 }: {
   addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
   storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null };
   pendingCheckout?: PendingCheckout | null;
   itemsToRestore?: CartItem[] | null;
+  bankAccounts: BankAccountInfo[];
 }) {
   const items = useCartStore((s) => s.items);
   const cartWeightGrams = useCartWeight();
@@ -39,9 +43,13 @@ export default function CheckoutClient({
   const [selectedAddress, setSelectedAddress] = useState(addresses[0]?.id ?? "");
   const [selectedMethodId, setSelectedMethodId] = useState(shippingMethods[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);;
+  const [error, setError] = useState<string | null>(null);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+
+  // پرداخت آنلاین پیش‌فرض
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ONLINE");
+  const [bankAccountId, setBankAccountId] = useState(bankAccounts[0]?.id ?? "");
 
   // برگرداندن آیتم‌های پیش‌فاکتور منقضی‌شده به سبد خرید
   useEffect(() => {
@@ -60,6 +68,9 @@ export default function CheckoutClient({
   const displayItems = pendingCheckout ? pendingCheckout.items : items;
   const isLocked = !!pendingCheckout;
 
+  // اگر پیش‌فاکتور فعال است، فقط پرداخت آنلاین مجاز است و سلکتور نمایش داده نمی‌شود
+  const showPaymentSelector = !isLocked;
+
   const subtotal = displayItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
 
   const shippingCost = useMemo(() => {
@@ -76,20 +87,41 @@ export default function CheckoutClient({
   async function handlePay() {
     if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
     if (!selectedMethodId && !pendingCheckout) { setError("لطفاً یک روش ارسال انتخاب کنید."); return; }
+    if (!isLocked && paymentMethod !== "ONLINE" && !bankAccountId) {
+      setError("لطفاً یک حساب بانکی برای پرداخت انتخاب کنید.");
+      return;
+    }
     setLoading(true);
     setError(null);
 
-    const result = await createOrderAndPay(
-      displayItems.map((i) => ({
-        productId: i.productId, name: i.name, image: i.image, price: i.price,
-        discountPrice: i.discountPrice, selectedColor: i.selectedColor,
-        selectedSize: i.selectedSize, quantity: i.quantity,
-      })),
-      selectedAddress,
-      shippingCost,
-      loyaltyPoints, 
-    );
-    if (result?.error) { setError(result.error); setLoading(false); }
+    const itemPayload = displayItems.map((i) => ({
+      productId: i.productId, name: i.name, image: i.image, price: i.price,
+      discountPrice: i.discountPrice, selectedColor: i.selectedColor,
+      selectedSize: i.selectedSize, quantity: i.quantity,
+    }));
+
+    if (isLocked || paymentMethod === "ONLINE") {
+      // پرداخت آنلاین (همیشه برای پیش‌فاکتور، یا انتخاب کاربر)
+      const result = await createOrderAndPay(
+        itemPayload,
+        selectedAddress,
+        shippingCost,
+        loyaltyPoints, 
+      );
+      if (result?.error) { setError(result.error); setLoading(false); }
+    } else {
+      // پرداخت آفلاین (کارت به کارت / شبا)
+      const result = await createOfflineOrder(
+        itemPayload,
+        selectedAddress,
+        shippingCost,
+        paymentMethod,        // "CARD_TO_CARD" | "SHEBA"
+        bankAccountId,
+        loyaltyPoints,
+      );
+      if (result?.error) { setError(result.error); setLoading(false); }
+      // در صورت موفقیت، redirect داخل createOfflineOrder انجام می‌شود
+    }
   }
 
   if (displayItems.length === 0 && !pendingCheckout) {
@@ -186,22 +218,33 @@ export default function CheckoutClient({
         </div>
       )}
 
+      {/* انتخاب روش پرداخت فقط وقتی که پیش‌فاکتور فعال نیست نمایش داده می‌شود */}
+      {showPaymentSelector && (
+        <PaymentMethodSelector
+          method={paymentMethod}
+          onMethodChange={setPaymentMethod}
+          bankAccounts={bankAccounts}
+          bankAccountId={bankAccountId}
+          onBankAccountChange={setBankAccountId}
+        />
+      )}
+
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
       {!isLocked && (
-  <div className="mb-6">
-    <LoyaltyRedemptionBox
-      subtotal={subtotal}
-      onChange={(points, discount) => {
-        setLoyaltyPoints(points);
-        setLoyaltyDiscount(discount);
-      }}
-    />
-  </div>
-)}
+        <div className="mb-6">
+          <LoyaltyRedemptionBox
+            subtotal={subtotal}
+            onChange={(points, discount) => {
+              setLoyaltyPoints(points);
+              setLoyaltyDiscount(discount);
+            }}
+          />
+        </div>
+      )}
 
       <button onClick={handlePay} disabled={loading} className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50">
-        {loading ? "در حال اتصال به درگاه پرداخت..." : isLocked ? "پرداخت نهایی (پیش‌فاکتور فعال)" : "پرداخت و ثبت نهایی سفارش"}
+        {loading ? "در حال پردازش..." : isLocked ? "پرداخت نهایی (پیش‌فاکتور فعال)" : "پرداخت و ثبت نهایی سفارش"}
       </button>
     </div>
   );

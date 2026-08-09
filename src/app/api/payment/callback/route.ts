@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyPayment } from "@/lib/zarinpal";
-import { sendSms } from "@/lib/sms";
+import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       const phone = order.address?.phone;
       if (phone) {
         try {
-          await sendSms(phone, `فروشگاه سبز فراز\nکد رهگیری سفارش: ${order.order_number}`);
+          await sendOrderTrackingSms(phone, order.order_number);
         } catch (e) {
           console.error("خطا در ارسال پیامک تایید سفارش:", e);
         }

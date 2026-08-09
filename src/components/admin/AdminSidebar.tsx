@@ -79,6 +79,7 @@ const navConfig: NavItem[] = [
     children: [
       { href: "/admin/orders", label: "همه سفارش‌ها" },
       { href: "/admin/finance/invoices", label: "مدیریت فاکتورها" },
+      { href: "/admin/bulk-orders", label: "سفارشات جمعی" },
     ],
   },
   {
@@ -111,6 +112,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/shipping-methods", label: "روش‌های ارسال (وزنی)" },
       { href: "/admin/site-settings", label: "لوگو و بنر سایت" },
       { href: "/admin/settings/backup", label: "پشتیبان‌گیری" },
+      { href: "/admin/settings/bank-accounts", label: "حساب‌های بانکی" },
     ],
   },
 ];

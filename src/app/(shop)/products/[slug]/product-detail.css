@@ -266,3 +266,9 @@
 }
 .points-earn-badge b { color: #b45309; }
 .points-earn-badge span { font-size: 11px; color: #92400e; opacity: 0.85; }
+
+.qty-unit-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-right: 6px;
+}

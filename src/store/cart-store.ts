@@ -15,6 +15,7 @@ export interface CartItem {
   quantity: number;
   stock: number | null;
   weightGrams: number | null;
+  unitLabel: string | null;
 }
 
 interface CartState {

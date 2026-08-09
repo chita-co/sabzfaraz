@@ -77,6 +77,8 @@ export default function ProductForm({
   const [isPopular, setIsPopular] = useState(product?.is_popular ?? false);
   const [isStock, setIsStock] = useState(product?.is_stock ?? false);
   const [weightGrams, setWeightGrams] = useState(product?.weight_grams?.toString() ?? "");
+  const [isSoldByUnit, setIsSoldByUnit] = useState(product?.is_sold_by_unit ?? false);
+  const [unitLabel, setUnitLabel] = useState(product?.unit_label ?? "متر");
 
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -294,6 +296,8 @@ export default function ProductForm({
           isPopular,
           isStock,
           weightGrams: weightGrams ? Number(weightGrams) : null,
+          isSoldByUnit,
+          unitLabel: isSoldByUnit ? unitLabel : null,
           images,
           descriptionImages: descImages,
           colors,
@@ -332,11 +336,13 @@ export default function ProductForm({
       isPopular,
       isStock,
       weightGrams: weightGrams ? Number(weightGrams) : null,
+      isSoldByUnit,
+      unitLabel: isSoldByUnit ? unitLabel : null,
       images,
+      descriptionImages: descImages,
       colors,
       sizes,
       quantityTiers: parsedTiers,
-      descriptionImages: descImages,
     };
 
     const result =
@@ -614,6 +620,17 @@ export default function ProductForm({
               نمایش در «محصولات استوک»
             </label>
           </div>
+
+          <div className="admin-form-group flex items-center gap-2">
+            <input type="checkbox" id="isSoldByUnit" checked={isSoldByUnit} onChange={(e) => setIsSoldByUnit(e.target.checked)} />
+            <label htmlFor="isSoldByUnit" style={{ marginBottom: 0 }}>فروش بر اساس واحد سفارشی (متری/کیلویی — مثل سیم لاکی)</label>
+          </div>
+          {isSoldByUnit && (
+            <div className="admin-form-group">
+              <label>عنوان واحد فروش (به‌جای «عدد» به مشتری نمایش داده می‌شود)</label>
+              <input type="text" value={unitLabel} onChange={(e) => setUnitLabel(e.target.value)} placeholder="مثلاً: متر یا کیلوگرم" />
+            </div>
+          )}
 
           <div className="admin-form-group flex items-center gap-2">
             <input

@@ -1627,3 +1627,24 @@
 @media (max-width: 480px) {
   .description-modal { height: 70vh; max-width: 100%; }
 }
+
+.bank-account-card {
+  display: flex; align-items: center; gap: 12px;
+  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px;
+}
+.bank-account-logo { height: 36px; border-radius: 6px; flex-shrink: 0; }
+.bank-account-name { font-size: 13px; font-weight: 700; color: #111827; }
+.bank-account-holder { font-size: 11.5px; color: #6b7280; margin-top: 1px; }
+.bank-account-number-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; font-weight: 700; color: #15803d; }
+
+.payment-method-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.payment-method-tab {
+  flex: 1; text-align: center; padding: 10px; border-radius: 10px; border: 1.5px solid #e5e7eb;
+  background: #fff; cursor: pointer; font-size: 12.5px; font-weight: 600; color: #374151;
+}
+.payment-method-tab.active { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+.payment-method-tab.disabled { opacity: 0.5; cursor: not-allowed; }
+.offline-payment-warning {
+  background: #fef3c7; border: 1px solid #fde68a; color: #78350f;
+  border-radius: 10px; padding: 12px 14px; font-size: 12px; line-height: 1.9; margin-top: 12px;
+}
