@@ -25,6 +25,7 @@ export default function QuickAddButton({ product }: { product: Product }) {
       quantity: 1,
       stock: product.stock,
       weightGrams: product.weight_grams,
+      unitLabel: product.is_sold_by_unit ? (product.unit_label ?? null) : null,
     });
 
     setAdded(true);
