@@ -31,14 +31,31 @@ export default async function ProductPage({
   const { slug } = await params;
   const supabase = await createClient();
 
+  // ۱. دریافت محصول به‌همراه شناسه و نام و والد دسته‌اش
   const { data: product } = await supabase
     .from("products")
-    .select("*, category:categories(slug)")
+    .select("*, category:categories(slug, parent_id, name)")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
 
   if (!product) notFound();
+
+  // ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
+  const categoryChain: { name: string; slug: string }[] = [];
+  if (product.category?.slug) {
+    let currentParentId = product.category.parent_id;
+    while (currentParentId) {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("name, slug, parent_id")
+        .eq("id", currentParentId)
+        .single();
+      if (!cat) break;
+      categoryChain.unshift({ name: cat.name, slug: cat.slug });
+      currentParentId = cat.parent_id;
+    }
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -126,40 +143,47 @@ export default async function ProductPage({
   };
 
   return (
-  <>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
-    <SilkBackground />
-    <div className="mx-auto max-w-7xl px-4 pt-8">
-      <Breadcrumb
-        theme="dark"
-        items={[
-          { label: product.category?.name ?? "دسته‌بندی", href: `/category/${product.category?.slug}` },
-          { label: product.name }, // صفحه فعلی (بدون href)
-        ]}
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <SilkBackground />
+      <div className="mx-auto max-w-7xl px-4 pt-8">
+        <Breadcrumb
+          theme="dark"
+          items={[
+            // والدین بالادستی (اگر وجود داشته باشند) — از پدربزرگ تا والد مستقیم
+            ...categoryChain.map((c) => ({
+              label: c.name,
+              href: `/category/${c.slug}`,
+            })),
+            // دستهٔ مستقیم محصول
+            { label: product.category?.name ?? "دسته‌بندی", href: `/category/${product.category?.slug}` },
+            // نام محصول (صفحه فعلی)
+            { label: product.name },
+          ]}
+        />
+      </div>
+      <ProductDetail
+        product={product}
+        isWishlisted={isWishlisted}
+        avgRating={product.rating_avg}
+        reviewCount={product.rating_count}
+        quantityTiers={quantityTiers ?? []}
+        tomanPerPoint={loyaltySettings.tomanPerPoint}
+        pointsMultiplier={loyaltyMultiplier}
+        pointValueToman={loyaltySettings.pointValueToman}
       />
-    </div>
-    <ProductDetail
-      product={product}
-      isWishlisted={isWishlisted}
-      avgRating={product.rating_avg}
-      reviewCount={product.rating_count}
-      quantityTiers={quantityTiers ?? []}
-      tomanPerPoint={loyaltySettings.tomanPerPoint}
-      pointsMultiplier={loyaltyMultiplier}
-      pointValueToman={loyaltySettings.pointValueToman}
-    />
 
-    <div className="mx-auto max-w-7xl px-4">
-      <RelatedProducts products={(relatedProducts as Product[]) ?? []} wishlistIds={relatedWishlistIds} categoryHref={`/category/${product.category?.slug}`} />
-    </div>
+      <div className="mx-auto max-w-7xl px-4">
+        <RelatedProducts products={(relatedProducts as Product[]) ?? []} wishlistIds={relatedWishlistIds} categoryHref={`/category/${product.category?.slug}`} />
+      </div>
 
-    <div className="mx-auto max-w-7xl px-4">
-      <ProductUnboxingSection videos={unboxingVideos ?? []} />
-    </div>
+      <div className="mx-auto max-w-7xl px-4">
+        <ProductUnboxingSection videos={unboxingVideos ?? []} />
+      </div>
 
-    <div className="mx-auto max-w-7xl px-4 pb-12">
-      <ProductReviewsDisplay reviews={reviews ?? []} avgRating={product.rating_avg} reviewCount={product.rating_count} />
-    </div>
-  </>
-);
+      <div className="mx-auto max-w-7xl px-4 pb-12">
+        <ProductReviewsDisplay reviews={reviews ?? []} avgRating={product.rating_avg} reviewCount={product.rating_count} />
+      </div>
+    </>
+  );
 }
