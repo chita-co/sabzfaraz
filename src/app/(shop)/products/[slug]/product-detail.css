@@ -278,3 +278,21 @@
   border: 1px dashed #fde68a; border-radius: 8px; padding: 6px 10px;
   margin-top: 8px; display: inline-block;
 }
+
+.qty-total-preview {
+  font-size: 13px;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px dashed #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  display: block;
+}
+.qty-total-preview b { font-size: 15px; font-weight: 800; }
+.qty-total-preview-detail {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}

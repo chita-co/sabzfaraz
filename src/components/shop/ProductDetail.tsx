@@ -273,6 +273,13 @@ export default function ProductDetail({
             <p className="min-order-note">حداقل تعداد سفارش این محصول: {product.min_order_quantity.toLocaleString("fa-IR")} {unitLabel}</p>
           )}
 
+          <p className="qty-total-preview">
+            جمع کل: <b>{(finalPrice * quantity).toLocaleString("fa-IR")} تومان</b>
+            <span className="qty-total-preview-detail">
+              ({quantity.toLocaleString("fa-IR")} {unitLabel} × {finalPrice.toLocaleString("fa-IR")} تومان)
+            </span>
+          </p>
+
           {pointsToEarn > 0 && (
             <div className="points-earn-badge">
               🎁 با خرید این محصول <b>{pointsToEarn.toLocaleString("fa-IR")} امتیاز</b> می‌گیری!

@@ -1646,14 +1646,24 @@
   .description-modal { height: 70vh; max-width: 100%; }
 }
 
-.bank-account-card {
-  display: flex; align-items: center; gap: 12px;
-  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px;
+.bank-accounts-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px;
 }
-.bank-account-logo { height: 36px; border-radius: 6px; flex-shrink: 0; }
-.bank-account-name { font-size: 13px; font-weight: 700; color: #111827; }
-.bank-account-holder { font-size: 11.5px; color: #6b7280; margin-top: 1px; }
-.bank-account-number-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; font-weight: 700; color: #15803d; }
+.bank-account-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+  background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 16px 10px;
+  font-family: inherit;
+}
+.bank-account-card.clickable { cursor: pointer; transition: 0.2s; }
+.bank-account-card.clickable:hover { border-color: #86efac; }
+.bank-account-card.selected { border-color: #16a34a; background: #f0fdf4; }
+.bank-account-logo { width: 72px; height: 48px; object-fit: contain; }
+.bank-account-name { font-size: 12.5px; font-weight: 700; color: #111827; margin-top: 4px; }
+.bank-account-holder { font-size: 11px; color: #6b7280; }
+.bank-account-number {
+  font-size: 12px; font-weight: 700; color: #15803d;
+  word-break: break-all; line-height: 1.6;
+}
 
 .payment-method-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
 .payment-method-tab {

@@ -19,7 +19,7 @@ export default function PaymentMethodSelector({
   onBankAccountChange: (id: string) => void;
   onlineEnabled?: boolean;
 }) {
-  const selectedBank = bankAccounts.find((b) => b.id === bankAccountId);
+  
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
@@ -42,10 +42,17 @@ export default function PaymentMethodSelector({
 
       {(method === "CARD_TO_CARD" || method === "SHEBA") && bankAccounts.length > 0 && (
         <>
-          <select value={bankAccountId} onChange={(e) => onBankAccountChange(e.target.value)} className="admin-input w-full mb-3">
-            {bankAccounts.map((b) => <option key={b.id} value={b.id}>{b.bank_name}</option>)}
-          </select>
-          {selectedBank && <BankAccountDisplay account={selectedBank} mode={method === "CARD_TO_CARD" ? "card" : "sheba"} />}
+          <div className="bank-accounts-row">
+            {bankAccounts.map((b) => (
+              <BankAccountDisplay
+                key={b.id}
+                account={b}
+                mode={method === "CARD_TO_CARD" ? "card" : "sheba"}
+                selected={bankAccountId === b.id}
+                onSelect={() => onBankAccountChange(b.id)}
+              />
+            ))}
+          </div>
           <div className="offline-payment-warning">
             لطفاً پس از ثبت سفارش، مبلغ را کارت به کارت/واریز کرده و از طریق «پشتیبانی» ما را از پرداخت مطلع کنید تا سفارش شما بررسی و پردازش شود.
           </div>
