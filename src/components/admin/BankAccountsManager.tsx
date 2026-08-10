@@ -86,7 +86,13 @@ export default function BankAccountsManager({ accounts, bulkSettings }: { accoun
           <div key={acc.id} className="admin-card">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Image src={`/banks/${acc.logo_slug}.svg`} alt="" width={32} height={32} style={{ borderRadius: 6 }} />
+                <Image
+                  src={acc.logo_slug === "generic" ? "/banks/generic.svg" : `/banks/${acc.logo_slug}.png`}
+                  alt={acc.bank_name}
+                  width={32}
+                  height={32}
+                  style={{ borderRadius: 6 }}
+                />
                 <h3 className="font-bold text-gray-800">{acc.bank_name}</h3>
               </div>
               <div className="flex items-center gap-2">
@@ -127,9 +133,9 @@ function BankAccountFields({ defaults }: { defaults?: Partial<Account> }) {
       <div className="admin-form-group">
         <label>لوگو</label>
         <select name="logoSlug" defaultValue={defaults?.logo_slug ?? "generic"}>
-          <option value="mellat">ملت</option>
-          <option value="saman-blue">سامان بلو</option>
-          <option value="resalat">رسالت</option>
+          <option value="bank-mellat">ملت</option>
+          <option value="bank-saman">سامان بلو</option>
+          <option value="bank-resalat">رسالت</option>
           <option value="generic">عمومی</option>
         </select>
       </div>

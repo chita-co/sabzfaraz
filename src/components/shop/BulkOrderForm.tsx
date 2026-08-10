@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Plus, Trash2, Search, ShoppingBag, PackageSearch } from "lucide-react";
-import { searchStoreProducts, submitBulkOrderRequest, type StoreItemInput, type MarketItemInput } from "@/app/bulk-order/actions";
+import { searchStoreProducts, submitBulkOrderRequest, type StoreItemInput, type MarketItemInput } from "@/app/(shop)/bulk-order/actions";
 
 interface StoreRow extends StoreItemInput { id: string; }
 interface MarketRow extends MarketItemInput { id: string; }

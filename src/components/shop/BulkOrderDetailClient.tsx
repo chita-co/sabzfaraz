@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Send, Upload, Loader2 } from "lucide-react";
-import { sendUserBulkMessage, getBulkMessages } from "@/app/bulk-order/message-actions";
-import { submitReceipt } from "@/app/bulk-order/receipt-actions";
+import { sendUserBulkMessage, getBulkMessages } from "@/app/(shop)/bulk-order/message-actions";
+import { submitReceipt } from "@/app/(shop)/bulk-order/receipt-actions";
 import BankAccountDisplay, { type BankAccountInfo } from "./BankAccountDisplay";
 
 const statusLabels: Record<string, string> = {

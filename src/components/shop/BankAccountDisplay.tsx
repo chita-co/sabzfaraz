@@ -13,7 +13,11 @@ export default function BankAccountDisplay({
   return (
     <div className="bank-account-card">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/banks/${account.logo_slug}.svg`} alt={account.bank_name} className="bank-account-logo" />
+      <img
+        src={account.logo_slug === "generic" ? "/banks/generic.svg" : `/banks/${account.logo_slug}.png`}
+        alt={account.bank_name}
+        className="bank-account-logo"
+      />
       <div className="bank-account-info">
         <p className="bank-account-name">{account.bank_name}</p>
         <p className="bank-account-holder">به نام: {account.account_holder_name}</p>

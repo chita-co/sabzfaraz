@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
-import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
+import Breadcrumb from "@/components/shop/Breadcrumb";
 
 export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
   const items = useCartStore((s) => s.items);
@@ -36,7 +36,6 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      {/* Breadcrumb هماهنگ با عرض داخلی */}
       <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
 
       <h1 className="text-xl font-bold text-white mb-6">سبد خرید</h1>
@@ -67,7 +66,7 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
                 <div className="flex items-center gap-2 border border-gray-200 rounded-full px-2 py-1">
                   <button
                     onClick={() => updateQuantity(item.productId, item.selectedColor, item.selectedSize, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
+                    disabled={item.quantity <= (item.minQuantity ?? 1)}
                   >
                     <Minus size={14} />
                   </button>

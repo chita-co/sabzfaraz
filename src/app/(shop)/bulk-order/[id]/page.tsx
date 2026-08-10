@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import BulkOrderDetailClient from "@/components/shop/BulkOrderDetailClient";
+import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
 export default async function BulkOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,9 @@ export default async function BulkOrderDetailPage({ params }: { params: Promise<
   return (
     <>
       <GalaxyBackground />
+      <div className="mx-auto max-w-3xl px-4 pt-8">
+        <Breadcrumb theme="dark" items={[{ label: "سفارش‌های جمعی من", href: "/profile/bulk-orders" }, { label: request.request_number }]} />
+      </div>
       <BulkOrderDetailClient
         requestId={id}
         requestNumber={request.request_number}

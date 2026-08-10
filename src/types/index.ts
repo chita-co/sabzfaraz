@@ -50,6 +50,8 @@ export interface Product {
   is_stock: boolean;
   is_sold_by_unit: boolean;
   unit_label: string | null;
+  has_min_order_quantity: boolean;
+  min_order_quantity: number | null
   description_images: string[];
   category_id: string;
   created_at: string;

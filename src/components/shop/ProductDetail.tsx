@@ -18,8 +18,11 @@ export default function ProductDetail({
   const [activeImage, setActiveImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name ?? null);
   const [selectedSize, setSelectedSize] = useState<string | null>(product.sizes?.[0] ?? null);
-  const [quantity, setQuantity] = useState(1);
-  const [quantityInput, setQuantityInput] = useState("1");
+  const minQuantity = product.has_min_order_quantity && product.min_order_quantity
+    ? product.min_order_quantity
+    : (product.is_sold_by_unit ? 0.1 : 1);
+  const [quantity, setQuantity] = useState(minQuantity);
+  const [quantityInput, setQuantityInput] = useState(String(minQuantity));
   const [added, setAdded] = useState(false);
   const [showTiersTable, setShowTiersTable] = useState(false);
 
@@ -56,6 +59,9 @@ export default function ProductDetail({
       stock: product.stock,
       weightGrams: product.weight_grams,
       unitLabel: product.is_sold_by_unit ? unitLabel : null,
+      minQuantity: product.has_min_order_quantity && product.min_order_quantity
+    ? product.min_order_quantity
+    : (product.is_sold_by_unit ? 0.1 : 1),
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -215,11 +221,11 @@ export default function ProductDetail({
             <div className="product-qty-control">
               <button
                 onClick={() => {
-                  const next = Math.max(1, quantity - 1);
+                  const next = Math.max(minQuantity, quantity - 1);
                   setQuantity(next);
                   setQuantityInput(next.toString());
                 }}
-                disabled={quantity <= 1}
+                disabled={quantity <= minQuantity}
               >
                 −
               </button>
@@ -238,14 +244,13 @@ export default function ProductDetail({
                 }}
                 onBlur={() => {
                   let val = product.is_sold_by_unit ? parseFloat(quantityInput) : parseInt(quantityInput, 10);
-                  const minVal = product.is_sold_by_unit ? 0.1 : 1;
-                  if (isNaN(val) || val < minVal) val = minVal;
+                  if (isNaN(val) || val < minQuantity) val = minQuantity;
                   if (product.stock !== null && val > product.stock) val = product.stock;
                   setQuantity(val);
                   setQuantityInput(val.toString());
                 }}
                 className="qty-input"
-                min={product.is_sold_by_unit ? 0.1 : 1}
+                min={minQuantity}
                 max={product.stock ?? undefined}
               />
               {product.is_sold_by_unit && <span className="qty-unit-label">{unitLabel}</span>}
@@ -261,13 +266,12 @@ export default function ProductDetail({
               </button>
             </div>
             <span className="product-stock-note">
-              {outOfStock
-                ? "ناموجود"
-                : product.stock !== null
-                ? `${product.stock.toLocaleString("fa-IR")} عدد موجود`
-                : "موجود در انبار"}
+              {outOfStock ? "ناموجود" : product.stock !== null ? `${product.stock.toLocaleString("fa-IR")} عدد موجود` : "موجود در انبار"}
             </span>
           </div>
+          {product.has_min_order_quantity && product.min_order_quantity && (
+            <p className="min-order-note">حداقل تعداد سفارش این محصول: {product.min_order_quantity.toLocaleString("fa-IR")} {unitLabel}</p>
+          )}
 
           {pointsToEarn > 0 && (
             <div className="points-earn-badge">

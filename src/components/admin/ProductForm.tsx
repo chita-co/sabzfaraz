@@ -79,6 +79,8 @@ export default function ProductForm({
   const [weightGrams, setWeightGrams] = useState(product?.weight_grams?.toString() ?? "");
   const [isSoldByUnit, setIsSoldByUnit] = useState(product?.is_sold_by_unit ?? false);
   const [unitLabel, setUnitLabel] = useState(product?.unit_label ?? "متر");
+  const [hasMinOrderQty, setHasMinOrderQty] = useState(product?.has_min_order_quantity ?? false);
+  const [minOrderQuantity, setMinOrderQuantity] = useState(product?.min_order_quantity?.toString() ?? "");
 
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -298,6 +300,8 @@ export default function ProductForm({
           weightGrams: weightGrams ? Number(weightGrams) : null,
           isSoldByUnit,
           unitLabel: isSoldByUnit ? unitLabel : null,
+          hasMinOrderQty,
+          minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
           images,
           descriptionImages: descImages,
           colors,
@@ -338,6 +342,8 @@ export default function ProductForm({
       weightGrams: weightGrams ? Number(weightGrams) : null,
       isSoldByUnit,
       unitLabel: isSoldByUnit ? unitLabel : null,
+      hasMinOrderQty,
+      minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
       images,
       descriptionImages: descImages,
       colors,
@@ -629,6 +635,17 @@ export default function ProductForm({
             <div className="admin-form-group">
               <label>عنوان واحد فروش (به‌جای «عدد» به مشتری نمایش داده می‌شود)</label>
               <input type="text" value={unitLabel} onChange={(e) => setUnitLabel(e.target.value)} placeholder="مثلاً: متر یا کیلوگرم" />
+            </div>
+          )}
+
+          <div className="admin-form-group flex items-center gap-2">
+            <input type="checkbox" id="hasMinOrderQty" checked={hasMinOrderQty} onChange={(e) => setHasMinOrderQty(e.target.checked)} />
+            <label htmlFor="hasMinOrderQty" style={{ marginBottom: 0 }}>حداقل تعداد/مقدار خرید الزامی است</label>
+          </div>
+          {hasMinOrderQty && (
+            <div className="admin-form-group">
+              <label>حداقل تعداد/مقدار سفارش (مثلاً 5 متر یا 2 عدد)</label>
+              <input type="number" step="0.1" value={minOrderQuantity} onChange={(e) => setMinOrderQuantity(e.target.value)} min={0.1} placeholder="مثلاً: 5" />
             </div>
           )}
 

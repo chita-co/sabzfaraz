@@ -31,6 +31,8 @@ interface ProductInput {
   weightGrams: number | null;
   isSoldByUnit?: boolean;
   unitLabel?: string | null;
+  hasMinOrderQty?: boolean;
+  minOrderQuantity?: number | null;
   images: string[];
   descriptionImages: string[];
   colors: { name: string; hex: string }[];
@@ -131,6 +133,8 @@ export async function createProduct(input: ProductInput) {
       weight_grams: input.weightGrams,
       is_sold_by_unit: input.isSoldByUnit,
       unit_label: input.unitLabel,
+      has_min_order_quantity: input.hasMinOrderQty,
+      min_order_quantity: input.minOrderQuantity,
       images: input.images,
       description_images: input.descriptionImages,
       colors: input.colors,
@@ -180,6 +184,8 @@ export async function updateProduct(id: string, input: ProductInput) {
       weight_grams: input.weightGrams,
       is_sold_by_unit: input.isSoldByUnit,
       unit_label: input.unitLabel,
+      has_min_order_quantity: input.hasMinOrderQty,
+      min_order_quantity: input.minOrderQuantity,
       images: input.images,
       description_images: input.descriptionImages,
       colors: input.colors,
@@ -241,7 +247,9 @@ interface BulkProductInput {
   isStock: boolean;
   weightGrams: number | null;
   isSoldByUnit?: boolean; 
-  unitLabel?: string | null
+  unitLabel?: string | null;
+  hasMinOrderQty: boolean;
+  minOrderQuantity: number | null;
   images: string[];
   descriptionImages: string[];
   colors: { name: string; hex: string }[];

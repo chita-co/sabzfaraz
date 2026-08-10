@@ -22,10 +22,13 @@ export default function QuickAddButton({ product }: { product: Product }) {
       discountPrice: product.discount_price,
       selectedColor: product.colors?.[0]?.name ?? null,
       selectedSize: product.sizes?.[0] ?? null,
-      quantity: 1,
+      quantity: product.has_min_order_quantity && product.min_order_quantity ? product.min_order_quantity : 1,
       stock: product.stock,
       weightGrams: product.weight_grams,
-      unitLabel: product.is_sold_by_unit ? (product.unit_label ?? null) : null,
+      unitLabel: product.is_sold_by_unit ? product.unit_label : null,
+      minQuantity: product.has_min_order_quantity && product.min_order_quantity
+    ? product.min_order_quantity
+    : (product.is_sold_by_unit ? 0.1 : 1),
     });
 
     setAdded(true);
