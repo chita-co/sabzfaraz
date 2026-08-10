@@ -1648,3 +1648,24 @@
   background: #fef3c7; border: 1px solid #fde68a; color: #78350f;
   border-radius: 10px; padding: 12px 14px; font-size: 12px; line-height: 1.9; margin-top: 12px;
 }
+
+.bulk-search-box {
+  display: flex; align-items: center; gap: 8px;
+  border: 1.5px solid #d1d5db; border-radius: 10px; padding: 9px 12px;
+}
+.bulk-search-box svg { color: #9ca3af; flex-shrink: 0; }
+.bulk-search-box input { border: none; outline: none; width: 100%; font-family: inherit; font-size: 13.5px; }
+.bulk-search-results {
+  position: absolute; top: 100%; right: 0; left: 0; z-index: 20;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+  margin-top: 4px; max-height: 240px; overflow-y: auto;
+}
+.bulk-search-result-item {
+  display: flex; justify-content: space-between; align-items: center; width: 100%;
+  padding: 10px 14px; font-size: 13px; text-align: right; border-bottom: 1px solid #f3f4f6; background: none;
+}
+.bulk-search-result-item:hover { background: #f9fafb; }
+
+.bulk-status-banner { border-radius: 12px; padding: 14px 18px; font-size: 13px; margin-bottom: 20px; text-align: center; }
+.bulk-status-banner.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.bulk-status-banner.error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }

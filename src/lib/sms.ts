@@ -51,3 +51,9 @@ export async function sendOrderTrackingSms(mobile: string, orderNumber: string) 
   if (!templateId) throw new Error("SMSIR_ORDER_TEMPLATE_ID تنظیم نشده است.");
   return sendTemplateSms(mobile, templateId, [{ name: "CODE", value: orderNumber }]);
 }
+
+export async function sendBulkOrderDepositSms(mobile: string, depositAmount: number) {
+  const templateId = Number(process.env.SMSIR_BULK_ORDER_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_BULK_ORDER_TEMPLATE_ID تنظیم نشده است.");
+  return sendTemplateSms(mobile, templateId, [{ name: "AMOUNT", value: depositAmount.toLocaleString("fa-IR") }]);
+}

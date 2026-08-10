@@ -2,37 +2,59 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 const statusLabels: Record<string, string> = {
-  PENDING_REVIEW: "در انتظار بررسی", PAYMENT_CONFIRMED: "پرداخت تأیید شد",
-  REJECTED: "رد شده", COMPLETED: "تکمیل شده", CANCELLED: "لغو شده",
+  PENDING_REVIEW: "در حال بررسی",
+  SUPPLY_POSSIBLE: "منتظر پرداخت بیعانه",
+  AWAITING_PAYMENT_CONFIRMATION: "پرداخت در انتظار تأیید",
+  PREPARING: "در حال تهیه",
+  COMPLETED: "تکمیل‌شده",
+  NOT_POSSIBLE: "غیرقابل تأمین",
 };
+
 const statusBadge: Record<string, string> = {
-  PENDING_REVIEW: "badge badge-warning", PAYMENT_CONFIRMED: "badge badge-success",
-  REJECTED: "badge badge-danger", COMPLETED: "badge badge-info", CANCELLED: "badge badge-danger",
+  PENDING_REVIEW: "badge badge-warning",
+  SUPPLY_POSSIBLE: "badge badge-info",
+  AWAITING_PAYMENT_CONFIRMATION: "badge badge-warning",
+  PREPARING: "badge badge-success",
+  COMPLETED: "badge badge-success",
+  NOT_POSSIBLE: "badge badge-danger",
 };
 
 const tabs = [
-  { value: "", label: "همه" }, { value: "PENDING_REVIEW", label: "در انتظار بررسی" },
-  { value: "PAYMENT_CONFIRMED", label: "پرداخت تأیید شد" }, { value: "COMPLETED", label: "تکمیل‌شده" },
+  { value: "", label: "همه" },
+  { value: "PENDING_REVIEW", label: "در حال بررسی" },
+  { value: "SUPPLY_POSSIBLE", label: "منتظر پرداخت" },
+  { value: "AWAITING_PAYMENT_CONFIRMATION", label: "منتظر تأیید" },
+  { value: "PREPARING", label: "در حال تهیه" },
+  { value: "COMPLETED", label: "تکمیل‌شده" },
 ];
 
+// تایپ هر ردیف از جدول (بر اساس کوئری)
 interface BulkOrderRow {
   id: string;
   request_number: string;
-  total_estimated: number;
   status: string;
   created_at: string;
-  items: unknown[];
-  profile: { full_name: string | null; phone: string | null } | null;
+  profile: {
+    full_name: string | null;
+    phone: string | null;
+  } | null;
 }
 
 export default async function AdminBulkOrdersPage({
   searchParams,
-}: { searchParams: Promise<{ status?: string }> }) {
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const { status } = await searchParams;
   const supabase = await createClient();
 
-  let query = supabase.from("bulk_order_requests").select("*, profile:profiles(full_name, phone)").order("created_at", { ascending: false });
+  let query = supabase
+    .from("bulk_order_requests")
+    .select("*, profile:profiles(full_name, phone)")
+    .order("created_at", { ascending: false });
+
   if (status) query = query.eq("status", status);
+
   const { data: requests } = await query;
 
   return (
@@ -41,7 +63,15 @@ export default async function AdminBulkOrdersPage({
 
       <div className="flex flex-wrap gap-2 mb-5">
         {tabs.map((t) => (
-          <Link key={t.value} href={t.value ? `/admin/bulk-orders?status=${t.value}` : "/admin/bulk-orders"} className={`order-tab${(status ?? "") === t.value ? " active" : ""}`}>
+          <Link
+            key={t.value}
+            href={
+              t.value
+                ? `/admin/bulk-orders?status=${t.value}`
+                : "/admin/bulk-orders"
+            }
+            className={`order-tab${(status ?? "") === t.value ? " active" : ""}`}
+          >
             {t.label}
           </Link>
         ))}
@@ -49,22 +79,48 @@ export default async function AdminBulkOrdersPage({
 
       <div className="admin-card">
         <table className="admin-table">
-          <thead><tr><th>شماره پیگیری</th><th>مشتری</th><th>تعداد اقلام</th><th>مبلغ نهایی</th><th>وضعیت</th><th>تاریخ</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th>شماره</th>
+              <th>مشتری</th>
+              <th>وضعیت</th>
+              <th>تاریخ</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody>
             {(requests ?? []).map((r: BulkOrderRow) => (
               <tr key={r.id}>
-                <td dir="ltr" className="text-left">{r.request_number}</td>
+                <td dir="ltr" className="text-left">
+                  {r.request_number}
+                </td>
                 <td>{r.profile?.full_name ?? "—"}</td>
-                <td>{(r.items).length.toLocaleString("fa-IR")}</td>
-                <td>{r.total_estimated.toLocaleString("fa-IR")} تومان</td>
-                <td><span className={statusBadge[r.status]}>{statusLabels[r.status]}</span></td>
-                <td className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString("fa-IR")}</td>
-                <td><Link href={`/admin/bulk-orders/${r.id}`} className="admin-btn admin-btn-secondary">جزئیات</Link></td>
+                <td>
+                  <span className={statusBadge[r.status]}>
+                    {statusLabels[r.status]}
+                  </span>
+                </td>
+                <td className="text-xs text-gray-500">
+                  {new Date(r.created_at).toLocaleDateString("fa-IR")}
+                </td>
+                <td>
+                  <Link
+                    href={`/admin/bulk-orders/${r.id}`}
+                    className="admin-btn admin-btn-secondary"
+                  >
+                    جزئیات
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {(!requests || requests.length === 0) && <p className="text-gray-500 text-sm text-center py-6">درخواستی ثبت نشده.</p>}
+
+        {(!requests || requests.length === 0) && (
+          <p className="text-gray-500 text-sm text-center py-6">
+            درخواستی ثبت نشده.
+          </p>
+        )}
       </div>
     </div>
   );
