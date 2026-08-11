@@ -11,7 +11,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.vercel.app"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir"
   ),
   title: "سبزفراز | فروشگاه اینترنتی",
   description: "خرید آنلاین انواع کالا از سبزفراز",
@@ -31,6 +31,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" className={cn("font-sans", geist.variable)}>
+      <head>
+        {/* تأیید گوگل سرچ کنسول برای دامنه جدید sabzfaraz.ir */}
+        <meta
+          name="google-site-verification"
+          content="zLktSAGcXPkl_HBvejo3FzUOp4OOWNU8v3QXbuF-kB8"
+        />
+      </head>
       <body className="antialiased">
         <Analytics />
         <Suspense fallback={null}>
