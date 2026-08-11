@@ -36,6 +36,7 @@ export async function uploadImage(buffer: Buffer, key: string) {
       Body: buffer,
       ContentType: "image/webp",
       ACL: "public-read",
+      CacheControl: "public, max-age=31536000, immutable", // ← همین خط اضافه شود
     })
   );
   return getPublicUrl(key);
