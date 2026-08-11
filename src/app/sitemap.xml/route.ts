@@ -14,7 +14,7 @@ function escapeXml(value: string): string {
 
 export async function GET() {
   const supabase = await createClient();
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.vercel.app").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir").replace(/\/$/, "");
 
   const [{ data: products }, { data: categories }] = await Promise.all([
     supabase.from("products").select("slug, updated_at").eq("is_active", true),
