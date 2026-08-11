@@ -5,9 +5,9 @@ import { useState } from "react";
 import { Plus, ShoppingBag } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
-  PENDING_REVIEW: "در حال بررسی", SUPPLY_POSSIBLE: "منتظر پرداخت بیعانه",
+  PENDING_REVIEW: "در انتظار بررسی", SUPPLY_POSSIBLE: "قابل تأمین — منتظر پرداخت",
   AWAITING_PAYMENT_CONFIRMATION: "پرداخت در انتظار تأیید", PREPARING: "در حال تهیه",
-  COMPLETED: "تکمیل‌شده", NOT_POSSIBLE: "غیرقابل تأمین",
+  COMPLETED: "تکمیل‌شده / ارسال‌شده", NOT_POSSIBLE: "غیرقابل تأمین", CLOSED_UNPAID: "بسته شده — عدم پرداخت",
 };
 const statusBadge: Record<string, string> = {
   PENDING_REVIEW: "badge badge-warning", SUPPLY_POSSIBLE: "badge badge-info",

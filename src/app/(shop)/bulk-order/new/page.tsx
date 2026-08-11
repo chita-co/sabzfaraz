@@ -11,13 +11,15 @@ export default async function NewBulkOrderPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?redirect=/bulk-order/new");
 
+  const { data: addresses } = await supabase.from("addresses").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+
   return (
     <>
       <GalaxyBackground />
       <div className="mx-auto max-w-3xl px-4 pt-8">
         <Breadcrumb theme="dark" items={[{ label: "سفارش جمعی", href: "/bulk-order" }, { label: "سفارش جدید" }]} />
       </div>
-      <BulkOrderForm />
+      <BulkOrderForm addresses={addresses ?? []} />
     </>
   );
 }

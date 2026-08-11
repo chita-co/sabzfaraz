@@ -50,3 +50,63 @@
   .shipping-label-print { position: fixed; top: 0; left: 0; margin: 0; }
   .no-print { display: none !important; }
 }
+
+.shipping-label-page { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.shipping-label-preview-wrap { background: #e5e7eb; padding: 16px; border-radius: 12px; }
+
+.shipping-label-a6 {
+  width: 148mm;
+  height: 105mm;
+  background: #fff;
+  padding: 6mm;
+  box-sizing: border-box;
+  font-family: Tahoma, Arial, sans-serif;
+  direction: rtl;
+  color: #111827;
+  border: 1.5px solid #000;
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+}
+
+.sl-top-row { display: flex; gap: 3mm; flex: 1; }
+.sl-sender-box, .sl-receiver-box {
+  border: 1px solid #9ca3af; border-radius: 4px; padding: 2.5mm; font-size: 9px; line-height: 1.7;
+}
+.sl-sender-box { flex: 1; }
+.sl-tracking-box {
+  width: 46mm; border: 1px dashed #000; border-radius: 4px; padding: 2.5mm;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1mm;
+}
+.sl-tracking-title { font-size: 9px; font-weight: 700; }
+.sl-tracking-number { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+.sl-tracking-date { font-size: 8px; color: #4b5563; }
+.sl-box-title { font-weight: 800; font-size: 10px; margin-bottom: 1.5mm; }
+.sl-sender-name { font-weight: 700; }
+.sl-line { margin: 0.5mm 0; }
+
+.sl-trust-row {
+  display: flex; justify-content: space-around; font-size: 7.5px; color: #374151; font-weight: 600;
+  border-top: 1px dashed #9ca3af; border-bottom: 1px dashed #9ca3af; padding: 1.5mm 0;
+}
+
+.sl-bottom-row { display: flex; gap: 3mm; flex: 1.4; }
+.sl-package-note {
+  width: 28mm; border: 1px solid #9ca3af; border-radius: 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  font-size: 8px; gap: 2mm; padding: 2mm;
+}
+.sl-package-icon { font-size: 20px; }
+.sl-receiver-box { flex: 1; font-size: 9.5px; }
+.sl-field { margin: 1mm 0; }
+.sl-postal-row { display: flex; align-items: center; gap: 2mm; margin: 1.5mm 0; font-size: 9.5px; }
+.sl-postal-boxes { display: flex; gap: 0.8mm; }
+.sl-postal-box { width: 4.5mm; height: 5.5mm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 8px; }
+
+@media print {
+  @page { size: 148mm 105mm landscape; margin: 0; }
+  body * { visibility: hidden; }
+  .shipping-label-print, .shipping-label-print * { visibility: visible; }
+  .shipping-label-print { position: fixed; top: 0; left: 0; margin: 0; }
+  .no-print { display: none !important; }
+}

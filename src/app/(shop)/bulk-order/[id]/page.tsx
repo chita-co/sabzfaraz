@@ -10,9 +10,10 @@ export default async function BulkOrderDetailPage({ params }: { params: Promise<
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: request }, { data: messages }] = await Promise.all([
-    supabase.from("bulk_order_requests").select("*, bank_account:bank_accounts(*)").eq("id", id).eq("user_id", user.id).single(),
+  const [{ data: request }, { data: messages }, { data: banks }] = await Promise.all([
+    supabase.from("bulk_order_requests").select("*").eq("id", id).eq("user_id", user.id).single(),
     supabase.from("bulk_order_messages").select("*").eq("request_id", id).order("created_at", { ascending: true }),
+    supabase.from("bank_accounts").select("*").eq("is_active", true).order("sort_order"),
   ]);
   if (!request) notFound();
 
@@ -20,7 +21,7 @@ export default async function BulkOrderDetailPage({ params }: { params: Promise<
     <>
       <GalaxyBackground />
       <div className="mx-auto max-w-3xl px-4 pt-8">
-        <Breadcrumb theme="dark" items={[{ label: "سفارش‌های جمعی من", href: "/profile/bulk-orders" }, { label: request.request_number }]} />
+        <Breadcrumb theme="dark" items={[{ label: "سفارش‌های جمعی من", href: "/bulk-order" }, { label: request.request_number }]} />
       </div>
       <BulkOrderDetailClient
         requestId={id}
@@ -29,9 +30,9 @@ export default async function BulkOrderDetailPage({ params }: { params: Promise<
         storeItems={request.store_items ?? []}
         marketItems={request.market_items ?? []}
         depositAmount={request.deposit_amount}
-        bankAccount={request.bank_account}
+        depositExpiresAt={request.deposit_expires_at}
+        banks={banks ?? []}
         rejectionReason={request.rejection_reason}
-        receiptImageUrl={request.receipt_image_url}
         initialMessages={messages ?? []}
       />
     </>

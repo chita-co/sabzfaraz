@@ -1,45 +1,47 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Search, ShoppingBag, PackageSearch } from "lucide-react";
 import { searchStoreProducts, submitBulkOrderRequest, type StoreItemInput, type MarketItemInput } from "@/app/(shop)/bulk-order/actions";
 
 interface StoreRow extends StoreItemInput { id: string; }
 interface MarketRow extends MarketItemInput { id: string; }
 interface SearchResult { id: string; name: string; unitPrice: number; }
+interface AddressRow { id: string; full_name: string; phone: string; province: string; city: string; address_line: string; }
 
-export default function BulkOrderForm() {
+export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }) {
   const [storeItems, setStoreItems] = useState<StoreRow[]>([]);
   const [marketItems, setMarketItems] = useState<MarketRow[]>([{ id: crypto.randomUUID(), name: "", quantity: 1, minPrice: null, maxPrice: null }]);
+  const [addressId, setAddressId] = useState(addresses[0]?.id ?? "");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<SearchResult | null>(null);
   const [addQty, setAddQty] = useState("1");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestQueryRef = useRef(searchQuery);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const performSearch = useCallback((query: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      const results = await searchStoreProducts(query);
-      setSearchResults(results);
-    }, 350);
-  }, []);
+  // به‌روزرسانی ref با آخرین مقدار searchQuery در هر رندر
+  useEffect(() => {
+    latestQueryRef.current = searchQuery;
+  });
 
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    setSelectedProduct(null);
-    performSearch(val);
-  };
+  // اثر جستجوی debounced با استفاده از setTimeout که setState را فقط در callback انجام می‌دهد
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const query = latestQueryRef.current;
+      if (!query.trim()) {
+        setSearchResults([]);
+      } else {
+        searchStoreProducts(query).then((results) => setSearchResults(results));
+      }
+    }, 350);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   function handleAddStoreItem() {
     if (!selectedProduct) return;
@@ -60,10 +62,12 @@ export default function BulkOrderForm() {
 
   async function handleSubmit() {
     setError(null);
+    if (!addressId) { setError("لطفاً یک آدرس تحویل انتخاب کنید."); return; }
     setSubmitting(true);
     const result = await submitBulkOrderRequest(
       storeItems.map(({ productId, productName, quantity, unitPrice }) => ({ productId, productName, quantity, unitPrice })),
-      marketItems.map(({ name, quantity, minPrice, maxPrice }) => ({ name, quantity, minPrice, maxPrice }))
+      marketItems.map(({ name, quantity, minPrice, maxPrice }) => ({ name, quantity, minPrice, maxPrice })),
+      addressId
     );
     if (result?.error) { setError(result.error); setSubmitting(false); }
     else setSubmitted(true);
@@ -78,6 +82,15 @@ export default function BulkOrderForm() {
     );
   }
 
+  if (addresses.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-20 text-center">
+        <p className="text-gray-300 mb-4">برای ثبت سفارش جمعی، ابتدا باید یک آدرس در پروفایل خود ثبت کنید.</p>
+        <a href="/profile" className="rounded-full bg-green-600 px-6 py-2 text-sm text-white hover:bg-green-700">افزودن آدرس</a>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="flex items-center gap-2 mb-2">
@@ -88,13 +101,12 @@ export default function BulkOrderForm() {
         ترکیبی از کالاهای موجود در فروشگاه و کالاهایی که در سایت نیست رو انتخاب کن — کارشناسان ما امکان تأمین رو بررسی می‌کنن.
       </p>
 
-      {/* بخش الف */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
         <h2 className="font-bold text-gray-800 mb-4">افزودن کالاهای موجود در سایت (اختیاری)</h2>
         <div className="relative mb-3">
           <div className="bulk-search-box">
             <Search size={15} />
-            <input type="text" placeholder="نام محصول را جستجو کنید..." value={searchQuery} onChange={handleSearchInputChange} />
+            <input type="text" placeholder="نام محصول را جستجو کنید..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setSelectedProduct(null); }} />
           </div>
           {searchResults.length > 0 && !selectedProduct && (
             <div className="bulk-search-results">
@@ -132,7 +144,6 @@ export default function BulkOrderForm() {
         )}
       </div>
 
-      {/* بخش ب */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <PackageSearch size={18} className="text-amber-500" />
@@ -152,6 +163,21 @@ export default function BulkOrderForm() {
         <button onClick={addMarketRow} type="button" className="admin-btn admin-btn-secondary mt-3 flex items-center gap-1">
           <Plus size={14} /> افزودن کالای جدید
         </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+        <h2 className="font-bold text-gray-800 mb-4">آدرس تحویل</h2>
+        <div className="space-y-2">
+          {addresses.map((a) => (
+            <label key={a.id} className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer ${addressId === a.id ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+              <input type="radio" checked={addressId === a.id} onChange={() => setAddressId(a.id)} className="mt-1" />
+              <div className="text-sm">
+                <p className="font-medium text-gray-800">{a.full_name} — {a.phone}</p>
+                <p className="text-gray-600">{a.province}، {a.city}، {a.address_line}</p>
+              </div>
+            </label>
+          ))}
+        </div>
       </div>
 
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}

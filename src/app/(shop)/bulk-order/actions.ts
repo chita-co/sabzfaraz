@@ -15,6 +15,7 @@ export interface MarketItemInput {
   quantity: number;
   minPrice: number | null;
   maxPrice: number | null;
+  finalUnitPrice?: number | null;
 }
 
 export async function searchStoreProducts(query: string) {
@@ -26,21 +27,20 @@ export async function searchStoreProducts(query: string) {
     .eq("is_active", true)
     .ilike("name", `%${query.trim()}%`)
     .limit(8);
-  return (data ?? []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    unitPrice: p.discount_price ?? p.price,
-  }));
+  return (data ?? []).map((p) => ({ id: p.id, name: p.name, unitPrice: p.discount_price ?? p.price }));
 }
 
-export async function submitBulkOrderRequest(storeItems: StoreItemInput[], marketItems: MarketItemInput[]) {
+export async function submitBulkOrderRequest(storeItems: StoreItemInput[], marketItems: MarketItemInput[], addressId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "برای ثبت درخواست باید وارد شوید." };
 
+  if (!addressId) return { error: "لطفاً یک آدرس تحویل انتخاب کنید." };
+  const { data: address } = await supabase.from("addresses").select("id").eq("id", addressId).eq("user_id", user.id).single();
+  if (!address) return { error: "آدرس انتخابی معتبر نیست." };
+
   const validStoreItems = storeItems.filter((i) => i.productId && i.quantity > 0);
   const validMarketItems = marketItems.filter((i) => i.name.trim() && i.quantity > 0);
-
   if (validStoreItems.length === 0 && validMarketItems.length === 0) {
     return { error: "حداقل یک کالا (از فروشگاه یا از بازار) اضافه کنید." };
   }
@@ -50,6 +50,7 @@ export async function submitBulkOrderRequest(storeItems: StoreItemInput[], marke
   const { data: created, error } = await supabase.from("bulk_order_requests").insert({
     request_number: requestNumber,
     user_id: user.id,
+    address_id: addressId,
     store_items: validStoreItems,
     market_items: validMarketItems,
   }).select("id").single();

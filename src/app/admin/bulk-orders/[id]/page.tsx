@@ -12,5 +12,5 @@ export default async function AdminBulkOrderDetailPage({ params }: { params: Pro
   ]);
   if (!request) notFound();
 
-  return <BulkOrderAdminDetail request={request} bankAccounts={bankAccounts ?? []} receiptImageUrl={request.receipt_image_url} />;
+  return <BulkOrderAdminDetail request={request} bankAccounts={bankAccounts ?? []} />;
 }

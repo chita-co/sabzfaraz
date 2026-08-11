@@ -5,19 +5,19 @@ import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
 import { sendBulkOrderDepositSms } from "@/lib/sms";
 
-// تایپ‌های مربوط به اقلام فروشگاهی و بازاری
-export interface StoreItemInput {
+interface StoreItemInput {
   productId: string;
   productName: string;
   quantity: number;
   unitPrice: number;
 }
 
-export interface MarketItemInput {
+interface MarketItemInput {
   name: string;
   quantity: number;
   minPrice: number | null;
   maxPrice: number | null;
+  finalUnitPrice?: number | null;
 }
 
 export async function updateBulkOrderItems(
@@ -34,7 +34,6 @@ export async function updateBulkOrderItems(
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
-
   if (error) return { error: error.message };
   revalidatePath(`/admin/bulk-orders/${requestId}`);
   return { success: true };
@@ -46,7 +45,6 @@ export async function updateInternalNote(requestId: string, note: string) {
     .from("bulk_order_requests")
     .update({ admin_internal_note: note })
     .eq("id", requestId);
-
   revalidatePath(`/admin/bulk-orders/${requestId}`);
   return { success: true };
 }
@@ -59,11 +57,14 @@ export async function markSupplyPossible(
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
-    .select("user_id, request_number")
+    .select("user_id, request_number, profile:profiles(phone)")
     .eq("id", requestId)
     .single();
-
   if (!request) return { error: "درخواست یافت نشد." };
+
+  const expiresAt = new Date(
+    Date.now() + 3 * 24 * 60 * 60 * 1000
+  ).toISOString();
 
   const { error } = await supabase
     .from("bulk_order_requests")
@@ -71,27 +72,24 @@ export async function markSupplyPossible(
       status: "SUPPLY_POSSIBLE",
       deposit_amount: depositAmount,
       bank_account_id: bankAccountId,
+      deposit_expires_at: expiresAt,
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
-
   if (error) return { error: error.message };
 
   await createNotification(
     request.user_id,
     "امکان تأمین سفارش جمعی شما فراهم شد 🎉",
-    `درخواست ${request.request_number} تأیید شد. لطفاً بیعانه‌ی ${depositAmount.toLocaleString("fa-IR")} تومان را پرداخت کنید.`
+    `درخواست ${request.request_number} تأیید شد. لطفاً تا ۳ روز آینده بیعانه‌ی ${depositAmount.toLocaleString("fa-IR")} تومان را پرداخت کنید.`
   );
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("phone")
-    .eq("id", request.user_id)
-    .single();
-
-  if (profile?.phone) {
+  const phone = (
+    request as { profile?: { phone?: string } | null }
+  ).profile?.phone;
+  if (phone) {
     try {
-      await sendBulkOrderDepositSms(profile.phone, depositAmount);
+      await sendBulkOrderDepositSms(phone, depositAmount);
     } catch (e) {
       console.error("خطا در ارسال پیامک:", e);
     }
@@ -102,14 +100,16 @@ export async function markSupplyPossible(
   return { success: true };
 }
 
-export async function markSupplyNotPossible(requestId: string, reason: string) {
+export async function markSupplyNotPossible(
+  requestId: string,
+  reason: string
+) {
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
     .select("user_id, request_number")
     .eq("id", requestId)
     .single();
-
   if (!request) return { error: "درخواست یافت نشد." };
 
   const { error } = await supabase
@@ -120,7 +120,6 @@ export async function markSupplyNotPossible(requestId: string, reason: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
-
   if (error) return { error: error.message };
 
   await createNotification(
@@ -141,17 +140,16 @@ export async function confirmDepositPayment(requestId: string) {
     .select("user_id, request_number")
     .eq("id", requestId)
     .single();
-
   if (!request) return { error: "درخواست یافت نشد." };
 
   const { error } = await supabase
     .from("bulk_order_requests")
     .update({
       status: "PREPARING",
+      deposit_paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
-
   if (error) return { error: error.message };
 
   await createNotification(
@@ -165,30 +163,36 @@ export async function confirmDepositPayment(requestId: string) {
   return { success: true };
 }
 
-export async function markBulkOrderCompleted(requestId: string) {
+export async function rejectDepositPayment(requestId: string) {
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
     .select("user_id, request_number")
     .eq("id", requestId)
     .single();
-
   if (!request) return { error: "درخواست یافت نشد." };
 
   const { error } = await supabase
     .from("bulk_order_requests")
     .update({
-      status: "COMPLETED",
+      status: "SUPPLY_POSSIBLE",
+      deposit_payment_method: null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
-
   if (error) return { error: error.message };
 
+  await supabase.from("bulk_order_messages").insert({
+    request_id: requestId,
+    sender_role: "ADMIN",
+    sender_name: "سیستم",
+    message:
+      "پرداخت اعلام‌شده تأیید نشد. لطفاً دوباره بررسی و پرداخت را تکرار کنید یا از طریق پیام‌ها با ما در ارتباط باشید.",
+  });
   await createNotification(
     request.user_id,
-    "سفارش جمعی شما تکمیل شد 📦",
-    `درخواست ${request.request_number} تکمیل و ارسال شد.`
+    "پرداخت شما تأیید نشد",
+    `پرداخت اعلام‌شده برای سفارش ${request.request_number} تأیید نشد. جزئیات را در بخش پیام‌ها ببینید.`
   );
 
   revalidatePath("/admin/bulk-orders");
@@ -196,7 +200,45 @@ export async function markBulkOrderCompleted(requestId: string) {
   return { success: true };
 }
 
-export async function sendAdminBulkMessage(requestId: string, message: string) {
+export async function setBulkOrderStatusManually(
+  requestId: string,
+  status: string
+) {
+  const supabase = await createClient();
+  const { data: request } = await supabase
+    .from("bulk_order_requests")
+    .select("user_id, request_number")
+    .eq("id", requestId)
+    .single();
+  if (!request) return { error: "درخواست یافت نشد." };
+
+  const { error } = await supabase
+    .from("bulk_order_requests")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", requestId);
+  if (error) return { error: error.message };
+
+  const labels: Record<string, string> = {
+    PREPARING: "در حال تهیه",
+    COMPLETED: "تکمیل‌شده / ارسال‌شده",
+  };
+  if (labels[status]) {
+    await createNotification(
+      request.user_id,
+      "به‌روزرسانی سفارش جمعی",
+      `وضعیت سفارش ${request.request_number} به «${labels[status]}» تغییر کرد.`
+    );
+  }
+
+  revalidatePath("/admin/bulk-orders");
+  revalidatePath(`/admin/bulk-orders/${requestId}`);
+  return { success: true };
+}
+
+export async function sendAdminBulkMessage(
+  requestId: string,
+  message: string
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -208,13 +250,11 @@ export async function sendAdminBulkMessage(requestId: string, message: string) {
     .select("full_name")
     .eq("id", user.id)
     .single();
-
   const { data: request } = await supabase
     .from("bulk_order_requests")
     .select("user_id, request_number")
     .eq("id", requestId)
     .single();
-
   if (!request) return { error: "درخواست یافت نشد." };
 
   const { error } = await supabase.from("bulk_order_messages").insert({
@@ -223,7 +263,6 @@ export async function sendAdminBulkMessage(requestId: string, message: string) {
     sender_name: profile?.full_name || "پشتیبانی",
     message,
   });
-
   if (error) return { error: error.message };
 
   await createNotification(
