@@ -59,7 +59,7 @@ export default async function InvoicePage({
   });
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: 24 }}>
+    <div className="invoice-print-wrap" style={{ maxWidth: 760, margin: "0 auto", padding: 24 }}>
       <AutoPrint />
       <AdminInvoiceView html={html} fileName={`invoice-${order.order_number}.pdf`} />
     </div>

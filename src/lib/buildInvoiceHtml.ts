@@ -73,9 +73,9 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
         </div>
 
         <div style="text-align:center; flex-shrink:0;">
-          ${p.logoDataUri ? `<img src="${p.logoDataUri}" style="height:50px; margin-bottom:2px;" />` : ""}
-          <h1 style="font-size:22px; font-weight:800; color:#111827; margin:2px 0 0;">${p.storeName}</h1>
-        </div>
+  <img src="/logo-invoice.png" alt="${p.storeName}" style="height:56px; margin-bottom:4px;" />
+  <h1 style="font-size:20px; font-weight:800; color:#111827; margin:0;">${p.storeName}</h1>
+</div>
 
         <div style="direction:rtl; text-align:right; font-size:10.5px; line-height:2.1; min-width:44mm;">
           <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.globe} <span dir="ltr">sabzfaraz.ir</span></p>
