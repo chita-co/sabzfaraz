@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useSyncExternalStore } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { sendUserBulkMessage, getBulkMessages } from "@/app/(shop)/bulk-order/message-actions";
 import { payDepositOnline } from "@/app/(shop)/bulk-order/deposit-actions";
@@ -45,16 +45,6 @@ interface Bank {
 }
 
 // هوک جایگزین برای دریافت زمان جاری بدون نقض قوانین React
-function useNow() {
-  const subscribe = (callback: () => void) => {
-    const id = setInterval(callback, 60000);
-    return () => clearInterval(id);
-  };
-  const getSnapshot = () => Date.now();
-  const getServerSnapshot = () => Date.now();
-
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
 
 export default function BulkOrderDetailClient({
   requestId,
@@ -85,16 +75,12 @@ export default function BulkOrderDetailClient({
   const [sending, setSending] = useState(false);
   const [payingOnline, setPayingOnline] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const now = useNow();
+  const [now, setNow] = useState<number>(() => Date.now());
 
-  // به‌روزرسانی پیام‌ها هر ۵ ثانیه
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const fresh = await getBulkMessages(requestId);
-      setMessages(fresh as Message[]);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [requestId]);
+useEffect(() => {
+  const timer = setInterval(() => setNow(Date.now()), 60000);
+  return () => clearInterval(timer);
+}, []);
 
   // محاسبه روزهای باقی‌مانده
   const daysLeft = depositExpiresAt

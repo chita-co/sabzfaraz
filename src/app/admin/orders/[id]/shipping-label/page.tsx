@@ -8,7 +8,7 @@ export default async function ShippingLabelPage({ params }: { params: Promise<{ 
 
   const [{ data: order }, { data: settings }] = await Promise.all([
     supabase.from("orders").select("*, profile:profiles(full_name, phone), address:addresses(*)").eq("id", id).single(),
-    supabase.from("site_settings").select("store_name, support_phone, store_address").eq("id", 1).single(),
+    supabase.from("site_settings").select("store_name, support_phone, support_phone_2, support_email, store_address").eq("id", 1).single(),
   ]);
   if (!order) notFound();
 
@@ -16,7 +16,13 @@ export default async function ShippingLabelPage({ params }: { params: Promise<{ 
     <AdminShippingLabelView
       orderNumber={order.order_number}
       date={new Date(order.created_at).toLocaleDateString("fa-IR")}
-      sender={{ name: settings?.store_name ?? "سبزفراز", phone: settings?.support_phone ?? "—", address: settings?.store_address ?? "" }}
+      storeName={settings?.store_name ?? "سبزفراز"}
+      sender={{
+        name: settings?.store_name ?? "سبزفراز",
+        phones: [settings?.support_phone, settings?.support_phone_2].filter(Boolean) as string[],
+        email: settings?.support_email ?? null,
+        address: settings?.store_address ?? "",
+      }}
       receiver={{
         name: order.profile?.full_name ?? "—",
         phone: order.address?.phone ?? order.profile?.phone ?? "—",

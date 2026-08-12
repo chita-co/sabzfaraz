@@ -127,20 +127,28 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
         </div>
 
         {storeItems.length > 0 && (
-          <table className="admin-table">
-            <thead><tr><th>نام کالا</th><th>تعداد</th><th>قیمت واحد</th><th>جمع</th><th></th></tr></thead>
-            <tbody>
-              {storeItems.map((it) => (
-                <tr key={it.id}>
-                  <td>{it.productName}</td>
-                  <td>{it.quantity.toLocaleString("fa-IR")}</td>
-                  <td>{it.unitPrice.toLocaleString("fa-IR")}</td>
-                  <td>{(it.quantity * it.unitPrice).toLocaleString("fa-IR")}</td>
-                  <td><button onClick={() => removeStoreItem(it.id)} className="admin-btn admin-btn-danger" type="button"><Trash2 size={13} /></button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="bulk-item-list">
+            {storeItems.map((it) => (
+              <div key={it.id} className="bulk-item-row">
+                <div className="bulk-item-name">{it.productName}</div>
+                <div className="bulk-item-field">
+                  <span>تعداد</span>
+                  <b>{it.quantity.toLocaleString("fa-IR")}</b>
+                </div>
+                <div className="bulk-item-field">
+                  <span>قیمت واحد</span>
+                  <b>{it.unitPrice.toLocaleString("fa-IR")} تومان</b>
+                </div>
+                <div className="bulk-item-field">
+                  <span>جمع</span>
+                  <b>{(it.quantity * it.unitPrice).toLocaleString("fa-IR")} تومان</b>
+                </div>
+                <button onClick={() => removeStoreItem(it.id)} className="admin-btn admin-btn-danger" type="button">
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

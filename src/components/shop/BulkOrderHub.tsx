@@ -43,11 +43,11 @@ export default function BulkOrderHub({ requests }: { requests: Request[] }) {
       ) : (
         <div className="space-y-3">
           {requests.map((r) => (
-            <Link key={r.id} href={`/bulk-order/${r.id}`} className="support-ticket-row">
-              <div className="support-ticket-icon"><ShoppingBag size={18} /></div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-800" dir="ltr">{r.request_number}</p>
-                <p className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString("fa-IR")}</p>
+            <Link key={r.id} href={`/bulk-order/${r.id}`} className="bulk-request-card">
+              <div className="bulk-request-icon"><ShoppingBag size={20} /></div>
+              <div className="bulk-request-info">
+                <p className="bulk-request-number" dir="ltr">{r.request_number}</p>
+                <p className="bulk-request-date">{new Date(r.created_at).toLocaleDateString("fa-IR")}</p>
               </div>
               <span className={statusBadge[r.status]}>{statusLabels[r.status]}</span>
             </Link>

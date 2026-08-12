@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CreditCard, Landmark } from "lucide-react";
 import { confirmOfflineDepositPayment } from "@/app/(shop)/bulk-order/deposit-actions";
 
 interface Bank { id: string; bank_name: string; account_holder_name: string; card_number: string | null; sheba_number: string | null; logo_slug: string; }
@@ -34,8 +35,12 @@ export default function BulkDepositBankList({ requestId, banks }: { requestId: s
       </div>
 
       <div className="flex gap-2 mt-4">
-        <button onClick={() => setConfirmType("CARD_TO_CARD")} className="admin-btn admin-btn-primary flex-1">پرداخت کارت‌به‌کارت انجام شد</button>
-        <button onClick={() => setConfirmType("SHEBA")} className="admin-btn admin-btn-secondary flex-1">پرداخت شبا انجام شد</button>
+        <button onClick={() => setConfirmType("CARD_TO_CARD")} className="admin-btn admin-btn-primary flex-1 justify-center">
+          <CreditCard size={15} /> پرداخت کارت‌به‌کارت انجام شد
+        </button>
+        <button onClick={() => setConfirmType("SHEBA")} className="admin-btn admin-btn-secondary flex-1 justify-center">
+          <Landmark size={15} /> پرداخت شبا انجام شد
+        </button>
       </div>
 
       {confirmType && (
