@@ -28,13 +28,20 @@ export default async function InvoicePage({
       .select("*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*)")
       .eq("id", id)
       .single(),
-    supabase.from("site_settings").select("store_name, support_phone, support_phone_2, store_address, logo_url").eq("id", 1).single(),
+    supabase.from("site_settings").select("store_name, support_phone, support_phone_2, store_address, logo_url, support_email").eq("id", 1).single(),
   ]);
 
   if (!order) notFound();
 
   const logoDataUri = settings?.logo_url ? await fetchImageAsDataUriServer(settings.logo_url) : null;
-  const phones = [settings?.support_phone, settings?.support_phone_2].filter(Boolean) as string[];
+  const phones = Array.from(
+  new Set(
+    [settings?.support_phone, settings?.support_phone_2]
+      .filter(Boolean)
+      .flatMap((x) => String(x).split(/[-–—]/).map((s) => s.trim()))
+      .filter(Boolean)
+  )
+) as string[];
   const subtotal = order.total_amount - (order.shipping_cost ?? 0);
 
   const html = buildInvoiceHtml({
@@ -45,6 +52,7 @@ export default async function InvoicePage({
     storePhones: phones.length > 0 ? phones : ["—"],
     storeAddress: settings?.store_address ?? "",
     logoDataUri,
+    storeEmail: settings?.support_email ?? null,
     buyerName: order.profile?.full_name ?? "—",
     buyerPhone: order.address?.phone ?? order.profile?.phone ?? "—",
     buyerAddress: `${order.address?.province ?? ""}، ${order.address?.city ?? ""}، ${order.address?.address_line ?? ""}`,

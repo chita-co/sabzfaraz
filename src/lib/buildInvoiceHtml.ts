@@ -64,20 +64,21 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
     <div style="position:relative; width:210mm; box-sizing:border-box; padding:14mm 10mm; background:#ffffff; font-family:Tahoma, Arial, sans-serif; color:#111827; direction:rtl;">
       ${cornerBrackets()}
 
-      <div style="direction:rtl; display:flex; align-items:flex-start; justify-content:space-between; gap:6mm;">
-  <div style="direction:rtl; text-align:right; font-size:10.5px; line-height:2.1; min-width:44mm;">
-  <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.globe} <span dir="ltr">sabzfaraz.ir</span></p>
-  <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.phone} <span dir="ltr">${p.storePhones.join(" - ") || "—"}</span></p>
-  ${p.storeEmail ? `<p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.mail} <span dir="ltr">${p.storeEmail}</span></p>` : ""}
-  <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.pin} ${p.storeAddress}</p>
-</div>
-
-  <div style="text-align:center; flex-shrink:0;">
-    <img src="/logo-invoice.png" alt="${p.storeName}" style="height:32px; display:block; margin:0 auto 4px;" />
-    <div style="font-size:16px; font-weight:800; color:#111827; white-space:nowrap;">${p.storeName}</div>
+      <div style="direction:rtl; display:flex; align-items:flex-start; gap:6mm;">
+  <div style="flex:0.8; direction:rtl; text-align:right; font-size:10.5px; line-height:2.1;">
+    <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.globe} <span dir="ltr">sabzfaraz.ir</span></p>
+    <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d; white-space:nowrap;">${ICONS.phone} <span dir="ltr" style="white-space:nowrap;">${p.storePhones.join(" - ") || "—"}</span></p>
+    ${p.storeEmail ? `<p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.mail} <span dir="ltr">${p.storeEmail}</span></p>` : ""}
+    <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.pin} ${p.storeAddress}</p>
   </div>
 
-  <div style="direction:rtl; text-align:right; border:1.5px dashed #9ca3af; border-radius:10px; padding:6px 14px; font-size:10.5px; line-height:2.1; min-width:44mm;">
+  <div style="flex:0 0 auto; text-align:center; width:70mm;">
+    <img src="/logo-invoice.png" alt="${p.storeName}" style="height:36px; display:block; margin:0 auto 5px;" />
+    <div style="font-size:16px; font-weight:800; color:#111827; line-height:1.6; white-space:nowrap;">${p.storeName}</div>
+    <div style="margin-top:2px; font-size:11px; color:#15803d; font-weight:600;">sabzfaraz.ir</div>
+  </div>
+
+  <div style="flex:1; direction:rtl; text-align:right; border:1.5px dashed #9ca3af; border-radius:10px; padding:6px 14px; font-size:10.5px; line-height:2.1;">
     <p style="margin:0;">شماره فاکتور: <b>${p.invoiceNumber}</b></p>
     <p style="margin:0;">تاریخ: ${p.date}</p>
     ${p.time ? `<p style="margin:0;">ساعت: ${p.time}</p>` : ""}
@@ -86,10 +87,13 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
   </div>
 </div>
 
-      <div style="text-align:center; margin:6mm 0 3mm;">
-        <span style="display:inline-block; border:2px solid #111827; border-radius:10px; padding:5px 34px; font-size:19px; font-weight:800;">${headerLabel}</span>
-      </div>
-      <p style="text-align:center; font-size:11px; color:#4b5563; margin:0 0 6mm;">${p.storeName}</p>
+<div style="display:flex; align-items:flex-start; gap:6mm; margin:4mm 0 5mm;">
+  <div style="flex:0.8;"></div>
+  <div style="flex:0 0 auto; width:70mm; text-align:center;">
+    <div style="display:inline-block; border:1.5px solid #111827; border-radius:12px; padding:5px 34px; font-size:19px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
+  </div>
+  <div style="flex:1.2;"></div>
+</div>
 
       <div style="border:1.5px solid #111827; border-radius:8px; margin-bottom:5mm; overflow:hidden;">
         <div style="direction:ltr; display:flex; border-bottom:1px solid #d1d5db;">

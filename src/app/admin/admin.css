@@ -354,6 +354,9 @@
 }
 
 @media print {
+  body {
+    margin: 0 !important;
+  }
   .admin-sidebar,
   .admin-mobile-toggle,
   .no-print {
@@ -381,7 +384,7 @@
 
 @page {
   size: A4;
-  margin: 10mm;
+  margin: 0;
 }
 
 .admin-input {
