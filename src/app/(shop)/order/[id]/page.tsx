@@ -21,10 +21,10 @@ export default async function OrderResultPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ payment?: string }>;
+  searchParams: Promise<{ payment?: string; status?: string }>;
 }) {
   const { id } = await params;
-  const { payment } = await searchParams;
+  const { payment, status } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,97 +38,120 @@ export default async function OrderResultPage({
       .eq("id", id)
       .eq("user_id", user.id)
       .single(),
-    supabase.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address").eq("id", 1).single(),
+    supabase.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address, support_email").eq("id", 1).single()
   ]);
   if (!order) notFound();
 
   const isSuccess = order.payment_status === "PAID";
+  const isOfflineRegistered = payment === "offline" && status === "registered";
+
   const subtotal = order.total_amount - order.shipping_cost;
 
   return (
-  <>
-    <IridescenceBackground />
-    <div className="mx-auto max-w-2xl px-4 py-16 text-center relative z-10 bg-white rounded-2xl shadow-lg">
-      {isSuccess && <ClearCartOnSuccess />}
-      {isSuccess ? (
-        <CheckCircle2 size={56} className="mx-auto text-green-600 mb-4" />
-      ) : payment === "failed" ? (
-        <XCircle size={56} className="mx-auto text-red-500 mb-4" />
-      ) : (
-        <Clock size={56} className="mx-auto text-yellow-500 mb-4" />
-      )}
+    <>
+      <IridescenceBackground />
+      <div className="mx-auto max-w-2xl px-4 py-16 text-center relative z-10 bg-white rounded-2xl shadow-lg">
+        {isSuccess && <ClearCartOnSuccess />}
+        {isSuccess ? (
+          <CheckCircle2 size={56} className="mx-auto text-green-600 mb-4" />
+        ) : isOfflineRegistered ? (
+          <CheckCircle2 size={56} className="mx-auto text-green-600 mb-4" />
+        ) : payment === "failed" ? (
+          <XCircle size={56} className="mx-auto text-red-500 mb-4" />
+        ) : (
+          <Clock size={56} className="mx-auto text-yellow-500 mb-4" />
+        )}
 
-      <h1 className="text-lg font-bold text-gray-900 mb-2">
-        {isSuccess ? "پرداخت با موفقیت انجام شد" : "پرداخت ناموفق بود"}
-      </h1>
-      <p className="text-sm text-gray-500 mb-6">
-        شماره سفارش / کد رهگیری:{" "}
-        <span dir="ltr" className="font-bold text-gray-800">
-          {order.order_number}
-        </span>
-      </p>
+        <h1 className="text-lg font-bold text-gray-900 mb-2">
+          {isSuccess
+            ? "پرداخت با موفقیت انجام شد"
+            : isOfflineRegistered
+            ? "پرداخت شما ثبت شد"
+            : "پرداخت ناموفق بود"}
+        </h1>
+        <p className="text-sm text-gray-500 mb-6">
+          شماره سفارش / کد رهگیری:{" "}
+          <span dir="ltr" className="font-bold text-gray-800">
+            {order.order_number}
+          </span>
+        </p>
 
-      {isSuccess && (
-        <>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 text-right mb-6">
-            <h2 className="font-bold text-gray-800 mb-3">اقلام سفارش</h2>
-            {order.items.map((item: OrderItem) => (
-              <div
-                key={item.id}
-                className="flex justify-between text-sm py-2 border-b last:border-0"
-              >
-                <span>
-                  {item.product_name} × {item.quantity}
-                </span>
-                <span>
-                  {(item.price * item.quantity).toLocaleString("fa-IR")} تومان
-                </span>
+        {isOfflineRegistered && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 mb-6">
+            پرداخت شما با موفقیت ثبت شد. کارشناسان ما پس از بررسی پرداخت، سفارش را
+            تایید خواهند کرد.
+          </div>
+        )}
+
+        {isSuccess && (
+          <>
+            <div className="rounded-xl border border-gray-200 bg-white p-5 text-right mb-6">
+              <h2 className="font-bold text-gray-800 mb-3">اقلام سفارش</h2>
+              {order.items.map((item: OrderItem) => (
+                <div
+                  key={item.id}
+                  className="flex justify-between text-sm py-2 border-b last:border-0"
+                >
+                  <span>
+                    {item.product_name} × {item.quantity}
+                  </span>
+                  <span>
+                    {(item.price * item.quantity).toLocaleString("fa-IR")} تومان
+                  </span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm py-2 border-b">
+                <span>هزینه ارسال</span>
+                <span>{order.shipping_cost.toLocaleString("fa-IR")} تومان</span>
               </div>
-            ))}
-            <div className="flex justify-between text-sm py-2 border-b">
-              <span>هزینه ارسال</span>
-              <span>{order.shipping_cost.toLocaleString("fa-IR")} تومان</span>
+              <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3 border-t">
+                <span>مبلغ کل</span>
+                <span>{order.total_amount.toLocaleString("fa-IR")} تومان</span>
+              </div>
             </div>
-            <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3 border-t">
-              <span>مبلغ کل</span>
-              <span>{order.total_amount.toLocaleString("fa-IR")} تومان</span>
+
+            <div className="mb-6">
+              <InvoiceDownloadButton
+                orderNumber={order.order_number}
+                createdAt={order.created_at}
+                customerName={order.profile?.full_name ?? ""}
+                address={`${order.address?.province}، ${order.address?.city}، ${order.address?.address_line}`}
+                phone={order.address?.phone ?? ""}
+                items={order.items.map((i: OrderItem) => ({
+                  name: i.product_name,
+                  variant: [i.selected_color, i.selected_size]
+                    .filter(Boolean)
+                    .join(" / "),
+                  price: i.price,
+                  quantity: i.quantity,
+                }))}
+                subtotal={subtotal}
+                shippingCost={order.shipping_cost}
+                total={order.total_amount}
+                logoUrl={settings?.logo_url ?? null}
+                storeName={settings?.store_name ?? "سبزفراز"}
+                storePhones={Array.from(
+                  new Set(
+                    [settings?.support_phone, settings?.support_phone_2]
+                      .filter(Boolean)
+                      .flatMap((x) => String(x).split(/[-–—]/).map((s) => s.trim()))
+                      .filter(Boolean)
+                  )
+                ) as string[]}
+                storeAddress={settings?.store_address ?? ""}
+                storeEmail={settings?.support_email ?? null}
+              />
             </div>
-          </div>
+          </>
+        )}
 
-          <div className="mb-6">
-            <InvoiceDownloadButton
-              orderNumber={order.order_number}
-              createdAt={order.created_at}
-              customerName={order.profile?.full_name ?? ""}
-              address={`${order.address?.province}، ${order.address?.city}، ${order.address?.address_line}`}
-              phone={order.address?.phone ?? ""}
-              items={order.items.map((i: OrderItem) => ({
-                name: i.product_name,
-                variant: [i.selected_color, i.selected_size]
-                  .filter(Boolean)
-                  .join(" / "),
-                price: i.price,
-                quantity: i.quantity,
-              }))}
-              subtotal={subtotal}
-              shippingCost={order.shipping_cost}
-              total={order.total_amount}
-              logoUrl={settings?.logo_url ?? null}
-              storeName={settings?.store_name ?? "سبزفراز"}
-              storePhones={[settings?.support_phone, settings?.support_phone_2].filter(Boolean) as string[]}
-              storeAddress={settings?.store_address ?? ""}
-            />
-          </div>
-        </>
-      )}
-
-      <Link
-        href="/"
-        className="inline-block rounded-full bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700"
-      >
-        بازگشت به فروشگاه
-      </Link>
-    </div>
-  </>
-);
+        <Link
+          href="/"
+          className="inline-block rounded-full bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700"
+        >
+          بازگشت به فروشگاه
+        </Link>
+      </div>
+    </>
+  );
 }

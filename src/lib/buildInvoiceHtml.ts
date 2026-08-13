@@ -15,6 +15,7 @@ export interface InvoiceParams {
   validUntil?: string;
   storeName: string;
   storePhones: string[];
+  storeEmail?: string | null;
   storeAddress: string;
   logoDataUri: string | null;
   buyerName: string;
@@ -63,26 +64,27 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
     <div style="position:relative; width:210mm; box-sizing:border-box; padding:14mm 10mm; background:#ffffff; font-family:Tahoma, Arial, sans-serif; color:#111827; direction:rtl;">
       ${cornerBrackets()}
 
-      <div style="direction:ltr; display:flex; align-items:flex-start; justify-content:space-between; gap:6mm;">
-        <div style="direction:rtl; text-align:right; border:1.5px dashed #9ca3af; border-radius:10px; padding:6px 14px; font-size:10.5px; line-height:2.1; min-width:44mm;">
-          <p style="margin:0;">شماره فاکتور: <b>${p.invoiceNumber}</b></p>
-          <p style="margin:0;">تاریخ: ${p.date}</p>
-          ${p.time ? `<p style="margin:0;">ساعت: ${p.time}</p>` : ""}
-          ${p.trackingCode ? `<p style="margin:0;">شماره پیگیری: ${p.trackingCode}</p>` : ""}
-          ${p.validUntil ? `<p style="margin:0; color:#b45309;">اعتبار تا: ${p.validUntil}</p>` : ""}
-        </div>
-
-        <div style="text-align:center; flex-shrink:0;">
-  <img src="/logo-invoice.png" alt="${p.storeName}" style="height:56px; margin-bottom:4px;" />
-  <h1 style="font-size:20px; font-weight:800; color:#111827; margin:0;">${p.storeName}</h1>
+      <div style="direction:rtl; display:flex; align-items:flex-start; justify-content:space-between; gap:6mm;">
+  <div style="direction:rtl; text-align:right; font-size:10.5px; line-height:2.1; min-width:44mm;">
+  <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.globe} <span dir="ltr">sabzfaraz.ir</span></p>
+  <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.phone} <span dir="ltr">${p.storePhones.join(" - ") || "—"}</span></p>
+  ${p.storeEmail ? `<p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.mail} <span dir="ltr">${p.storeEmail}</span></p>` : ""}
+  <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.pin} ${p.storeAddress}</p>
 </div>
 
-        <div style="direction:rtl; text-align:right; font-size:10.5px; line-height:2.1; min-width:44mm;">
-          <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.globe} <span dir="ltr">sabzfaraz.ir</span></p>
-          ${p.storePhones.map((ph) => `<p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.phone} <span dir="ltr">${ph}</span></p>`).join("")}
-          <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.pin} ${p.storeAddress}</p>
-        </div>
-      </div>
+  <div style="text-align:center; flex-shrink:0;">
+    <img src="/logo-invoice.png" alt="${p.storeName}" style="height:32px; display:block; margin:0 auto 4px;" />
+    <div style="font-size:16px; font-weight:800; color:#111827; white-space:nowrap;">${p.storeName}</div>
+  </div>
+
+  <div style="direction:rtl; text-align:right; border:1.5px dashed #9ca3af; border-radius:10px; padding:6px 14px; font-size:10.5px; line-height:2.1; min-width:44mm;">
+    <p style="margin:0;">شماره فاکتور: <b>${p.invoiceNumber}</b></p>
+    <p style="margin:0;">تاریخ: ${p.date}</p>
+    ${p.time ? `<p style="margin:0;">ساعت: ${p.time}</p>` : ""}
+    ${p.trackingCode ? `<p style="margin:0;">شماره پیگیری: ${p.trackingCode}</p>` : ""}
+    ${p.validUntil ? `<p style="margin:0; color:#b45309;">اعتبار تا: ${p.validUntil}</p>` : ""}
+  </div>
+</div>
 
       <div style="text-align:center; margin:6mm 0 3mm;">
         <span style="display:inline-block; border:2px solid #111827; border-radius:10px; padding:5px 34px; font-size:19px; font-weight:800;">${headerLabel}</span>

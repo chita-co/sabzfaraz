@@ -20,6 +20,7 @@ export default function ManualInvoiceBuilder({
   storeAddress,
   logoUrl,
   initialNumber,
+  storeEmail,
 }: {
   requestId: string;
   requestNumber: string;
@@ -32,6 +33,7 @@ export default function ManualInvoiceBuilder({
   logoUrl: string | null;
   initialHtml: string | null;
   initialNumber: string | null;
+  storeEmail?: string | null;
 }) {
   const [rows, setRows] = useState<Row[]>([
     { id: crypto.randomUUID(), name: "", qty: 1, unitPrice: 0 },
@@ -74,6 +76,7 @@ export default function ManualInvoiceBuilder({
         storePhones,
         storeAddress,
         logoDataUri: null,
+        storeEmail,
         buyerName,
         buyerPhone,
         buyerAddress,
@@ -99,6 +102,7 @@ export default function ManualInvoiceBuilder({
       storeName,
       storePhones,
       storeAddress,
+      storeEmail,
       subtotal,
       discountAmount,
     ]
@@ -122,6 +126,7 @@ export default function ManualInvoiceBuilder({
       storePhones,
       storeAddress,
       logoDataUri,
+      storeEmail,
       buyerName,
       buyerPhone,
       buyerAddress,
@@ -147,7 +152,7 @@ export default function ManualInvoiceBuilder({
         ساخت فاکتور دستی — سفارش جمعی {requestNumber}
       </h1>
 
-      <div className="admin-card mb-5">
+      <div className="admin-card mb-5 no-print">
         <div className="admin-form-group">
           <label>شماره فاکتور</label>
           <input
@@ -245,10 +250,12 @@ export default function ManualInvoiceBuilder({
         </div>
       </div>
 
-      <div className="admin-card">
-        <h2 className="font-bold text-gray-800 mb-3">پیش‌نمایش</h2>
-        <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
-      </div>
+      <div className="admin-card invoice-print-wrap">
+  <h2 className="font-bold text-gray-800 mb-3 no-print">پیش‌نمایش</h2>
+  <div className="invoice-preview-scroll">
+    <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+  </div>
+</div>
     </div>
   );
 }

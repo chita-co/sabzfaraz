@@ -9,7 +9,7 @@ import { imageUrlToDataUri } from "@/lib/invoiceImage";
 import { createPendingCheckout } from "@/app/(shop)/checkout/pending-actions";
 import { useCartStore } from "@/store/cart-store";
 
-interface StoreInfo { name: string; phones: string[]; address: string; logoUrl: string | null; }
+interface StoreInfo { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null; }
 interface BuyerInfo { fullName: string; phone: string; province: string; city: string; addressLine: string; }
 
 export default function ProformaInvoiceButton({
@@ -44,6 +44,7 @@ export default function ProformaInvoiceButton({
         storeName: storeInfo.name,
         storePhones: storeInfo.phones,
         storeAddress: storeInfo.address,
+        storeEmail: storeInfo.email ?? null,
         logoDataUri,
         buyerName: buyer.fullName,
         buyerPhone: buyer.phone,

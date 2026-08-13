@@ -26,6 +26,7 @@ export default function InvoiceDownloadButton({
   storeName = "سبزفراز",
   storePhones,
   storeAddress = "",
+  storeEmail,
 }: {
   orderNumber: string;
   createdAt: string;
@@ -40,6 +41,7 @@ export default function InvoiceDownloadButton({
   storeName?: string;
   storePhones?: string[];
   storeAddress?: string;
+  storeEmail?: string | null;
 }) {
   const [generating, setGenerating] = useState(false);
 
@@ -56,6 +58,7 @@ export default function InvoiceDownloadButton({
         storePhones: storePhones && storePhones.length > 0 ? storePhones : ["—"],
         storeAddress,
         logoDataUri,
+        storeEmail,
         buyerName: customerName,
         buyerPhone: phone,
         buyerAddress: address,

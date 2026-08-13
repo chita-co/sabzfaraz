@@ -329,6 +329,30 @@
   border-color: #16a34a;
 }
 
+.invoice-preview-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  direction: ltr;
+}
+
+.invoice-preview-scroll > div {
+  min-width: 210mm;
+  margin: 0 auto;
+  direction: rtl;
+}
+
+@media screen and (max-width: 900px) {
+  .invoice-preview-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .invoice-preview-scroll > div {
+    transform: scale(0.65);
+    transform-origin: top right;
+    width: 210mm;
+  }
+}
+
 @media print {
   .admin-sidebar,
   .admin-mobile-toggle,
@@ -338,14 +362,26 @@
   .admin-main {
     padding: 0 !important;
   }
-}
-
-@media print {
   .invoice-print-wrap {
     max-width: none !important;
     padding: 0 !important;
     margin: 0 !important;
   }
+
+  /* ← این بخش را اضافه کنید */
+  .invoice-preview-scroll {
+    overflow: visible !important;
+  }
+  .invoice-preview-scroll > div {
+    transform: none !important;
+    width: 210mm !important;
+    margin: 0 !important;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 10mm;
 }
 
 .admin-input {

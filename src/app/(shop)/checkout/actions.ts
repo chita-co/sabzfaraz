@@ -170,5 +170,5 @@ export async function createOfflineOrder(
     await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
   }
 
-  redirect(`/order/${order.id}?payment=offline`);
+  redirect(`/order/${order.id}?payment=offline&status=registered`);
 }

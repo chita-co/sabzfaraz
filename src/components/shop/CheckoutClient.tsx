@@ -31,7 +31,7 @@ export default function CheckoutClient({
   bankAccounts,
 }: {
   addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
-  storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null };
+  storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null };
   pendingCheckout?: PendingCheckout | null;
   itemsToRestore?: CartItem[] | null;
   bankAccounts: BankAccountInfo[];
@@ -39,6 +39,8 @@ export default function CheckoutClient({
   const items = useCartStore((s) => s.items);
   const cartWeightGrams = useCartWeight();
   const restoreGate = useRef(false);
+
+  const [pendingOfflineMethod, setPendingOfflineMethod] = useState<PaymentMethod | null>(null);
 
   const [selectedAddress, setSelectedAddress] = useState(addresses[0]?.id ?? "");
   const [selectedMethodId, setSelectedMethodId] = useState(shippingMethods[0]?.id ?? "");
@@ -69,7 +71,7 @@ export default function CheckoutClient({
   const isLocked = !!pendingCheckout;
 
   // اگر پیش‌فاکتور فعال است، فقط پرداخت آنلاین مجاز است و سلکتور نمایش داده نمی‌شود
-  const showPaymentSelector = !isLocked;
+  const showPaymentSelector = true;
 
   const subtotal = displayItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
 
@@ -84,45 +86,59 @@ export default function CheckoutClient({
 
   const total = subtotal + shippingCost - loyaltyDiscount;
 
-  async function handlePay() {
-    if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
-    if (!selectedMethodId && !pendingCheckout) { setError("لطفاً یک روش ارسال انتخاب کنید."); return; }
-    if (!isLocked && paymentMethod !== "ONLINE" && !bankAccountId) {
-      setError("لطفاً یک حساب بانکی برای پرداخت انتخاب کنید.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
+  async function handlePay(methodOverride?: PaymentMethod) {
+  const effectiveMethod = methodOverride ?? paymentMethod;
 
-    const itemPayload = displayItems.map((i) => ({
-      productId: i.productId, name: i.name, image: i.image, price: i.price,
-      discountPrice: i.discountPrice, selectedColor: i.selectedColor,
-      selectedSize: i.selectedSize, quantity: i.quantity,
-    }));
-
-    if (isLocked || paymentMethod === "ONLINE") {
-      // پرداخت آنلاین (همیشه برای پیش‌فاکتور، یا انتخاب کاربر)
-      const result = await createOrderAndPay(
-        itemPayload,
-        selectedAddress,
-        shippingCost,
-        loyaltyPoints, 
-      );
-      if (result?.error) { setError(result.error); setLoading(false); }
-    } else {
-      // پرداخت آفلاین (کارت به کارت / شبا)
-      const result = await createOfflineOrder(
-        itemPayload,
-        selectedAddress,
-        shippingCost,
-        paymentMethod,        // "CARD_TO_CARD" | "SHEBA"
-        bankAccountId,
-        loyaltyPoints,
-      );
-      if (result?.error) { setError(result.error); setLoading(false); }
-      // در صورت موفقیت، redirect داخل createOfflineOrder انجام می‌شود
-    }
+  if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
+  if (!selectedMethodId && !pendingCheckout) { setError("لطفاً یک روش ارسال انتخاب کنید."); return; }
+  if (effectiveMethod !== "ONLINE" && !bankAccountId) {
+    setError("لطفاً یک حساب بانکی برای پرداخت انتخاب کنید.");
+    return;
   }
+
+  if (effectiveMethod !== "ONLINE") {
+    setPendingOfflineMethod(effectiveMethod);
+    return;
+  }
+
+  await processPayment(effectiveMethod);
+}
+
+async function processPayment(method: PaymentMethod) {
+  setLoading(true);
+  setError(null);
+
+  const itemPayload = displayItems.map((i) => ({
+    productId: i.productId,
+    name: i.name,
+    image: i.image,
+    price: i.price,
+    discountPrice: i.discountPrice,
+    selectedColor: i.selectedColor,
+    selectedSize: i.selectedSize,
+    quantity: i.quantity,
+  }));
+
+  if (method === "ONLINE") {
+    const result = await createOrderAndPay(
+      itemPayload,
+      selectedAddress,
+      shippingCost,
+      loyaltyPoints,
+    );
+    if (result?.error) { setError(result.error); setLoading(false); }
+  } else {
+    const result = await createOfflineOrder(
+      itemPayload,
+      selectedAddress,
+      shippingCost,
+      method,
+      bankAccountId,
+      loyaltyPoints,
+    );
+    if (result?.error) { setError(result.error); setLoading(false); }
+  }
+}
 
   if (displayItems.length === 0 && !pendingCheckout) {
     return (
@@ -162,7 +178,7 @@ export default function CheckoutClient({
         <div className="space-y-3">
           {addresses.map((a) => (
             <label key={a.id} className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer ${selectedAddress === a.id ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
-              <input type="radio" name="address" checked={selectedAddress === a.id} onChange={() => setSelectedAddress(a.id)} className="mt-1" disabled={isLocked} />
+              <input type="radio" name="address" checked={selectedAddress === a.id} onChange={() => setSelectedAddress(a.id)} className="mt-1" />
               <div className="text-sm">
                 <p className="font-medium text-gray-800">{a.full_name} — {a.phone}</p>
                 <p className="text-gray-600">{a.province}، {a.city}</p>
@@ -202,21 +218,21 @@ export default function CheckoutClient({
         <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3"><span>مبلغ نهایی قابل پرداخت</span><span>{total.toLocaleString("fa-IR")} تومان</span></div>
       </div>
 
-      {selectedAddress && !isLocked && (
-        <div className="mb-6">
-          <ProformaInvoiceButton
-            items={items}
-            subtotal={subtotal}
-            shippingCost={shippingCost}
-            storeInfo={storeInfo}
-            buyer={(() => {
-              const addr = addresses.find((a) => a.id === selectedAddress)!;
-              return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line };
-            })()}
-            shippingMethodId={selectedMethodId}
-          />
-        </div>
-      )}
+      {selectedAddress && (
+  <div className="mb-6">
+    <ProformaInvoiceButton
+      items={displayItems}
+      subtotal={subtotal}
+      shippingCost={shippingCost}
+      storeInfo={storeInfo}
+      buyer={(() => {
+        const addr = addresses.find((a) => a.id === selectedAddress)!;
+        return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line };
+      })()}
+      shippingMethodId={selectedMethodId}
+    />
+  </div>
+)}
 
       {/* انتخاب روش پرداخت فقط وقتی که پیش‌فاکتور فعال نیست نمایش داده می‌شود */}
       {showPaymentSelector && (
@@ -243,9 +259,63 @@ export default function CheckoutClient({
         </div>
       )}
 
-      <button onClick={handlePay} disabled={loading} className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50">
-        {loading ? "در حال پردازش..." : isLocked ? "پرداخت نهایی (پیش‌فاکتور فعال)" : "پرداخت و ثبت نهایی سفارش"}
-      </button>
+       {paymentMethod === "ONLINE" ? (
+        <button
+          onClick={() => handlePay("ONLINE")}
+          disabled={loading}
+          className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
+        >
+          {loading ? "در حال پردازش..." : isLocked ? "پرداخت نهایی (پیش‌فاکتور فعال)" : "پرداخت و ثبت نهایی سفارش"}
+        </button>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => handlePay("CARD_TO_CARD")}
+            disabled={loading}
+            className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            پرداخت کارت به کارت انجام شد
+          </button>
+          <button
+            onClick={() => handlePay("SHEBA")}
+            disabled={loading}
+            className="w-full rounded-xl bg-purple-600 py-3.5 text-sm font-bold text-white hover:bg-purple-700 disabled:opacity-50"
+          >
+            پرداخت شبا انجام شد
+          </button>
+        </div>
+      )}
+
+      {pendingOfflineMethod && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
+            <h3 className="font-bold text-gray-900 mb-3">تایید پرداخت</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              {pendingOfflineMethod === "CARD_TO_CARD"
+                ? "آیا مطمئن هستید پرداخت از طریق کارت به کارت انجام شده است؟"
+                : "آیا مطمئن هستید پرداخت از طریق شبا انجام شده است؟"}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  const method = pendingOfflineMethod;
+                  setPendingOfflineMethod(null);
+                  await processPayment(method);
+                }}
+                className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700"
+              >
+                بله، پرداخت شد
+              </button>
+              <button
+                onClick={() => setPendingOfflineMethod(null)}
+                className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200"
+              >
+                انصراف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

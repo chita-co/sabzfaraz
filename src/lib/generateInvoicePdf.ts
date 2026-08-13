@@ -1,8 +1,7 @@
 "use client";
 
-const A5_LANDSCAPE_HEIGHT_MM = 148;
-const A4_HEIGHT_MM = 297;
-const WIDTH_MM = 210;
+const PAGE_WIDTH_MM = 210;
+const PAGE_HEIGHT_MM = 297; // A4
 
 export async function renderInvoiceToPdf(html: string, fileName: string) {
   const html2canvas = (await import("html2canvas-pro")).default;
@@ -13,36 +12,77 @@ export async function renderInvoiceToPdf(html: string, fileName: string) {
   container.style.left = "-9999px";
   container.style.top = "0";
   container.style.zIndex = "-1";
+  container.style.width = PAGE_WIDTH_MM + "mm";
+  container.style.background = "#ffffff";
   container.innerHTML = html;
   document.body.appendChild(container);
+
   const target = container.firstElementChild as HTMLElement;
+  target.style.width = PAGE_WIDTH_MM + "mm";
+  target.style.margin = "0 auto";
 
   try {
-    const canvas = await html2canvas(target, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
-    const contentHeightMM = (canvas.height * WIDTH_MM) / canvas.width;
-    const imgData = canvas.toDataURL("image/png");
+    // scale=3 برای کیفیت بهتر
+    const canvas = await html2canvas(target, {
+      scale: 3,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+    });
 
-    if (contentHeightMM <= A4_HEIGHT_MM) {
-      // محتوای کوتاه: صفحه‌ای دقیقاً به‌اندازه‌ی محتوا (حداقل نیم برگ A4 = A5 افقی)
-      const pageHeightMM = Math.max(A5_LANDSCAPE_HEIGHT_MM, contentHeightMM);
-      const pdf = new jsPDF({ unit: "mm", format: [WIDTH_MM, pageHeightMM] });
-      pdf.addImage(imgData, "PNG", 0, 0, WIDTH_MM, contentHeightMM);
-      pdf.save(fileName);
-    } else {
-      // محتوای بلند: تقسیم چندصفحه‌ای روی A4 کامل
-      const pdf = new jsPDF({ unit: "mm", format: "a4" });
-      let heightLeft = contentHeightMM;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, WIDTH_MM, contentHeightMM);
-      heightLeft -= A4_HEIGHT_MM;
-      while (heightLeft > 0) {
-        position = heightLeft - contentHeightMM;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, WIDTH_MM, contentHeightMM);
-        heightLeft -= A4_HEIGHT_MM;
+    // ابعاد پیکسلی صفحه A4 با همان نسبت canvas
+    const pageWidthPx = canvas.width;
+    const pageHeightPx = Math.floor(
+      pageWidthPx * (PAGE_HEIGHT_MM / PAGE_WIDTH_MM)
+    );
+
+    const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
+    const pdf = new jsPDF({
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait",
+    });
+
+    for (let i = 0; i < totalPages; i++) {
+      const sourceY = i * pageHeightPx;
+      const sourceHeight = Math.min(pageHeightPx, canvas.height - sourceY);
+
+      // برش canvas به اندازه همان بخش صفحه
+      const pageCanvas = document.createElement("canvas");
+      pageCanvas.width = pageWidthPx;
+      pageCanvas.height = sourceHeight;
+      const ctx = pageCanvas.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      ctx.drawImage(
+        canvas,
+        0,
+        sourceY,
+        pageWidthPx,
+        sourceHeight,
+        0,
+        0,
+        pageWidthPx,
+        sourceHeight
+      );
+
+      const imgData = pageCanvas.toDataURL("image/png");
+
+      if (i > 0) {
+        pdf.addPage("a4", "portrait");
       }
-      pdf.save(fileName);
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        PAGE_WIDTH_MM,
+        (sourceHeight * PAGE_WIDTH_MM) / pageWidthPx
+      );
     }
+
+    pdf.save(fileName);
   } finally {
     document.body.removeChild(container);
   }

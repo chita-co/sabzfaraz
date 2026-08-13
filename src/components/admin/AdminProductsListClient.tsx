@@ -24,6 +24,7 @@ export default function AdminProductsListClient({
   const [products, setProducts] = useState<ProductRow[]>(initialProducts);
   const [count, setCount] = useState(initialCount);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
 
   const fetchProducts = useCallback(async (next: Filters) => {
@@ -43,10 +44,13 @@ export default function AdminProductsListClient({
       if (res.ok) {
         setProducts(data.products);
         setCount(data.count);
+        setError(null);
         window.history.replaceState(null, "", `/admin/products?${params.toString()}`);
+      } else {
+        setError(data.error || "خطا در دریافت لیست محصولات.");
       }
     } catch {
-      // خطای شبکه؛ بی‌صدا نادیده گرفته می‌شود
+      if (id === requestId.current) setError("خطا در ارتباط با سرور. اتصال اینترنت را بررسی کنید.");
     }
     if (id === requestId.current) setLoading(false);
   }, []);
@@ -60,6 +64,10 @@ export default function AdminProductsListClient({
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     applyFilters({ q: qInput });
+  }
+
+  function handleRefresh() {
+    fetchProducts(filters);
   }
 
   const totalPages = Math.max(1, Math.ceil(count / filters.pageSize));
@@ -111,11 +119,13 @@ export default function AdminProductsListClient({
         </select>
       </div>
 
+      {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+
       <p className="text-sm text-gray-500 mb-3">
         {loading ? "در حال بارگذاری..." : `${count.toLocaleString("fa-IR")} محصول`}
       </p>
 
-      <ProductsTable key={JSON.stringify(filters)} products={products} categories={categories} />
+      <ProductsTable products={products} categories={categories} onRefresh={handleRefresh} />
 
       {totalPages > 1 && (
         <div className="admin-pagination-bar">

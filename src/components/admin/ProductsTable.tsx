@@ -1,33 +1,26 @@
-// src/components/admin/ProductsTable.tsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, Trash2, Layers, Copy, Check, X as XIcon, History } from "lucide-react";
 import { deleteProduct, copyProduct, quickUpdateProduct, getProductPriceHistory } from "@/app/admin/products/actions";
 import BulkEditModal from "./BulkEditModal";
 import { Category } from "@/types";
 
 interface Row {
-  id: string;
-  name: string;
-  slug: string;
-  sku: string;
-  price: number;
-  stock: number | null;
-  is_active: boolean;
-  is_stock: boolean;
-  images: string[];
-  category: { name: string } | null;
+  id: string; name: string; slug: string; sku: string; price: number; stock: number | null;
+  is_active: boolean; is_stock: boolean; images: string[]; category: { name: string } | null;
 }
 
 export default function ProductsTable({
   products,
   categories,
+  onRefresh,
 }: {
   products: Row[];
   categories: Category[];
+  onRefresh: () => void;
 }) {
   const [rows, setRows] = useState(products);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -38,15 +31,14 @@ export default function ProductsTable({
   const [editValue, setEditValue] = useState("");
   const [historyProductId, setHistoryProductId] = useState<string | null>(null);
   const [historyRows, setHistoryRows] = useState<{ id: string; price: number; discount_price: number | null; changed_at: string }[]>([]);
-
-  const initialized = useRef(false);
-
-  // فقط بار اول rows را با products هماهنگ کن
+  
+// هر بار که لیست از سرور (فیلتر/صفحه‌بندی/رفرش) عوض شود، جدول محلی هم‌زمان شود
   useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true;
+    const timer = setTimeout(() => {
       setRows(products);
-    }
+      setSelected(new Set());
+    }, 0);
+    return () => clearTimeout(timer);
   }, [products]);
 
   async function handleDelete(p: Row) {
@@ -55,7 +47,10 @@ export default function ProductsTable({
     const result = await deleteProduct(p.id, p.images);
     setDeletingId(null);
     if (result?.error) alert(result.error);
-    else setRows((prev) => prev.filter((r) => r.id !== p.id));
+    else {
+      setRows((prev) => prev.filter((r) => r.id !== p.id));
+      onRefresh();
+    }
   }
 
   async function handleCopy(p: Row) {
@@ -63,7 +58,7 @@ export default function ProductsTable({
     const result = await copyProduct(p.id);
     setCopyingId(null);
     if (result?.error) alert(result.error);
-    else window.location.reload();
+    else onRefresh();
   }
 
   function startEdit(id: string, field: "price" | "stock", currentValue: number | null) {
@@ -262,7 +257,7 @@ export default function ProductsTable({
           onDone={() => {
             setShowBulkModal(false);
             setSelected(new Set());
-            window.location.reload();
+            onRefresh();
           }}
         />
       )}
