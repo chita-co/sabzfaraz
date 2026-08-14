@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Search, ShoppingCart, Heart, User, Menu, X, ChevronDown,
   LayoutDashboard, LogOut, Package, Gift, Clapperboard,
+  Gavel, Wallet,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { useCartTotals } from "@/store/cart-store";
@@ -17,20 +18,24 @@ import NotificationBell from "@/components/shop/NotificationBell";
 interface CategoryLite { id: string; name: string; slug: string; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, logoUrl,
+  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "مزایده",
 }: {
   isLoggedIn: boolean;
   userName: string | null;
   isAdmin: boolean;
   categories: CategoryLite[];
   logoUrl?: string | null;
+  walletBalance?: number;
+  auctionEnabled?: boolean;
+  auctionLabel?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const { totalItems } = useCartTotals();
 
   const gooeyItems = [
-    { label: "خانه", href: "/" },
+  { label: "خانه", href: "/" },
+  ...(auctionEnabled ? [{ label: auctionLabel, href: "/auctions" }] : []),
     { label: "آنباکس", href: "/unboxing" },
     { label: "سفارش جمعی", href: "/bulk-order" },
     { label: "درباره ما", href: "/about" },
@@ -94,6 +99,16 @@ export default function HeaderNav({
 
         {/* ===== بخش اصلی دکمه‌های هدر (دسکتاپ) ===== */}
         <div className="site-actions">
+  {auctionEnabled && (
+  <Link href="/auctions" onClick={() => setMobileOpen(false)} style={{ color: "#b45309", fontWeight: 700 }}>
+    <Gavel size={16} style={{ display: "inline", marginLeft: 6 }} /> {auctionLabel}
+  </Link>
+)}
+  {isLoggedIn && (
+  <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>
+    <Wallet size={16} style={{ display: "inline", marginLeft: 6 }} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
+  </Link>
+)}
           <Link href="/wishlist" className="site-icon-btn"><Heart size={20} /></Link>
           <NotificationBell />
           

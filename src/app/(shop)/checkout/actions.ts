@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requestPayment } from "@/lib/zarinpal";
 import { redirect } from "next/navigation";
 import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
+import { consumeDiscountCode } from "@/lib/discountCode";
 
 interface CheckoutItem {
   productId: string;
@@ -21,6 +22,7 @@ export async function createOrderAndPay(
   addressId: string,
   shippingCost: number,
   loyaltyPointsToRedeem: number = 0,
+  discountCodeId: string | null = null,
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -72,9 +74,18 @@ export async function createOrderAndPay(
     if (redemption?.error) {
       return { error: redemption.error };
     }
-    finalAmount = order.total_amount - (redemption.discountAmount ?? 0);
+    finalAmount = finalAmount - (redemption.discountAmount ?? 0);
     if (finalAmount < 0) finalAmount = 0;
+  }
 
+  if (discountCodeId) {
+    const consumed = await consumeDiscountCode(supabase, user.id, discountCodeId, finalAmount, order.id);
+    if (consumed.error) return { error: consumed.error };
+    finalAmount = finalAmount - consumed.discountAmount;
+    if (finalAmount < 0) finalAmount = 0;
+  }
+
+  if (finalAmount !== totalAmount) {
     await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
   }
 
@@ -101,8 +112,6 @@ export async function createOrderAndPay(
   redirect(payment.url);
 }
 
-// ← تابع جدید را اینجا اضافه کنید (بعد از createOrderAndPay)
-
 export async function createOfflineOrder(
   items: CheckoutItem[],
   addressId: string,
@@ -110,6 +119,7 @@ export async function createOfflineOrder(
   paymentMethod: "CARD_TO_CARD" | "SHEBA",
   bankAccountId: string,
   loyaltyPointsToRedeem: number = 0,
+  discountCodeId: string | null = null,
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -162,11 +172,20 @@ export async function createOfflineOrder(
 
   let finalAmount = totalAmount;
   if (loyaltyPointsToRedeem > 0) {
-    const { redeemPointsForOrder } = await import("@/lib/loyalty/ledger");
     const redemption = await redeemPointsForOrder(user.id, order.id, loyaltyPointsToRedeem);
     if (redemption?.error) return { error: redemption.error };
-    finalAmount = order.total_amount - (redemption.discountAmount ?? 0);
+    finalAmount = finalAmount - (redemption.discountAmount ?? 0);
     if (finalAmount < 0) finalAmount = 0;
+  }
+
+  if (discountCodeId) {
+    const consumed = await consumeDiscountCode(supabase, user.id, discountCodeId, finalAmount, order.id);
+    if (consumed.error) return { error: consumed.error };
+    finalAmount = finalAmount - consumed.discountAmount;
+    if (finalAmount < 0) finalAmount = 0;
+  }
+
+  if (finalAmount !== totalAmount) {
     await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
   }
 

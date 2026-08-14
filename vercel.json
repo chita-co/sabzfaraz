@@ -3,6 +3,10 @@
     { "path": "/api/cron/cleanup-analytics", "schedule": "0 3 1 * *" },
     { "path": "/api/cron/expire-loyalty-points", "schedule": "0 2 * * *" },
     { "path": "/api/cron/loyalty-expiry-reminders", "schedule": "0 9 * * *" },
-    { "path": "/api/cron/expire-bulk-orders", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/expire-bulk-orders", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/run-auction-bots", "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/finalize-auctions", "schedule": "*/2 * * * *" },
+    { "path": "/api/cron/expire-auction-winner-payments", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/expire-reverse-auctions", "schedule": "*/5 * * * *" }
   ]
 }

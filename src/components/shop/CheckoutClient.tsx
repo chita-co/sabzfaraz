@@ -9,6 +9,7 @@ import LoyaltyRedemptionBox from "./LoyaltyRedemptionBox";
 import PaymentMethodSelector, { type PaymentMethod } from "./PaymentMethodSelector";
 import type { BankAccountInfo } from "./BankAccountDisplay";
 import { CartItem } from "@/store/cart-store";
+import DiscountCodeBox from "./DiscountCodeBox";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
@@ -47,7 +48,9 @@ export default function CheckoutClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+const [discountCodeId, setDiscountCodeId] = useState<string | null>(null);
+const [discountAmount, setDiscountAmount] = useState(0);
 
   // پرداخت آنلاین پیش‌فرض
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ONLINE");
@@ -84,7 +87,7 @@ export default function CheckoutClient({
     return methodTiers[methodTiers.length - 1].cost;
   }, [selectedMethodId, shippingTiers, cartWeightGrams, pendingCheckout]);
 
-  const total = subtotal + shippingCost - loyaltyDiscount;
+  const total = Math.max(subtotal + shippingCost - loyaltyDiscount - discountAmount, 0);
 
   async function handlePay(methodOverride?: PaymentMethod) {
   const effectiveMethod = methodOverride ?? paymentMethod;
@@ -125,6 +128,7 @@ async function processPayment(method: PaymentMethod) {
       selectedAddress,
       shippingCost,
       loyaltyPoints,
+      discountCodeId,
     );
     if (result?.error) { setError(result.error); setLoading(false); }
   } else {
@@ -135,10 +139,11 @@ async function processPayment(method: PaymentMethod) {
       method,
       bankAccountId,
       loyaltyPoints,
+      discountCodeId,
     );
     if (result?.error) { setError(result.error); setLoading(false); }
   }
-}
+  }
 
   if (displayItems.length === 0 && !pendingCheckout) {
     return (
@@ -215,6 +220,12 @@ async function processPayment(method: PaymentMethod) {
         ))}
         <div className="flex justify-between text-sm py-2 border-b"><span>جمع کالاها</span><span>{subtotal.toLocaleString("fa-IR")} تومان</span></div>
         <div className="flex justify-between text-sm py-2 border-b"><span>هزینه ارسال و بسته‌بندی</span><span>{shippingCost.toLocaleString("fa-IR")} تومان</span></div>
+{loyaltyDiscount > 0 && (
+  <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف امتیاز وفاداری</span><span>- {loyaltyDiscount.toLocaleString("fa-IR")} تومان</span></div>
+)}
+{discountAmount > 0 && (
+  <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف کد تخفیف</span><span>- {discountAmount.toLocaleString("fa-IR")} تومان</span></div>
+)}
         <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3"><span>مبلغ نهایی قابل پرداخت</span><span>{total.toLocaleString("fa-IR")} تومان</span></div>
       </div>
 
@@ -257,6 +268,16 @@ async function processPayment(method: PaymentMethod) {
             }}
           />
         </div>
+      )}
+
+      {!isLocked && (
+        <DiscountCodeBox
+          orderTotal={Math.max(subtotal + shippingCost - loyaltyDiscount, 0)}
+          onChange={(discount, codeId) => {
+            setDiscountAmount(discount);
+            setDiscountCodeId(codeId);
+          }}
+        />
       )}
 
        {paymentMethod === "ONLINE" ? (
