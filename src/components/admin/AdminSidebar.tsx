@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Gift,
   Film,
+  Gavel,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 
@@ -102,10 +103,25 @@ const navConfig: NavItem[] = [
       { href: "/admin/loyalty/transactions", label: "دفتر کل امتیازها" },
     ],
   },
+  {
+    id: "auctions",
+    label: "مزایده و جمعه بازار",
+    icon: Gavel,
+    children: [
+      { href: "/admin/auctions", label: "لیست مزایده‌ها" },
+      { href: "/admin/auctions/new", label: "مزایده جدید" },
+      { href: "/admin/auction-bots", label: "ربات‌های پیشنهاددهنده" },
+      { href: "/admin/reverse-auctions", label: "جمعه بازار (حراج معکوس)" },
+      { href: "/admin/reverse-auctions/new", label: "کالای جدید جمعه بازار" },
+      { href: "/admin/wallet-requests", label: "درخواست‌های شارژ کیف پول" },
+      { href: "/admin/auction-reputation", label: "اعتبار و لیست سیاه کاربران" },
+      { href: "/admin/auction-settings", label: "تنظیمات مزایده و کیف پول" },
+    ],
+  },
   { href: "/admin/unboxing", label: "ویدیوهای آنباکس", icon: Film },
   {
     id: "settings", label: "تنظیمات", icon: Settings,
-    children: [ // <-- children به صورت آرایه اضافه شد
+    children: [
       { href: "/admin/settings/general", label: "تنظیمات عمومی" },
       { href: "/admin/shipping", label: "هزینه ارسال" },
       { href: "/admin/tracking-settings", label: "پیام‌های پیگیری" },
@@ -224,7 +240,6 @@ export default function AdminSidebar({
             );
           })}
         </nav>
-
         <div className="admin-sidebar-footer">
           <Link href="/" className="admin-back-link">
             بازگشت به فروشگاه

@@ -2,11 +2,22 @@
 
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
+import ShinyText from "@/components/ShinyText";
 import "./GooeyNav.css";
 
-interface GooeyNavItem {
+export interface GooeyNavChildItem {
   label: string;
   href: string;
+}
+
+export interface GooeyNavItem {
+  label: string;
+  href?: string;
+  type?: "link" | "dropdown";
+  children?: GooeyNavChildItem[];
+  /** اگر true باشد، متن آیتم با افکت درخشش ملایم (ShinyText) رندر می‌شود */
+  shiny?: boolean;
 }
 
 export default function GooeyNav({
@@ -33,6 +44,15 @@ export default function GooeyNav({
   const filterRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+
+  // در صورت ناوبری واقعی به صفحه‌ی دیگر (تغییر initialActiveIndex از سمت والد)، پیل فعال هم‌گام شود
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setActiveIndex(initialActiveIndex);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [initialActiveIndex]);
 
   // تولید مقادیر تصادفی فقط یک‌بار (با useState و lazy initializer)
   const [randomValues] = useState(() => {
@@ -80,7 +100,6 @@ export default function GooeyNav({
       const t = animationTime * 2 + noise(i, timeVariance * 2);
       const p = createParticle(i, t, d, r);
       element.classList.remove("active");
-
       setTimeout(() => {
         const particle = document.createElement("span");
         const point = document.createElement("span");
@@ -168,13 +187,57 @@ export default function GooeyNav({
     <div className="gooey-nav-container" ref={containerRef}>
       <nav>
         <ul ref={navRef}>
-          {items.map((item, index) => (
-            <li key={index} className={activeIndex === index ? "active" : ""}>
-              <Link href={item.href} onClick={(e) => handleClick(e, index)}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
+          {items.map((item, index) => {
+            const type = item.type ?? "link";
+
+            if (type === "dropdown") {
+              const isOpen = openDropdownIndex === index;
+              return (
+                <li
+                  key={index}
+                  className={`dropdown-item${activeIndex === index ? " active" : ""}${isOpen ? " open" : ""}`}
+                  onMouseEnter={() => setOpenDropdownIndex(index)}
+                  onMouseLeave={() => setOpenDropdownIndex((cur) => (cur === index ? null : cur))}
+                >
+                  <button
+                    type="button"
+                    className="gooey-dropdown-trigger"
+                    onClick={() => setOpenDropdownIndex((cur) => (cur === index ? null : index))}
+                  >
+                    {item.label} <ChevronDown size={14} />
+                  </button>
+                  {isOpen && item.children && item.children.length > 0 && (
+                    <div className="gooey-dropdown-menu">
+                      {item.children.map((child) => (
+                        <Link key={child.href} href={child.href}>
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            }
+
+            return (
+              <li key={index} className={activeIndex === index ? "active" : ""}>
+                <Link href={item.href!} onClick={(e) => handleClick(e, index)}>
+                  {item.shiny ? (
+                    <ShinyText
+                      text={item.label}
+                      color={activeIndex === index ? "#14532d" : "#ffffff"}
+                      shineColor="#fde047"
+                      speed={4}
+                      spread={40}
+                      className="gooey-shiny-item"
+                    />
+                  ) : (
+                    item.label
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
       <span className="effect filter" ref={filterRef} />

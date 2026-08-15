@@ -1273,7 +1273,7 @@
 
 .gooey-nav-wrapper {
   background: linear-gradient(135deg, #14532d 0%, #166534 55%, #854d0e 100%);
-  padding: 6px 12px;
+  padding: 4px 9px;
   border-radius: 999px;
   box-shadow: 0 4px 14px rgba(20, 83, 45, 0.25);
 }
@@ -1819,3 +1819,61 @@
 .sealed-bid-note {
   background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: #92400e; margin-bottom: 10px;
 }
+
+/* ===== فیلد جستجوی محصول - واضح و قابل مشاهده ===== */
+.site-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  padding: 8px 16px;
+  min-width: 220px;
+}
+.site-search svg { color: #6b7280; flex-shrink: 0; }
+.site-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #111827;
+  width: 100%;
+}
+.site-search input::placeholder { color: #9ca3af; }
+
+.site-mobile-panel .site-search {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+/* ===== دکمه‌ی شناور پشتیبانی ===== */
+.floating-support-btn {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  z-index: 9999;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+.floating-support-btn:hover {
+  transform: scale(1.08);
+  color: #15803d;
+}
+@media (max-width: 640px) {
+  .floating-support-btn {
+    bottom: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}
+

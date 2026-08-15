@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
-  Search, ShoppingCart, Heart, User, Menu, X, ChevronDown,
-  LayoutDashboard, LogOut, Package, Gift, Clapperboard,
-  Gavel, Wallet,
+  Search, ShoppingCart, Heart, User, Menu, X,
+  LayoutDashboard, LogOut, Package, Gift, Clapperboard, Wallet,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { useCartTotals } from "@/store/cart-store";
-import { usePathname } from "next/navigation";
-import ShinyText from "@/components/ShinyText";
-import GooeyNav from "@/components/GooeyNav";
+import GooeyNav, { type GooeyNavItem } from "@/components/GooeyNav";
 import NotificationBell from "@/components/shop/NotificationBell";
 
 interface CategoryLite { id: string; name: string; slug: string; }
@@ -33,18 +30,28 @@ export default function HeaderNav({
   const pathname = usePathname();
   const { totalItems } = useCartTotals();
 
-  const gooeyItems = [
-  { label: "خانه", href: "/" },
-  ...(auctionEnabled ? [{ label: auctionLabel, href: "/auctions" }] : []),
-    { label: "آنباکس", href: "/unboxing" },
-    { label: "سفارش جمعی", href: "/bulk-order" },
-    { label: "درباره ما", href: "/about" },
-    { label: "تماس با ما", href: "/contact" },
-    { label: "پشتیبانی", href: "/support" },
+  // آیتم‌های داخل پیل هدر (لوگو دیگر اینجا نیست، جدا از منو رندر می‌شود)
+  // ترتیب: سبزفراز / دسته‌بندی‌ها / مزایده / آنباکس / سفارش جمعی / جمعه بازار / درباره ما / تماس با ما
+  const navItems: GooeyNavItem[] = [
+    { type: "link", label: "سبزفراز", href: "/", shiny: true },
+    {
+      type: "dropdown",
+      label: "دسته‌بندی‌ها",
+      children: categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` })),
+    },
+    ...(auctionEnabled ? [{ type: "link" as const, label: auctionLabel, href: "/auctions" }] : []),
+    { type: "link", label: "آنباکس", href: "/unboxing" },
+    { type: "link", label: "سفارش جمعی", href: "/bulk-order" },
+    ...(auctionEnabled ? [{ type: "link" as const, label: "جمعه بازار", href: "/reverse-auctions" }] : []),
+    { type: "link", label: "درباره ما", href: "/about" },
+    { type: "link", label: "تماس با ما", href: "/contact" },
   ];
-  const initialNavIndex = Math.max(0, gooeyItems.findIndex((i) => i.href === pathname));
+
+  let initialNavIndex = navItems.findIndex((i) => i.type !== "dropdown" && i.href === pathname);
+  if (initialNavIndex === -1 && pathname.startsWith("/category")) initialNavIndex = 1;
+  if (initialNavIndex === -1) initialNavIndex = 0;
+
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [catOpen, setCatOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -55,40 +62,22 @@ export default function HeaderNav({
       setMobileOpen(false);
     }
   }
-
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <Link href="/" className="site-logo">
-          {logoUrl && (
-            <span className="site-logo-shine-wrap">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoUrl} alt="سبزفراز" className="site-logo-img" />
-            </span>
-          )}
-          <ShinyText
-            text="سبزفراز"
-            color="#ffffff"
-            shineColor="#fde047"
-            speed={2.5}
-            spread={90}
-            className="site-logo-text"
-          />
-        </Link>
-
         <nav className="site-nav">
-          <div className="site-nav-dropdown" onMouseEnter={() => setCatOpen(true)} onMouseLeave={() => setCatOpen(false)}>
-            <button type="button">دسته‌بندی‌ها <ChevronDown size={14} /></button>
-            {catOpen && (
-              <div className="site-dropdown-menu">
-                {categories.map((c) => (
-                  <Link key={c.id} href={`/category/${c.slug}`}>{c.name}</Link>
-                ))}
-              </div>
+          {/* ===== لوگوی رنگی دایره‌ای — بیرون از پیل منو ===== */}
+          <Link href="/" className="site-brand-logo" aria-label="سبزفراز - صفحه اصلی">
+            {logoUrl && (
+              <span className="site-logo-shine-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logoUrl} alt="سبزفراز" className="site-logo-img" />
+              </span>
             )}
-          </div>
+          </Link>
+
           <div className="gooey-nav-wrapper">
-            <GooeyNav items={gooeyItems} initialActiveIndex={initialNavIndex} />
+            <GooeyNav items={navItems} initialActiveIndex={initialNavIndex} />
           </div>
         </nav>
 
@@ -99,20 +88,9 @@ export default function HeaderNav({
 
         {/* ===== بخش اصلی دکمه‌های هدر (دسکتاپ) ===== */}
         <div className="site-actions">
-  {auctionEnabled && (
-  <Link href="/auctions" onClick={() => setMobileOpen(false)} style={{ color: "#b45309", fontWeight: 700 }}>
-    <Gavel size={16} style={{ display: "inline", marginLeft: 6 }} /> {auctionLabel}
-  </Link>
-)}
-  {isLoggedIn && (
-  <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>
-    <Wallet size={16} style={{ display: "inline", marginLeft: 6 }} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
-  </Link>
-)}
           <Link href="/wishlist" className="site-icon-btn"><Heart size={20} /></Link>
           <NotificationBell />
-          
-          {/* فقط یک لینک سبد خرید باید وجود داشته باشد */}
+
           <Link href="/cart" className="site-icon-btn cart-icon-wrap">
             <ShoppingCart size={20} />
             {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -134,6 +112,9 @@ export default function HeaderNav({
                     </Link>
                     <Link href="/unboxing">
                       <Clapperboard size={14} /> آنباکس محصولات
+                    </Link>
+                    <Link href="/profile/wallet">
+                      <Wallet size={14} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
                     </Link>
                     {isAdmin && (
                       <Link href="/admin" className="site-dropdown-admin">
@@ -157,7 +138,7 @@ export default function HeaderNav({
         </div>
       </div>
 
-      {/* ===== منوی موبایل ===== */}
+      {/* ===== منوی موبایل (بدون تغییر نسبت به قبل) ===== */}
       {mobileOpen && (
         <div className="site-mobile-overlay" onClick={() => setMobileOpen(false)}>
           <div className="site-mobile-panel" onClick={(e) => e.stopPropagation()}>
@@ -166,20 +147,26 @@ export default function HeaderNav({
               <Search size={16} />
               <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </form>
+
             <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
-            <Link href="/unboxing" onClick={() => setMobileOpen(false)}>
-              <Clapperboard size={16} style={{ display: "inline", marginLeft: 6 }} /> آنباکس مشتریان
-            </Link>
+            {auctionEnabled && (
+              <Link href="/auctions" onClick={() => setMobileOpen(false)}>{auctionLabel}</Link>
+            )}
             {categories.map((c) => (
               <Link key={c.id} href={`/category/${c.slug}`} onClick={() => setMobileOpen(false)}>{c.name}</Link>
             ))}
+            <Link href="/unboxing" onClick={() => setMobileOpen(false)}>
+              <Clapperboard size={16} style={{ display: "inline", marginLeft: 6 }} /> آنباکس مشتریان
+            </Link>
+            <Link href="/bulk-order" onClick={() => setMobileOpen(false)}>سفارش جمعی</Link>
+            {auctionEnabled && (
+              <Link href="/reverse-auctions" onClick={() => setMobileOpen(false)}>جمعه بازار</Link>
+            )}
             <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
-            <Link href="/support" onClick={() => setMobileOpen(false)}>پشتیبانی</Link>
-            
-            {/* NotificationBell به‌عنوان یک آیتم مستقل در موبایل */}
+
             <NotificationBell />
-            
+
             <Link href="/cart" onClick={() => setMobileOpen(false)}>سبد خرید</Link>
             <Link href="/wishlist" onClick={() => setMobileOpen(false)}>علاقه‌مندی‌ها</Link>
             {isLoggedIn ? (
@@ -188,6 +175,9 @@ export default function HeaderNav({
                 <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>سفارشات من</Link>
                 <Link href="/profile/loyalty" onClick={() => setMobileOpen(false)}>باشگاه مشتریان</Link>
                 <Link href="/unboxing" onClick={() => setMobileOpen(false)}>آنباکس محصولات</Link>
+                <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>
+                  کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
+                </Link>
                 {isAdmin && <Link href="/admin" onClick={() => setMobileOpen(false)}>پنل مدیریت</Link>}
                 <form action={signOut}><button type="submit">خروج</button></form>
               </>

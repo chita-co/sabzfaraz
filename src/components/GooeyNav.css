@@ -11,18 +11,41 @@
   --color-4: #facc15;
 }
 
+/* ===== باکس بیرونیِ لوگو (خارج از پیل منو) ===== */
+.site-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-inline-end: 12px;
+  transition: transform 0.25s ease;
+}
+.site-brand-logo:hover {
+  transform: scale(1.05);
+}
+/* توجه: کلاس‌های site-logo-shine-wrap و site-logo-img دست‌نخورده موندن
+   تا همون افکت شاین و سایز قبلی‌شون (که در shop.css تعریف شده) حفظ بشه */
+
+/* توجه: پس‌زمینه/سایز پیل اصلی منو (.gooey-nav-wrapper) دیگه اینجا تعریف نمی‌شه
+   چون نسخه‌ی واقعی‌ش رو خودت در shop.css داری — بخش اصلاح‌شده‌اش رو جدا زیر همین پیام گذاشتم */
+
 .gooey-nav-container { position: relative; }
 .gooey-nav-container nav { display: flex; position: relative; transform: translate3d(0, 0, 0.01px); }
 .gooey-nav-container nav ul {
-  display: flex; gap: 1.4em; list-style: none; padding: 0 1em; margin: 0;
-  position: relative; z-index: 3; color: white; text-shadow: 0 1px 1px hsl(205deg 30% 10% / 0.2);
+  display: flex; gap: 0.9em; list-style: none; padding: 0 0.6em; margin: 0;
+  position: relative; z-index: 3; color: white;
+  /* سایه‌ی متن حذف شد؛ همین سایه بود که باعث می‌شد اسم هر دکمه انگار دوبار نوشته شده دیده بشه */
+  text-shadow: none;
 }
 .gooey-nav-container nav ul li {
   border-radius: 100vw; position: relative; cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 0 0.5px 1.5px transparent; color: white;
 }
-.gooey-nav-container nav ul li a { display: inline-block; padding: 0.55em 0.9em; font-size: 13.5px; }
+.gooey-nav-container nav ul li a {
+  display: inline-block; padding: 0.45em 0.8em; font-size: 12.5px;
+  font-weight: 500; letter-spacing: 0.1px;
+}
 .gooey-nav-container nav ul li:focus-within:has(:focus-visible) { box-shadow: 0 0 0.5px 1.5px white; }
 .gooey-nav-container nav ul li::after {
   content: ""; position: absolute; inset: 0; border-radius: 10px;
@@ -35,7 +58,11 @@
   position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 1;
   pointer-events: none; display: grid; place-items: center; z-index: 1;
 }
-.gooey-nav-container .effect.text { color: white; transition: color 0.3s ease; }
+.gooey-nav-container .effect.text {
+  color: white; transition: color 0.3s ease;
+  /* اندازه‌ی متنِ افکت دقیقاً با متن واقعی دکمه یکی شد تا کپی/شبح دیده نشه */
+  font-size: 12.5px; font-weight: 500; letter-spacing: 0.1px; white-space: nowrap;
+}
 .gooey-nav-container .effect.text.active { color: black; }
 .gooey-nav-container .effect.filter { filter: blur(7px) contrast(100) blur(0); mix-blend-mode: lighten; }
 .gooey-nav-container .effect.filter::before { content: ""; position: absolute; inset: -75px; z-index: -2; background: transparent; }
@@ -65,4 +92,76 @@
   65% { transform: scale(var(--scale)); opacity: 1; animation-timing-function: ease; }
   85% { transform: scale(var(--scale)); opacity: 1; }
   100% { transform: scale(0); opacity: 0; }
+}
+
+/* ===== آیتم متنیِ «سبزفراز» با افکت درخشش ملایم داخل ShinyText ===== */
+.gooey-shiny-item {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* ===== آیتم دراپ‌داون «دسته‌بندی‌ها» داخل منوی گویی ===== */
+.gooey-nav-container nav ul li.dropdown-item {
+  position: relative;
+}
+.gooey-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.45em 0.8em;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+.gooey-nav-container nav ul li.dropdown-item.active .gooey-dropdown-trigger {
+  color: #14532d;
+}
+.gooey-nav-container nav ul li.dropdown-item.open .gooey-dropdown-trigger svg {
+  transform: rotate(180deg);
+}
+.gooey-dropdown-trigger svg {
+  transition: transform 0.2s ease;
+}
+
+/* منوی کشویی دسته‌بندی‌ها - به سمت پایین باز می‌شود */
+.gooey-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  min-width: 180px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 50;
+}
+.gooey-dropdown-menu a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827 !important;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gooey-dropdown-menu a:hover {
+  background: #f3f4f6;
+  color: #111827 !important;
+}
+
+/* هاور ملایم روی آیتم‌های غیرفعال منو برای هماهنگی بصری با بقیه دکمه‌ها */
+.gooey-nav-container nav ul li:not(.active):hover {
+  background: rgba(255, 255, 255, 0.07);
 }
