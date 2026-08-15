@@ -2,14 +2,15 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
+import { Wallet } from "lucide-react";
 import { useCartStore, useCartWeight } from "@/store/cart-store";
 import { createOrderAndPay, createOfflineOrder } from "@/app/(shop)/checkout/actions";
 import ProformaInvoiceButton from "./ProformaInvoiceButton";
 import LoyaltyRedemptionBox from "./LoyaltyRedemptionBox";
+import DiscountCodeBox from "./DiscountCodeBox";
 import PaymentMethodSelector, { type PaymentMethod } from "./PaymentMethodSelector";
 import type { BankAccountInfo } from "./BankAccountDisplay";
 import { CartItem } from "@/store/cart-store";
-import DiscountCodeBox from "./DiscountCodeBox";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
@@ -17,7 +18,6 @@ interface AddressRow {
 }
 interface ShippingMethod { id: string; name: string; }
 interface ShippingTier { id: string; method_id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
-
 interface PendingCheckout {
   id: string;
   items: CartItem[];
@@ -30,12 +30,14 @@ export default function CheckoutClient({
   pendingCheckout,
   itemsToRestore,
   bankAccounts,
+  walletBalance = 0,
 }: {
   addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
   storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null };
   pendingCheckout?: PendingCheckout | null;
   itemsToRestore?: CartItem[] | null;
   bankAccounts: BankAccountInfo[];
+  walletBalance?: number;
 }) {
   const items = useCartStore((s) => s.items);
   const cartWeightGrams = useCartWeight();
@@ -48,15 +50,14 @@ export default function CheckoutClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
-const [discountCodeId, setDiscountCodeId] = useState<string | null>(null);
-const [discountAmount, setDiscountAmount] = useState(0);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+  const [discountCodeId, setDiscountCodeId] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
 
-  // پرداخت آنلاین پیش‌فرض
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ONLINE");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CARD_TO_CARD");
   const [bankAccountId, setBankAccountId] = useState(bankAccounts[0]?.id ?? "");
 
-  // برگرداندن آیتم‌های پیش‌فاکتور منقضی‌شده به سبد خرید
   useEffect(() => {
     if (restoreGate.current) return;
     restoreGate.current = true;
@@ -69,12 +70,8 @@ const [discountAmount, setDiscountAmount] = useState(0);
     ? "پیش‌فاکتور قبلی منقضی شد و کالاها به سبد خرید برگشت."
     : null;
 
-  // اگر پیش‌فاکتور فعال وجود دارد، آیتم‌های قفل‌شده را استفاده کن
   const displayItems = pendingCheckout ? pendingCheckout.items : items;
   const isLocked = !!pendingCheckout;
-
-  // اگر پیش‌فاکتور فعال است، فقط پرداخت آنلاین مجاز است و سلکتور نمایش داده نمی‌شود
-  const showPaymentSelector = true;
 
   const subtotal = displayItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
 
@@ -87,62 +84,77 @@ const [discountAmount, setDiscountAmount] = useState(0);
     return methodTiers[methodTiers.length - 1].cost;
   }, [selectedMethodId, shippingTiers, cartWeightGrams, pendingCheckout]);
 
-  const total = Math.max(subtotal + shippingCost - loyaltyDiscount - discountAmount, 0);
+  // مبلغ نهایی پیش از اعمال کیف پول
+  const totalBeforeWallet = Math.max(subtotal + shippingCost - loyaltyDiscount - discountAmount, 0);
+
+  // مبلغی که از کیف پول کسر می‌شود (حداکثر تا سقف موجودی یا مبلغ سفارش)
+  const walletUseAmount = useWallet ? Math.min(walletBalance, totalBeforeWallet) : 0;
+  // مبلغ باقیمانده‌ای که باید از درگاه/کارت‌به‌کارت/شبا پرداخت شود
+  const remainderAmount = Math.max(totalBeforeWallet - walletUseAmount, 0);
+  const fullyCoveredByWallet = useWallet && remainderAmount === 0 && totalBeforeWallet > 0;
 
   async function handlePay(methodOverride?: PaymentMethod) {
-  const effectiveMethod = methodOverride ?? paymentMethod;
+    const effectiveMethod = methodOverride ?? paymentMethod;
 
-  if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
-  if (!selectedMethodId && !pendingCheckout) { setError("لطفاً یک روش ارسال انتخاب کنید."); return; }
-  if (effectiveMethod !== "ONLINE" && !bankAccountId) {
-    setError("لطفاً یک حساب بانکی برای پرداخت انتخاب کنید.");
-    return;
+    if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
+    if (!selectedMethodId && !pendingCheckout) { setError("لطفاً یک روش ارسال انتخاب کنید."); return; }
+
+    if (fullyCoveredByWallet) {
+      await processPayment("ONLINE");
+      return;
+    }
+
+    if (effectiveMethod !== "ONLINE" && !bankAccountId) {
+      setError("لطفاً یک حساب بانکی برای پرداخت انتخاب کنید.");
+      return;
+    }
+
+    if (effectiveMethod !== "ONLINE") {
+      setPendingOfflineMethod(effectiveMethod);
+      return;
+    }
+
+    await processPayment(effectiveMethod);
   }
 
-  if (effectiveMethod !== "ONLINE") {
-    setPendingOfflineMethod(effectiveMethod);
-    return;
-  }
+  async function processPayment(method: PaymentMethod) {
+    setLoading(true);
+    setError(null);
 
-  await processPayment(effectiveMethod);
-}
+    const itemPayload = displayItems.map((i) => ({
+      productId: i.productId,
+      name: i.name,
+      image: i.image,
+      price: i.price,
+      discountPrice: i.discountPrice,
+      selectedColor: i.selectedColor,
+      selectedSize: i.selectedSize,
+      quantity: i.quantity,
+    }));
 
-async function processPayment(method: PaymentMethod) {
-  setLoading(true);
-  setError(null);
-
-  const itemPayload = displayItems.map((i) => ({
-    productId: i.productId,
-    name: i.name,
-    image: i.image,
-    price: i.price,
-    discountPrice: i.discountPrice,
-    selectedColor: i.selectedColor,
-    selectedSize: i.selectedSize,
-    quantity: i.quantity,
-  }));
-
-  if (method === "ONLINE") {
-    const result = await createOrderAndPay(
-      itemPayload,
-      selectedAddress,
-      shippingCost,
-      loyaltyPoints,
-      discountCodeId,
-    );
-    if (result?.error) { setError(result.error); setLoading(false); }
-  } else {
-    const result = await createOfflineOrder(
-      itemPayload,
-      selectedAddress,
-      shippingCost,
-      method,
-      bankAccountId,
-      loyaltyPoints,
-      discountCodeId,
-    );
-    if (result?.error) { setError(result.error); setLoading(false); }
-  }
+    if (method === "ONLINE" || fullyCoveredByWallet) {
+      const result = await createOrderAndPay(
+        itemPayload,
+        selectedAddress,
+        shippingCost,
+        loyaltyPoints,
+        discountCodeId,
+        walletUseAmount,
+      );
+      if (result?.error) { setError(result.error); setLoading(false); }
+    } else {
+      const result = await createOfflineOrder(
+        itemPayload,
+        selectedAddress,
+        shippingCost,
+        method,
+        bankAccountId,
+        loyaltyPoints,
+        discountCodeId,
+        walletUseAmount,
+      );
+      if (result?.error) { setError(result.error); setLoading(false); }
+    }
   }
 
   if (displayItems.length === 0 && !pendingCheckout) {
@@ -220,33 +232,71 @@ async function processPayment(method: PaymentMethod) {
         ))}
         <div className="flex justify-between text-sm py-2 border-b"><span>جمع کالاها</span><span>{subtotal.toLocaleString("fa-IR")} تومان</span></div>
         <div className="flex justify-between text-sm py-2 border-b"><span>هزینه ارسال و بسته‌بندی</span><span>{shippingCost.toLocaleString("fa-IR")} تومان</span></div>
-{loyaltyDiscount > 0 && (
-  <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف امتیاز وفاداری</span><span>- {loyaltyDiscount.toLocaleString("fa-IR")} تومان</span></div>
-)}
-{discountAmount > 0 && (
-  <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف کد تخفیف</span><span>- {discountAmount.toLocaleString("fa-IR")} تومان</span></div>
-)}
-        <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3"><span>مبلغ نهایی قابل پرداخت</span><span>{total.toLocaleString("fa-IR")} تومان</span></div>
+        {loyaltyDiscount > 0 && (
+          <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف امتیاز وفاداری</span><span>- {loyaltyDiscount.toLocaleString("fa-IR")} تومان</span></div>
+        )}
+        {discountAmount > 0 && (
+          <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف کد تخفیف</span><span>- {discountAmount.toLocaleString("fa-IR")} تومان</span></div>
+        )}
+        {walletUseAmount > 0 && (
+          <div className="flex justify-between text-sm py-2 border-b text-emerald-600"><span>پرداخت‌شده از کیف پول</span><span>- {walletUseAmount.toLocaleString("fa-IR")} تومان</span></div>
+        )}
+        <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3">
+          <span>{remainderAmount === totalBeforeWallet ? "مبلغ نهایی قابل پرداخت" : "مبلغ باقیمانده برای پرداخت"}</span>
+          <span>{remainderAmount.toLocaleString("fa-IR")} تومان</span>
+        </div>
       </div>
 
       {selectedAddress && (
-  <div className="mb-6">
-    <ProformaInvoiceButton
-      items={displayItems}
-      subtotal={subtotal}
-      shippingCost={shippingCost}
-      storeInfo={storeInfo}
-      buyer={(() => {
-        const addr = addresses.find((a) => a.id === selectedAddress)!;
-        return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line };
-      })()}
-      shippingMethodId={selectedMethodId}
-    />
-  </div>
-)}
+        <div className="mb-6">
+          <ProformaInvoiceButton
+            items={displayItems}
+            subtotal={subtotal}
+            shippingCost={shippingCost}
+            storeInfo={storeInfo}
+            buyer={(() => {
+              const addr = addresses.find((a) => a.id === selectedAddress)!;
+              return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line };
+            })()}
+            shippingMethodId={selectedMethodId}
+          />
+        </div>
+      )}
 
-      {/* انتخاب روش پرداخت فقط وقتی که پیش‌فاکتور فعال نیست نمایش داده می‌شود */}
-      {showPaymentSelector && (
+      {/* ===== کیف پول ===== */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useWallet}
+            onChange={(e) => setUseWallet(e.target.checked)}
+            disabled={walletBalance <= 0}
+            className="mt-1"
+          />
+          <div className="flex-1">
+            <p className="font-bold text-gray-800 flex items-center gap-2">
+              <Wallet size={16} className="text-emerald-600" /> استفاده از موجودی کیف پول
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              موجودی فعلی شما: <b>{walletBalance.toLocaleString("fa-IR")} تومان</b>
+              {walletBalance <= 0 && " — کیف پول شما خالی است."}
+            </p>
+            {useWallet && walletUseAmount > 0 && (
+              <p className="text-xs text-emerald-600 mt-1">
+                {fullyCoveredByWallet
+                  ? "کل مبلغ سفارش از کیف پول پرداخت می‌شود؛ نیازی به روش پرداخت دیگری نیست."
+                  : `${walletUseAmount.toLocaleString("fa-IR")} تومان از کیف پول کسر و باقیمانده از طریق روش پرداخت زیر تسویه می‌شود.`}
+              </p>
+            )}
+          </div>
+        </label>
+        {walletBalance <= 0 && (
+          <Link href="/profile/wallet" className="inline-block mt-3 text-sm text-green-600 hover:underline">شارژ کیف پول</Link>
+        )}
+      </div>
+
+      {/* روش پرداخت فقط برای مبلغ باقیمانده (در صورتی که کیف پول کل مبلغ را پوشش ندهد) نمایش داده می‌شود */}
+      {!fullyCoveredByWallet && (
         <PaymentMethodSelector
           method={paymentMethod}
           onMethodChange={setPaymentMethod}
@@ -280,10 +330,18 @@ async function processPayment(method: PaymentMethod) {
         />
       )}
 
-       {paymentMethod === "ONLINE" ? (
+      {fullyCoveredByWallet ? (
         <button
           onClick={() => handlePay("ONLINE")}
           disabled={loading}
+          className="w-full rounded-full bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {loading ? "در حال پردازش..." : `پرداخت ${totalBeforeWallet.toLocaleString("fa-IR")} تومان از کیف پول`}
+        </button>
+      ) : paymentMethod === "ONLINE" ? (
+        <button
+          onClick={() => handlePay("ONLINE")}
+          disabled={true}
           className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
         >
           {loading ? "در حال پردازش..." : isLocked ? "پرداخت نهایی (پیش‌فاکتور فعال)" : "پرداخت و ثبت نهایی سفارش"}

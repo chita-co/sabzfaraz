@@ -10,13 +10,12 @@ const DEFAULT_BOT_SETTINGS = {
   bots_per_auction: 5,
   min_interval_minutes: 20,
   max_interval_minutes: 40,
-  stop_after_real_bid: false,
+  stop_after_real_bid: true,
   end_behavior: "CANCEL",
 };
 
 export default async function AdminAuctionBotsPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("auction_bot_settings").select("*").eq("id", 1).maybeSingle();
-  if (error) console.error("خطا در دریافت تنظیمات ربات‌ها:", error.message);
+  const { data } = await supabase.from("auction_bot_settings").select("*").eq("id", 1).maybeSingle();
   return <BotSettingsForm initial={data ?? DEFAULT_BOT_SETTINGS} />;
 }

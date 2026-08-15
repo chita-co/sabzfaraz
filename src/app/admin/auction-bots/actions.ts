@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { runAuctionBotsOnce } from "@/lib/auction/runBots";
 
 export async function updateBotSettings(formData: FormData) {
   const supabase = await createClient();
@@ -19,4 +20,14 @@ export async function updateBotSettings(formData: FormData) {
   if (error) return { error: error.message };
   revalidatePath("/admin/auction-bots");
   return { success: true };
+}
+
+export async function runBotsManually() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "ابتدا وارد شوید." };
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "ADMIN") return { error: "دسترسی غیرمجاز." };
+  const result = await runAuctionBotsOnce();
+  return result;
 }

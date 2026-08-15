@@ -15,7 +15,7 @@ import NotificationBell from "@/components/shop/NotificationBell";
 interface CategoryLite { id: string; name: string; slug: string; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار ",
+  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "مزایده",
 }: {
   isLoggedIn: boolean;
   userName: string | null;
@@ -30,8 +30,6 @@ export default function HeaderNav({
   const pathname = usePathname();
   const { totalItems } = useCartTotals();
 
-  // آیتم‌های داخل پیل هدر (لوگو دیگر اینجا نیست، جدا از منو رندر می‌شود)
-  // ترتیب: سبزفراز / دسته‌بندی‌ها / جمعه بازار (صفحه مزایده) / آنباکس / سفارش جمعی / درباره ما / تماس با ما
   const navItems: GooeyNavItem[] = [
     { type: "link", label: "سبزفراز", href: "/", shiny: true },
     {
@@ -61,20 +59,21 @@ export default function HeaderNav({
       setMobileOpen(false);
     }
   }
+
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <nav className="site-nav">
-          {/* ===== لوگوی رنگی دایره‌ای — بیرون از پیل منو ===== */}
-          <Link href="/" className="site-brand-logo" aria-label="سبزفراز - صفحه اصلی">
-            {logoUrl && (
-              <span className="site-logo-shine-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logoUrl} alt="سبزفراز" className="site-logo-img" />
-              </span>
-            )}
-          </Link>
+        {/* لوگو حالا خارج از منوی گویی است و همیشه (چه دسکتاپ چه موبایل) دیده می‌شود */}
+        <Link href="/" className="site-brand-logo" aria-label="سبزفراز - صفحه اصلی">
+          {logoUrl && (
+            <span className="site-logo-shine-wrap">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logoUrl} alt="سبزفراز" className="site-logo-img" />
+            </span>
+          )}
+        </Link>
 
+        <nav className="site-nav ad-gooey-nav-hide-mobile">
           <div className="gooey-nav-wrapper">
             <GooeyNav items={navItems} initialActiveIndex={initialNavIndex} />
           </div>
@@ -85,7 +84,6 @@ export default function HeaderNav({
           <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </form>
 
-        {/* ===== بخش اصلی دکمه‌های هدر (دسکتاپ) ===== */}
         <div className="site-actions">
           <Link href="/wishlist" className="site-icon-btn"><Heart size={20} /></Link>
           <NotificationBell />
@@ -103,27 +101,15 @@ export default function HeaderNav({
                   <div className="site-dropdown-menu site-dropdown-left">
                     <div className="site-dropdown-user">{userName || "کاربر"}</div>
                     <Link href="/profile">پروفایل من</Link>
-                    <Link href="/profile/orders">
-                      <Package size={14} /> سفارشات من
-                    </Link>
-                    <Link href="/profile/loyalty">
-                      <Gift size={14} /> باشگاه مشتریان
-                    </Link>
-                    <Link href="/unboxing">
-                      <Clapperboard size={14} /> آنباکس محصولات
-                    </Link>
-                    <Link href="/profile/wallet">
-                      <Wallet size={14} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
-                    </Link>
+                    <Link href="/profile/orders"><Package size={14} /> سفارشات من</Link>
+                    <Link href="/profile/loyalty"><Gift size={14} /> باشگاه مشتریان</Link>
+                    <Link href="/unboxing"><Clapperboard size={14} /> آنباکس محصولات</Link>
+                    <Link href="/profile/wallet"><Wallet size={14} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)</Link>
                     {isAdmin && (
-                      <Link href="/admin" className="site-dropdown-admin">
-                        <LayoutDashboard size={14} /> پنل مدیریت
-                      </Link>
+                      <Link href="/admin" className="site-dropdown-admin"><LayoutDashboard size={14} /> پنل مدیریت</Link>
                     )}
                     <form action={signOut}>
-                      <button type="submit" className="site-dropdown-logout">
-                        <LogOut size={14} /> خروج
-                      </button>
+                      <button type="submit" className="site-dropdown-logout"><LogOut size={14} /> خروج</button>
                     </form>
                   </div>
                 )}
@@ -137,7 +123,6 @@ export default function HeaderNav({
         </div>
       </div>
 
-      {/* ===== منوی موبایل (بدون تغییر نسبت به قبل) ===== */}
       {mobileOpen && (
         <div className="site-mobile-overlay" onClick={() => setMobileOpen(false)}>
           <div className="site-mobile-panel" onClick={(e) => e.stopPropagation()}>
@@ -148,9 +133,7 @@ export default function HeaderNav({
             </form>
 
             <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
-            {auctionEnabled && (
-              <Link href="/auctions" onClick={() => setMobileOpen(false)}>{auctionLabel}</Link>
-            )}
+            {auctionEnabled && <Link href="/auctions" onClick={() => setMobileOpen(false)}>{auctionLabel}</Link>}
             {categories.map((c) => (
               <Link key={c.id} href={`/category/${c.slug}`} onClick={() => setMobileOpen(false)}>{c.name}</Link>
             ))}
@@ -161,7 +144,9 @@ export default function HeaderNav({
             <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
 
-            <NotificationBell />
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+              <NotificationBell /><span>اعلان‌ها</span>
+            </div>
 
             <Link href="/cart" onClick={() => setMobileOpen(false)}>سبد خرید</Link>
             <Link href="/wishlist" onClick={() => setMobileOpen(false)}>علاقه‌مندی‌ها</Link>
@@ -171,9 +156,7 @@ export default function HeaderNav({
                 <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>سفارشات من</Link>
                 <Link href="/profile/loyalty" onClick={() => setMobileOpen(false)}>باشگاه مشتریان</Link>
                 <Link href="/unboxing" onClick={() => setMobileOpen(false)}>آنباکس محصولات</Link>
-                <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>
-                  کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
-                </Link>
+                <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)</Link>
                 {isAdmin && <Link href="/admin" onClick={() => setMobileOpen(false)}>پنل مدیریت</Link>}
                 <form action={signOut}><button type="submit">خروج</button></form>
               </>
@@ -183,6 +166,13 @@ export default function HeaderNav({
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
+        @media (max-width: 1024px) {
+          .ad-gooey-nav-hide-mobile { display: none !important; }
+        }
+      `}</style>
     </header>
   );
 }

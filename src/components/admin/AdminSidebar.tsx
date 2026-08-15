@@ -89,6 +89,8 @@ const navConfig: NavItem[] = [
     icon: Wallet,
     children: [
       { href: "/admin/finance/transactions", label: "تراکنش‌ها" },
+      { href: "/admin/finance/wallet-transactions", label: "تراکنش‌های کیف پول" },
+      { href: "/admin/finance/wallet-withdrawals", label: "برداشت کیف پول (تسویه)" },
       { href: "/admin/analytics", label: "گزارش فروش" },
       { href: "/admin/analytics-visitors", label: "آمار بازدیدکنندگان" },
     ],

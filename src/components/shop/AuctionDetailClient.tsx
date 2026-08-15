@@ -5,14 +5,24 @@ import { Clock, Users, Gavel, Heart, Wallet, Zap, EyeOff } from "lucide-react";
 import { getAuctionLiveState, payAuctionEntryFee, placeAuctionBid, toggleAuctionFavorite, setAuctionProxyBid } from "@/app/(shop)/auctions/actions";
 import AuctionBidChart from "./AuctionBidChart";
 import AuctionShareButtons from "./AuctionShareButtons";
-import type { BidHistoryItem } from "@/lib/auction/queries";
 import AuctionGroupBiddingBox from "./AuctionGroupBiddingBox";
+import type { BidHistoryItem } from "@/lib/auction/queries";
+import "./auction-detail.css";
 
 interface Auction {
   id: string; title: string; description: string; images: string[];
   base_price: number; min_increment: number; entry_fee: number; shipping_cost: number;
   ends_at: string; starts_at: string; status: string; rules_text: string | null; is_sealed: boolean;
 }
+
+const statusColor: Record<string, string> = {
+  ACTIVE: "#16a34a", UPCOMING: "#3b82f6", ENDED: "#6b7280",
+  WINNER_DETERMINED: "#16a34a", CANCELLED: "#dc2626", FAILED_NO_WINNER: "#6b7280",
+};
+const statusLabel: Record<string, string> = {
+  ACTIVE: "در حال برگزاری", UPCOMING: "به‌زودی شروع می‌شود", ENDED: "پایان یافته",
+  WINNER_DETERMINED: "برنده مشخص شد", CANCELLED: "لغو شده", FAILED_NO_WINNER: "بدون برنده",
+};
 
 function useCountdown(endsAt: string) {
   const [remaining, setRemaining] = useState(() => Math.max(0, new Date(endsAt).getTime() - Date.now()));
@@ -59,9 +69,7 @@ export default function AuctionDetailClient({
     ? Math.max(auction.base_price, (myOwnBid ?? 0) + 1)
     : (highestBid ?? auction.base_price - auction.min_increment) + auction.min_increment;
 
-  const [bidAmount, setBidAmount] = useState(
-    sealedHidden ? minNext.toString() : highestBid ? minNext.toString() : auction.base_price.toString()
-  );
+  const [bidAmount, setBidAmount] = useState(String(sealedHidden ? minNext : (highestBid ? minNext : auction.base_price)));
   const [paying, setPaying] = useState(false);
   const [bidding, setBidding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +112,7 @@ export default function AuctionDetailClient({
     const amount = Number(bidAmount);
     if (!amount || amount < minNext) { setError(`مبلغ پیشنهادی باید حداقل ${minNext.toLocaleString("fa-IR")} تومان باشد.`); return; }
     const confirmMsg = sealedHidden
-      ? `آیا از ثبت پیشنهاد مخفی ${amount.toLocaleString("fa-IR")} تومانی مطمئن هستید؟ این مبلغ تا پایان مزایده برای دیگران نمایش داده نمی‌شود.`
+      ? `آیا از ثبت پیشنهاد مخفی ${amount.toLocaleString("fa-IR")} تومانی مطمئن هستید؟`
       : `آیا از ثبت پیشنهاد ${amount.toLocaleString("fa-IR")} تومانی مطمئن هستید؟ امکان لغو یا کاهش آن وجود ندارد.`;
     if (!confirm(confirmMsg)) return;
     setBidding(true);
@@ -114,6 +122,7 @@ export default function AuctionDetailClient({
     setMessage(sealedHidden ? "پیشنهاد مخفی شما با موفقیت ثبت شد." : "پیشنهاد شما با موفقیت ثبت شد.");
     poll();
     setBidHistory((prev) => [{ id: `local-${Date.now()}`, amount, createdAt: new Date().toISOString(), displayName: sealedHidden ? "پیشنهاد شما" : "شما", isMine: true }, ...prev]);
+    setBidAmount(String(amount + auction.min_increment));
   }
 
   async function handleProxySave() {
@@ -126,7 +135,7 @@ export default function AuctionDetailClient({
     if (result?.error) { setError(result.error); return; }
     setProxyMax(amount);
     setShowProxyBox(false);
-    setMessage("پیشنهاد خودکار شما فعال شد. سیستم تا این سقف به‌صورت خودکار برای شما رقابت می‌کند.");
+    setMessage("پیشنهاد خودکار شما فعال شد.");
     poll();
   }
 
@@ -140,24 +149,25 @@ export default function AuctionDetailClient({
   const chartPoints = bidHistory.filter((b) => !sealedHidden || b.isMine).map((b) => ({ amount: b.amount, createdAt: b.createdAt }));
 
   return (
-    <div className="product-page">
-      <div className="product-card">
-        <div className="product-gallery">
-          <div className="product-gallery-main">
+    <div className="ad-wrap">
+      <div className="ad-grid">
+        {/* گالری */}
+        <div className="ad-gallery">
+          <div className="ad-gallery-main">
             {auction.images?.[activeImage] ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={auction.images[activeImage]} alt={auction.title} />
             ) : (
-              <div className="product-no-image">بدون تصویر</div>
+              <div className="ad-gallery-no-image">بدون تصویر</div>
             )}
-            <button className="product-share-btn" onClick={handleFavorite}>
-              <Heart size={16} fill={favorited ? "#ef4444" : "none"} color={favorited ? "#ef4444" : undefined} />
+            <button className="ad-fav-btn" onClick={handleFavorite} aria-label="علاقه‌مندی">
+              <Heart size={17} fill={favorited ? "#ef4444" : "none"} color={favorited ? "#ef4444" : "#fff"} />
             </button>
           </div>
           {auction.images && auction.images.length > 1 && (
-            <div className="product-thumbs">
+            <div className="ad-thumbs">
               {auction.images.map((img, i) => (
-                <button key={i} className={`product-thumb${i === activeImage ? " active" : ""}`} onClick={() => setActiveImage(i)}>
+                <button key={i} className={`ad-thumb${i === activeImage ? " active" : ""}`} onClick={() => setActiveImage(i)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img} alt="" />
                 </button>
@@ -166,106 +176,102 @@ export default function AuctionDetailClient({
           )}
         </div>
 
-        <div className="product-info">
-          <div className="product-name-row">
-            <h1 className="product-title">{auction.title}</h1>
-            <span className="product-badge-new" style={{ background: isActive ? "#16a34a" : "#9ca3af" }}>
-              {isActive ? "در حال برگزاری" : status === "UPCOMING" ? "به‌زودی شروع می‌شود" : "پایان یافته"}
-            </span>
+        {/* اطلاعات و ثبت پیشنهاد */}
+        <div className="ad-info">
+          <div className="ad-title-row">
+            <h1 className="ad-title">{auction.title}</h1>
+            <span className="ad-status-badge" style={{ background: statusColor[status] }}>{statusLabel[status]}</span>
           </div>
 
-          <div className="flex items-center justify-between mb-3">
+          <div className="ad-share-row">
             <AuctionShareButtons title={auction.title} path={`/auctions/${auction.id}`} />
             {auction.is_sealed && (
-              <span className="badge badge-warning flex items-center gap-1"><EyeOff size={12} /> پیشنهاد مخفی</span>
+              <span className="ad-status-badge" style={{ background: "#b45309", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <EyeOff size={12} /> پیشنهاد مخفی
+              </span>
             )}
           </div>
 
           {isActive && (
-            <div className="qty-total-preview" style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
-              <div className="flex items-center gap-2 mb-1"><Clock size={16} className="text-amber-600" /><b>زمان باقی‌مانده:</b></div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#b45309" }}>
-                {countdown.days > 0 && `${countdown.days.toLocaleString("fa-IR")} روز `}
+            <div className="ad-countdown-card">
+              <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
+              <div className="ad-countdown-value">
+                {countdown.days > 0 && `${countdown.days.toLocaleString("fa-IR")} روز و `}
                 {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
               </div>
             </div>
           )}
 
           {sealedHidden ? (
-            <div className="sealed-bid-note">
-              🔒 این مزایده از نوع پیشنهاد مخفی است — پیشنهادها تا پایان مزایده از دید همه (از جمله شما نسبت به دیگران) پنهان است.
+            <div className="ad-sealed-note">
+              🔒 این مزایده از نوع پیشنهاد مخفی است — پیشنهادها تا پایان مزایده از دید همه (از جمله شما نسبت به دیگران) پنهان می‌ماند.
               {myOwnBid && <><br />پیشنهاد فعلی شما: <b>{myOwnBid.toLocaleString("fa-IR")} تومان</b></>}
             </div>
           ) : (
-            <div className="product-price-block">
-              <div className="price-lowest">
-                <h1>{(highestBid ?? auction.base_price).toLocaleString("fa-IR")} <span>تومان</span></h1>
-              </div>
-              <p className="price-lowest-note">{highestBid ? "بالاترین پیشنهاد فعلی" : "قیمت پایه"}</p>
+            <div className="ad-price-card">
+              <div className="ad-price-label">{highestBid ? "بالاترین پیشنهاد فعلی" : "قیمت پایه (شروع مزایده)"}</div>
+              <div className="ad-price-value">{(highestBid ?? auction.base_price).toLocaleString("fa-IR")}<small>تومان</small></div>
             </div>
           )}
 
-          <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1"><Gavel size={14} /> {bidCount.toLocaleString("fa-IR")} پیشنهاد</span>
-            <span className="flex items-center gap-1"><Users size={14} /> {participantCount.toLocaleString("fa-IR")} شرکت‌کننده</span>
+          <div className="ad-stats-row">
+            <span className="ad-stat"><Gavel size={14} /> <b>{bidCount.toLocaleString("fa-IR")}</b> پیشنهاد ثبت‌شده</span>
+            <span className="ad-stat"><Users size={14} /> <b>{participantCount.toLocaleString("fa-IR")}</b> شرکت‌کننده</span>
           </div>
 
           {auction.entry_fee > 0 && (
-            <div className="points-earn-badge">
+            <div className="ad-entry-fee-box">
               💰 هزینه شرکت در این مزایده: <b>{auction.entry_fee.toLocaleString("fa-IR")} تومان</b>
-              {isLoggedIn && <span>موجودی کیف پول شما: {myWalletBalance.toLocaleString("fa-IR")} تومان</span>}
+              {isLoggedIn && <span className="ad-wallet-line">موجودی کیف پول شما: {myWalletBalance.toLocaleString("fa-IR")} تومان</span>}
             </div>
           )}
 
-          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-          {message && <p className="text-green-600 text-sm mb-3">{message}</p>}
+          {error && <p className="ad-error">{error}</p>}
+          {message && <p className="ad-success">{message}</p>}
 
           {!isLoggedIn ? (
-            <a href="/login" className="product-buy-btn" style={{ justifyContent: "center" }}>ورود برای شرکت در مزایده</a>
+            <a href="/login" className="ad-cta-btn">ورود برای شرکت در مزایده</a>
           ) : isBlacklisted ? (
-            <p className="product-stock-note" style={{ color: "#dc2626" }}>
-              به دلیل عدم پرداخت به‌موقع در مزایده‌های قبلی، امکان شرکت در مزایده‌های جدید برای شما موقتاً غیرفعال شده است. لطفاً با پشتیبانی تماس بگیرید.
-            </p>
+            <div className="ad-disabled-note" style={{ color: "#fca5a5" }}>
+              به دلیل عدم پرداخت به‌موقع در مزایده‌های قبلی، امکان شرکت در مزایده‌های جدید برای شما موقتاً غیرفعال شده است. با پشتیبانی تماس بگیرید.
+            </div>
           ) : !isActive ? (
-            <p className="product-stock-note">{status === "UPCOMING" ? "مزایده هنوز شروع نشده است." : "این مزایده به پایان رسیده است."}</p>
+            <div className="ad-disabled-note">
+              {status === "UPCOMING" ? "این مزایده هنوز شروع نشده است." : "این مزایده به پایان رسیده است."}
+            </div>
           ) : !paid ? (
-            <button onClick={handlePayEntryFee} disabled={paying} className="product-buy-btn" style={{ justifyContent: "center" }}>
+            <button onClick={handlePayEntryFee} disabled={paying} className="ad-cta-btn">
               <Wallet size={18} /> {paying ? "در حال پرداخت..." : `پرداخت هزینه شرکت (${auction.entry_fee.toLocaleString("fa-IR")} تومان)`}
             </button>
           ) : (
             <>
-              <div className="product-qty-row">
-                <div className="product-qty-control" style={{ flex: 1 }}>
-                  <input type="number" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} className="qty-input" style={{ width: "100%" }} min={minNext} />
-                </div>
-                <button onClick={handleBid} disabled={bidding} className="product-buy-btn">
-                  {bidding ? "در حال ثبت..." : sealedHidden ? "ثبت پیشنهاد مخفی" : "ثبت پیشنهاد"}
+              <div className="ad-bid-row">
+                <input type="number" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} className="ad-bid-input" min={minNext} />
+                <button onClick={handleBid} disabled={bidding} className="ad-cta-btn" style={{ width: "auto", flexShrink: 0, padding: "0 22px" }}>
+                  {bidding ? "..." : sealedHidden ? "ثبت پیشنهاد مخفی" : "ثبت پیشنهاد"}
                 </button>
               </div>
-              <p className="min-order-note">
+              <p className="ad-bid-note">
                 {sealedHidden ? `حداقل پیشنهاد شما: ${minNext.toLocaleString("fa-IR")} تومان` : `حداقل پیشنهاد بعدی: ${minNext.toLocaleString("fa-IR")} تومان`}
               </p>
 
               {!auction.is_sealed && (
-                <div className="proxy-bid-box">
+                <div className="ad-proxy-box">
                   {proxyMax ? (
-                    <p className="text-xs text-gray-600 flex items-center gap-1">
-                      <Zap size={13} className="text-amber-500" /> پیشنهاد خودکار شما فعال است — تا سقف <b>{proxyMax.toLocaleString("fa-IR")} تومان</b>
-                      <button onClick={() => setShowProxyBox(true)} className="text-green-600 underline mr-1">ویرایش</button>
+                    <p className="ad-bid-note" style={{ marginBottom: 0 }}>
+                      <Zap size={12} style={{ display: "inline", color: "#fbbf24" }} /> پیشنهاد خودکار فعال — تا سقف <b style={{ color: "#fff" }}>{proxyMax.toLocaleString("fa-IR")} تومان</b>{" "}
+                      <button onClick={() => setShowProxyBox(true)} className="ad-proxy-trigger" style={{ display: "inline", color: "#4ade80" }}>ویرایش</button>
                     </p>
                   ) : !showProxyBox ? (
-                    <button onClick={() => setShowProxyBox(true)} className="text-xs text-gray-600 flex items-center gap-1">
-                      <Zap size={13} className="text-amber-500" /> فعال‌سازی پیشنهاد خودکار (Proxy Bidding)
+                    <button onClick={() => setShowProxyBox(true)} className="ad-proxy-trigger">
+                      <Zap size={13} style={{ color: "#fbbf24" }} /> فعال‌سازی پیشنهاد خودکار (Proxy Bidding)
                     </button>
                   ) : null}
 
                   {showProxyBox && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 mb-2">حداکثر مبلغی که مایلید برای این کالا بپردازید را وارد کنید؛ سیستم تا این سقف به‌صورت خودکار برای شما رقابت می‌کند.</p>
-                      <div className="flex gap-2">
-                        <input type="number" value={proxyInput} onChange={(e) => setProxyInput(e.target.value)} placeholder="مثلاً 5000000" className="admin-input" style={{ flex: 1 }} />
-                        <button onClick={handleProxySave} disabled={proxySaving} className="admin-btn admin-btn-primary">{proxySaving ? "..." : "فعال‌سازی"}</button>
-                      </div>
+                    <div className="ad-proxy-input-row">
+                      <input type="number" value={proxyInput} onChange={(e) => setProxyInput(e.target.value)} placeholder="حداکثر مبلغ پیشنهادی شما" className="ad-proxy-input" />
+                      <button onClick={handleProxySave} disabled={proxySaving} className="ad-cta-btn" style={{ width: "auto", padding: "0 18px" }}>{proxySaving ? "..." : "فعال"}</button>
                     </div>
                   )}
                 </div>
@@ -275,42 +281,42 @@ export default function AuctionDetailClient({
             </>
           )}
 
-          <div className="product-description">
-            <h3 className="product-section-title">توضیحات محصول</h3>
-            <p className="product-description-text">{auction.description}</p>
+          <div className="ad-section">
+            <h3 className="ad-section-title">توضیحات محصول</h3>
+            <p className="ad-section-text">{auction.description}</p>
           </div>
 
           {auction.rules_text && (
-            <div className="product-description">
-              <h3 className="product-section-title">قوانین این مزایده</h3>
-              <p className="product-description-text">{auction.rules_text}</p>
+            <div className="ad-section">
+              <h3 className="ad-section-title">قوانین این مزایده</h3>
+              <p className="ad-section-text">{auction.rules_text}</p>
             </div>
           )}
 
           {!sealedHidden && chartPoints.length >= 2 && (
-            <div className="product-description">
-              <h3 className="product-section-title">نمودار زنده پیشنهادها</h3>
+            <div className="ad-section">
+              <h3 className="ad-section-title">نمودار زنده پیشنهادها</h3>
               <AuctionBidChart points={chartPoints} basePrice={auction.base_price} />
             </div>
           )}
 
-          <div className="product-description">
-            <h3 className="product-section-title">تاریخچه پیشنهادها</h3>
+          <div className="ad-section">
+            <h3 className="ad-section-title">تاریخچه پیشنهادها</h3>
             {bidHistory.length > 0 ? (
-              <table className="qty-tiers-table">
+              <table className="ad-history-table">
                 <thead><tr><th>کاربر</th><th>مبلغ</th><th>زمان</th></tr></thead>
                 <tbody>
                   {bidHistory.map((b) => (
-                    <tr key={b.id} style={b.isMine ? { background: "#f0fdf4" } : undefined}>
+                    <tr key={b.id} className={b.isMine ? "ad-mine" : ""}>
                       <td>{b.displayName}</td>
                       <td>{b.amount.toLocaleString("fa-IR")} تومان</td>
-                      <td className="text-xs text-gray-500">{new Date(b.createdAt).toLocaleTimeString("fa-IR")}</td>
+                      <td>{new Date(b.createdAt).toLocaleTimeString("fa-IR")}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p className="product-description-text">{sealedHidden ? "شما هنوز پیشنهادی ثبت نکرده‌اید." : "هنوز پیشنهادی ثبت نشده — اولین نفر باشید!"}</p>
+              <p className="ad-history-empty">{sealedHidden ? "شما هنوز پیشنهادی ثبت نکرده‌اید." : "هنوز پیشنهادی ثبت نشده — اولین نفر باشید!"}</p>
             )}
           </div>
         </div>

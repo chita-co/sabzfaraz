@@ -83,3 +83,16 @@ export async function cancelAuction(id: string, reason: string) {
   revalidatePath(`/admin/auctions/${id}`);
   return { success: true };
 }
+
+export async function deleteAuction(id: string) {
+  const supabase = await createClient();
+  const { data: participants } = await supabase.from("auction_participants").select("user_id").eq("auction_id", id).eq("entry_fee_paid", true);
+  for (const p of participants ?? []) {
+    await supabase.rpc("refund_auction_entry_fee", { p_auction_id: id, p_user_id: p.user_id, p_reason: "بازگشت هزینه شرکت — حذف مزایده توسط مدیر" });
+  }
+  const { error } = await supabase.from("auctions").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/auctions");
+  revalidatePath("/auctions");
+  return { success: true };
+}

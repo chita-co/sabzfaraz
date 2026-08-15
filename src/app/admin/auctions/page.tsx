@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Plus, Gavel, Users, Wallet, TrendingUp } from "lucide-react";
+import DeleteAuctionButton from "@/components/admin/DeleteAuctionButton";
 
 const statusLabels: Record<string, string> = {
   UPCOMING: "پیش‌رو", ACTIVE: "فعال", ENDED: "پایان‌یافته",
@@ -61,7 +62,12 @@ export default async function AdminAuctionsPage({ searchParams }: { searchParams
                 <td>{a.base_price.toLocaleString("fa-IR")} تومان</td>
                 <td><span className={statusBadge[a.status]}>{statusLabels[a.status]}</span></td>
                 <td className="text-xs text-gray-500">{new Date(a.ends_at).toLocaleString("fa-IR")}</td>
-                <td><Link href={`/admin/auctions/${a.id}`} className="admin-btn admin-btn-secondary">جزئیات</Link></td>
+                <td>
+  <div className="flex gap-1">
+    <Link href={`/admin/auctions/${a.id}`} className="admin-btn admin-btn-secondary">جزئیات</Link>
+    <DeleteAuctionButton auctionId={a.id} />
+  </div>
+</td>
               </tr>
             ))}
           </tbody>

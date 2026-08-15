@@ -1,0 +1,164 @@
+/* استایل کاملاً مستقل صفحه‌ی مزایده — هیچ وابستگی به فایل‌های دیگر ندارد */
+.ad-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 16px 60px;
+  position: relative;
+  z-index: 10;
+}
+.ad-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ad-grid { grid-template-columns: 1fr; gap: 20px; }
+}
+
+/* ===== گالری تصاویر ===== */
+.ad-gallery {
+  position: sticky;
+  top: 90px;
+}
+@media (max-width: 900px) { .ad-gallery { position: static; } }
+.ad-gallery-main {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+.ad-gallery-main img { width: 100%; height: 100%; object-fit: contain; }
+.ad-gallery-no-image { display: flex; align-items: center; justify-content: center; height: 100%; color: #9ca3af; font-size: 13px; }
+.ad-fav-btn {
+  position: absolute; top: 12px; left: 12px; width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+}
+.ad-thumbs { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 4px; }
+.ad-thumb {
+  flex-shrink: 0; width: 64px; height: 64px; border-radius: 10px; overflow: hidden;
+  border: 2px solid transparent; opacity: 0.6; cursor: pointer; background: rgba(255, 255, 255, 0.05);
+}
+.ad-thumb.active { border-color: #16a34a; opacity: 1; }
+.ad-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ===== پنل اطلاعات ===== */
+.ad-info { color: #f3f4f6; }
+.ad-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.ad-title { font-size: 20px; font-weight: 800; color: #ffffff; line-height: 1.5; }
+.ad-status-badge { flex-shrink: 0; padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: #fff; white-space: nowrap; }
+
+.ad-share-row { margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+.ad-countdown-card {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.ad-countdown-label { display: flex; align-items: center; gap: 6px; color: #fcd34d; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.ad-countdown-value { font-size: 24px; font-weight: 800; color: #fbbf24; letter-spacing: 0.5px; direction: ltr; text-align: right; }
+
+.ad-price-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.ad-price-label { font-size: 12.5px; color: #9ca3af; margin-bottom: 4px; }
+.ad-price-value { font-size: 30px; font-weight: 800; color: #4ade80; }
+.ad-price-value small { font-size: 14px; font-weight: 600; color: #9ca3af; margin-right: 6px; }
+
+.ad-stats-row { display: flex; gap: 18px; margin-bottom: 16px; flex-wrap: wrap; }
+.ad-stat { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #d1d5db; }
+.ad-stat b { color: #ffffff; }
+
+.ad-sealed-note {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: #fcd34d;
+  margin-bottom: 16px;
+  line-height: 1.9;
+}
+
+.ad-entry-fee-box {
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #d1fae5;
+}
+.ad-entry-fee-box b { color: #4ade80; }
+.ad-entry-fee-box .ad-wallet-line { display: block; margin-top: 4px; font-size: 12px; color: #a7f3d0; }
+
+.ad-error { color: #fca5a5; font-size: 13px; margin-bottom: 12px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 10px 14px; }
+.ad-success { color: #86efac; font-size: 13px; margin-bottom: 12px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 10px; padding: 10px 14px; }
+
+.ad-cta-btn {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff; font-weight: 700; font-size: 14.5px;
+  border: none; border-radius: 14px; padding: 14px 20px; cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+}
+.ad-cta-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(22, 163, 74, 0.45); }
+.ad-cta-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.ad-cta-btn.ad-cta-secondary { background: rgba(255,255,255,0.08); box-shadow: none; border: 1px solid rgba(255,255,255,0.18); }
+
+.ad-bid-row { display: flex; gap: 10px; margin-bottom: 8px; }
+.ad-bid-input {
+  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px; padding: 12px 14px; color: #fff; font-size: 15px; font-weight: 700;
+  direction: ltr; text-align: right;
+}
+.ad-bid-input:focus { outline: none; border-color: #16a34a; }
+.ad-bid-note { font-size: 11.5px; color: #9ca3af; margin-bottom: 18px; }
+
+.ad-disabled-note {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; padding: 14px 18px; color: #d1d5db; font-size: 13px; margin-bottom: 14px;
+}
+
+.ad-section {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 16px; margin-top: 16px;
+}
+.ad-section-title { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
+.ad-section-text { font-size: 13px; color: #d1d5db; line-height: 2; white-space: pre-line; }
+
+.ad-history-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ad-history-table th { text-align: right; padding: 8px; color: #9ca3af; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.ad-history-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #e5e7eb; }
+.ad-history-table tr.ad-mine td { background: rgba(74, 222, 128, 0.08); }
+.ad-history-empty { font-size: 13px; color: #9ca3af; padding: 10px 0; }
+
+.ad-proxy-box {
+  border: 1px dashed rgba(255,255,255,0.25); border-radius: 14px; padding: 14px 16px; margin-top: 14px; background: rgba(255,255,255,0.03);
+}
+.ad-proxy-trigger { font-size: 12.5px; color: #d1d5db; display: flex; align-items: center; gap: 6px; cursor: pointer; background: none; border: none; padding: 0; }
+.ad-proxy-input-row { display: flex; gap: 8px; margin-top: 10px; }
+.ad-proxy-input {
+  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px; padding: 10px 12px; color: #fff; font-size: 13.5px; direction: ltr; text-align: right;
+}
+
+@media (max-width: 640px) {
+  .ad-title { font-size: 17px; }
+  .ad-price-value { font-size: 24px; }
+  .ad-countdown-value { font-size: 19px; }
+  .ad-stats-row { gap: 10px; }
+}

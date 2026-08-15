@@ -17,12 +17,23 @@ interface CheckoutItem {
   quantity: number;
 }
 
+async function decrementStockForItems(supabase: Awaited<ReturnType<typeof createClient>>, items: CheckoutItem[]) {
+  for (const item of items) {
+    try {
+      await supabase.rpc("decrement_product_stock", { p_product_id: item.productId, p_qty: item.quantity });
+    } catch (e) {
+      console.error("خطا در کسر موجودی محصول:", e);
+    }
+  }
+}
+
 export async function createOrderAndPay(
   items: CheckoutItem[],
   addressId: string,
   shippingCost: number,
   loyaltyPointsToRedeem: number = 0,
   discountCodeId: string | null = null,
+  walletAmountToUse: number = 0,
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -71,9 +82,7 @@ export async function createOrderAndPay(
 
   if (loyaltyPointsToRedeem > 0) {
     const redemption = await redeemPointsForOrder(user.id, order.id, loyaltyPointsToRedeem);
-    if (redemption?.error) {
-      return { error: redemption.error };
-    }
+    if (redemption?.error) return { error: redemption.error };
     finalAmount = finalAmount - (redemption.discountAmount ?? 0);
     if (finalAmount < 0) finalAmount = 0;
   }
@@ -85,8 +94,30 @@ export async function createOrderAndPay(
     if (finalAmount < 0) finalAmount = 0;
   }
 
-  if (finalAmount !== totalAmount) {
-    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+  // ===== اعمال موجودی کیف پول (جزئی یا کامل) — سرور مقدار واقعی را بر اساس موجودی واقعی محدود می‌کند =====
+  let remainder = finalAmount;
+  if (walletAmountToUse > 0) {
+    const requestedWalletUse = Math.min(walletAmountToUse, finalAmount);
+    const { data: walletData, error: walletError } = await supabase.rpc("debit_wallet_amount", {
+      p_user_id: user.id,
+      p_amount: requestedWalletUse,
+      p_description: `پرداخت سفارش ${orderNumber} از کیف پول`,
+    });
+    if (walletError) return { error: walletError.message };
+    const walletResult = walletData as { debited?: number };
+    remainder = finalAmount - (walletResult.debited ?? 0);
+    if (remainder < 0) remainder = 0;
+  }
+
+  if (remainder !== totalAmount) {
+    await supabase.from("orders").update({ total_amount: remainder }).eq("id", order.id);
+  }
+
+  // اگر کیف پول کل مبلغ را پوشش داد، نیازی به درگاه نیست
+  if (remainder === 0) {
+    await supabase.from("orders").update({ payment_status: "PAID", payment_method: "WALLET" }).eq("id", order.id);
+    await decrementStockForItems(supabase, items);
+    redirect(`/order/${order.id}?payment=success`);
   }
 
   const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback?orderId=${order.id}`;
@@ -94,7 +125,7 @@ export async function createOrderAndPay(
   let payment;
   try {
     payment = await requestPayment({
-      amount: finalAmount,
+      amount: remainder,
       description: `پرداخت سفارش ${orderNumber}`,
       callbackUrl,
       mobile: address.phone,
@@ -120,6 +151,7 @@ export async function createOfflineOrder(
   bankAccountId: string,
   loyaltyPointsToRedeem: number = 0,
   discountCodeId: string | null = null,
+  walletAmountToUse: number = 0,
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -147,7 +179,7 @@ export async function createOfflineOrder(
       total_amount: totalAmount,
       shipping_cost: shippingCost,
       status: "PENDING",
-      payment_status: "AWAITING_CONFIRMATION",
+      payment_status: "PENDING",
       payment_method: paymentMethod,
       bank_account_id: bankAccountId,
     })
@@ -171,6 +203,7 @@ export async function createOfflineOrder(
   if (itemsError) return { error: "خطا در ثبت اقلام سفارش: " + itemsError.message };
 
   let finalAmount = totalAmount;
+
   if (loyaltyPointsToRedeem > 0) {
     const redemption = await redeemPointsForOrder(user.id, order.id, loyaltyPointsToRedeem);
     if (redemption?.error) return { error: redemption.error };
@@ -185,9 +218,31 @@ export async function createOfflineOrder(
     if (finalAmount < 0) finalAmount = 0;
   }
 
-  if (finalAmount !== totalAmount) {
-    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+  let remainder = finalAmount;
+  if (walletAmountToUse > 0) {
+    const requestedWalletUse = Math.min(walletAmountToUse, finalAmount);
+    const { data: walletData, error: walletError } = await supabase.rpc("debit_wallet_amount", {
+      p_user_id: user.id,
+      p_amount: requestedWalletUse,
+      p_description: `پرداخت سفارش ${orderNumber} از کیف پول`,
+    });
+    if (walletError) return { error: walletError.message };
+    const walletResult = walletData as { debited?: number };
+    remainder = finalAmount - (walletResult.debited ?? 0);
+    if (remainder < 0) remainder = 0;
   }
+
+  if (remainder !== totalAmount) {
+    await supabase.from("orders").update({ total_amount: remainder }).eq("id", order.id);
+  }
+
+  if (remainder === 0) {
+    await supabase.from("orders").update({ payment_status: "PAID", payment_method: "WALLET" }).eq("id", order.id);
+    await decrementStockForItems(supabase, items);
+    redirect(`/order/${order.id}?payment=success`);
+  }
+
+  await supabase.from("orders").update({ payment_status: "AWAITING_CONFIRMATION" }).eq("id", order.id);
 
   redirect(`/order/${order.id}?payment=offline&status=registered`);
 }
