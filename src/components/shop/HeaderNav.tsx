@@ -15,7 +15,7 @@ import NotificationBell from "@/components/shop/NotificationBell";
 interface CategoryLite { id: string; name: string; slug: string; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "مزایده",
+  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار ",
 }: {
   isLoggedIn: boolean;
   userName: string | null;
@@ -31,7 +31,7 @@ export default function HeaderNav({
   const { totalItems } = useCartTotals();
 
   // آیتم‌های داخل پیل هدر (لوگو دیگر اینجا نیست، جدا از منو رندر می‌شود)
-  // ترتیب: سبزفراز / دسته‌بندی‌ها / مزایده / آنباکس / سفارش جمعی / جمعه بازار / درباره ما / تماس با ما
+  // ترتیب: سبزفراز / دسته‌بندی‌ها / جمعه بازار (صفحه مزایده) / آنباکس / سفارش جمعی / درباره ما / تماس با ما
   const navItems: GooeyNavItem[] = [
     { type: "link", label: "سبزفراز", href: "/", shiny: true },
     {
@@ -42,7 +42,6 @@ export default function HeaderNav({
     ...(auctionEnabled ? [{ type: "link" as const, label: auctionLabel, href: "/auctions" }] : []),
     { type: "link", label: "آنباکس", href: "/unboxing" },
     { type: "link", label: "سفارش جمعی", href: "/bulk-order" },
-    ...(auctionEnabled ? [{ type: "link" as const, label: "جمعه بازار", href: "/reverse-auctions" }] : []),
     { type: "link", label: "درباره ما", href: "/about" },
     { type: "link", label: "تماس با ما", href: "/contact" },
   ];
@@ -159,9 +158,6 @@ export default function HeaderNav({
               <Clapperboard size={16} style={{ display: "inline", marginLeft: 6 }} /> آنباکس مشتریان
             </Link>
             <Link href="/bulk-order" onClick={() => setMobileOpen(false)}>سفارش جمعی</Link>
-            {auctionEnabled && (
-              <Link href="/reverse-auctions" onClick={() => setMobileOpen(false)}>جمعه بازار</Link>
-            )}
             <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
 

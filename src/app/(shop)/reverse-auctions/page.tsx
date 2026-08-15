@@ -25,7 +25,7 @@ export default async function ReverseAuctionsListPage() {
             <TrendingDown size={22} className="text-amber-400" />
             <h1 className="text-xl font-bold text-white">حراج معکوس — قیمت هر لحظه پایین‌تر می‌رود</h1>
           </div>
-          <Link href="/auctions" className="order-tab flex items-center gap-1"><Gavel size={14} /> مزایده‌های پیشنهادی</Link>
+          <Link href="/auctions" className="order-tab flex items-center gap-1" style={{ color: "#000" }}><Gavel size={14} /> مزایده‌های پیشنهادی</Link>
         </div>
         <p className="text-gray-300 text-sm mb-6">قیمت این کالاها به‌تدریج کاهش می‌یابد؛ اولین کسی که دکمه خرید را بزند، کالا را با همان قیمت لحظه‌ای می‌برد.</p>
 

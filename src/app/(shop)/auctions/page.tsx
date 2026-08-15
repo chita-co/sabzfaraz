@@ -31,7 +31,7 @@ export default async function AuctionsListPage() {
     <Gavel size={22} className="text-amber-400" />
     <h1 className="text-xl font-bold text-white">مزایده‌های فعال و آینده</h1>
   </div>
-  <Link href="/reverse-auctions" className="order-tab flex items-center gap-1"><TrendingDown size={14} /> حراج معکوس</Link>
+  <Link href="/reverse-auctions" className="order-tab flex items-center gap-1" style={{ color: "#000" }}><TrendingDown size={14} /> حراج معکوس</Link>
 </div>
 
         {auctions && auctions.length > 0 ? (
