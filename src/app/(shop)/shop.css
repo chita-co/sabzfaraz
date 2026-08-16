@@ -538,25 +538,60 @@
   flex-shrink: 0;
 }
 
-.footer-trust-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
-.footer-enamad {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px dashed rgba(234, 179, 8, 0.4);
-  border-radius: 10px;
-  padding: 6px;
-  display: flex; align-items: center; justify-content: center;
-  text-align: center;
-  font-size: 9.5px;
-  color: rgba(255, 255, 255, 0.55);
-  width: 64px; height: 64px;
+.footer-trust-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
 }
-.trust-badge-btn {
-  width: 64px; height: 64px; border-radius: 10px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
-  cursor: pointer; padding: 0; flex-shrink: 0;
-}
-.trust-badge-btn img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
 
+.enamad-badges-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.enamad-badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.enamad-badge-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.enamad-badge-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.trust-badge-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.trust-badge-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  display: block;
+}
 .trust-badge-modal-overlay {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 160;
   display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -1877,3 +1912,25 @@
   }
 }
 
+.enamad-badges-row {
+  display: flex;
+  gap: 8px;
+}
+.enamad-badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.enamad-badge-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+.enamad-badge-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+}

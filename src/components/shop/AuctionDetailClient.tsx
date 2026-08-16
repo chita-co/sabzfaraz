@@ -25,11 +25,22 @@ const statusLabel: Record<string, string> = {
 };
 
 function useCountdown(endsAt: string) {
-  const [remaining, setRemaining] = useState(() => Math.max(0, new Date(endsAt).getTime() - Date.now()));
+  const [remaining, setRemaining] = useState<number | null>(null); // null یعنی «هنوز mount نشده»
+
   useEffect(() => {
-    const timer = setInterval(() => setRemaining(Math.max(0, new Date(endsAt).getTime() - Date.now())), 1000);
+    function tick() {
+      setRemaining(Math.max(0, new Date(endsAt).getTime() - Date.now()));
+    }
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [endsAt]);
+
+  if (remaining === null) {
+    // دقیقاً همین مقدار روی سرور و در اولین رندر کلاینت (پیش از mount) استفاده می‌شود — بدون تفاوت
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: false, ready: false };
+  }
+
   const totalSec = Math.floor(remaining / 1000);
   return {
     days: Math.floor(totalSec / 86400),
@@ -37,6 +48,7 @@ function useCountdown(endsAt: string) {
     minutes: Math.floor((totalSec % 3600) / 60),
     seconds: totalSec % 60,
     isOver: remaining <= 0,
+    ready: true,
   };
 }
 
@@ -74,6 +86,11 @@ export default function AuctionDetailClient({
   const [bidding, setBidding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+useEffect(() => {
+  const timer = setTimeout(() => setMounted(true), 0);
+  return () => clearTimeout(timer);
+}, []);
 
   const countdown = useCountdown(endsAt);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -193,14 +210,24 @@ export default function AuctionDetailClient({
           </div>
 
           {isActive && (
-            <div className="ad-countdown-card">
-              <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
-              <div className="ad-countdown-value">
-                {countdown.days > 0 && `${countdown.days.toLocaleString("fa-IR")} روز و `}
-                {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
-              </div>
-            </div>
+  <div className="ad-countdown-card">
+    <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
+    <div className="ad-countdown-value">
+      {countdown.ready ? (
+        <>
+          <span className="ad-countdown-time" dir="ltr">
+            {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
+          </span>
+          {countdown.days > 0 && (
+            <span className="ad-countdown-days">و {countdown.days} روز</span>
           )}
+        </>
+      ) : (
+        <span className="ad-countdown-time" dir="ltr">--:--:--</span>
+      )}
+    </div>
+  </div>
+)}
 
           {sealedHidden ? (
             <div className="ad-sealed-note">
@@ -310,7 +337,7 @@ export default function AuctionDetailClient({
                     <tr key={b.id} className={b.isMine ? "ad-mine" : ""}>
                       <td>{b.displayName}</td>
                       <td>{b.amount.toLocaleString("fa-IR")} تومان</td>
-                      <td>{new Date(b.createdAt).toLocaleTimeString("fa-IR")}</td>
+                      <td className="text-xs text-gray-500">{mounted ? new Date(b.createdAt).toLocaleTimeString("fa-IR") : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

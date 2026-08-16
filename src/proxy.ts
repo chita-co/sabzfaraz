@@ -2,7 +2,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+const OLD_DOMAIN = "sabzfaraz.vercel.app";
+const NEW_DOMAIN = "sabzfaraz.ir";
+const EXEMPT_PATH = "/enamad-verify"; // فقط همین مسیر از ریدایرکت مستثناست
+
 export async function proxy(request: NextRequest) {
+  const host = request.headers.get("host") || "";
+
+  // ریدایرکت دائمی دامنه‌ی قدیمی به دامنه‌ی جدید — به‌جز مسیر تأیید اینماد
+  if (host === OLD_DOMAIN && request.nextUrl.pathname !== EXEMPT_PATH) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https:";
+    url.host = NEW_DOMAIN;
+    return NextResponse.redirect(url, 301);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

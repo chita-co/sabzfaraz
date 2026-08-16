@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -15,7 +16,7 @@ import NotificationBell from "@/components/shop/NotificationBell";
 interface CategoryLite { id: string; name: string; slug: string; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "مزایده",
+  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",
 }: {
   isLoggedIn: boolean;
   userName: string | null;
@@ -51,6 +52,18 @@ export default function HeaderNav({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+  const timer = setTimeout(() => setMounted(true), 0);
+  return () => clearTimeout(timer);
+}, []);
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [mobileOpen]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -60,10 +73,57 @@ export default function HeaderNav({
     }
   }
 
+  const mobileMenu = mobileOpen && (
+    <div className="site-mobile-overlay" onClick={() => setMobileOpen(false)}>
+      <div className="site-mobile-panel" onClick={(e) => e.stopPropagation()}>
+        <button className="site-mobile-close" onClick={() => setMobileOpen(false)}><X size={22} /></button>
+        <form className="site-search" onSubmit={handleSearch}>
+          <Search size={16} />
+          <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </form>
+
+        <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
+        {auctionEnabled && (
+          <Link href="/auctions" onClick={() => setMobileOpen(false)}>{auctionLabel}</Link>
+        )}
+        {categories.map((c) => (
+          <Link key={c.id} href={`/category/${c.slug}`} onClick={() => setMobileOpen(false)}>{c.name}</Link>
+        ))}
+        <Link href="/unboxing" onClick={() => setMobileOpen(false)}>
+          <Clapperboard size={16} style={{ display: "inline", marginLeft: 6 }} /> آنباکس مشتریان
+        </Link>
+        <Link href="/bulk-order" onClick={() => setMobileOpen(false)}>سفارش جمعی</Link>
+        <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
+        <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 8px" }}>
+          <NotificationBell /> <span style={{ fontSize: 14, color: "#374151" }}>اعلان‌ها</span>
+        </div>
+
+        <Link href="/cart" onClick={() => setMobileOpen(false)}>سبد خرید</Link>
+        <Link href="/wishlist" onClick={() => setMobileOpen(false)}>علاقه‌مندی‌ها</Link>
+        {isLoggedIn ? (
+          <>
+            <Link href="/profile" onClick={() => setMobileOpen(false)}>پروفایل من</Link>
+            <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>سفارشات من</Link>
+            <Link href="/profile/loyalty" onClick={() => setMobileOpen(false)}>باشگاه مشتریان</Link>
+            <Link href="/unboxing" onClick={() => setMobileOpen(false)}>آنباکس محصولات</Link>
+            <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>
+              کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)
+            </Link>
+            {isAdmin && <Link href="/admin" onClick={() => setMobileOpen(false)}>پنل مدیریت</Link>}
+            <form action={signOut}><button type="submit">خروج</button></form>
+          </>
+        ) : (
+          <Link href="/login" onClick={() => setMobileOpen(false)}>ورود / ثبت‌نام</Link>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        {/* لوگو حالا خارج از منوی گویی است و همیشه (چه دسکتاپ چه موبایل) دیده می‌شود */}
         <Link href="/" className="site-brand-logo" aria-label="سبزفراز - صفحه اصلی">
           {logoUrl && (
             <span className="site-logo-shine-wrap">
@@ -73,7 +133,7 @@ export default function HeaderNav({
           )}
         </Link>
 
-        <nav className="site-nav ad-gooey-nav-hide-mobile">
+        <nav className="site-nav">
           <div className="gooey-nav-wrapper">
             <GooeyNav items={navItems} initialActiveIndex={initialNavIndex} />
           </div>
@@ -123,54 +183,32 @@ export default function HeaderNav({
         </div>
       </div>
 
-      {mobileOpen && (
-        <div className="site-mobile-overlay" onClick={() => setMobileOpen(false)}>
-          <div className="site-mobile-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="site-mobile-close" onClick={() => setMobileOpen(false)}><X size={22} /></button>
-            <form className="site-search" onSubmit={handleSearch}>
-              <Search size={16} />
-              <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            </form>
-
-            <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
-            {auctionEnabled && <Link href="/auctions" onClick={() => setMobileOpen(false)}>{auctionLabel}</Link>}
-            {categories.map((c) => (
-              <Link key={c.id} href={`/category/${c.slug}`} onClick={() => setMobileOpen(false)}>{c.name}</Link>
-            ))}
-            <Link href="/unboxing" onClick={() => setMobileOpen(false)}>
-              <Clapperboard size={16} style={{ display: "inline", marginLeft: 6 }} /> آنباکس مشتریان
-            </Link>
-            <Link href="/bulk-order" onClick={() => setMobileOpen(false)}>سفارش جمعی</Link>
-            <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
-            <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
-              <NotificationBell /><span>اعلان‌ها</span>
-            </div>
-
-            <Link href="/cart" onClick={() => setMobileOpen(false)}>سبد خرید</Link>
-            <Link href="/wishlist" onClick={() => setMobileOpen(false)}>علاقه‌مندی‌ها</Link>
-            {isLoggedIn ? (
-              <>
-                <Link href="/profile" onClick={() => setMobileOpen(false)}>پروفایل من</Link>
-                <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>سفارشات من</Link>
-                <Link href="/profile/loyalty" onClick={() => setMobileOpen(false)}>باشگاه مشتریان</Link>
-                <Link href="/unboxing" onClick={() => setMobileOpen(false)}>آنباکس محصولات</Link>
-                <Link href="/profile/wallet" onClick={() => setMobileOpen(false)}>کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)</Link>
-                {isAdmin && <Link href="/admin" onClick={() => setMobileOpen(false)}>پنل مدیریت</Link>}
-                <form action={signOut}><button type="submit">خروج</button></form>
-              </>
-            ) : (
-              <Link href="/login" onClick={() => setMobileOpen(false)}>ورود / ثبت‌نام</Link>
-            )}
-          </div>
-        </div>
-      )}
+      {/* منوی موبایل با React Portal مستقیم به body متصل می‌شود
+          تا هیچ‌وقت تحت‌تأثیر backdrop-filter/transform هدر یا هر ancestor دیگری قرار نگیرد */}
+      {mounted && mobileMenu && createPortal(mobileMenu, document.body)}
 
       <style jsx>{`
         .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
-        @media (max-width: 1024px) {
-          .ad-gooey-nav-hide-mobile { display: none !important; }
+
+        /* از دسکتاپ کامل تا نقطه‌ی سوییچ به منوی موبایل: منوی گویی به‌جای رپ‌شدن/بهم‌ریختن،
+           به‌صورت افقی اسکرول می‌شود و چیدمان هدر هرگز نمی‌شکند. */
+        @media (max-width: 1400px) and (min-width: 901px) {
+          .site-header-inner { flex-wrap: nowrap !important; gap: 8px !important; }
+          .site-nav {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            flex-shrink: 1 !important;
+            min-width: 0 !important;
+          }
+          .site-nav::-webkit-scrollbar { display: none !important; }
+          .gooey-nav-wrapper { flex-shrink: 0 !important; }
+          .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
+          .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
+        }
+        @media (max-width: 1100px) and (min-width: 901px) {
+          .site-search { display: none !important; }
         }
       `}</style>
     </header>

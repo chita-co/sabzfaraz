@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Share2, Send, MessageCircle, Copy, Check } from "lucide-react";
 
 export default function AuctionShareButtons({ title, path }: { title: string; path: string }) {
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+  const [url, setUrl] = useState(path); // مقدار اولیه دقیقاً همان چیزی که سرور رندر می‌کند
   const text = `مزایده «${title}» را در سبزفراز ببینید:`;
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    setUrl(`${window.location.origin}${path}`);
+  }, 0);
+  return () => clearTimeout(timer);
+}, [path]);
 
   async function handleCopy() {
     try {

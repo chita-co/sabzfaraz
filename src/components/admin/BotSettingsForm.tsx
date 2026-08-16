@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bot, PlayCircle } from "lucide-react";
 import { updateBotSettings, runBotsManually } from "@/app/admin/auction-bots/actions";
 
@@ -10,49 +11,62 @@ interface Settings {
 }
 
 export default function BotSettingsForm({ initial }: { initial: Settings }) {
+  const router = useRouter();
   const [enabled, setEnabled] = useState(initial.enabled_global);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [running, setRunning] = useState(false);
-  const [runResult, setRunResult] = useState<string | null>(null);
+  const [runSummary, setRunSummary] = useState<string | null>(null);
+  const [runDetails, setRunDetails] = useState<string[]>([]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     const fd = new FormData(e.currentTarget);
     if (enabled) fd.set("enabledGlobal", "on"); else fd.delete("enabledGlobal");
-    await updateBotSettings(fd);
+    const result = await updateBotSettings(fd);
     setSaving(false);
+    if (result?.error) { setSaveError(result.error); return; }
     setSaved(true);
+    router.refresh();
   }
 
   async function handleRunNow() {
-    setRunning(true);
-    setRunResult(null);
-    const result = await runBotsManually();
-    setRunning(false);
+  setRunning(true);
+  setRunSummary(null);
+  setRunDetails([]);
 
-    if (!result) {
-      setRunResult("پاسخی از سرور دریافت نشد.");
-      return;
-    }
+  const result = await runBotsManually();
+  setRunning(false);
 
-    if ("error" in result) {
-      setRunResult("خطا: " + result.error);
-      return;
-    }
-
-    if (result.status === "bots-disabled") {
-      setRunResult("ربات‌ها غیرفعال هستند — ابتدا کلید بالا را روشن و ذخیره کنید.");
-      return;
-    }
-
-    setRunResult(`اجرا شد — ${(result.bidsPlaced ?? 0).toLocaleString("fa-IR")} پیشنهاد جدید توسط ربات‌ها ثبت شد.`);
+  if (!result) {
+    setRunSummary("پاسخی از سرور دریافت نشد.");
+    return;
   }
 
+  // ابتدا خطا را جدا می‌کنیم
+  if ("error" in result) {
+    setRunSummary("خطا: " + (result.error ?? "خطای ناشناخته"));
+    return;
+  }
+
+  // حالا TypeScript می‌داند که result حتماً از نوع موفقیت است
+  if (result.status === "bots-disabled") {
+    setRunSummary("ربات‌ها غیرفعال هستند — ابتدا کلید بالا را روشن و «ذخیره تنظیمات» را بزنید.");
+    return;
+  }
+
+  setRunSummary(
+    `اجرا شد — ${(result.bidsPlaced ?? 0).toLocaleString("fa-IR")} پیشنهاد جدید ثبت شد.`
+  );
+  setRunDetails(result.details ?? []);
+}
+
   return (
-    <form onSubmit={handleSubmit} className="admin-card" style={{ maxWidth: 560 }}>
+    <form onSubmit={handleSubmit} className="admin-card" style={{ maxWidth: 620 }}>
       <div className="flex items-center gap-2 mb-6">
         <Bot size={20} className="text-amber-500" />
         <h1 className="text-xl font-bold text-gray-900">تنظیمات ربات‌های پیشنهاددهنده</h1>
@@ -60,13 +74,7 @@ export default function BotSettingsForm({ initial }: { initial: Settings }) {
 
       <label className="ad-toggle-row">
         <span>{enabled ? "ربات‌ها به‌صورت سراسری فعال هستند" : "ربات‌ها غیرفعال هستند"}</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          onClick={() => setEnabled((v) => !v)}
-          className={`ad-toggle-switch${enabled ? " on" : ""}`}
-        >
+        <button type="button" role="switch" aria-checked={enabled} onClick={() => setEnabled((v) => !v)} className={`ad-toggle-switch${enabled ? " on" : ""}`}>
           <span className="ad-toggle-knob" />
         </button>
       </label>
@@ -97,17 +105,23 @@ export default function BotSettingsForm({ initial }: { initial: Settings }) {
         <textarea name="botNames" rows={6} defaultValue={initial.bot_names.join("\n")} />
       </div>
 
-      {saved && <p className="text-green-600 text-sm mb-3">ذخیره شد.</p>}
+      {saveError && <p className="text-red-600 text-sm mb-3">{saveError}</p>}
+      {saved && !saveError && <p className="text-green-600 text-sm mb-3">ذخیره شد.</p>}
       <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">{saving ? "در حال ذخیره..." : "ذخیره تنظیمات"}</button>
 
       <div style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
         <p className="text-xs text-gray-500 mb-2">
-          روی سرور واقعی (Vercel)، ربات‌ها هر ۱۰ دقیقه خودکار اجرا می‌شوند. برای تست روی localhost، از دکمه‌ی زیر استفاده کنید:
+          روی سرور واقعی، ربات‌ها طبق زمان‌بندی pg_cron خودکار اجرا می‌شوند. برای تست فوری:
         </p>
         <button type="button" onClick={handleRunNow} disabled={running} className="admin-btn admin-btn-secondary flex items-center gap-2">
           <PlayCircle size={15} /> {running ? "در حال اجرا..." : "اجرای دستی ربات‌ها (تست)"}
         </button>
-        {runResult && <p className="text-sm mt-2" style={{ color: runResult.startsWith("خطا") ? "#dc2626" : "#16a34a" }}>{runResult}</p>}
+        {runSummary && <p className="text-sm mt-2 font-medium" style={{ color: runSummary.startsWith("خطا") ? "#dc2626" : "#16a34a" }}>{runSummary}</p>}
+        {runDetails.length > 0 && (
+          <ul style={{ marginTop: 8, fontSize: 12, color: "#6b7280", lineHeight: 1.9, listStyle: "disc", paddingRight: 18 }}>
+            {runDetails.map((d, i) => <li key={i}>{d}</li>)}
+          </ul>
+        )}
       </div>
 
       <style jsx>{`

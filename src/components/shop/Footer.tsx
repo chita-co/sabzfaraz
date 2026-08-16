@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Send, Phone, Mail, MapPin } from "lucide-react";
 import TrustBadges from "./TrustBadges";
+import EnamadBadges from "./EnamadBadges";
 
 // آیکون SVG اینستاگرام جایگزین (به دلیل حذف از lucide-react)
 function InstagramIcon({ size = 16 }: { size?: number }) {
@@ -52,21 +53,7 @@ export default async function Footer() {
               <a href="#" aria-label="تلگرام"><Send size={16} /></a>
             </div>
             <div className="footer-trust-row">
-              <div className="footer-enamad">
-                <a
-                  referrerPolicy="origin"
-                  target="_blank"
-                  href="https://trustseal.enamad.ir/?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    referrerPolicy="origin"
-                    src="https://trustseal.enamad.ir/logo.aspx?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk"
-                    alt="نماد اعتماد الکترونیکی"
-                    style={{ cursor: "pointer" }}
-                  />
-                </a>
-              </div>
+              <EnamadBadges />
               <TrustBadges />
             </div>
           </div>
