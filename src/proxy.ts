@@ -4,20 +4,24 @@ import { createServerClient } from "@supabase/ssr";
 
 const OLD_DOMAIN = "sabzfaraz.vercel.app";
 const NEW_DOMAIN = "sabzfaraz.ir";
-const EXEMPT_PATH = "/enamad-verify"; // فقط همین مسیر از ریدایرکت مستثناست
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") || "";
+  const pathname = request.nextUrl.pathname;
 
-  // ریدایرکت دائمی دامنه‌ی قدیمی به دامنه‌ی جدید — به‌جز مسیر تأیید اینماد
-  if (host === OLD_DOMAIN && request.nextUrl.pathname !== EXEMPT_PATH) {
+  // ریدایرکت دامنه‌ی قدیمی به دامنه‌ی جدید — به‌جز ریشه (/)
+  if (host === OLD_DOMAIN && pathname !== "/") {
     const url = request.nextUrl.clone();
     url.protocol = "https:";
     url.host = NEW_DOMAIN;
     return NextResponse.redirect(url, 301);
   }
 
+  // اگر ریشه‌ی دامنه‌ی قدیمی بود، noindex header اضافه کن
   let response = NextResponse.next({ request });
+  if (host === OLD_DOMAIN && pathname === "/") {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,8 +47,6 @@ export async function proxy(request: NextRequest) {
   try {
     await supabase.auth.getUser();
   } catch (error) {
-    // خطای fetch (قطعی شبکه یا مشکل Supabase) را نادیده می‌گیریم
-    // تا صفحات عمومی همچنان بدون خطا لود شوند.
     console.error("Auth error in proxy:", error);
   }
 
@@ -53,7 +55,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // مسیرهای API، فایل‌های استاتیک، sitemap و robots را نادیده می‌گیرد
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|_rsc|product-detail|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
