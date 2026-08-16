@@ -208,24 +208,24 @@ export default function AuctionDetailClient({
           </div>
 
           {isActive && (
-            <div className="ad-countdown-card">
-              <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
-              <div className="ad-countdown-value">
-                {countdown.ready ? (
-                  <>
-                    {countdown.days > 0 && (
-                      <span className="ad-countdown-days">{countdown.days.toLocaleString("fa-IR")} روز و </span>
-                    )}
-                    <span className="ad-countdown-time" dir="ltr">
-                      {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
-                    </span>
-                  </>
-                ) : (
-                  <span className="ad-countdown-time" dir="ltr">--:--:--</span>
-                )}
-              </div>
-            </div>
+  <div className="ad-countdown-card">
+    <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
+    <div className="ad-countdown-value">
+      {countdown.ready ? (
+        <>
+          <span className="ad-countdown-time" dir="ltr">
+            {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
+          </span>
+          {countdown.days > 0 && (
+            <span className="ad-countdown-days">و {countdown.days} روز</span>
           )}
+        </>
+      ) : (
+        <span className="ad-countdown-time" dir="ltr">--:--:--</span>
+      )}
+    </div>
+  </div>
+)}
 
           {sealedHidden ? (
             <div className="ad-sealed-note">
