@@ -188,29 +188,39 @@ export default function HeaderNav({
       {mounted && mobileMenu && createPortal(mobileMenu, document.body)}
 
       <style jsx>{`
-        .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .site-actions,
+  .site-actions > * { flex-shrink: 0; }
 
-        /* از دسکتاپ کامل تا نقطه‌ی سوییچ به منوی موبایل: منوی گویی به‌جای رپ‌شدن/بهم‌ریختن،
-           به‌صورت افقی اسکرول می‌شود و چیدمان هدر هرگز نمی‌شکند. */
-        @media (max-width: 1400px) and (min-width: 901px) {
-          .site-header-inner { flex-wrap: nowrap !important; gap: 8px !important; }
-          .site-nav {
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
-            flex-shrink: 1 !important;
-            min-width: 0 !important;
-          }
-          .site-nav::-webkit-scrollbar { display: none !important; }
-          .gooey-nav-wrapper { flex-shrink: 0 !important; }
-          .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
-          .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
-        }
-        @media (max-width: 1100px) and (min-width: 901px) {
-          .site-search { display: none !important; }
-        }
-      `}</style>
+  /* از دسکتاپ کامل تا نقطه‌ی سوییچ به منوی موبایل (۱۰۲۵ تا ۱۴۰۰ پیکسل): منوی گویی
+     به‌جای رپ‌شدن/بهم‌ریختن، به‌صورت افقی اسکرول می‌شود. نقطه‌ی ۱۰۲۴px دقیقاً همان
+     نقطه‌ای است که shop.css منو را به حالت همبرگری تبدیل می‌کند. */
+  @media (max-width: 1400px) and (min-width: 1025px) {
+    .site-header-inner { flex-wrap: nowrap !important; gap: 8px !important; }
+    .site-nav {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+      flex-shrink: 1 !important;
+      min-width: 0 !important;
+    }
+    .site-nav::-webkit-scrollbar { display: none !important; }
+    .gooey-nav-wrapper { flex-shrink: 0 !important; }
+    .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
+    .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
+  }
+  @media (max-width: 1150px) and (min-width: 1025px) {
+    .site-search { display: none !important; }
+  }
+
+  @media (max-width: 400px) {
+    .site-header-inner { padding: 0 12px !important; gap: 10px !important; }
+    .site-actions { gap: 4px !important; }
+    .site-icon-btn { width: 36px !important; height: 36px !important; }
+    .site-logo-img { height: 52px !important; }
+  }
+`}</style>
     </header>
   );
 }

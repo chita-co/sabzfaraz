@@ -215,7 +215,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .site-nav,
   .site-search {
     display: none;
@@ -538,60 +538,7 @@
   flex-shrink: 0;
 }
 
-.footer-trust-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 16px;
-  flex-wrap: wrap;
-}
 
-.enamad-badges-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.enamad-badge-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.enamad-badge-item img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-
-.enamad-badge-label {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.trust-badge-btn {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.trust-badge-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
-  display: block;
-}
 .trust-badge-modal-overlay {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 160;
   display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -1855,19 +1802,41 @@
   background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: #92400e; margin-bottom: 10px;
 }
 
-/* ===== فیلد جستجوی محصول - واضح و قابل مشاهده ===== */
-.site-search {
+/* ===== فیلد جستجوی محصول - واضح و قابل مشاهده (فقط در حالت دسکتاپ) ===== */
+@media (min-width: 1025px) {
+  .site-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    padding: 8px 16px;
+    min-width: 220px;
+  }
+  .site-search svg { color: #6b7280; flex-shrink: 0; }
+  .site-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    color: #111827;
+    width: 100%;
+  }
+  .site-search input::placeholder { color: #9ca3af; }
+}
+
+.site-mobile-panel .site-search {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 999px;
   padding: 8px 16px;
-  min-width: 220px;
 }
-.site-search svg { color: #6b7280; flex-shrink: 0; }
-.site-search input {
+.site-mobile-panel .site-search svg { color: #6b7280; flex-shrink: 0; }
+.site-mobile-panel .site-search input {
   border: none;
   outline: none;
   background: transparent;
@@ -1875,12 +1844,7 @@
   color: #111827;
   width: 100%;
 }
-.site-search input::placeholder { color: #9ca3af; }
-
-.site-mobile-panel .site-search {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-}
+.site-mobile-panel .site-search input::placeholder { color: #9ca3af; }
 
 /* ===== دکمه‌ی شناور پشتیبانی ===== */
 .floating-support-btn {
@@ -1912,25 +1876,98 @@
   }
 }
 
+/* ===== چیدمان کلی نشان‌ها در فوتر ===== */
+.footer-trust-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 16px;
+  flex-wrap: nowrap;
+}
+
+/* ===== ردیف اینمادها ===== */
 .enamad-badges-row {
   display: flex;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 14px;
 }
+
+/* ===== هر آیتم اینماد — بدون کادر، فقط چیدمان عمودی ===== */
 .enamad-badge-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-}
-.enamad-badge-item img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-.enamad-badge-label {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  line-height: 1.5;
+  gap: 10px;
   margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+/* ===== کادر طلایی فقط دور لوگو/iframe اینماد ===== */
+.enamad-badge-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;      /* کمی عریض‌تر برای جا دادن کامل لوگو */
+  height: 160px;     /* ارتفاع بیشتر تا ستاره‌های اینماد هم دیده شوند */
+  padding: 10px;
+  border: 1.5px solid rgba(212, 175, 55, 0.7);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 4px 14px rgba(212, 175, 55, 0.12);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.enamad-badge-media img,
+.enamad-badge-media iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: none;
+}
+
+/* ===== کادر طلایی فقط دور متن زیر هر اینماد ===== */
+.enamad-badge-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fde68a;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-line;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 999px;
+  padding: 5px 14px;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+/* ===== ردیف لوگوهای TrustBadges ===== */
+.trust-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ===== دکمه‌های TrustBadges هم‌سایز با کادر لوگوی اینماد ===== */
+.trust-badge-btn {
+  width: 160px;      /* هم‌سایز با enamad-badge-media */
+  height: 160px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.trust-badge-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0;
+  display: block;
 }

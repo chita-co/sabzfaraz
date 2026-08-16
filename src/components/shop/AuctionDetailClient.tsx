@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Clock, Users, Gavel, Heart, Wallet, Zap, EyeOff } from "lucide-react";
+import { Clock, Users, Gavel, Heart, Wallet, Zap, EyeOff, History } from "lucide-react";
 import { getAuctionLiveState, payAuctionEntryFee, placeAuctionBid, toggleAuctionFavorite, setAuctionProxyBid } from "@/app/(shop)/auctions/actions";
 import AuctionBidChart from "./AuctionBidChart";
 import AuctionShareButtons from "./AuctionShareButtons";
@@ -25,7 +25,7 @@ const statusLabel: Record<string, string> = {
 };
 
 function useCountdown(endsAt: string) {
-  const [remaining, setRemaining] = useState<number | null>(null); // null یعنی «هنوز mount نشده»
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     function tick() {
@@ -37,7 +37,6 @@ function useCountdown(endsAt: string) {
   }, [endsAt]);
 
   if (remaining === null) {
-    // دقیقاً همین مقدار روی سرور و در اولین رندر کلاینت (پیش از mount) استفاده می‌شود — بدون تفاوت
     return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: false, ready: false };
   }
 
@@ -73,6 +72,12 @@ export default function AuctionDetailClient({
   const [showProxyBox, setShowProxyBox] = useState(false);
   const [proxyInput, setProxyInput] = useState("");
   const [proxySaving, setProxySaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+  const timer = setTimeout(() => setMounted(true), 0);
+  return () => clearTimeout(timer);
+}, []);
 
   const sealedHidden = auction.is_sealed && (status === "ACTIVE" || status === "UPCOMING");
   const myOwnBid = bidHistory.find((b) => b.isMine)?.amount ?? null;
@@ -86,11 +91,6 @@ export default function AuctionDetailClient({
   const [bidding, setBidding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-useEffect(() => {
-  const timer = setTimeout(() => setMounted(true), 0);
-  return () => clearTimeout(timer);
-}, []);
 
   const countdown = useCountdown(endsAt);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -168,7 +168,6 @@ useEffect(() => {
   return (
     <div className="ad-wrap">
       <div className="ad-grid">
-        {/* گالری */}
         <div className="ad-gallery">
           <div className="ad-gallery-main">
             {auction.images?.[activeImage] ? (
@@ -193,7 +192,6 @@ useEffect(() => {
           )}
         </div>
 
-        {/* اطلاعات و ثبت پیشنهاد */}
         <div className="ad-info">
           <div className="ad-title-row">
             <h1 className="ad-title">{auction.title}</h1>
@@ -210,24 +208,24 @@ useEffect(() => {
           </div>
 
           {isActive && (
-  <div className="ad-countdown-card">
-    <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
-    <div className="ad-countdown-value">
-      {countdown.ready ? (
-        <>
-          <span className="ad-countdown-time" dir="ltr">
-            {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
-          </span>
-          {countdown.days > 0 && (
-            <span className="ad-countdown-days">و {countdown.days} روز</span>
+            <div className="ad-countdown-card">
+              <div className="ad-countdown-label"><Clock size={15} /> زمان باقی‌مانده تا پایان مزایده</div>
+              <div className="ad-countdown-value">
+                {countdown.ready ? (
+                  <>
+                    {countdown.days > 0 && (
+                      <span className="ad-countdown-days">{countdown.days.toLocaleString("fa-IR")} روز و </span>
+                    )}
+                    <span className="ad-countdown-time" dir="ltr">
+                      {String(countdown.hours).padStart(2, "0")}:{String(countdown.minutes).padStart(2, "0")}:{String(countdown.seconds).padStart(2, "0")}
+                    </span>
+                  </>
+                ) : (
+                  <span className="ad-countdown-time" dir="ltr">--:--:--</span>
+                )}
+              </div>
+            </div>
           )}
-        </>
-      ) : (
-        <span className="ad-countdown-time" dir="ltr">--:--:--</span>
-      )}
-    </div>
-  </div>
-)}
 
           {sealedHidden ? (
             <div className="ad-sealed-note">
@@ -308,6 +306,31 @@ useEffect(() => {
             </>
           )}
 
+          {/* ===== تاریخچه پیشنهادها — درست زیر دکمه‌ی پرداخت/ثبت پیشنهاد و پیش از توضیحات ===== */}
+          <div className="ad-history-card">
+            <div className="ad-history-header">
+              <span className="ad-history-header-title"><History size={16} /> تاریخچه پیشنهادها</span>
+              <span className="ad-history-count">{bidHistory.length.toLocaleString("fa-IR")} پیشنهاد</span>
+            </div>
+            <div className="ad-history-scroll">
+              {bidHistory.length > 0 ? (
+                bidHistory.map((b, i) => (
+                  <div key={b.id} className={`ad-history-row${b.isMine ? " ad-mine" : ""}`}>
+                    <span className="ad-history-rank">{(i + 1).toLocaleString("fa-IR")}</span>
+                    <span className="ad-history-name">
+                      {b.displayName}
+                      {b.viaProxy && <Zap size={11} className="ad-history-proxy-icon" />}
+                    </span>
+                    <span className="ad-history-amount">{b.amount.toLocaleString("fa-IR")} تومان</span>
+                    <span className="ad-history-time">{mounted ? new Date(b.createdAt).toLocaleTimeString("fa-IR") : "—"}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="ad-history-empty">{sealedHidden ? "شما هنوز پیشنهادی ثبت نکرده‌اید." : "هنوز پیشنهادی ثبت نشده — اولین نفر باشید!"}</p>
+              )}
+            </div>
+          </div>
+
           <div className="ad-section">
             <h3 className="ad-section-title">توضیحات محصول</h3>
             <p className="ad-section-text">{auction.description}</p>
@@ -326,26 +349,6 @@ useEffect(() => {
               <AuctionBidChart points={chartPoints} basePrice={auction.base_price} />
             </div>
           )}
-
-          <div className="ad-section">
-            <h3 className="ad-section-title">تاریخچه پیشنهادها</h3>
-            {bidHistory.length > 0 ? (
-              <table className="ad-history-table">
-                <thead><tr><th>کاربر</th><th>مبلغ</th><th>زمان</th></tr></thead>
-                <tbody>
-                  {bidHistory.map((b) => (
-                    <tr key={b.id} className={b.isMine ? "ad-mine" : ""}>
-                      <td>{b.displayName}</td>
-                      <td>{b.amount.toLocaleString("fa-IR")} تومان</td>
-                      <td className="text-xs text-gray-500">{mounted ? new Date(b.createdAt).toLocaleTimeString("fa-IR") : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="ad-history-empty">{sealedHidden ? "شما هنوز پیشنهادی ثبت نکرده‌اید." : "هنوز پیشنهادی ثبت نشده — اولین نفر باشید!"}</p>
-            )}
-          </div>
         </div>
       </div>
     </div>

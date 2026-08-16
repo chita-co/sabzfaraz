@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createNotification } from "@/lib/notifications";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 interface AuctionInput {
   title: string; description: string; images: string[]; categoryId: string | null; productId: string | null;
@@ -94,5 +95,25 @@ export async function deleteAuction(id: string) {
   if (error) return { error: error.message };
   revalidatePath("/admin/auctions");
   revalidatePath("/auctions");
+  return { success: true };
+}
+
+export async function deleteAuctionBid(bidId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "ابتدا وارد شوید." };
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "ADMIN") return { error: "دسترسی غیرمجاز." };
+
+  const { data: bid } = await supabase.from("auction_bids").select("auction_id").eq("id", bidId).single();
+  if (!bid) return { error: "پیشنهاد یافت نشد." };
+
+  // چون هیچ سیاست RLS برای حذف از auction_bids تعریف نشده، باید از کلاینت ادمین (service role) استفاده شود
+  const admin = createAdminClient();
+  const { error } = await admin.from("auction_bids").delete().eq("id", bidId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/auctions/${bid.auction_id}`);
+  revalidatePath(`/auctions/${bid.auction_id}`);
   return { success: true };
 }

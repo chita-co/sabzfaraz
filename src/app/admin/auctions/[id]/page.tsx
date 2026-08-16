@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Pencil } from "lucide-react";
 import AdminAuctionActions from "@/components/admin/AdminAuctionActions";
 import ConfirmAuctionPaymentButton from "@/components/admin/ConfirmAuctionPaymentButton";
+import DeleteBidButton from "@/components/admin/DeleteBidButton";
 
 export default async function AdminAuctionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -87,18 +88,19 @@ export default async function AdminAuctionDetailPage({ params }: { params: Promi
       <div className="admin-card">
         <h2 className="font-bold text-gray-800 mb-3">تاریخچه پیشنهادها ({(bids ?? []).length.toLocaleString("fa-IR")})</h2>
         <table className="admin-table">
-          <thead><tr><th>کاربر</th><th>مبلغ</th><th>نوع</th><th>زمان</th></tr></thead>
-          <tbody>
-            {(bids ?? []).map((b) => (
-              <tr key={b.id}>
-                <td>{b.is_bot ? b.bot_name : (b.profile?.full_name ?? "—")}</td>
-                <td>{b.amount.toLocaleString("fa-IR")} تومان</td>
-                <td>{b.is_bot ? <span className="badge badge-warning">ربات</span> : <span className="badge badge-success">واقعی</span>}</td>
-                <td className="text-xs text-gray-500">{new Date(b.created_at).toLocaleString("fa-IR")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  <thead><tr><th>کاربر</th><th>مبلغ</th><th>نوع</th><th>زمان</th><th></th></tr></thead>
+  <tbody>
+    {(bids ?? []).map((b) => (
+      <tr key={b.id}>
+        <td>{b.is_bot ? b.bot_name : (b.profile?.full_name ?? "—")}</td>
+        <td>{b.amount.toLocaleString("fa-IR")} تومان</td>
+        <td>{b.is_bot ? <span className="badge badge-warning">ربات</span> : <span className="badge badge-success">واقعی</span>}</td>
+        <td className="text-xs text-gray-500">{new Date(b.created_at).toLocaleString("fa-IR")}</td>
+        <td><DeleteBidButton bidId={b.id} /></td>
+      </tr>
+    ))}
+  </tbody>
+</table>
       </div>
     </div>
   );
