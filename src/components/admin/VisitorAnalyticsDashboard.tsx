@@ -21,12 +21,15 @@ interface ReportData {
     id: string; startedAt: string; landingPage: string; exitPage: string;
     device: string; browser: string; os: string; source: string;
     pageCount: number; durationSeconds: number; converted: boolean;
+    isGuest: boolean; customerName: string | null; customerPhone: string | null;
   }[];
   totalSessions: number;
 }
 
 interface LiveSession {
   id: string; exit_page: string; device_type: string; browser: string; traffic_source: string; ended_at: string;
+  user_id: string | null;
+  profile: { full_name: string | null } | null;
 }
 
 function formatDuration(seconds: number) {
@@ -189,10 +192,16 @@ export default function VisitorAnalyticsDashboard() {
               <span className="badge badge-success">{liveSessions.length.toLocaleString("fa-IR")} نفر آنلاین</span>
             </div>
             <table className="admin-table">
-              <thead><tr><th>صفحه فعلی</th><th>دستگاه</th><th>مرورگر</th><th>منبع</th></tr></thead>
+              <thead><tr><th>کاربر</th><th>صفحه فعلی</th><th>دستگاه</th><th>مرورگر</th><th>منبع</th></tr></thead>
               <tbody>
                 {liveSessions.map((s) => (
-                  <tr key={s.id}><td dir="ltr" className="text-left text-xs">{s.exit_page}</td><td>{deviceLabel(s.device_type)}</td><td>{s.browser}</td><td>{s.traffic_source}</td></tr>
+                  <tr key={s.id}>
+                    <td>{s.profile?.full_name ?? <span className="text-gray-400">مهمان</span>}</td>
+                    <td dir="ltr" className="text-left text-xs">{s.exit_page}</td>
+                    <td>{deviceLabel(s.device_type)}</td>
+                    <td>{s.browser}</td>
+                    <td>{s.traffic_source}</td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -251,10 +260,20 @@ export default function VisitorAnalyticsDashboard() {
           <div className="admin-card">
             <h2 className="font-bold text-gray-800 mb-4">نشست‌های اخیر (کلیک برای مشاهده جزئیات)</h2>
             <table className="admin-table">
-              <thead><tr><th>زمان شروع</th><th>صفحه ورود</th><th>منبع</th><th>دستگاه</th><th>تعداد صفحه</th><th>مدت حضور</th><th>خرید</th></tr></thead>
+              <thead><tr><th>کاربر</th><th>زمان شروع</th><th>صفحه ورود</th><th>منبع</th><th>دستگاه</th><th>تعداد صفحه</th><th>مدت حضور</th><th>خرید</th></tr></thead>
               <tbody>
                 {data.recentSessions.map((s) => (
                   <tr key={s.id} onClick={() => setDrilldownId(s.id)} className="inline-edit-cell">
+                    <td>
+                      {s.isGuest ? (
+                        <span className="badge badge-info">مهمان</span>
+                      ) : (
+                        <div>
+                          <div className="font-medium text-gray-800">{s.customerName ?? "بدون نام"}</div>
+                          {s.customerPhone && <div className="text-xs text-gray-400" dir="ltr">{s.customerPhone}</div>}
+                        </div>
+                      )}
+                    </td>
                     <td className="text-xs text-gray-500">{new Date(s.startedAt).toLocaleString("fa-IR")}</td>
                     <td dir="ltr" className="text-left text-xs">{s.landingPage}</td>
                     <td>{s.source}</td>
@@ -277,6 +296,7 @@ export default function VisitorAnalyticsDashboard() {
 
 function SessionDrilldownModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
   const [details, setDetails] = useState<{
+    session: { user_id: string | null; profile: { full_name: string | null; phone: string | null } | null; traffic_source: string; is_converted: boolean } | null;
     pageviews: { id: string; page_url: string; time_on_page_seconds: number | null; viewed_at: string }[];
     conversions: { id: string; event_type: string; value: number | null; created_at: string }[];
   } | null>(null);
@@ -295,6 +315,21 @@ function SessionDrilldownModal({ sessionId, onClose }: { sessionId: string; onCl
         {!details ? (
           <p className="text-gray-500 text-sm">در حال بارگذاری...</p>
         ) : (
+          <>
+            <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm">
+              {details.session?.user_id ? (
+                <>
+                  <p className="font-bold text-gray-800">{details.session.profile?.full_name ?? "بدون نام ثبت‌شده"}</p>
+                  {details.session.profile?.phone && <p className="text-xs text-gray-500" dir="ltr">{details.session.profile.phone}</p>}
+                </>
+              ) : (
+                <p className="text-gray-500">بازدیدکننده‌ی مهمان (بدون ورود به حساب کاربری)</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">منبع ورود: {details.session?.traffic_source} — وضعیت خرید: {details.session?.is_converted ? "خرید انجام‌شده" : "بدون خرید"}</p>
+            </div>
+          </>
+        )}
+        {details && (
           <>
             <table className="admin-table mb-4">
               <thead><tr><th>صفحه</th><th>زمان بازدید</th><th>مدت حضور</th></tr></thead>

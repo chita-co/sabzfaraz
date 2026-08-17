@@ -55,15 +55,16 @@ export async function POST(request: NextRequest) {
 
     if (existingSession) {
       sessionId = existingSession.id;
-      await admin
-        .from("analytics_sessions")
-        .update({
-          ended_at: new Date().toISOString(),
-          exit_page: pageUrl,
-          page_count: (existingSession.page_count ?? 0) + 1,
-          user_id: user?.id ?? null,
-        })
-        .eq("id", sessionId);
+      const updatePayload: Record<string, unknown> = {
+        ended_at: new Date().toISOString(),
+        exit_page: pageUrl,
+        page_count: (existingSession.page_count ?? 0) + 1,
+      };
+      // فقط وقتی کاربر لاگین است user_id را ثبت/به‌روزرسانی کن؛
+      // هرگز آن را با null بازنویسی نکن تا هویت کاربر وسط نشست گم نشود
+      if (user?.id) updatePayload.user_id = user.id;
+
+      await admin.from("analytics_sessions").update(updatePayload).eq("id", sessionId);
     } else {
       const { source, domain } = classifyTraffic(referrer || null, pageUrl, utmSource || null, utmMedium || null);
       const { data: created, error } = await admin

@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data } = await admin
     .from("analytics_sessions")
-    .select("id, exit_page, device_type, browser, traffic_source, ended_at")
+    .select("id, exit_page, device_type, browser, traffic_source, ended_at, user_id, profile:profiles(full_name)")
     .gte("ended_at", fiveMinAgo)
     .eq("is_bot", false)
     .order("ended_at", { ascending: false })

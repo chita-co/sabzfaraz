@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const admin = createAdminClient();
   const [{ data: session }, { data: pageviews }, { data: conversions }] = await Promise.all([
-    admin.from("analytics_sessions").select("*").eq("id", id).single(),
+    admin.from("analytics_sessions").select("*, profile:profiles(full_name, phone)").eq("id", id).single(),
     admin.from("analytics_pageviews").select("*").eq("session_id", id).order("viewed_at", { ascending: true }),
     admin.from("analytics_conversions").select("*").eq("session_id", id),
   ]);

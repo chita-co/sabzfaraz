@@ -22,6 +22,7 @@ function startOfDay(d: Date) {
 interface SessionRow {
   id: string;
   visitor_id: string;
+  user_id: string | null;
   started_at: string;
   ended_at: string;
   landing_page: string;
@@ -32,6 +33,7 @@ interface SessionRow {
   os: string;
   page_count: number;
   is_converted: boolean;
+  profile: { full_name: string | null; phone: string | null }[] | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
 
   let query = admin
     .from("analytics_sessions")
-    .select("id, visitor_id, started_at, ended_at, landing_page, exit_page, traffic_source, device_type, browser, os, page_count, is_converted")
+    .select("id, visitor_id, user_id, started_at, ended_at, landing_page, exit_page, traffic_source, device_type, browser, os, page_count, is_converted, profile:profiles(full_name, phone)")
     .eq("is_bot", false)
     .gte("started_at", from.toISOString())
     .lte("started_at", to.toISOString());
@@ -142,6 +144,9 @@ export async function GET(request: NextRequest) {
       pageCount: s.page_count,
       durationSeconds: Math.max(0, Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 1000)),
       converted: s.is_converted,
+      isGuest: !s.user_id,
+      customerName: s.profile?.[0]?.full_name ?? null,
+      customerPhone: s.profile?.[0]?.phone ?? null,
     }));
 
   return NextResponse.json({
