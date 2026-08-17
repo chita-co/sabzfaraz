@@ -65,6 +65,7 @@ export default async function AdminAuctionsPage({ searchParams }: { searchParams
                 <td>
   <div className="flex gap-1">
     <Link href={`/admin/auctions/${a.id}`} className="admin-btn admin-btn-secondary">جزئیات</Link>
+    <Link href={`/admin/auctions/${a.id}#bid-history`} className="admin-btn admin-btn-secondary">تاریخچه پیشنهادها</Link>
     <DeleteAuctionButton auctionId={a.id} />
   </div>
 </td>

@@ -26,28 +26,18 @@ const statusLabel: Record<string, string> = {
 
 function useCountdown(endsAt: string) {
   const [remaining, setRemaining] = useState<number | null>(null);
-
   useEffect(() => {
-    function tick() {
-      setRemaining(Math.max(0, new Date(endsAt).getTime() - Date.now()));
-    }
+    function tick() { setRemaining(Math.max(0, new Date(endsAt).getTime() - Date.now())); }
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [endsAt]);
-
-  if (remaining === null) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: false, ready: false };
-  }
-
+  if (remaining === null) return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: false, ready: false };
   const totalSec = Math.floor(remaining / 1000);
   return {
-    days: Math.floor(totalSec / 86400),
-    hours: Math.floor((totalSec % 86400) / 3600),
-    minutes: Math.floor((totalSec % 3600) / 60),
-    seconds: totalSec % 60,
-    isOver: remaining <= 0,
-    ready: true,
+    days: Math.floor(totalSec / 86400), hours: Math.floor((totalSec % 86400) / 3600),
+    minutes: Math.floor((totalSec % 3600) / 60), seconds: totalSec % 60,
+    isOver: remaining <= 0, ready: true,
   };
 }
 
@@ -66,6 +56,7 @@ export default function AuctionDetailClient({
   const [status, setStatus] = useState(auction.status);
   const [endsAt, setEndsAt] = useState(auction.ends_at);
   const [paid, setPaid] = useState(entryFeePaid);
+  const [walletBalance, setWalletBalance] = useState(myWalletBalance);
   const [bidHistory, setBidHistory] = useState(initialBidHistory);
   const [favorited, setFavorited] = useState(isFavorited);
   const [proxyMax, setProxyMax] = useState(myProxyMax);
@@ -78,6 +69,11 @@ export default function AuctionDetailClient({
   const timer = setTimeout(() => setMounted(true), 0);
   return () => clearTimeout(timer);
 }, []);
+  // اگر به هر دلیلی (کش مرورگر/Next.js، رفت‌وبرگشت بین صفحات) prop سرور تغییر کند، state هم هماهنگ شود
+  useEffect(() => {
+  const timer = setTimeout(() => setPaid(entryFeePaid), 0);
+  return () => clearTimeout(timer);
+}, [entryFeePaid]);
 
   const sealedHidden = auction.is_sealed && (status === "ACTIVE" || status === "UPCOMING");
   const myOwnBid = bidHistory.find((b) => b.isMine)?.amount ?? null;
@@ -94,18 +90,36 @@ export default function AuctionDetailClient({
 
   const countdown = useCountdown(endsAt);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRequestIdRef = useRef(0);
+  const pollInFlightRef = useRef(false);
 
   const poll = useCallback(async () => {
-    const state = await getAuctionLiveState(auction.id);
-    setHighestBid(state.highestBid);
-    setBidCount(state.bidCount);
-    setParticipantCount(state.participantCount);
-    setStatus(state.status);
-    if (state.endsAt) setEndsAt(state.endsAt);
+    // محافظ ۱: اگر یک درخواست قبلی هنوز جواب نگرفته، درخواست جدید نفرست
+    // (رفع دقیق تلنبار شدن درخواست‌ها و خطای «Failed to fetch»)
+    if (pollInFlightRef.current) return;
+    pollInFlightRef.current = true;
+    const myRequestId = ++pollRequestIdRef.current;
+    try {
+      const state = await getAuctionLiveState(auction.id);
+      // محافظ ۲: اگر در فاصله‌ی انتظار این پاسخ، یک درخواست جدیدتر شروع شده،
+      // این پاسخِ کهنه را نادیده بگیر تا هرگز state جدید و درست را بازنویسی نکند
+      // (رفع دقیق باگ: برگشتن paid به false چند ثانیه بعد از پرداخت موفق)
+      if (myRequestId !== pollRequestIdRef.current) return;
+      setHighestBid(state.highestBid);
+      setBidCount(state.bidCount);
+      setParticipantCount(state.participantCount);
+      setStatus(state.status);
+      if (state.endsAt) setEndsAt(state.endsAt);
+      setPaid(state.entryFeePaid);
+      setWalletBalance(state.walletBalance);
+    } finally {
+      pollInFlightRef.current = false;
+    }
   }, [auction.id]);
 
   useEffect(() => {
-    pollRef.current = setInterval(poll, 8000);
+    poll(); // چک فوری در همان لحظه‌ی بارگذاری
+    pollRef.current = setInterval(poll, 12000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [poll]);
 
@@ -121,6 +135,7 @@ export default function AuctionDetailClient({
     if (result?.error) { setError(result.error); return; }
     setPaid(true);
     setMessage("هزینه شرکت با موفقیت پرداخت شد. اکنون می‌توانید پیشنهاد خود را ثبت کنید.");
+    poll();
   }
 
   async function handleBid() {
@@ -135,7 +150,11 @@ export default function AuctionDetailClient({
     setBidding(true);
     const result = await placeAuctionBid(auction.id, amount);
     setBidding(false);
-    if (result?.error) { setError(result.error); return; }
+    if (result?.error) {
+      setError(result.error);
+      poll(); // اگر خطای «باید پرداخت کنی» گرفتیم، بلافاصله وضعیت واقعی را دوباره چک کن
+      return;
+    }
     setMessage(sealedHidden ? "پیشنهاد مخفی شما با موفقیت ثبت شد." : "پیشنهاد شما با موفقیت ثبت شد.");
     poll();
     setBidHistory((prev) => [{ id: `local-${Date.now()}`, amount, createdAt: new Date().toISOString(), displayName: sealedHidden ? "پیشنهاد شما" : "شما", isMine: true }, ...prev]);
@@ -247,7 +266,7 @@ export default function AuctionDetailClient({
           {auction.entry_fee > 0 && (
             <div className="ad-entry-fee-box">
               💰 هزینه شرکت در این مزایده: <b>{auction.entry_fee.toLocaleString("fa-IR")} تومان</b>
-              {isLoggedIn && <span className="ad-wallet-line">موجودی کیف پول شما: {myWalletBalance.toLocaleString("fa-IR")} تومان</span>}
+              {isLoggedIn && <span className="ad-wallet-line">موجودی کیف پول شما: {walletBalance.toLocaleString("fa-IR")} تومان</span>}
             </div>
           )}
 
@@ -270,6 +289,11 @@ export default function AuctionDetailClient({
             </button>
           ) : (
             <>
+              {auction.entry_fee > 0 && (
+                <div className="ad-paid-badge">
+                  ✅ هزینه شرکت شما در این مزایده پرداخت شده — تا پایان مزایده هر چند بار بخواهید می‌توانید بدون پرداخت مجدد پیشنهاد ثبت کنید.
+                </div>
+              )}
               <div className="ad-bid-row">
                 <input type="number" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} className="ad-bid-input" min={minNext} />
                 <button onClick={handleBid} disabled={bidding} className="ad-cta-btn" style={{ width: "auto", flexShrink: 0, padding: "0 22px" }}>
@@ -306,7 +330,6 @@ export default function AuctionDetailClient({
             </>
           )}
 
-          {/* ===== تاریخچه پیشنهادها — درست زیر دکمه‌ی پرداخت/ثبت پیشنهاد و پیش از توضیحات ===== */}
           <div className="ad-history-card">
             <div className="ad-history-header">
               <span className="ad-history-header-title"><History size={16} /> تاریخچه پیشنهادها</span>

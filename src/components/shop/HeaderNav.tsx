@@ -55,9 +55,9 @@ export default function HeaderNav({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-  const timer = setTimeout(() => setMounted(true), 0);
-  return () => clearTimeout(timer);
-}, []);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = "hidden";
@@ -183,44 +183,66 @@ export default function HeaderNav({
         </div>
       </div>
 
-      {/* منوی موبایل با React Portal مستقیم به body متصل می‌شود
-          تا هیچ‌وقت تحت‌تأثیر backdrop-filter/transform هدر یا هر ancestor دیگری قرار نگیرد */}
       {mounted && mobileMenu && createPortal(mobileMenu, document.body)}
 
       <style jsx>{`
-  .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
-  .site-actions,
-  .site-actions > * { flex-shrink: 0; }
+        .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
+        .site-actions, .site-actions > * { flex-shrink: 0; }
 
-  /* از دسکتاپ کامل تا نقطه‌ی سوییچ به منوی موبایل (۱۰۲۵ تا ۱۴۰۰ پیکسل): منوی گویی
-     به‌جای رپ‌شدن/بهم‌ریختن، به‌صورت افقی اسکرول می‌شود. نقطه‌ی ۱۰۲۴px دقیقاً همان
-     نقطه‌ای است که shop.css منو را به حالت همبرگری تبدیل می‌کند. */
-  @media (max-width: 1400px) and (min-width: 1025px) {
-    .site-header-inner { flex-wrap: nowrap !important; gap: 8px !important; }
-    .site-nav {
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-      flex-shrink: 1 !important;
-      min-width: 0 !important;
-    }
-    .site-nav::-webkit-scrollbar { display: none !important; }
-    .gooey-nav-wrapper { flex-shrink: 0 !important; }
-    .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
-    .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
-  }
-  @media (max-width: 1150px) and (min-width: 1025px) {
-    .site-search { display: none !important; }
-  }
+        /* دسکتاپ کامل تا میانه (بالای ۱۰۲۴): بدون هیچ تغییری نسبت به قبل - فقط اسکرول
+           افقی داخل همان ردیف واحد هدر */
+        @media (max-width: 1400px) and (min-width: 1025px) {
+          .site-header-inner { flex-wrap: nowrap !important; gap: 8px !important; }
+          .site-nav {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            flex-shrink: 1 !important;
+            min-width: 0 !important;
+          }
+          .site-nav::-webkit-scrollbar { display: none !important; }
+          .gooey-nav-wrapper { flex-shrink: 0 !important; }
+          .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
+          .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
+        }
+        @media (max-width: 1150px) and (min-width: 1025px) {
+          .site-search { display: none !important; }
+        }
 
-  @media (max-width: 400px) {
-    .site-header-inner { padding: 0 12px !important; gap: 10px !important; }
-    .site-actions { gap: 4px !important; }
-    .site-icon-btn { width: 36px !important; height: 36px !important; }
-    .site-logo-img { height: 52px !important; }
-  }
-`}</style>
+        /* بازه‌ی میانی جدید (۶۴۱ تا ۱۰۲۴): به‌جای پنهان شدن پشت همبرگر، منو و سرچ در
+           ردیف‌های جداگانه‌ی زیر آیکون‌ها نمایش داده می‌شوند و اسکرول‌پذیرند. */
+        @media (max-width: 1024px) and (min-width: 641px) {
+          .site-header-inner {
+            flex-wrap: wrap !important;
+            height: auto !important;
+            padding: 12px 16px !important;
+            row-gap: 10px !important;
+          }
+          .site-nav {
+            order: 3 !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+          }
+          .site-nav::-webkit-scrollbar { display: none !important; }
+          .gooey-nav-wrapper { flex-shrink: 0 !important; }
+          .site-search {
+            order: 4 !important;
+            width: 100% !important;
+            max-width: none !important;
+          }
+        }
+
+        /* موبایل خیلی کوچک */
+        @media (max-width: 400px) {
+          .site-header-inner { padding: 0 12px !important; gap: 10px !important; }
+          .site-actions { gap: 4px !important; }
+          .site-icon-btn { width: 36px !important; height: 36px !important; }
+          .site-logo-img { height: 52px !important; }
+        }
+      `}</style>
     </header>
   );
 }

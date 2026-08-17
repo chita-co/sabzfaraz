@@ -5,6 +5,9 @@ import { getAuctionBidHistory } from "@/lib/auction/queries";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
+// جلوگیری از هرگونه کش‌شدن این صفحه توسط Next.js — همیشه وضعیت تازه از دیتابیس خوانده شود
+export const dynamic = "force-dynamic";
+
 export default async function AuctionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -49,6 +52,7 @@ export default async function AuctionDetailPage({ params }: { params: Promise<{ 
         <Breadcrumb theme="dark" items={[{ label: "مزایده‌ها", href: "/auctions" }, { label: auction.title }]} />
       </div>
       <AuctionDetailClient
+        key={auction.id}
         auction={auction}
         isLoggedIn={!!user}
         entryFeePaid={!!myParticipant?.entry_fee_paid}

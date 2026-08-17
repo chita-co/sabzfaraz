@@ -6,13 +6,15 @@ export default async function ContactPage() {
   const supabase = await createClient();
   const { data: settings } = await supabase
     .from("site_settings")
-    .select("support_phone, support_email, store_address")
+    .select("support_phone, support_email, store_address, extra_phones, extra_emails")
     .eq("id", 1)
     .single();
 
   const phone = settings?.support_phone ?? "021-00000000";
   const email = settings?.support_email ?? "support@sabzfaraz.ir";
   const address = settings?.store_address ?? "ایران، تهران";
+  const extraPhones: string[] = (settings?.extra_phones as string[]) ?? [];
+  const extraEmails: string[] = (settings?.extra_emails as string[]) ?? [];
 
   return (
     <>
@@ -24,9 +26,19 @@ export default async function ContactPage() {
             <p className="contact-line">
               <Phone size={18} /> <span dir="ltr">{phone}</span>
             </p>
+            {extraPhones.map((p, i) => (
+              <p key={`extra-phone-${i}`} className="contact-line">
+                <Phone size={18} /> <span dir="ltr">{p}</span>
+              </p>
+            ))}
             <p className="contact-line">
               <Mail size={18} /> <span dir="ltr">{email}</span>
             </p>
+            {extraEmails.map((e, i) => (
+              <p key={`extra-email-${i}`} className="contact-line">
+                <Mail size={18} /> <span dir="ltr">{e}</span>
+              </p>
+            ))}
             <p className="contact-line">
               <MapPin size={18} /> {address}
             </p>

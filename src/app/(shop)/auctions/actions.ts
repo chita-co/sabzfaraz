@@ -9,34 +9,31 @@ import { payEntryFeeFromWallet } from "@/lib/auction/entryFee";
 
 export async function getAuctionLiveState(auctionId: string) {
   const supabase = await createClient();
-  const { data: auction } = await supabase
-    .from("auctions")
-    .select("status, ends_at, is_sealed")
-    .eq("id", auctionId)
-    .single();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const sealedActive = !!auction?.is_sealed && (auction?.status === "ACTIVE" || auction?.status === "UPCOMING");
+  // به‌جای ۶-۷ کوئری جداگانه (که هرکدام یک رفت‌وبرگشت شبکه‌ی جدا داشت و باعث کندی
+  // و تلنبار شدن درخواست‌ها می‌شد)، همه‌چیز در یک تابع دیتابیسی واحد خوانده می‌شود.
+  const { data, error } = await supabase.rpc("get_auction_live_state", {
+    p_auction_id: auctionId,
+    p_user_id: user?.id ?? null,
+  });
 
-  const { data: highest } = sealedActive
-    ? { data: null }
-    : await supabase
-        .from("auction_bids")
-        .select("amount")
-        .eq("auction_id", auctionId)
-        .order("amount", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-  const { count } = await supabase.from("auction_bids").select("*", { count: "exact", head: true }).eq("auction_id", auctionId);
-  const { count: participantCount } = await supabase.from("auction_participants").select("*", { count: "exact", head: true }).eq("auction_id", auctionId).eq("entry_fee_paid", true);
+  if (error || !data || data.error) {
+    return {
+      status: "ENDED", endsAt: null, highestBid: null, bidCount: 0,
+      participantCount: 0, isSealed: false, entryFeePaid: false, walletBalance: 0,
+    };
+  }
 
   return {
-    status: auction?.status ?? "ENDED",
-    endsAt: auction?.ends_at ?? null,
-    highestBid: highest?.amount ?? null,
-    bidCount: count ?? 0,
-    participantCount: participantCount ?? 0,
-    isSealed: sealedActive,
+    status: data.status as string,
+    endsAt: data.endsAt as string | null,
+    highestBid: data.highestBid as number | null,
+    bidCount: data.bidCount as number,
+    participantCount: data.participantCount as number,
+    isSealed: data.isSealed as boolean,
+    entryFeePaid: data.entryFeePaid as boolean,
+    walletBalance: data.walletBalance as number,
   };
 }
 

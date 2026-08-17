@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, AlertTriangle } from "lucide-react";
 import { approveTopupRequest, rejectTopupRequest } from "@/app/admin/wallet-requests/actions";
 
 interface Req {
@@ -38,9 +38,22 @@ export default function WalletRequestsManager({ requests, totalWallets }: { requ
       <h1 className="text-xl font-bold text-gray-900 mb-2">درخواست‌های شارژ کیف پول</h1>
       <p className="text-sm text-gray-500 mb-5">مجموع موجودی کیف پول همه کاربران: <b>{totalWallets.toLocaleString("fa-IR")} تومان</b></p>
 
+      {pending.length > 0 && (
+        <div
+          style={{
+            background: "#fee2e2", border: "1.5px solid #fca5a5", color: "#991b1b",
+            borderRadius: 14, padding: "14px 18px", marginBottom: 20,
+            display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 13.5,
+          }}
+        >
+          <AlertTriangle size={20} />
+          {pending.length.toLocaleString("fa-IR")} درخواست شارژ کیف پول در انتظار بررسی شماست — لطفاً هرچه سریع‌تر بررسی کنید.
+        </div>
+      )}
+
       <div className="admin-card">
         <table className="admin-table">
-          <thead><tr><th>کاربر</th><th>مبلغ</th><th>روش</th><th>رسید</th><th>وضعیت</th><th>تاریخ</th><th></th></tr></thead>
+          <thead><tr><th>کاربر</th><th>مبلغ</th><th>روش</th><th>رسید</th><th>وضعیت</th><th>تاریخ و ساعت</th><th></th></tr></thead>
           <tbody>
             {pending.map((r) => (
               <tr key={r.id}>
@@ -49,7 +62,7 @@ export default function WalletRequestsManager({ requests, totalWallets }: { requ
                 <td>{r.method === "ONLINE" ? "آنلاین" : r.bank_account?.bank_name ?? "—"}</td>
                 <td>{r.receipt_image_url ? <a href={r.receipt_image_url} target="_blank" rel="noreferrer" className="text-green-600 underline text-xs">مشاهده رسید</a> : "—"}</td>
                 <td><span className="badge badge-warning">در انتظار بررسی</span></td>
-                <td className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString("fa-IR")}</td>
+                <td className="text-xs text-gray-500">{new Date(r.created_at).toLocaleString("fa-IR")}</td>
                 <td>
                   <div className="flex gap-1">
                     <button onClick={() => handleApprove(r.id)} className="admin-btn admin-btn-primary"><Check size={13} /></button>

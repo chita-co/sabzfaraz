@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, Upload, Loader2 } from "lucide-react";
-import { topUpWalletOnline, submitManualTopupRequest } from "@/app/(shop)/profile/wallet/actions";
+import { Wallet, CreditCard, Landmark, Loader2, Info } from "lucide-react";
+import { submitManualTopupRequest } from "@/app/(shop)/profile/wallet/actions";
 
 const typeLabels: Record<string, string> = { credit: "شارژ", debit: "برداشت", refund: "بازگشت وجه" };
 const statusLabels: Record<string, string> = { PENDING: "در انتظار", APPROVED: "تأیید شده", REJECTED: "رد شده" };
@@ -18,33 +18,35 @@ export default function WalletClient({
   manualTopupEnabled: boolean; bankAccounts: Bank[];
 }) {
   const [amount, setAmount] = useState(minTopup.toString());
-  const [mode, setMode] = useState<"ONLINE" | "MANUAL">("ONLINE");
   const [method, setMethod] = useState<"CARD_TO_CARD" | "SHEBA">("CARD_TO_CARD");
   const [bankAccountId, setBankAccountId] = useState(bankAccounts[0]?.id ?? "");
-  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [onlineNotice, setOnlineNotice] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<"CARD_TO_CARD" | "SHEBA" | null>(null);
 
-  async function handleOnline() {
-    setError(null);
+  function validateAmount(): number | null {
     const n = Number(amount);
-    if (!n || n < minTopup) { setError(`حداقل مبلغ شارژ ${minTopup.toLocaleString("fa-IR")} تومان است.`); return; }
-    if (maxTopup && n > maxTopup) { setError(`حداکثر مبلغ شارژ ${maxTopup.toLocaleString("fa-IR")} تومان است.`); return; }
-    setLoading(true);
-    await topUpWalletOnline(n);
-    setLoading(false);
+    if (!n || n < minTopup) { setError(`حداقل مبلغ شارژ ${minTopup.toLocaleString("fa-IR")} تومان است.`); return null; }
+    if (maxTopup && n > maxTopup) { setError(`حداکثر مبلغ شارژ ${maxTopup.toLocaleString("fa-IR")} تومان است.`); return null; }
+    return n;
   }
 
-  async function handleManual() {
+  function handleClickPay(m: "CARD_TO_CARD" | "SHEBA") {
     setError(null);
-    const n = Number(amount);
-    if (!n || n < minTopup) { setError(`حداقل مبلغ شارژ ${minTopup.toLocaleString("fa-IR")} تومان است.`); return; }
-    if (!file) { setError("لطفاً تصویر رسید پرداخت را آپلود کنید."); return; }
+    if (!validateAmount()) return;
     if (!bankAccountId) { setError("لطفاً یک حساب بانکی انتخاب کنید."); return; }
-    const fd = new FormData();
-    fd.append("file", file);
+    setMethod(m);
+    setPendingConfirm(m);
+  }
+
+  async function handleConfirm() {
+    const m = pendingConfirm;
+    setPendingConfirm(null);
+    if (!m) return;
     setLoading(true);
-    const result = await submitManualTopupRequest(n, method, bankAccountId, fd);
+    setError(null);
+    const result = await submitManualTopupRequest(Number(amount), m, bankAccountId);
     setLoading(false);
     if (result?.error) setError(result.error);
     else window.location.reload();
@@ -68,14 +70,24 @@ export default function WalletClient({
         </div>
 
         <div className="payment-method-tabs">
-          <div className={`payment-method-tab${mode === "ONLINE" ? " active" : ""}`} onClick={() => setMode("ONLINE")}>پرداخت آنلاین</div>
+          <div className="payment-method-tab disabled" onClick={() => setOnlineNotice(true)}>
+            پرداخت آنلاین (به‌زودی)
+          </div>
           {manualTopupEnabled && (
-            <div className={`payment-method-tab${mode === "MANUAL" ? " active" : ""}`} onClick={() => setMode("MANUAL")}>کارت به کارت / شبا</div>
+            <div className="payment-method-tab active" onClick={() => setOnlineNotice(false)}>
+              کارت به کارت / شبا
+            </div>
           )}
         </div>
 
-        {mode === "MANUAL" && (
-          <div className="mt-4 space-y-3">
+        {onlineNotice && (
+          <div className="offline-payment-warning flex items-center gap-2" style={{ marginBottom: 14 }}>
+            <Info size={15} /> فعلاً درگاه پرداخت آنلاین برای شارژ کیف پول راه‌اندازی نشده است. لطفاً از طریق کارت‌به‌کارت یا شبا اقدام کنید.
+          </div>
+        )}
+
+        {manualTopupEnabled && (
+          <div className="mt-2 space-y-3">
             <div className="flex gap-2">
               <button type="button" onClick={() => setMethod("CARD_TO_CARD")} className={`admin-btn ${method === "CARD_TO_CARD" ? "admin-btn-primary" : "admin-btn-secondary"}`}>کارت به کارت</button>
               <button type="button" onClick={() => setMethod("SHEBA")} className={`admin-btn ${method === "SHEBA" ? "admin-btn-primary" : "admin-btn-secondary"}`}>شبا</button>
@@ -90,24 +102,39 @@ export default function WalletClient({
                 </div>
               ))}
             </div>
-            <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg py-3 cursor-pointer text-sm text-gray-500 hover:border-green-500">
-              <Upload size={16} /> {file ? file.name : "آپلود تصویر رسید پرداخت"}
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            </label>
+
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              <button onClick={() => handleClickPay("CARD_TO_CARD")} disabled={loading} className="admin-btn admin-btn-primary justify-center flex items-center gap-2">
+                <CreditCard size={15} /> پرداخت با کارت به کارت انجام شد
+              </button>
+              <button onClick={() => handleClickPay("SHEBA")} disabled={loading} className="admin-btn admin-btn-secondary justify-center flex items-center gap-2">
+                <Landmark size={15} /> پرداخت با شبا انجام شد
+              </button>
+            </div>
           </div>
         )}
-
-        {error && <p className="text-red-600 text-sm mt-3">{error}</p>}
-
-        <button
-          onClick={mode === "ONLINE" ? handleOnline : handleManual}
-          disabled={loading}
-          className="admin-btn admin-btn-primary w-full mt-4 justify-center"
-        >
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
-          {loading ? "در حال پردازش..." : "ثبت درخواست شارژ"}
-        </button>
       </div>
+
+      {pendingConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
+            <h3 className="font-bold text-gray-900 mb-3">تأیید پرداخت</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              آیا مطمئن هستید پرداخت {Number(amount).toLocaleString("fa-IR")} تومانی از طریق {pendingConfirm === "CARD_TO_CARD" ? "کارت به کارت" : "شبا"} انجام شده است؟
+            </p>
+            <div className="flex gap-3">
+              <button onClick={handleConfirm} disabled={loading} className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                {loading ? <Loader2 size={16} className="animate-spin" /> : null} بله، پرداخت شد
+              </button>
+              <button onClick={() => setPendingConfirm(null)} className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200">
+                انصراف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pendingRequests.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-6">

@@ -20,6 +20,7 @@ import {
   Gavel,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
+import PendingWalletBadge from "./PendingWalletBadge";
 
 interface NavChild {
   href: string;
@@ -91,6 +92,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/finance/transactions", label: "تراکنش‌ها" },
       { href: "/admin/finance/wallet-transactions", label: "تراکنش‌های کیف پول" },
       { href: "/admin/finance/wallet-withdrawals", label: "برداشت کیف پول (تسویه)" },
+      { href: "/admin/finance/wallet-topups-history", label: "تاریخچه شارژهای تأییدشده" },
       { href: "/admin/analytics", label: "گزارش فروش" },
       { href: "/admin/analytics-visitors", label: "آمار بازدیدکنندگان" },
     ],
@@ -233,6 +235,7 @@ export default function AdminSidebar({
                           onClick={() => setMobileOpen(false)}
                         >
                           <span>{child.label}</span>
+                          {child.href === "/admin/wallet-requests" && <PendingWalletBadge />}
                         </Link>
                       );
                     })}

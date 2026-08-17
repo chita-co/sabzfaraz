@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requestPayment } from "@/lib/zarinpal";
-import { uploadImage } from "@/lib/arvan";
+import { createNotification } from "@/lib/notifications";
 
 export async function getMyWalletData() {
   const supabase = await createClient();
@@ -59,29 +59,37 @@ export async function topUpWalletOnline(amount: number) {
   redirect(payment.url);
 }
 
-export async function submitManualTopupRequest(amount: number, method: "CARD_TO_CARD" | "SHEBA", bankAccountId: string, receiptFile: FormData) {
+async function notifyAdminsOfTopupRequest(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userName: string,
+  amount: number,
+  method: "CARD_TO_CARD" | "SHEBA"
+) {
+  const { data: admins } = await supabase.from("profiles").select("id").eq("role", "ADMIN");
+  const methodLabel = method === "CARD_TO_CARD" ? "کارت به کارت" : "شبا";
+  for (const a of admins ?? []) {
+    await createNotification(
+      a.id,
+      "درخواست شارژ کیف پول جدید 💳",
+      `${userName} درخواست شارژ ${amount.toLocaleString("fa-IR")} تومانی از طریق ${methodLabel} ثبت کرد و منتظر تأیید شماست.`
+    );
+  }
+}
+
+export async function submitManualTopupRequest(amount: number, method: "CARD_TO_CARD" | "SHEBA", bankAccountId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "ابتدا وارد شوید." };
-
-  const file = receiptFile.get("file") as File | null;
-  if (!file) return { error: "لطفاً رسید پرداخت را آپلود کنید." };
-
-  let receiptUrl: string;
-  try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const sharp = (await import("sharp")).default;
-    const { randomUUID } = await import("crypto");
-    const optimized = await sharp(buffer).resize(1400, 1400, { fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
-    receiptUrl = await uploadImage(optimized, `wallet-receipts/${randomUUID()}.webp`);
-  } catch {
-    return { error: "خطا در آپلود رسید." };
-  }
+  if (!amount || amount <= 0) return { error: "مبلغ نامعتبر است." };
+  if (!bankAccountId) return { error: "لطفاً یک حساب بانکی انتخاب کنید." };
 
   const { error } = await supabase.from("wallet_topup_requests").insert({
-    user_id: user.id, amount, method, bank_account_id: bankAccountId, receipt_image_url: receiptUrl, status: "PENDING",
+    user_id: user.id, amount, method, bank_account_id: bankAccountId, status: "PENDING",
   });
   if (error) return { error: error.message };
+
+  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+  await notifyAdminsOfTopupRequest(supabase, profile?.full_name ?? "یک کاربر", amount, method);
 
   revalidatePath("/profile/wallet");
   return { success: true };

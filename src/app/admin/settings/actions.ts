@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 
 export async function updateGeneralSettings(formData: FormData) {
   const supabase = await createClient();
+
+  const extraPhones = (formData.getAll("extraPhones") as string[]).map((p) => p.trim()).filter(Boolean);
+  const extraEmails = (formData.getAll("extraEmails") as string[]).map((e) => e.trim()).filter(Boolean);
+
   const { error } = await supabase
     .from("site_settings")
     .update({
@@ -19,6 +23,8 @@ export async function updateGeneralSettings(formData: FormData) {
       unboxing_whatsapp_number: (formData.get("unboxingWhatsapp") as string) || null,
       unboxing_telegram_id: (formData.get("unboxingTelegram") as string) || null,
       unboxing_instagram_handle: (formData.get("unboxingInstagram") as string) || null,
+      extra_phones: extraPhones,
+      extra_emails: extraEmails,
     })
     .eq("id", 1);
 

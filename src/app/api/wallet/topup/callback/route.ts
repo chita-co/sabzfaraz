@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const result = await verifyPayment({ amount: reqRow.amount, authority });
     if (result.status === 100 || result.status === 101) {
       await creditWallet(reqRow.user_id, reqRow.amount, "شارژ آنلاین کیف پول");
-      await admin.from("wallet_topup_requests").update({ status: "APPROVED", reviewed_at: new Date().toISOString() }).eq("id", requestId);
+      await admin.from("wallet_topup_requests").update({ status: "APPROVED", reviewed_at: new Date().toISOString(), zarinpal_ref_id: String(result.refId ?? "") }).eq("id", requestId);
       return NextResponse.redirect(`${origin}/profile/wallet?topup=success`);
     }
     await admin.from("wallet_topup_requests").update({ status: "REJECTED", admin_note: "تأیید پرداخت ناموفق" }).eq("id", requestId);

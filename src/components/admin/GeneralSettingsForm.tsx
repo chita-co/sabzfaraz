@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DynamicListInput from "./DynamicListInput";
 import { updateGeneralSettings } from "@/app/admin/settings/actions";
 
 export default function GeneralSettingsForm({
@@ -19,6 +20,8 @@ export default function GeneralSettingsForm({
     unboxing_whatsapp_number: string | null;
     unboxing_telegram_id: string | null;
     unboxing_instagram_handle: string | null;
+    extra_phones: string[];
+    extra_emails: string[];
   };
 }) {
   const [saving, setSaving] = useState(false);
@@ -56,10 +59,27 @@ export default function GeneralSettingsForm({
         <label>تلفن پشتیبانی</label>
         <input type="text" name="supportPhone" dir="ltr" defaultValue={initial.support_phone ?? ""} placeholder="021-00000000" />
       </div>
+
+      <DynamicListInput
+        name="extraPhones"
+        label="شماره تماس اضافی (نمایش زیر تلفن پشتیبانی در فوتر و صفحه تماس با ما)"
+        placeholder="0912-1111111"
+        initialValues={initial.extra_phones ?? []}
+        type="tel"
+      />
+
       <div className="admin-form-group">
         <label>ایمیل پشتیبانی</label>
         <input type="email" name="supportEmail" dir="ltr" defaultValue={initial.support_email ?? ""} placeholder="support@sabzfaraz.ir" />
       </div>
+
+      <DynamicListInput
+        name="extraEmails"
+        label="ایمیل اضافی (نمایش زیر ایمیل پشتیبانی در فوتر و صفحه تماس با ما)"
+        placeholder="sales@sabzfaraz.ir"
+        initialValues={initial.extra_emails ?? []}
+        type="email"
+      />
       <div className="admin-form-group">
         <label>آدرس فروشگاه</label>
         <textarea name="storeAddress" rows={3} defaultValue={initial.store_address ?? ""} placeholder="ایران، تهران" />

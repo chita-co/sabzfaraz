@@ -7,7 +7,7 @@ import { deleteAuctionBid } from "@/app/admin/auctions/actions";
 export default function DeleteBidButton({ bidId }: { bidId: string }) {
   const [loading, setLoading] = useState(false);
   async function handleClick() {
-    if (!confirm("آیا از حذف این پیشنهاد مطمئن هستید؟ این عملیات قابل بازگشت نیست.")) return;
+    if (!confirm("آیا از حذف این پیشنهاد مطمئن هستید؟ این عملیات قابل بازگشت نیست و به‌طور کامل از تاریخچه‌ی کاربر هم پاک می‌شود.")) return;
     setLoading(true);
     const result = await deleteAuctionBid(bidId);
     setLoading(false);

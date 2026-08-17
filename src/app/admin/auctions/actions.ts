@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createNotification } from "@/lib/notifications";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 interface AuctionInput {
   title: string; description: string; images: string[]; categoryId: string | null; productId: string | null;
@@ -108,12 +107,13 @@ export async function deleteAuctionBid(bidId: string) {
   const { data: bid } = await supabase.from("auction_bids").select("auction_id").eq("id", bidId).single();
   if (!bid) return { error: "پیشنهاد یافت نشد." };
 
-  // چون هیچ سیاست RLS برای حذف از auction_bids تعریف نشده، باید از کلاینت ادمین (service role) استفاده شود
-  const admin = createAdminClient();
-  const { error } = await admin.from("auction_bids").delete().eq("id", bidId);
+  const { data, error } = await supabase.rpc("admin_delete_auction_bid", { p_bid_id: bidId });
   if (error) return { error: error.message };
+  const result = data as { success?: boolean; error?: string };
+  if (result?.error) return { error: result.error };
 
   revalidatePath(`/admin/auctions/${bid.auction_id}`);
   revalidatePath(`/auctions/${bid.auction_id}`);
   return { success: true };
 }
+
