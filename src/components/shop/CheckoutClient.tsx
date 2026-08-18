@@ -104,8 +104,9 @@ export default function CheckoutClient({
       ? "پیش‌فاکتور قبلی منقضی شد و کالاها به سبد خرید برگشت."
       : null;
 
-  const displayItems = pendingCheckout ? pendingCheckout.items : items;
-  const isLocked = !!pendingCheckout;
+  // ✅ همیشه از سبد خرید زنده استفاده می‌کنیم — نه snapshot قفل‌شده
+  const displayItems = items;
+  // ✅ قفل پیش‌فاکتور کاملاً غیرفعال شد
   const pendingCheckoutId = pendingCheckout?.id ?? null;
 
   const subtotal = displayItems.reduce(
@@ -114,7 +115,7 @@ export default function CheckoutClient({
   );
 
   const shippingCost = useMemo(() => {
-    if (pendingCheckout) return pendingCheckout.shipping_cost;
+    // ✅ همیشه از روش ارسال انتخاب‌شده محاسبه می‌شود؛ نه از pending
     const methodTiers = shippingTiers
       .filter((t) => t.method_id === selectedMethodId)
       .sort((a, b) => a.min_weight_grams - b.min_weight_grams);
@@ -126,7 +127,7 @@ export default function CheckoutClient({
     );
     if (matched) return matched.cost;
     return methodTiers[methodTiers.length - 1].cost;
-  }, [selectedMethodId, shippingTiers, cartWeightGrams, pendingCheckout]);
+  }, [selectedMethodId, shippingTiers, cartWeightGrams]);
 
   const totalBeforeWallet = Math.max(
     subtotal + shippingCost - loyaltyDiscount - discountAmount,
@@ -147,7 +148,7 @@ export default function CheckoutClient({
       setError("لطفاً یک آدرس انتخاب کنید.");
       return;
     }
-    if (!selectedMethodId && !pendingCheckout) {
+    if (!selectedMethodId) {
       setError("لطفاً یک روش ارسال انتخاب کنید.");
       return;
     }
@@ -221,7 +222,7 @@ export default function CheckoutClient({
     }
   }
 
-  if (displayItems.length === 0 && !pendingCheckout) {
+  if (displayItems.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
         <p className="text-gray-500">سبد خرید شما خالی است.</p>
@@ -257,13 +258,6 @@ export default function CheckoutClient({
       {restoredMessage && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 mb-4 text-sm">
           {restoredMessage}
-        </div>
-      )}
-
-      {isLocked && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 mb-4 text-sm">
-          یک پیش‌فاکتور فعال داری. تا زمانی که پرداخت نهایی رو انجام ندی یا
-          پیش‌فاکتور منقضی بشه، آیتم‌های سبد خرید قفل هستن.
         </div>
       )}
 
@@ -309,7 +303,7 @@ export default function CheckoutClient({
         </Link>
       </div>
 
-      {shippingMethods.length > 0 && !isLocked && (
+      {shippingMethods.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h2 className="font-bold text-gray-800 mb-4">روش ارسال</h2>
           <div className="space-y-2">
@@ -465,30 +459,23 @@ export default function CheckoutClient({
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-      {!isLocked && (
-        <div className="mb-6">
-          <LoyaltyRedemptionBox
-            subtotal={subtotal}
-            onChange={(points, discount) => {
-              setLoyaltyPoints(points);
-              setLoyaltyDiscount(discount);
-            }}
-          />
-        </div>
-      )}
-
-      {!isLocked && (
-        <DiscountCodeBox
-          orderTotal={Math.max(
-            subtotal + shippingCost - loyaltyDiscount,
-            0
-          )}
-          onChange={(discount, codeId) => {
-            setDiscountAmount(discount);
-            setDiscountCodeId(codeId);
+      <div className="mb-6">
+        <LoyaltyRedemptionBox
+          subtotal={subtotal}
+          onChange={(points, discount) => {
+            setLoyaltyPoints(points);
+            setLoyaltyDiscount(discount);
           }}
         />
-      )}
+      </div>
+
+      <DiscountCodeBox
+        orderTotal={Math.max(subtotal + shippingCost - loyaltyDiscount, 0)}
+        onChange={(discount, codeId) => {
+          setDiscountAmount(discount);
+          setDiscountCodeId(codeId);
+        }}
+      />
 
       {fullyCoveredByWallet ? (
         <button
@@ -508,11 +495,7 @@ export default function CheckoutClient({
           disabled={true}
           className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
         >
-          {loading
-            ? "در حال پردازش..."
-            : isLocked
-            ? "پرداخت نهایی (پیش‌فاکتور فعال)"
-            : "پرداخت و ثبت نهایی سفارش"}
+          {loading ? "در حال پردازش..." : "پرداخت و ثبت نهایی سفارش"}
         </button>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
