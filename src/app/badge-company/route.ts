@@ -9,7 +9,7 @@ export async function GET() {
   <title>نماد اعتماد شرکت</title>
 </head>
 <body style="margin:0; display:flex; justify-content:center; align-items:center; background:transparent;">
-  <a referrerPolicy="origin" target="_blank" rel="noreferrer" href="https://trustseal.enamad.ir/?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk">
+  <a referrerPolicy="origin" target="_blank" href="https://trustseal.enamad.ir/?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk">
     <img
       referrerPolicy="origin"
       src="https://trustseal.enamad.ir/logo.aspx?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk"

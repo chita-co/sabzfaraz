@@ -22,7 +22,7 @@ function DirectBadge({ type }: { type: BadgeType }) {
   return (
     <div className="enamad-badge-item">
       <div className="enamad-badge-media">
-        <a referrerPolicy="origin" target="_blank" rel="noreferrer" href={data.href}>
+        <a referrerPolicy="origin" target="_blank" href={data.href}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             referrerPolicy="origin"
