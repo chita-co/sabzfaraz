@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "@/components/shop/CheckoutClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
-import { getActivePendingCheckout } from "./pending-actions";
+import LightfallBackground from "@/components/backgrounds/LightfallBackground";
 
 export default async function CheckoutPage() {
   const supabase = await createClient();
@@ -19,18 +19,17 @@ export default async function CheckoutPage() {
   ]);
 
   const phones = Array.from(
-  new Set(
-    [settings?.support_phone, settings?.support_phone_2]
-      .filter(Boolean)
-      .flatMap((x) => String(x).split(/[-–—]/).map((s) => s.trim()))
-      .filter(Boolean)
-  )
-) as string[];
-
-  const pendingResult = await getActivePendingCheckout();
+    new Set(
+      [settings?.support_phone, settings?.support_phone_2]
+        .filter(Boolean)
+        .flatMap((x) => String(x).split(/[-–—]/).map((s) => s.trim()))
+        .filter(Boolean)
+    )
+  ) as string[];
 
   return (
     <>
+      <LightfallBackground />
       <div className="mx-auto max-w-3xl px-4 pt-8">
         <Breadcrumb theme="dark" items={[{ label: "سبد خرید", href: "/cart" }, { label: "تکمیل خرید" }]} />
       </div>
@@ -45,8 +44,6 @@ export default async function CheckoutPage() {
           logoUrl: settings?.logo_url ?? null,
           email: settings?.support_email ?? null,
         }}
-        pendingCheckout={pendingResult?.expired === false ? pendingResult.pending : null}
-        itemsToRestore={pendingResult?.expired === true ? pendingResult.items : null}
         bankAccounts={bankAccounts ?? []}
         walletBalance={profile?.wallet_balance ?? 0}
       />

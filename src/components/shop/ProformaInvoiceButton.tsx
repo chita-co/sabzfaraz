@@ -6,30 +6,20 @@ import { CartItem } from "@/store/cart-store";
 import { buildInvoiceHtml } from "@/lib/buildInvoiceHtml";
 import { renderInvoiceToPdf } from "@/lib/generateInvoicePdf";
 import { imageUrlToDataUri } from "@/lib/invoiceImage";
-import { createPendingCheckout } from "@/app/(shop)/checkout/pending-actions";
-import { useCartStore } from "@/store/cart-store";
 
 interface StoreInfo { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null; }
 interface BuyerInfo { fullName: string; phone: string; province: string; city: string; addressLine: string; }
 
 export default function ProformaInvoiceButton({
-  items, subtotal, shippingCost, storeInfo, buyer, shippingMethodId,
+  items, subtotal, shippingCost, storeInfo, buyer,
 }: {
-  items: CartItem[]; subtotal: number; shippingCost: number; storeInfo: StoreInfo; buyer: BuyerInfo; shippingMethodId: string | null;
+  items: CartItem[]; subtotal: number; shippingCost: number; storeInfo: StoreInfo; buyer: BuyerInfo; shippingMethodId?: string | null;
 }) {
   const [generating, setGenerating] = useState(false);
-  const clearCart = useCartStore((s) => s.clearCart);
 
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const holdResult = await createPendingCheckout(items, shippingMethodId, shippingCost);
-      if (holdResult?.error) {
-        alert(holdResult.error);
-        setGenerating(false);
-        return;
-      }
-
       const logoDataUri = storeInfo.logoUrl ? await imageUrlToDataUri(storeInfo.logoUrl) : null;
 
       const now = new Date();
@@ -55,8 +45,6 @@ export default function ProformaInvoiceButton({
       });
 
       await renderInvoiceToPdf(html, `proforma-${proformaNumber}.pdf`);
-      clearCart();
-      window.location.reload();
     } catch (e) {
       console.error(e);
       alert("خطا در ساخت پیش‌فاکتور.");
