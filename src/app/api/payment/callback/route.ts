@@ -4,6 +4,7 @@ import { verifyPayment } from "@/lib/zarinpal";
 import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
+import { completePendingCheckout } from "@/app/(shop)/checkout/pending-actions";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -21,23 +22,42 @@ export async function GET(request: NextRequest) {
     .select("*, address:addresses(phone)")
     .eq("id", orderId)
     .single();
-  if (!order) return NextResponse.redirect(`${origin}/checkout?error=notfound`);
+  if (!order)
+    return NextResponse.redirect(`${origin}/checkout?error=notfound`);
 
   if (status !== "OK") {
-    await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
-    try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
+    await supabase
+      .from("orders")
+      .update({ payment_status: "FAILED", status: "CANCELLED" })
+      .eq("id", orderId);
+    try {
+      await refundRedeemedPoints(orderId);
+    } catch (e) {
+      console.error("خطا در بازگشت امتیاز:", e);
+    }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   }
 
   try {
-    const result = await verifyPayment({ amount: order.total_amount, authority });
+    const result = await verifyPayment({
+      amount: order.total_amount,
+      authority,
+    });
     if (result.status === 100 || result.status === 101) {
-      await supabase.from("orders").update({
-        payment_status: "PAID",
-        status: "PROCESSING",
-        zarinpal_ref_id: String(result.refId ?? ""),
-      }).eq("id", orderId);
-      
+      await supabase
+        .from("orders")
+        .update({
+          payment_status: "PAID",
+          status: "PROCESSING",
+          zarinpal_ref_id: String(result.refId ?? ""),
+        })
+        .eq("id", orderId);
+
+      // ✅ تکمیل پیش‌فاکتور در صورت وجود
+      if (order.pending_checkout_id) {
+        await completePendingCheckout(order.pending_checkout_id);
+      }
+
       const { data: orderItemsForStock } = await supabase
         .from("order_items")
         .select("product_id, quantity")
@@ -61,17 +81,27 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const sessionKeyCookie = request.cookies.get("sf_analytics_session")?.value ?? null;
+      const sessionKeyCookie =
+        request.cookies.get("sf_analytics_session")?.value ?? null;
       try {
         await logConversion(sessionKeyCookie, orderId, order.total_amount);
       } catch (e) {
         console.error("خطا در ثبت تبدیل آماری:", e);
       }
 
-      return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
+      return NextResponse.redirect(
+        `${origin}/order/${orderId}?payment=success`
+      );
     }
-    await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
-    try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
+    await supabase
+      .from("orders")
+      .update({ payment_status: "FAILED", status: "CANCELLED" })
+      .eq("id", orderId);
+    try {
+      await refundRedeemedPoints(orderId);
+    } catch (e) {
+      console.error("خطا در بازگشت امتیاز:", e);
+    }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   } catch {
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=error`);
