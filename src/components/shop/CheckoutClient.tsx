@@ -91,7 +91,6 @@ export default function CheckoutClient({
   async function processPayment(method: PaymentMethod) {
     // به‌محض تأیید پرداخت (چه آنلاین چه کارت‌به‌کارت/شبا)، سبد خرید فوراً خالی می‌شود
     // تا در صورت مراجعه‌ی دوباره به این صفحه، آیتم‌های قبلی دوباره نمایش داده نشوند
-    useCartStore.getState().clearCart();
 
     setLoading(true);
     setError(null);
