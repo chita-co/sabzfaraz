@@ -98,6 +98,7 @@ export default function WalletClient({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={b.logo_slug === "generic" ? "/banks/generic.svg" : `/banks/${b.logo_slug}.png`} alt={b.bank_name} className="bank-account-logo" />
                   <p className="bank-account-name">{b.bank_name}</p>
+                  <p className="bank-account-holder">{b.account_holder_name}</p>
                   <p className="bank-account-number" dir="ltr">{method === "CARD_TO_CARD" ? b.card_number : b.sheba_number}</p>
                 </div>
               ))}

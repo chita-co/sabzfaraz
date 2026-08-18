@@ -102,6 +102,7 @@ export async function createOrderAndPay(
       p_user_id: user.id,
       p_amount: requestedWalletUse,
       p_description: `پرداخت سفارش ${orderNumber} از کیف پول`,
+      p_order_id: order.id,
     });
     if (walletError) return { error: walletError.message };
     const walletResult = walletData as { debited?: number };
@@ -225,6 +226,7 @@ export async function createOfflineOrder(
       p_user_id: user.id,
       p_amount: requestedWalletUse,
       p_description: `پرداخت سفارش ${orderNumber} از کیف پول`,
+      p_order_id: order.id,
     });
     if (walletError) return { error: walletError.message };
     const walletResult = walletData as { debited?: number };
