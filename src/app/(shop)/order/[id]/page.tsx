@@ -145,12 +145,21 @@ export default async function OrderResultPage({
           </>
         )}
 
-        <Link
-          href="/"
-          className="inline-block rounded-full bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700"
-        >
-          بازگشت به فروشگاه
-        </Link>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <Link
+            href="/"
+            className="inline-block rounded-full bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700"
+          >
+            بازگشت به فروشگاه
+          </Link>
+          <Link
+            href="/profile/wallet"
+            prefetch={false}
+            className="inline-block rounded-full bg-gray-100 px-8 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200"
+          >
+            مشاهده موجودی کیف پول
+          </Link>
+        </div>
       </div>
     </>
   );

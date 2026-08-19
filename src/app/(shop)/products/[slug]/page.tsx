@@ -16,12 +16,17 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: product } = await supabase.from("products").select("name, description, images").eq("slug", slug).single();
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, description, images, meta_title, meta_description, canonical_url")
+    .eq("slug", slug)
+    .single();
   if (!product) return {};
   return {
-    title: `${product.name} | سبزفراز`,
-    description: product.description?.slice(0, 160),
+    title: product.meta_title || `${product.name} | سبزفراز`,
+    description: (product.meta_description || product.description)?.slice(0, 160),
     openGraph: { images: product.images?.[0] ? [product.images[0]] : [] },
+    ...(product.canonical_url ? { alternates: { canonical: product.canonical_url } } : {}),
   };
 }
 
@@ -77,7 +82,7 @@ export default async function ProductPage({
     isWishlisted = !!wish;
   }
 
-  const [{ data: relatedProducts }, { data: reviews }, { data: quantityTiers }, { data: unboxingVideos }] = await Promise.all([
+  const [{ data: relatedProducts }, { data: reviews }, { data: quantityTiers }, { data: unboxingVideos }, { data: attributes }] = await Promise.all([
     supabase
       .from("products")
       .select("*")
@@ -103,6 +108,11 @@ export default async function ProductPage({
       .eq("product_id", product.id)
       .eq("status", "PUBLISHED")
       .order("published_at", { ascending: false }),
+    supabase
+      .from("product_attributes")
+      .select("*")
+      .eq("product_id", product.id)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const relatedIds = (relatedProducts ?? []).map((p) => p.id);
@@ -128,8 +138,11 @@ export default async function ProductPage({
     "@type": "Product",
     name: product.name,
     image: product.images,
-    description: product.description,
+    description: product.short_description || product.description,
     sku: product.sku,
+    ...(product.gtin && { gtin: product.gtin }),
+    ...(product.model_version && { mpn: product.model_version }),
+    ...(product.tags && product.tags.length > 0 && { keywords: product.tags.join("، ") }),
     ...(product.brand && { brand: { "@type": "Brand", name: product.brand } }),
     offers: {
       "@type": "AggregateOffer",
@@ -170,6 +183,7 @@ export default async function ProductPage({
         avgRating={product.rating_avg}
         reviewCount={product.rating_count}
         quantityTiers={quantityTiers ?? []}
+        attributes={attributes ?? []}
         tomanPerPoint={loyaltySettings.tomanPerPoint}
         pointsMultiplier={loyaltyMultiplier}
         pointValueToman={loyaltySettings.pointValueToman}

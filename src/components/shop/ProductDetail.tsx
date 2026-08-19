@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { Share2, ShoppingCart, Check, ChevronDown } from "lucide-react";
-import { Product, ProductQuantityTier } from "@/types";
+import { Product, ProductQuantityTier, ProductAttribute } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
 import { StarRatingDisplay } from "./StarRating";
 import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
 
 export default function ProductDetail({
-  product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [],
+  product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [], attributes = [],
   tomanPerPoint = 1000, pointsMultiplier = 1, pointValueToman = 100,
 }: {
-  product: Product; isWishlisted: boolean; avgRating?: number; reviewCount?: number; quantityTiers?: ProductQuantityTier[];
+  product: Product; isWishlisted: boolean; avgRating?: number; reviewCount?: number; quantityTiers?: ProductQuantityTier[]; attributes?: ProductAttribute[];
   tomanPerPoint?: number; pointsMultiplier?: number; pointValueToman?: number;
 }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -312,6 +312,9 @@ export default function ProductDetail({
 
           <div className="product-description">
             <h3 className="product-section-title">اطلاعات محصول</h3>
+            {product.short_description && (
+              <p className="product-description-text" style={{ fontWeight: 600, marginBottom: 10 }}>{product.short_description}</p>
+            )}
             <p className="product-description-text">{product.description}</p>
             {product.description_images && product.description_images.length > 0 && (
               <div className="description-images-grid">
@@ -322,6 +325,22 @@ export default function ProductDetail({
               </div>
             )}
           </div>
+
+          {attributes.length > 0 && (
+            <div className="product-description">
+              <h3 className="product-section-title">مشخصات فنی</h3>
+              <table className="qty-tiers-table">
+                <tbody>
+                  {attributes.map((a) => (
+                    <tr key={a.id}>
+                      <td style={{ fontWeight: 600, width: "40%" }}>{a.attr_key}</td>
+                      <td>{a.attr_value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
