@@ -16,12 +16,17 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: product } = await supabase
+  const { data: product, error: productError } = await supabase
     .from("products")
-    .select("name, description, images, meta_title, meta_description, canonical_url")
+    .select("*, category:categories(slug, parent_id, name)")
     .eq("slug", slug)
+    .eq("is_active", true)
     .single();
-  if (!product) return {};
+
+  if (productError) {
+    console.error(`خطای دیتابیس در دریافت محصول با اسلاگ "${slug}":`, JSON.stringify(productError));
+  }
+  if (!product) notFound();
   return {
     title: product.meta_title || `${product.name} | سبزفراز`,
     description: (product.meta_description || product.description)?.slice(0, 160),
@@ -47,17 +52,23 @@ export default async function ProductPage({
     .single();
 
   if (!product) notFound();
-
-  // ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
+  
+// ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
   const categoryChain: { name: string; slug: string }[] = [];
   if (product.category?.slug) {
     let currentParentId = product.category.parent_id;
-    while (currentParentId) {
-      const { data: cat } = await supabase
+    let safetyCounter = 0;
+    while (currentParentId && safetyCounter < 10) {
+      safetyCounter++;
+      const { data: cat, error: catError } = await supabase
         .from("categories")
         .select("name, slug, parent_id")
         .eq("id", currentParentId)
-        .single();
+        .maybeSingle();
+      if (catError) {
+        console.error("خطا در دریافت زنجیره دسته‌بندی:", JSON.stringify(catError));
+        break;
+      }
       if (!cat) break;
       categoryChain.unshift({ name: cat.name, slug: cat.slug });
       currentParentId = cat.parent_id;
