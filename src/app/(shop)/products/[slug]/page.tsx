@@ -11,6 +11,8 @@ import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
