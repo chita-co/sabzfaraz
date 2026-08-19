@@ -1,6 +1,5 @@
 // src/app/api/admin/upload/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { uploadImage, deleteImageByUrl } from "@/lib/arvan";
@@ -38,13 +37,20 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const optimized = await sharp(buffer)
-      .resize(1000, 1000, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer();
+    let optimized = buffer;
 
-    // کلید فایل بر اساس هش محتوای تصویر ساخته می‌شود؛ یعنی آپلود مجدد
-    // همان تصویر دقیقاً همان فایل قبلی را بازنویسی می‌کند و فایل تکراری ساخته نمی‌شود.
+    // استفاده از sharp فقط اگر در محیط سرور درست لود شود
+    try {
+      const sharp = (await import("sharp")).default;
+      optimized = await sharp(buffer)
+        .resize(1000, 1000, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+    } catch (e) {
+      console.error("sharp not available, using original buffer", e);
+      optimized = buffer;
+    }
+
     const key = `products/${randomUUID()}.webp`;
     const url = await uploadImage(optimized, key);
 
