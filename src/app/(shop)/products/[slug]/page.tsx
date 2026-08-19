@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient();
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("*, category:categories(slug, parent_id, name)")
+    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name)")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
@@ -46,13 +46,13 @@ export default async function ProductPage({
   // ۱. دریافت محصول به‌همراه شناسه و نام و والد دسته‌اش
   const { data: product } = await supabase
     .from("products")
-    .select("*, category:categories(slug, parent_id, name)")
+    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name)")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
 
   if (!product) notFound();
-  
+
 // ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
   const categoryChain: { name: string; slug: string }[] = [];
   if (product.category?.slug) {

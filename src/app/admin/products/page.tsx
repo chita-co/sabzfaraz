@@ -22,8 +22,8 @@ export default async function AdminProductsPage({
   const supabase = await createClient();
 
   let query = supabase
-    .from("products")
-    .select("*, category:categories(name)", { count: "exact" });
+  .from("products")
+  .select("*, category:categories!products_category_id_fkey(name)", { count: "exact" });
 
   if (q)
     query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,name_en.ilike.%${q}%`);
