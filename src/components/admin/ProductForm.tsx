@@ -7,8 +7,6 @@ import Image from "next/image";
 import { Plus, X, Upload, Loader2, Layers, GripVertical } from "lucide-react";
 import { createProduct, updateProduct, createProductsBulk } from "@/app/admin/products/actions";
 import { Category, Product, ProductColor, ProductQuantityTier } from "@/types";
-import CategoryMultiSelect from "./CategoryMultiSelect";
-import ProductAttributesEditor, { type AttributeRow } from "./ProductAttributesEditor";
 
 const NAMED_COLORS: ProductColor[] = [
   { name: "مشکی", hex: "#111827" },
@@ -49,15 +47,11 @@ export default function ProductForm({
   product,
   categories,
   initialQuantityTiers = [],
-  initialExtraCategoryIds = [],
-  initialAttributes = [],
 }: {
   mode: "create" | "edit";
   product?: Product;
   categories: Category[];
   initialQuantityTiers?: ProductQuantityTier[];
-  initialExtraCategoryIds?: string[];
-  initialAttributes?: AttributeRow[];
 }) {
   const router = useRouter();
 
@@ -110,25 +104,6 @@ export default function ProductForm({
       unitPrice: t.unit_price.toString(),
     }))
   );
-
-  const [shortDescription, setShortDescription] = useState(product?.short_description ?? "");
-  const [tagsInput, setTagsInput] = useState((product?.tags ?? []).join("، "));
-  const [metaTitle, setMetaTitle] = useState(product?.meta_title ?? "");
-  const [metaDescription, setMetaDescription] = useState(product?.meta_description ?? "");
-  const [focusKeyword, setFocusKeyword] = useState(product?.focus_keyword ?? "");
-  const [imageAltTexts, setImageAltTexts] = useState<string[]>(product?.image_alt_texts ?? []);
-  const [extraCategoryIds, setExtraCategoryIds] = useState<string[]>(initialExtraCategoryIds);
-  const [attributes, setAttributes] = useState<AttributeRow[]>(initialAttributes);
-  const [displayPriority, setDisplayPriority] = useState(product?.display_priority?.toString() ?? "0");
-  const [maxPurchaseQty, setMaxPurchaseQty] = useState(product?.max_purchase_qty?.toString() ?? "");
-  const [packageLength, setPackageLength] = useState(product?.package_length_cm?.toString() ?? "");
-  const [packageWidth, setPackageWidth] = useState(product?.package_width_cm?.toString() ?? "");
-  const [packageHeight, setPackageHeight] = useState(product?.package_height_cm?.toString() ?? "");
-  const [reviewsEnabled, setReviewsEnabled] = useState(product?.reviews_enabled ?? true);
-  const [canonicalUrl, setCanonicalUrl] = useState(product?.canonical_url ?? "");
-  const [showInFeed, setShowInFeed] = useState(product?.show_in_feed ?? true);
-  const [gtin, setGtin] = useState(product?.gtin ?? "");
-  const [modelVersion, setModelVersion] = useState(product?.model_version ?? "");
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -374,24 +349,6 @@ export default function ProductForm({
       colors,
       sizes,
       quantityTiers: parsedTiers,
-      shortDescription: shortDescription || null,
-      tags: tagsInput.split(/[،,]/).map((t) => t.trim()).filter(Boolean),
-      metaTitle: metaTitle || null,
-      metaDescription: metaDescription || null,
-      focusKeyword: focusKeyword || null,
-      imageAltTexts,
-      extraCategoryIds,
-      attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
-      displayPriority: Number(displayPriority) || 0,
-      maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
-      packageLengthCm: packageLength ? Number(packageLength) : null,
-      packageWidthCm: packageWidth ? Number(packageWidth) : null,
-      packageHeightCm: packageHeight ? Number(packageHeight) : null,
-      reviewsEnabled,
-      canonicalUrl: canonicalUrl || null,
-      showInFeed,
-      gtin: gtin || null,
-      modelVersion: modelVersion || null,
     };
 
     const result =
@@ -622,42 +579,6 @@ export default function ProductForm({
             </select>
           </div>
 
-          {categoryId && (
-            <CategoryMultiSelect
-              categories={categories}
-              excludeId={categoryId}
-              selectedIds={extraCategoryIds}
-              onChange={setExtraCategoryIds}
-            />
-          )}
-
-          <div className="admin-form-group">
-            <label>توضیح کوتاه (برای نمایش در لیست محصولات و خلاصه گوگل)</label>
-            <textarea rows={2} value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} placeholder="یک یا دو جمله‌ی کوتاه درباره‌ی محصول" />
-          </div>
-
-          <div className="admin-form-group">
-            <label>برچسب‌ها (با ویرگول جدا کنید — برای سئو و جستجوی داخلی)</label>
-            <input type="text" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="مثلاً: سنسور، آردوینو، اولتراسونیک" />
-          </div>
-
-          <div className="admin-form-group">
-            <label>عنوان سئو (Meta Title — حداکثر ۶۰ کاراکتر)</label>
-            <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value.slice(0, 60))} maxLength={60} />
-            <p className="text-xs text-gray-400 mt-1">{metaTitle.length.toLocaleString("fa-IR")} / ۶۰</p>
-          </div>
-
-          <div className="admin-form-group">
-            <label>توضیحات متا (Meta Description — حداکثر ۱۶۰ کاراکتر)</label>
-            <textarea rows={2} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value.slice(0, 160))} maxLength={160} />
-            <p className="text-xs text-gray-400 mt-1">{metaDescription.length.toLocaleString("fa-IR")} / ۱۶۰</p>
-          </div>
-
-          <div className="admin-form-group">
-            <label>کلمه کلیدی کانونی (اختیاری)</label>
-            <input type="text" value={focusKeyword} onChange={(e) => setFocusKeyword(e.target.value)} />
-          </div>
-
           <div className="admin-form-group flex items-center gap-2">
             <input
               type="checkbox"
@@ -741,52 +662,6 @@ export default function ProductForm({
               {!discountPrice && "(ابتدا قیمت تخفیف را وارد کنید)"}
             </label>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            <div className="admin-form-group">
-              <label>اولویت نمایش در دسته‌بندی (اختیاری)</label>
-              <input type="number" value={displayPriority} onChange={(e) => setDisplayPriority(e.target.value)} />
-            </div>
-            <div className="admin-form-group">
-              <label>حداکثر تعداد مجاز خرید هر سفارش (اختیاری)</label>
-              <input type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(e.target.value)} min={1} />
-            </div>
-          </div>
-
-          <div className="admin-form-group">
-            <label>ابعاد بسته‌بندی برای محاسبه‌ی دقیق هزینه پست (سانتی‌متر — اختیاری)</label>
-            <div className="grid grid-cols-3 gap-2">
-              <input type="number" placeholder="طول" value={packageLength} onChange={(e) => setPackageLength(e.target.value)} />
-              <input type="number" placeholder="عرض" value={packageWidth} onChange={(e) => setPackageWidth(e.target.value)} />
-              <input type="number" placeholder="ارتفاع" value={packageHeight} onChange={(e) => setPackageHeight(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="admin-form-group">
-              <label>بارکد / GTIN (اختیاری)</label>
-              <input type="text" value={gtin} onChange={(e) => setGtin(e.target.value)} dir="ltr" />
-            </div>
-            <div className="admin-form-group">
-              <label>مدل / نسخه (اختیاری)</label>
-              <input type="text" value={modelVersion} onChange={(e) => setModelVersion(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="admin-form-group">
-            <label>لینک کانونی محصول (Canonical URL — اختیاری)</label>
-            <input type="text" value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)} dir="ltr" placeholder="/products/..." />
-          </div>
-
-          <div className="admin-form-group flex items-center gap-2">
-            <input type="checkbox" id="reviewsEnabled" checked={reviewsEnabled} onChange={(e) => setReviewsEnabled(e.target.checked)} />
-            <label htmlFor="reviewsEnabled" style={{ marginBottom: 0 }}>امکان ثبت نظر برای این محصول فعال باشد</label>
-          </div>
-
-          <div className="admin-form-group flex items-center gap-2">
-            <input type="checkbox" id="showInFeed" checked={showInFeed} onChange={(e) => setShowInFeed(e.target.checked)} />
-            <label htmlFor="showInFeed" style={{ marginBottom: 0 }}>نمایش در فید گوگل/ترب (بازارگاه‌ها)</label>
-          </div>
         </div>
 
         <div>
@@ -817,17 +692,6 @@ export default function ProductForm({
                   >
                     <X size={12} />
                   </button>
-                  <input
-                    type="text"
-                    placeholder="متن جایگزین (Alt)"
-                    value={imageAltTexts[i] ?? ""}
-                    onChange={(e) => {
-                      const next = [...imageAltTexts];
-                      next[i] = e.target.value;
-                      setImageAltTexts(next);
-                    }}
-                    className="absolute bottom-1 right-1 left-1 text-[10px] px-1 py-0.5 rounded bg-white/90 border border-gray-200"
-                  />
                 </div>
               ))}
             </div>
@@ -949,8 +813,6 @@ export default function ProductForm({
               </button>
             </div>
           </div>
-
-          <ProductAttributesEditor attributes={attributes} onChange={setAttributes} />
 
           {!bulkMode && (
             <div className="admin-form-group">

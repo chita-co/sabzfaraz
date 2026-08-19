@@ -312,9 +312,6 @@ export default function ProductDetail({
 
           <div className="product-description">
             <h3 className="product-section-title">اطلاعات محصول</h3>
-            {product.short_description && (
-              <p className="product-description-text" style={{ fontWeight: 600, marginBottom: 10 }}>{product.short_description}</p>
-            )}
             <p className="product-description-text">{product.description}</p>
             {product.description_images && product.description_images.length > 0 && (
               <div className="description-images-grid">
