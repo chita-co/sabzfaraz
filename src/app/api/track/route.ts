@@ -5,6 +5,8 @@ import { parseUserAgent } from "@/lib/analytics/parseUserAgent";
 import { isBotUserAgent } from "@/lib/analytics/botDetection";
 import { classifyTraffic } from "@/lib/analytics/trafficSource";
 import { hashIp, getClientIp } from "@/lib/analytics/hashIp";
+import { lookupIpCountry } from "@/lib/analytics/geoLookup";
+import { extractSearchInfo } from "@/lib/analytics/searchKeywords";
 
 export const runtime = "nodejs";
 
@@ -26,14 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "ignored-bot" });
     }
 
-    // بازدید ادمین شمرده نمی‌شود (تشخیص خودکار از روی نقش کاربر لاگین‌شده)
+    // بازدید ادمین دیگر نادیده گرفته نمی‌شود — با پرچم is_admin_visit ثبت می‌شود
+    // تا هم در جدول با برچسب مشخص دیده شود، هم بتوان آن را از آمار اصلی فروش کنار گذاشت
     const authClient = await createClient();
     const { data: { user } } = await authClient.auth.getUser();
+    let isAdminVisit = false;
     if (user) {
       const { data: profile } = await authClient.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role === "ADMIN") {
-        return NextResponse.json({ status: "ignored-admin" });
-      }
+      isAdminVisit = profile?.role === "ADMIN";
     }
 
     const admin = createAdminClient();
@@ -60,13 +62,17 @@ export async function POST(request: NextRequest) {
         exit_page: pageUrl,
         page_count: (existingSession.page_count ?? 0) + 1,
       };
-      // فقط وقتی کاربر لاگین است user_id را ثبت/به‌روزرسانی کن؛
-      // هرگز آن را با null بازنویسی نکن تا هویت کاربر وسط نشست گم نشود
+      // فقط وقتی کاربر لاگین است user_id را ثبت/به‌روزرسانی کن؛ هرگز با null بازنویسی نکن
       if (user?.id) updatePayload.user_id = user.id;
+      // اگر کاربر وسط همین نشست وارد حساب ادمین شد، کل نشست علامت‌گذاری شود
+      if (isAdminVisit) updatePayload.is_admin_visit = true;
 
       await admin.from("analytics_sessions").update(updatePayload).eq("id", sessionId);
     } else {
       const { source, domain } = classifyTraffic(referrer || null, pageUrl, utmSource || null, utmMedium || null);
+      const { keywords: searchKeywords, engine: searchEngine } = extractSearchInfo(referrer || null);
+      const geo = await lookupIpCountry(ip);
+
       const { data: created, error } = await admin
         .from("analytics_sessions")
         .insert({
@@ -90,8 +96,14 @@ export async function POST(request: NextRequest) {
           utm_term: utmTerm || null,
           utm_content: utmContent || null,
           is_bot: false,
+          is_admin_visit: isAdminVisit,
           user_id: user?.id ?? null,
           page_count: 1,
+          country_code: geo.countryCode,
+          country_name: geo.countryName,
+          city: geo.city,
+          search_keywords: searchKeywords,
+          search_engine: searchEngine,
         })
         .select("id")
         .single();

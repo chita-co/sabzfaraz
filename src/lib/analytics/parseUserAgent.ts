@@ -25,14 +25,23 @@ export function parseUserAgent(ua: string): ParsedUserAgent {
 
   let browser = "Unknown";
   let browserVersion = "";
+
+  const samsungMatch = s.match(/SamsungBrowser\/([\d.]+)/);
+  const yandexMatch = s.match(/YaBrowser\/([\d.]+)/);
+  const ucMatch = s.match(/UCBrowser\/([\d.]+)/);
   const edgeMatch = s.match(/Edg\/([\d.]+)/);
   const operaMatch = s.match(/OPR\/([\d.]+)/);
+  const braveMatch = /Brave\//.test(s);
   const chromeMatch = s.match(/Chrome\/([\d.]+)/);
   const firefoxMatch = s.match(/Firefox\/([\d.]+)/);
   const safariMatch = s.match(/Version\/([\d.]+).*Safari/);
 
-  if (edgeMatch) { browser = "Edge"; browserVersion = edgeMatch[1]; }
+  if (samsungMatch) { browser = "Samsung Internet"; browserVersion = samsungMatch[1]; }
+  else if (yandexMatch) { browser = "Yandex Browser"; browserVersion = yandexMatch[1]; }
+  else if (ucMatch) { browser = "UC Browser"; browserVersion = ucMatch[1]; }
+  else if (edgeMatch) { browser = "Edge"; browserVersion = edgeMatch[1]; }
   else if (operaMatch) { browser = "Opera"; browserVersion = operaMatch[1]; }
+  else if (braveMatch && chromeMatch) { browser = "Brave"; browserVersion = chromeMatch[1]; }
   else if (firefoxMatch) { browser = "Firefox"; browserVersion = firefoxMatch[1]; }
   else if (chromeMatch) { browser = "Chrome"; browserVersion = chromeMatch[1]; }
   else if (safariMatch) { browser = "Safari"; browserVersion = safariMatch[1]; }

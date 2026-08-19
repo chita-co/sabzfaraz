@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requestPayment } from "@/lib/zarinpal";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
 import { consumeDiscountCode } from "@/lib/discountCode";
 
@@ -44,8 +45,6 @@ export async function createOrderAndPay(
     .from("addresses").select("*").eq("id", addressId).eq("user_id", user.id).single();
   if (!address) return { error: "آدرس انتخابی معتبر نیست." };
 
-  // بررسی اطمینان (لایه‌ی دوم، مطابق درخواست مورد ۲) — طبق محدودیت‌های دیتابیس این مقادیر
-  // هرگز نباید خالی باشند، اما به‌عنوان یک محافظ اضافه دوباره بررسی می‌شود
   if (!address.postal_code || !address.full_name || !address.address_line) {
     return { error: "اطلاعات آدرس (نام گیرنده، کد پستی، آدرس کامل) ناقص است. لطفاً از بخش پروفایل تکمیل کنید." };
   }
@@ -100,11 +99,14 @@ export async function createOrderAndPay(
     if (finalAmount < 0) finalAmount = 0;
   }
 
+  // ثبت ارزش واقعی و نهایی سفارش (پس از تخفیف‌ها) — این مقدار دیگر توسط هیچ مرحله‌ای صفر نمی‌شود
+  if (finalAmount !== totalAmount) {
+    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+  }
+
   let remainder = finalAmount;
 
   if (walletAmountToUse > 0) {
-    // ===== تابع اتمیک: کسر از کیف پول کاربر + واریز به کیف پول ادمین + به‌روزرسانی سفارش
-    // همگی در یک تراکنش دیتابیسی واحد اجرا می‌شود (رفع قطعی باگ ناهماهنگی) =====
     const { data: walletData, error: walletError } = await supabase.rpc("apply_wallet_payment_to_order", {
       p_order_id: order.id,
       p_user_id: user.id,
@@ -115,8 +117,10 @@ export async function createOrderAndPay(
     const walletResult = walletData as { success?: boolean; error?: string; debited?: number; remainder?: number };
     if (walletResult.error) return { error: walletResult.error };
     remainder = walletResult.remainder ?? finalAmount;
-  } else if (finalAmount !== totalAmount) {
-    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+
+    // آپدیت فوری کش صفحه‌ی کیف پول تا موجودی جدید همیشه به‌روز نمایش داده شود
+    revalidatePath("/profile/wallet");
+    revalidatePath("/admin/finance/wallet-transactions");
   }
 
   if (remainder === 0) {
@@ -226,6 +230,10 @@ export async function createOfflineOrder(
     if (finalAmount < 0) finalAmount = 0;
   }
 
+  if (finalAmount !== totalAmount) {
+    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+  }
+
   let remainder = finalAmount;
 
   if (walletAmountToUse > 0) {
@@ -239,8 +247,9 @@ export async function createOfflineOrder(
     const walletResult = walletData as { success?: boolean; error?: string; debited?: number; remainder?: number };
     if (walletResult.error) return { error: walletResult.error };
     remainder = walletResult.remainder ?? finalAmount;
-  } else if (finalAmount !== totalAmount) {
-    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+
+    revalidatePath("/profile/wallet");
+    revalidatePath("/admin/finance/wallet-transactions");
   }
 
   if (remainder === 0) {

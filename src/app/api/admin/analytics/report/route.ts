@@ -28,12 +28,20 @@ interface SessionRow {
   landing_page: string;
   exit_page: string;
   traffic_source: string;
+  referrer_domain: string | null;
   device_type: string;
   browser: string;
   os: string;
   page_count: number;
   is_converted: boolean;
-  profile: { full_name: string | null; phone: string | null }[] | null;
+  is_admin_visit: boolean;
+  country_code: string | null;
+  country_name: string | null;
+  search_keywords: string | null;
+  search_engine: string | null;
+  // نکته‌ی مهم: چون user_id یک رابطه‌ی many-to-one به profiles است،
+  // Supabase این را به‌صورت آبجکت تکی برمی‌گرداند، نه آرایه
+  profile: { full_name: string | null; phone: string | null } | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -46,6 +54,7 @@ export async function GET(request: NextRequest) {
   const sourceFilter = searchParams.get("source") || "";
   const deviceFilter = searchParams.get("device") || "";
   const convertedFilter = searchParams.get("converted") || "";
+  const includeAdmin = searchParams.get("includeAdmin") === "true";
 
   const now = new Date();
   const from = fromParam ? new Date(fromParam) : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -58,27 +67,51 @@ export async function GET(request: NextRequest) {
   const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
   const monthStart = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [todayCount, yesterdayCount, weekCount, monthCount] = await Promise.all([
-    admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).gte("started_at", todayStart.toISOString()),
-    admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).gte("started_at", yesterdayStart.toISOString()).lt("started_at", todayStart.toISOString()),
-    admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).gte("started_at", weekStart.toISOString()),
-    admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).gte("started_at", monthStart.toISOString()),
+  function countQuery(startDate: Date, endDate?: Date) {
+    let q = admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).gte("started_at", startDate.toISOString());
+    if (endDate) q = q.lt("started_at", endDate.toISOString());
+    if (!includeAdmin) q = q.eq("is_admin_visit", false);
+    return q;
+  }
+
+  const [todayCount, yesterdayCount, weekCount, monthCount, adminVisitsInRange] = await Promise.all([
+    countQuery(todayStart),
+    countQuery(yesterdayStart, todayStart),
+    countQuery(weekStart),
+    countQuery(monthStart),
+    admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).eq("is_admin_visit", true).gte("started_at", from.toISOString()).lte("started_at", to.toISOString()),
   ]);
 
   let query = admin
     .from("analytics_sessions")
-    .select("id, visitor_id, user_id, started_at, ended_at, landing_page, exit_page, traffic_source, device_type, browser, os, page_count, is_converted, profile:profiles(full_name, phone)")
+    .select("id, visitor_id, user_id, started_at, ended_at, landing_page, exit_page, traffic_source, referrer_domain, device_type, browser, os, page_count, is_converted, is_admin_visit, country_code, country_name, search_keywords, search_engine, profile:profiles(full_name, phone)")
     .eq("is_bot", false)
     .gte("started_at", from.toISOString())
     .lte("started_at", to.toISOString());
 
+  if (!includeAdmin) query = query.eq("is_admin_visit", false);
   if (sourceFilter) query = query.eq("traffic_source", sourceFilter);
   if (deviceFilter) query = query.eq("device_type", deviceFilter);
   if (convertedFilter === "yes") query = query.eq("is_converted", true);
   else if (convertedFilter === "no") query = query.eq("is_converted", false);
 
   const { data } = await query;
-  const rows = (data ?? []) as SessionRow[];
+  const rows = (data ?? []) as unknown as SessionRow[];
+
+  // تشخیص «بازدیدکننده‌ی بازگشتی»: آیا این visitor_id پیش از این نشست، نشست دیگری هم داشته؟
+  const visitorIds = Array.from(new Set(rows.map((s) => s.visitor_id)));
+  const firstSeenMap = new Map<string, string>();
+  if (visitorIds.length > 0) {
+    const { data: historyRows } = await admin
+      .from("analytics_sessions")
+      .select("visitor_id, started_at")
+      .eq("is_bot", false)
+      .in("visitor_id", visitorIds)
+      .order("started_at", { ascending: true });
+    for (const r of historyRows ?? []) {
+      if (!firstSeenMap.has(r.visitor_id)) firstSeenMap.set(r.visitor_id, r.started_at);
+    }
+  }
 
   const bounceCount = rows.filter((s) => (s.page_count ?? 0) <= 1).length;
   const bounceRate = rows.length > 0 ? (bounceCount / rows.length) * 100 : 0;
@@ -129,25 +162,49 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count);
   }
 
+  function bucketizeCountries() {
+    const map = new Map<string, { count: number; countryCode: string | null }>();
+    for (const s of rows) {
+      const key = s.country_name || "نامشخص";
+      if (!map.has(key)) map.set(key, { count: 0, countryCode: s.country_code });
+      map.get(key)!.count++;
+    }
+    const total = rows.length || 1;
+    return Array.from(map.entries())
+      .map(([name, v]) => ({ name, countryCode: v.countryCode, count: v.count, percent: Math.round((v.count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  }
+
   const recentSessions = [...rows]
     .sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
     .slice(0, 50)
-    .map((s) => ({
-      id: s.id,
-      startedAt: s.started_at,
-      landingPage: s.landing_page,
-      exitPage: s.exit_page,
-      device: s.device_type,
-      browser: s.browser,
-      os: s.os,
-      source: s.traffic_source,
-      pageCount: s.page_count,
-      durationSeconds: Math.max(0, Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 1000)),
-      converted: s.is_converted,
-      isGuest: !s.user_id,
-      customerName: s.profile?.[0]?.full_name ?? null,
-      customerPhone: s.profile?.[0]?.phone ?? null,
-    }));
+    .map((s) => {
+      const firstSeen = firstSeenMap.get(s.visitor_id);
+      const isReturning = !!firstSeen && new Date(firstSeen).getTime() < new Date(s.started_at).getTime();
+      return {
+        id: s.id,
+        startedAt: s.started_at,
+        landingPage: s.landing_page,
+        exitPage: s.exit_page,
+        referrerDomain: s.referrer_domain,
+        device: s.device_type,
+        browser: s.browser,
+        os: s.os,
+        source: s.traffic_source,
+        pageCount: s.page_count,
+        durationSeconds: Math.max(0, Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 1000)),
+        converted: s.is_converted,
+        isGuest: !s.user_id,
+        isAdmin: s.is_admin_visit,
+        isReturning,
+        customerName: s.profile?.full_name ?? null,
+        customerPhone: s.profile?.phone ?? null,
+        countryCode: s.country_code,
+        countryName: s.country_name,
+        searchEngine: s.traffic_source === "Organic Search" ? s.search_engine : null,
+        searchKeywords: s.traffic_source === "Organic Search" ? s.search_keywords : null,
+      };
+    });
 
   return NextResponse.json({
     cards: {
@@ -159,6 +216,7 @@ export async function GET(request: NextRequest) {
       bounceRate: Math.round(bounceRate),
       avgSessionSeconds,
       conversionRate: Math.round(conversionRate * 10) / 10,
+      adminVisits: adminVisitsInRange.count ?? 0,
     },
     chart,
     landingPages,
@@ -166,6 +224,7 @@ export async function GET(request: NextRequest) {
     browsers: bucketize("browser"),
     os: bucketize("os"),
     devices: bucketize("device_type"),
+    countries: bucketizeCountries(),
     recentSessions,
     totalSessions: rows.length,
   });

@@ -4,6 +4,8 @@ import WalletClient from "@/components/shop/WalletClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GrainientBackground from "@/components/backgrounds/GrainientBackground";
 
+export const dynamic = "force-dynamic";
+
 export default async function WalletPage() {
   const data = await getMyWalletData();
   if (!data) redirect("/login");

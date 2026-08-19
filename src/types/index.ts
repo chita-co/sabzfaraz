@@ -54,8 +54,32 @@ export interface Product {
   min_order_quantity: number | null
   description_images: string[];
   category_id: string;
+  short_description: string | null;
+  tags: string[];
+  meta_title: string | null;
+  meta_description: string | null;
+  focus_keyword: string | null;
+  image_alt_texts: string[];
+  display_priority: number;
+  max_purchase_qty: number | null;
+  package_length_cm: number | null;
+  package_width_cm: number | null;
+  package_height_cm: number | null;
+  reviews_enabled: boolean;
+  canonical_url: string | null;
+  show_in_feed: boolean;
+  gtin: string | null;
+  model_version: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProductAttribute {
+  id: string;
+  product_id: string;
+  attr_key: string;
+  attr_value: string;
+  sort_order: number;
 }
 
 export interface ProductQuantityTier {

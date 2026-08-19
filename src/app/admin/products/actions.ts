@@ -13,6 +13,8 @@ interface QuantityTierInput {
   unitPrice: number;
 }
 
+interface ProductAttributeInput { key: string; value: string; }
+
 interface ProductInput {
   name: string;
   nameEn: string | null;
@@ -38,6 +40,24 @@ interface ProductInput {
   colors: { name: string; hex: string }[];
   sizes: string[];
   quantityTiers: QuantityTierInput[];
+  shortDescription?: string | null;
+  tags?: string[];
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  focusKeyword?: string | null;
+  imageAltTexts?: string[];
+  extraCategoryIds?: string[];
+  attributes?: ProductAttributeInput[];
+  displayPriority?: number;
+  maxPurchaseQty?: number | null;
+  packageLengthCm?: number | null;
+  packageWidthCm?: number | null;
+  packageHeightCm?: number | null;
+  reviewsEnabled?: boolean;
+  canonicalUrl?: string | null;
+  showInFeed?: boolean;
+  gtin?: string | null;
+  modelVersion?: string | null;
 }
 
 async function generateUniqueSku(
@@ -96,6 +116,33 @@ async function logPriceHistory(
   });
 }
 
+async function saveProductCategories(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  productId: string,
+  primaryCategoryId: string,
+  extraCategoryIds: string[]
+) {
+  await supabase.from("product_categories").delete().eq("product_id", productId);
+  const rows = [
+    { product_id: productId, category_id: primaryCategoryId, is_primary: true },
+    ...extraCategoryIds.filter((id) => id !== primaryCategoryId).map((id) => ({ product_id: productId, category_id: id, is_primary: false })),
+  ];
+  await supabase.from("product_categories").insert(rows);
+}
+
+async function saveProductAttributes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  productId: string,
+  attributes: { key: string; value: string }[]
+) {
+  await supabase.from("product_attributes").delete().eq("product_id", productId);
+  if (attributes.length > 0) {
+    await supabase.from("product_attributes").insert(
+      attributes.map((a, i) => ({ product_id: productId, attr_key: a.key, attr_value: a.value, sort_order: i }))
+    );
+  }
+}
+
 export async function createProduct(input: ProductInput) {
   const supabase = await createClient();
   const slug = await generateUniqueSlug(supabase, input.slug || input.name);
@@ -139,6 +186,22 @@ export async function createProduct(input: ProductInput) {
       description_images: input.descriptionImages,
       colors: input.colors,
       sizes: input.sizes,
+      short_description: input.shortDescription ?? null,
+      tags: input.tags ?? [],
+      meta_title: input.metaTitle ?? null,
+      meta_description: input.metaDescription ?? null,
+      focus_keyword: input.focusKeyword ?? null,
+      image_alt_texts: input.imageAltTexts ?? [],
+      display_priority: input.displayPriority ?? 0,
+      max_purchase_qty: input.maxPurchaseQty ?? null,
+      package_length_cm: input.packageLengthCm ?? null,
+      package_width_cm: input.packageWidthCm ?? null,
+      package_height_cm: input.packageHeightCm ?? null,
+      reviews_enabled: input.reviewsEnabled ?? true,
+      canonical_url: input.canonicalUrl ?? null,
+      show_in_feed: input.showInFeed ?? true,
+      gtin: input.gtin ?? null,
+      model_version: input.modelVersion ?? null,
     })
     .select()
     .single();
@@ -148,6 +211,8 @@ export async function createProduct(input: ProductInput) {
 
   await saveQuantityTiers(supabase, created.id, input.quantityTiers);
   await logPriceHistory(supabase, created.id, input.price, input.discountPrice);
+  await saveProductCategories(supabase, created.id, input.categoryId, input.extraCategoryIds ?? []);
+  await saveProductAttributes(supabase, created.id, input.attributes ?? []);
 
   revalidatePath("/admin/products");
   revalidatePath("/");
@@ -190,12 +255,30 @@ export async function updateProduct(id: string, input: ProductInput) {
       description_images: input.descriptionImages,
       colors: input.colors,
       sizes: input.sizes,
+      short_description: input.shortDescription ?? null,
+      tags: input.tags ?? [],
+      meta_title: input.metaTitle ?? null,
+      meta_description: input.metaDescription ?? null,
+      focus_keyword: input.focusKeyword ?? null,
+      image_alt_texts: input.imageAltTexts ?? [],
+      display_priority: input.displayPriority ?? 0,
+      max_purchase_qty: input.maxPurchaseQty ?? null,
+      package_length_cm: input.packageLengthCm ?? null,
+      package_width_cm: input.packageWidthCm ?? null,
+      package_height_cm: input.packageHeightCm ?? null,
+      reviews_enabled: input.reviewsEnabled ?? true,
+      canonical_url: input.canonicalUrl ?? null,
+      show_in_feed: input.showInFeed ?? true,
+      gtin: input.gtin ?? null,
+      model_version: input.modelVersion ?? null,
     })
     .eq("id", id);
 
   if (error) return { error: "خطا: " + error.message };
 
   await saveQuantityTiers(supabase, id, input.quantityTiers);
+  await saveProductCategories(supabase, id, input.categoryId, input.extraCategoryIds ?? []);
+  await saveProductAttributes(supabase, id, input.attributes ?? []);
 
   if (
     !before ||
@@ -255,6 +338,24 @@ interface BulkProductInput {
   colors: { name: string; hex: string }[];
   sizes: string[];
   quantityTiers: QuantityTierInput[];
+  shortDescription?: string | null;
+  tags?: string[];
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  focusKeyword?: string | null;
+  imageAltTexts?: string[];
+  extraCategoryIds?: string[];
+  attributes?: ProductAttributeInput[];
+  displayPriority?: number;
+  maxPurchaseQty?: number | null;
+  packageLengthCm?: number | null;
+  packageWidthCm?: number | null;
+  packageHeightCm?: number | null;
+  reviewsEnabled?: boolean;
+  canonicalUrl?: string | null;
+  showInFeed?: boolean;
+  gtin?: string | null;
+  modelVersion?: string | null;
 }
 
 export async function createProductsBulk(
@@ -305,6 +406,22 @@ export async function createProductsBulk(
           description_images: base.descriptionImages,
           colors: base.colors,
           sizes: base.sizes,
+          short_description: base.shortDescription ?? null,
+          tags: base.tags ?? [],
+          meta_title: base.metaTitle ?? null,
+          meta_description: base.metaDescription ?? null,
+          focus_keyword: base.focusKeyword ?? null,
+          image_alt_texts: base.imageAltTexts ?? [],
+          display_priority: base.displayPriority ?? 0,
+          max_purchase_qty: base.maxPurchaseQty ?? null,
+          package_length_cm: base.packageLengthCm ?? null,
+          package_width_cm: base.packageWidthCm ?? null,
+          package_height_cm: base.packageHeightCm ?? null,
+          reviews_enabled: base.reviewsEnabled ?? true,
+          canonical_url: base.canonicalUrl ?? null,
+          show_in_feed: base.showInFeed ?? true,
+          gtin: base.gtin ?? null,
+          model_version: base.modelVersion ?? null,
         })
         .select()
         .single();
@@ -313,7 +430,6 @@ export async function createProductsBulk(
         failures.push(`${variant.name}: ${error?.message ?? "خطای نامشخص"}`);
         continue;
       }
-
       await saveQuantityTiers(supabase, created.id, base.quantityTiers);
       await logPriceHistory(
         supabase,
@@ -321,6 +437,8 @@ export async function createProductsBulk(
         base.price,
         base.discountPrice
       );
+      await saveProductCategories(supabase, created.id, base.categoryId, base.extraCategoryIds ?? []);
+      await saveProductAttributes(supabase, created.id, base.attributes ?? []);
       successCount++;
     } catch (e: unknown) {
       const message =
