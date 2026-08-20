@@ -1971,3 +1971,44 @@
   padding: 0;
   display: block;
 }
+
+/* ===== نشان ایمالز — هم‌سایز با سایر نشان‌ها ===== */
+.emalls-badge-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 160px;
+  padding: 10px;
+  border: 1.5px solid rgba(212, 175, 55, 0.7);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 4px 14px rgba(212, 175, 55, 0.12);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.emalls-badge-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: none;
+}
+
+/* ===== چیدمان موبایل: هر گروه در یک خط جدا ===== */
+@media (max-width: 640px) {
+  .footer-trust-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .enamad-badges-row,
+  .trust-badges-row {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .emalls-badge-item {
+    width: 160px; /* هم‌سایز با بقیه نشان‌ها */
+  }
+}

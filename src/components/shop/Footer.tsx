@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Send, Phone, Mail, MapPin } from "lucide-react";
 import TrustBadges from "./TrustBadges";
 import EnamadBadges from "./EnamadBadges";
+import EmallsBadge from "./EmallsBadge";
 
 // آیکون SVG اینستاگرام جایگزین (به دلیل حذف از lucide-react)
 function InstagramIcon({ size = 16 }: { size?: number }) {
@@ -56,6 +57,7 @@ export default async function Footer() {
             </div>
             <div className="footer-trust-row">
               <EnamadBadges />
+              <EmallsBadge />
               <TrustBadges />
             </div>
           </div>
