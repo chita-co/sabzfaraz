@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Send, Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import TrustBadges from "./TrustBadges";
 import EnamadBadges from "./EnamadBadges";
 import EmallsBadge from "./EmallsBadge";
@@ -21,6 +21,42 @@ function InstagramIcon({ size = 16 }: { size?: number }) {
       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
       <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
+function YouTubeIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="5" width="20" height="14" rx="3" />
+      <path d="M10 9.5v5l5-2.5z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function AparatIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10 9.5v5l5-2.5z" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -52,8 +88,15 @@ export default async function Footer() {
               سریع به سراسر کشور.
             </p>
             <div className="footer-social">
-              <a href="#" aria-label="اینستاگرام"><InstagramIcon size={16} /></a>
-              <a href="#" aria-label="تلگرام"><Send size={16} /></a>
+              <a href="https://www.instagram.com/sabz.faraz" target="_blank" rel="noreferrer" aria-label="اینستاگرام">
+                <InstagramIcon size={24} />
+              </a>
+              <a href="https://www.youtube.com/@sabz-faraz" target="_blank" rel="noreferrer" aria-label="یوتیوب">
+                <YouTubeIcon size={24} />
+              </a>
+              <a href="https://www.aparat.com/sabzfaraz" target="_blank" rel="noreferrer" aria-label="آپارات">
+                <AparatIcon size={24} />
+              </a>
             </div>
             <div className="footer-trust-row">
               <EnamadBadges />

@@ -37,6 +37,25 @@ export default function RootLayout({
           name="google-site-verification"
           content="zLktSAGcXPkl_HBvejo3FzUOp4OOWNU8v3QXbuF-kB8"
         />
+
+        {/* اسکیما برای شبکه‌های اجتماعی و معرفی برند */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "سبزفراز",
+              url: "https://sabzfaraz.ir",
+              logo: "https://sabzfaraz.ir/icon.png",
+              sameAs: [
+                "https://www.instagram.com/sabz.faraz",
+                "https://www.youtube.com/@sabz-faraz",
+                "https://www.aparat.com/sabzfaraz",
+              ],
+            }),
+          }}
+        />
       </head>
       <body className="antialiased">
         <Analytics />
