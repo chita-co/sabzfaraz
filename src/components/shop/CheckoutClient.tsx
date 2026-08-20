@@ -218,7 +218,7 @@ export default function CheckoutClient({
             storeInfo={storeInfo}
             buyer={(() => {
               const addr = addresses.find((a) => a.id === selectedAddress)!;
-              return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line };
+              return { fullName: addr.full_name, phone: addr.phone, province: addr.province, city: addr.city, addressLine: addr.address_line, postalCode: addr.postal_code };
             })()}
             shippingMethodId={selectedMethodId}
           />

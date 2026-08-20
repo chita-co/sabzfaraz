@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    let optimized = buffer;
+    let optimized: Buffer = buffer;
 
     // استفاده از sharp فقط اگر در محیط سرور درست لود شود
     try {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         .webp({ quality: 80 })
         .toBuffer();
     } catch (e) {
-      console.error("sharp not available, using original buffer", e);
+      console.error("⚠️ فشرده‌سازی تصویر شکست خورد — فایل خام (بدون بهینه‌سازی) آپلود می‌شود:", e);
       optimized = buffer;
     }
 

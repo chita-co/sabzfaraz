@@ -19,6 +19,7 @@ export default function InvoiceDownloadButton({
   customerName,
   address,
   phone,
+  postalCode,
   items,
   subtotal,
   shippingCost,
@@ -33,6 +34,7 @@ export default function InvoiceDownloadButton({
   customerName: string;
   address: string;
   phone: string;
+  postalCode?: string;
   items: InvoiceLineItem[];
   subtotal: number;
   shippingCost: number;
@@ -62,6 +64,7 @@ export default function InvoiceDownloadButton({
         buyerName: customerName,
         buyerPhone: phone,
         buyerAddress: address,
+        buyerPostalCode: postalCode,
         items: items.map((i) => ({ name: i.name, variant: i.variant, quantity: i.quantity, unitPrice: i.price })),
         subtotal,
         shippingCost,

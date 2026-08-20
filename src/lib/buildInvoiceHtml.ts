@@ -20,7 +20,7 @@ export interface InvoiceParams {
   logoDataUri: string | null;
   buyerName: string;
   buyerCompanyName?: string;
-  buyerNationalId?: string;
+  buyerPostalCode?: string;
   buyerPhone: string;
   buyerAddress: string;
   paymentMethodLabel?: string;
@@ -106,8 +106,7 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
         </div>
         <div style="direction:ltr; display:flex;">
           <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px; border-left:1px solid #d1d5db;"><b>روش پرداخت:</b> ${p.paymentMethodLabel ?? "—"}</div>
-          <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px;"><b>کد ملی / شناسه ملی:</b> ${p.buyerNationalId ?? "—"}</div>
-        </div>
+          <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px;"><b>کدپستی:</b> ${p.buyerPostalCode ?? "—"}</div>
       </div>
 
       <table style="width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:5mm;">

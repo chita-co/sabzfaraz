@@ -117,6 +117,7 @@ export default async function OrderResultPage({
                 customerName={order.profile?.full_name ?? ""}
                 address={`${order.address?.province}، ${order.address?.city}، ${order.address?.address_line}`}
                 phone={order.address?.phone ?? ""}
+                postalCode={order.address?.postal_code ?? ""}
                 items={order.items.map((i: OrderItem) => ({
                   name: i.product_name,
                   variant: [i.selected_color, i.selected_size]

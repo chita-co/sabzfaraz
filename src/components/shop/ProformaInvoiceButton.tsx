@@ -8,7 +8,7 @@ import { renderInvoiceToPdf } from "@/lib/generateInvoicePdf";
 import { imageUrlToDataUri } from "@/lib/invoiceImage";
 
 interface StoreInfo { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null; }
-interface BuyerInfo { fullName: string; phone: string; province: string; city: string; addressLine: string; }
+interface BuyerInfo { fullName: string; phone: string; province: string; city: string; addressLine: string; postalCode?: string; }
 
 export default function ProformaInvoiceButton({
   items, subtotal, shippingCost, storeInfo, buyer,
@@ -39,6 +39,7 @@ export default function ProformaInvoiceButton({
         buyerName: buyer.fullName,
         buyerPhone: buyer.phone,
         buyerAddress: `${buyer.province}، ${buyer.city}، ${buyer.addressLine}`,
+        buyerPostalCode: buyer.postalCode,
         items: items.map((i) => ({ name: i.name, quantity: i.quantity, unitPrice: i.discountPrice ?? i.price })),
         subtotal,
         shippingCost,
