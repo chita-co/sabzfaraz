@@ -14,14 +14,16 @@ import GooeyNav, { type GooeyNavItem } from "@/components/GooeyNav";
 import NotificationBell from "@/components/shop/NotificationBell";
 
 interface CategoryLite { id: string; name: string; slug: string; }
+interface CategoryTreeItem extends CategoryLite { children: CategoryLite[]; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",
+  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",
 }: {
   isLoggedIn: boolean;
   userName: string | null;
   isAdmin: boolean;
   categories: CategoryLite[];
+  categoryTree?: CategoryTreeItem[];
   logoUrl?: string | null;
   walletBalance?: number;
   auctionEnabled?: boolean;
@@ -36,7 +38,11 @@ export default function HeaderNav({
     {
       type: "dropdown",
       label: "دسته‌بندی‌ها",
-      children: categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` })),
+      children: (categoryTree ?? categories.map((c) => ({ ...c, children: [] }))).map((c) => ({
+        label: c.name,
+        href: `/category/${c.slug}`,
+        children: c.children.map((sub) => ({ label: sub.name, href: `/category/${sub.slug}` })),
+      })),
     },
     ...(auctionEnabled ? [{ type: "link" as const, label: auctionLabel, href: "/auctions" }] : []),
     { type: "link", label: "آنباکس", href: "/unboxing" },

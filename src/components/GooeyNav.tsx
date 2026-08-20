@@ -9,6 +9,7 @@ import "./GooeyNav.css";
 export interface GooeyNavChildItem {
   label: string;
   href: string;
+  children?: GooeyNavChildItem[];
 }
 
 export interface GooeyNavItem {
@@ -192,6 +193,7 @@ export default function GooeyNav({
 
             if (type === "dropdown") {
               const isOpen = openDropdownIndex === index;
+              const hasMegaGroups = !!item.children?.some((c) => c.children && c.children.length > 0);
               return (
                 <li
                   key={index}
@@ -207,13 +209,44 @@ export default function GooeyNav({
                     {item.label} <ChevronDown size={14} />
                   </button>
                   {isOpen && item.children && item.children.length > 0 && (
-                    <div className="gooey-dropdown-menu">
-                      {item.children.map((child) => (
-                        <Link key={child.href} href={child.href}>
-                          {child.label}
-                        </Link>
-                      ))}
-                    </div>
+                    hasMegaGroups ? (
+                      <div className="gooey-mega-menu">
+                        <div className="gooey-mega-grid">
+                          {item.children.map((group) => (
+                            <div key={group.href} className="gooey-mega-group">
+                              <Link
+                                href={group.href}
+                                className="gooey-mega-group-title"
+                                onClick={() => setOpenDropdownIndex(null)}
+                              >
+                                {group.label}
+                              </Link>
+                              {group.children && group.children.length > 0 && (
+                                <div className="gooey-mega-sublist">
+                                  {group.children.map((sub) => (
+                                    <Link
+                                      key={sub.href}
+                                      href={sub.href}
+                                      onClick={() => setOpenDropdownIndex(null)}
+                                    >
+                                      {sub.label}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="gooey-dropdown-menu">
+                        {item.children.map((child) => (
+                          <Link key={child.href} href={child.href} onClick={() => setOpenDropdownIndex(null)}>
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )
                   )}
                 </li>
               );
