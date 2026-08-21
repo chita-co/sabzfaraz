@@ -70,6 +70,14 @@ export interface Product {
   show_in_feed: boolean;
   gtin: string | null;
   model_version: string | null;
+  fulfillment_type: "INSTANT" | "CHINA_ORDER" | "BOTH";
+  china_price: number | null;
+  china_delivery_min: number | null;
+  china_delivery_max: number | null;
+  china_delivery_unit: "day" | "week" | "month";
+  china_terms_text: string | null;
+  china_delivery_text: string | null;
+  china_order_note: string | null;
   created_at: string;
   updated_at: string;
 }

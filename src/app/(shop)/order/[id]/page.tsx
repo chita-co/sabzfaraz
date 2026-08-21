@@ -42,6 +42,8 @@ export default async function OrderResultPage({
   ]);
   if (!order) notFound();
 
+  const isChinaOrder = order.order_type === "CHINA_ORDER";
+
   const isSuccess = order.payment_status === "PAID";
   const isOfflineRegistered = payment === "offline" && status === "registered";
 
@@ -141,6 +143,9 @@ export default async function OrderResultPage({
                 ) as string[]}
                 storeAddress={settings?.store_address ?? ""}
                 storeEmail={settings?.support_email ?? null}
+                invoiceType={isChinaOrder ? "china" : "final"}
+                chinaDeliveryText={order.china_delivery_text ?? "طبق توافق هنگام ثبت سفارش"}
+                chinaTermsText={order.china_terms_text ?? "خریدار با آگاهی از زمان تحویل غیرفوری اقدام به ثبت سفارش نموده است."}
               />
             </div>
           </>

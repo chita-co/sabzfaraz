@@ -129,6 +129,18 @@ export default function ProductForm({
   const [showInFeed, setShowInFeed] = useState(product?.show_in_feed ?? true);
   const [gtin, setGtin] = useState(product?.gtin ?? "");
   const [modelVersion, setModelVersion] = useState(product?.model_version ?? "");
+  const [fulfillmentType, setFulfillmentType] = useState<"INSTANT" | "CHINA_ORDER" | "BOTH">(
+  product?.fulfillment_type ?? "INSTANT"
+);
+const [chinaPrice, setChinaPrice] = useState(product?.china_price?.toString() ?? "");
+const [chinaDeliveryMin, setChinaDeliveryMin] = useState(product?.china_delivery_min?.toString() ?? "");
+const [chinaDeliveryMax, setChinaDeliveryMax] = useState(product?.china_delivery_max?.toString() ?? "");
+const [chinaDeliveryUnit, setChinaDeliveryUnit] = useState<"day" | "week" | "month">(
+  product?.china_delivery_unit ?? "day"
+);
+const [chinaTermsText, setChinaTermsText] = useState(product?.china_terms_text ?? "");
+const [chinaDeliveryText, setChinaDeliveryText] = useState(product?.china_delivery_text ?? "");
+const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?? "");
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -332,6 +344,32 @@ export default function ProductForm({
           colors,
           sizes,
           quantityTiers: parsedTiers,
+          shortDescription: shortDescription || null,
+          tags: tagsInput.split(/[،,]/).map((t) => t.trim()).filter(Boolean),
+          metaTitle: metaTitle || null,
+          metaDescription: metaDescription || null,
+          focusKeyword: focusKeyword || null,
+          imageAltTexts,
+          extraCategoryIds,
+          attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
+          displayPriority: Number(displayPriority) || 0,
+          maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
+          packageLengthCm: packageLength ? Number(packageLength) : null,
+          packageWidthCm: packageWidth ? Number(packageWidth) : null,
+          packageHeightCm: packageHeight ? Number(packageHeight) : null,
+          reviewsEnabled,
+          canonicalUrl: canonicalUrl || null,
+          showInFeed,
+          gtin: gtin || null,
+          modelVersion: modelVersion || null,
+          fulfillmentType,
+          chinaPrice: chinaPrice ? Number(chinaPrice) : null,
+          chinaDeliveryMin: chinaDeliveryMin ? Number(chinaDeliveryMin) : null,
+          chinaDeliveryMax: chinaDeliveryMax ? Number(chinaDeliveryMax) : null,
+          chinaDeliveryUnit,
+          chinaTermsText: chinaTermsText || null,
+          chinaDeliveryText: chinaDeliveryText || null,
+          chinaOrderNote: chinaOrderNote || null,
         },
         validRows.map((r) => ({
           name: r.name.trim(),
@@ -392,6 +430,14 @@ export default function ProductForm({
       showInFeed,
       gtin: gtin || null,
       modelVersion: modelVersion || null,
+      fulfillmentType,
+      chinaPrice: chinaPrice ? Number(chinaPrice) : null,
+      chinaDeliveryMin: chinaDeliveryMin ? Number(chinaDeliveryMin) : null,
+      chinaDeliveryMax: chinaDeliveryMax ? Number(chinaDeliveryMax) : null,
+      chinaDeliveryUnit,
+      chinaTermsText: chinaTermsText || null,
+      chinaDeliveryText: chinaDeliveryText || null,
+      chinaOrderNote: chinaOrderNote || null,
     };
 
     const result =
@@ -787,6 +833,81 @@ export default function ProductForm({
             <input type="checkbox" id="showInFeed" checked={showInFeed} onChange={(e) => setShowInFeed(e.target.checked)} />
             <label htmlFor="showInFeed" style={{ marginBottom: 0 }}>نمایش در فید گوگل/ترب (بازارگاه‌ها)</label>
           </div>
+
+          {/* ===== بخش جدید: روش تأمین / سفارش از چین ===== */}
+          <div className="admin-form-group">
+            <label>روش تأمین</label>
+            <select
+  value={fulfillmentType}
+  onChange={(e) =>
+    setFulfillmentType(e.target.value as "INSTANT" | "CHINA_ORDER" | "BOTH")
+  }
+>
+              <option value="INSTANT">فقط موجود / فوری</option>
+              <option value="CHINA_ORDER">فقط سفارش از چین</option>
+              <option value="BOTH">هر دو (موجود و سفارش از چین)</option>
+            </select>
+          </div>
+
+          {(fulfillmentType === "CHINA_ORDER" || fulfillmentType === "BOTH") && (
+            <>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="admin-form-group">
+                  <label>قیمت سفارش از چین (تومان)</label>
+                  <input type="number" value={chinaPrice} onChange={(e) => setChinaPrice(e.target.value)} />
+                </div>
+                <div className="admin-form-group">
+                  <label>حداقل زمان تحویل</label>
+                  <input type="number" value={chinaDeliveryMin} onChange={(e) => setChinaDeliveryMin(e.target.value)} />
+                </div>
+                <div className="admin-form-group">
+                  <label>حداکثر زمان تحویل</label>
+                  <input type="number" value={chinaDeliveryMax} onChange={(e) => setChinaDeliveryMax(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="admin-form-group">
+                  <label>واحد زمان</label>
+                  <select
+                    value={chinaDeliveryUnit}
+                    onChange={(e) =>
+                      setChinaDeliveryUnit(e.target.value as "day" | "week" | "month")
+                    }
+                  >
+                    <option value="day">روز</option>
+                    <option value="week">هفته</option>
+                    <option value="month">ماه</option>
+                  </select>
+                </div>
+                <div className="admin-form-group">
+                  <label>متن قوانین سفارش از چین</label>
+                  <textarea value={chinaTermsText} onChange={(e) => setChinaTermsText(e.target.value)} />
+                </div>
+              </div>
+
+              {/* این دو بلاک را اینجا اضافه کن */}
+              <div className="admin-form-group">
+                <label>متن زمان تحویل (اختیاری — اگر خالی بماند از حداقل/حداکثر ساخته می‌شود)</label>
+                <input
+                  type="text"
+                  value={chinaDeliveryText}
+                  onChange={(e) => setChinaDeliveryText(e.target.value)}
+                  placeholder="مثلاً: بین ۳۵ تا ۸۰ روز کاری"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>توضیحات سفارش مدت‌دار برای فاکتور (اختیاری)</label>
+                <textarea
+                  rows={2}
+                  value={chinaOrderNote}
+                  onChange={(e) => setChinaOrderNote(e.target.value)}
+                  placeholder="مثلاً: این سفارش به‌صورت مدت‌دار ثبت می‌شود و زمان تحویل آن طبق توضیحات درج‌شده است."
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div>
@@ -952,8 +1073,7 @@ export default function ProductForm({
 
           <ProductAttributesEditor attributes={attributes} onChange={setAttributes} />
 
-          {!bulkMode && (
-            <div className="admin-form-group">
+          <div className="admin-form-group">
               <label>تخفیف پلکانی بر اساس تعداد (اختیاری)</label>
               <div className="space-y-2 mb-2">
                 {tiers.map((t) => (
@@ -1003,7 +1123,6 @@ export default function ProductForm({
                 <Plus size={14} /> افزودن بازه تعداد
               </button>
             </div>
-          )}
         </div>
       </div>
 

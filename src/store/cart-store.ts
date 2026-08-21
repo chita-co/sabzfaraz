@@ -17,6 +17,10 @@ export interface CartItem {
   weightGrams: number | null;
   unitLabel: string | null;
   minQuantity?: number;
+  isChinaOrder?: boolean;
+  chinaDeliveryText?: string | null;
+  chinaTermsText?: string | null;
+  chinaOrderNote?: string | null;
 }
 
 interface CartState {

@@ -58,6 +58,14 @@ interface ProductInput {
   showInFeed?: boolean;
   gtin?: string | null;
   modelVersion?: string | null;
+  fulfillmentType?: "INSTANT" | "CHINA_ORDER" | "BOTH";
+  chinaPrice?: number | null;
+  chinaDeliveryMin?: number | null;
+  chinaDeliveryMax?: number | null;
+  chinaDeliveryUnit?: "day" | "week" | "month";
+  chinaTermsText?: string | null;
+  chinaDeliveryText?: string | null;
+  chinaOrderNote?: string | null;
 }
 
 async function generateUniqueSku(
@@ -202,6 +210,14 @@ export async function createProduct(input: ProductInput) {
       show_in_feed: input.showInFeed ?? true,
       gtin: input.gtin ?? null,
       model_version: input.modelVersion ?? null,
+      fulfillment_type: input.fulfillmentType ?? "INSTANT",
+      china_price: input.chinaPrice ?? null,
+      china_delivery_min: input.chinaDeliveryMin ?? null,
+      china_delivery_max: input.chinaDeliveryMax ?? null,
+      china_delivery_unit: input.chinaDeliveryUnit ?? "day",
+      china_terms_text: input.chinaTermsText ?? null,
+      china_delivery_text: input.chinaDeliveryText ?? null,
+      china_order_note: input.chinaOrderNote ?? null,
     })
     .select()
     .single();
@@ -271,6 +287,14 @@ export async function updateProduct(id: string, input: ProductInput) {
       show_in_feed: input.showInFeed ?? true,
       gtin: input.gtin ?? null,
       model_version: input.modelVersion ?? null,
+      fulfillment_type: input.fulfillmentType ?? "INSTANT",
+      china_price: input.chinaPrice ?? null,
+      china_delivery_min: input.chinaDeliveryMin ?? null,
+      china_delivery_max: input.chinaDeliveryMax ?? null,
+      china_delivery_unit: input.chinaDeliveryUnit ?? "day",
+      china_terms_text: input.chinaTermsText ?? null,
+      china_delivery_text: input.chinaDeliveryText ?? null,
+      china_order_note: input.chinaOrderNote ?? null,
     })
     .eq("id", id);
 
@@ -356,6 +380,14 @@ interface BulkProductInput {
   showInFeed?: boolean;
   gtin?: string | null;
   modelVersion?: string | null;
+  fulfillmentType?: "INSTANT" | "CHINA_ORDER" | "BOTH";
+  chinaPrice?: number | null;
+  chinaDeliveryMin?: number | null;
+  chinaDeliveryMax?: number | null;
+  chinaDeliveryUnit?: "day" | "week" | "month";
+  chinaTermsText?: string | null;
+  chinaDeliveryText?: string | null;
+  chinaOrderNote?: string | null;
 }
 
 export async function createProductsBulk(
@@ -406,6 +438,10 @@ export async function createProductsBulk(
           description_images: base.descriptionImages,
           colors: base.colors,
           sizes: base.sizes,
+          is_sold_by_unit: base.isSoldByUnit ?? false,
+          unit_label: base.unitLabel ?? null,
+          has_min_order_quantity: base.hasMinOrderQty ?? false,
+          min_order_quantity: base.minOrderQuantity ?? null,
           short_description: base.shortDescription ?? null,
           tags: base.tags ?? [],
           meta_title: base.metaTitle ?? null,
@@ -422,6 +458,14 @@ export async function createProductsBulk(
           show_in_feed: base.showInFeed ?? true,
           gtin: base.gtin ?? null,
           model_version: base.modelVersion ?? null,
+          fulfillment_type: base.fulfillmentType ?? "INSTANT",
+          china_price: base.chinaPrice ?? null,
+          china_delivery_min: base.chinaDeliveryMin ?? null,
+          china_delivery_max: base.chinaDeliveryMax ?? null,
+          china_delivery_unit: base.chinaDeliveryUnit ?? "day",
+          china_terms_text: base.chinaTermsText ?? null,
+          china_delivery_text: base.chinaDeliveryText ?? null,
+          china_order_note: base.chinaOrderNote ?? null,
         })
         .select()
         .single();
@@ -499,6 +543,34 @@ export async function copyProduct(id: string) {
       description_images: original.description_images,
       colors: original.colors,
       sizes: original.sizes,
+      is_sold_by_unit: original.is_sold_by_unit,
+      unit_label: original.unit_label,
+      has_min_order_quantity: original.has_min_order_quantity,
+      min_order_quantity: original.min_order_quantity,
+      short_description: original.short_description,
+      tags: original.tags,
+      meta_title: original.meta_title,
+      meta_description: original.meta_description,
+      focus_keyword: original.focus_keyword,
+      image_alt_texts: original.image_alt_texts,
+      display_priority: original.display_priority,
+      max_purchase_qty: original.max_purchase_qty,
+      package_length_cm: original.package_length_cm,
+      package_width_cm: original.package_width_cm,
+      package_height_cm: original.package_height_cm,
+      reviews_enabled: original.reviews_enabled,
+      canonical_url: original.canonical_url,
+      show_in_feed: original.show_in_feed,
+      gtin: original.gtin,
+      model_version: original.model_version,
+      fulfillment_type: original.fulfillment_type,
+      china_price: original.china_price,
+      china_delivery_min: original.china_delivery_min,
+      china_delivery_max: original.china_delivery_max,
+      china_delivery_unit: original.china_delivery_unit,
+      china_terms_text: original.china_terms_text,
+      china_delivery_text: original.china_delivery_text,
+      china_order_note: original.china_order_note,
     })
     .select()
     .single();
@@ -520,6 +592,20 @@ export async function copyProduct(id: string) {
       }))
     );
   }
+
+  const { data: extraCats } = await supabase
+    .from("product_categories")
+    .select("category_id")
+    .eq("product_id", id)
+    .eq("is_primary", false);
+  await saveProductCategories(supabase, created.id, original.category_id, (extraCats ?? []).map((c) => c.category_id));
+
+  const { data: attrs } = await supabase
+    .from("product_attributes")
+    .select("attr_key, attr_value")
+    .eq("product_id", id)
+    .order("sort_order");
+  await saveProductAttributes(supabase, created.id, (attrs ?? []).map((a) => ({ key: a.attr_key, value: a.attr_value })));
 
   revalidatePath("/admin/products");
   return { success: true, newId: created.id };

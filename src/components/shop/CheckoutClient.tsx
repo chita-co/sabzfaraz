@@ -48,6 +48,9 @@ export default function CheckoutClient({
 
   // صفحه‌ی تکمیل خرید همیشه بر اساس سبد خرید زنده ساخته می‌شود — هیچ اسنپ‌شات قدیمی جایگزینش نمی‌شود
   const displayItems = items;
+  const hasStandard = displayItems.some((i) => !i.isChinaOrder);
+  const hasChina = displayItems.some((i) => i.isChinaOrder);
+  const mixedCart = hasStandard && hasChina;
 
   const subtotal = displayItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
 
@@ -65,6 +68,11 @@ export default function CheckoutClient({
   const fullyCoveredByWallet = useWallet && remainderAmount === 0 && totalBeforeWallet > 0;
 
   async function handlePay(methodOverride?: PaymentMethod) {
+    if (mixedCart) {
+      setError("محصولات عادی و سفارش از چین را نمی‌توانید در یک فاکتور بخرید. لطفاً یکی از گروه‌ها را از سبد حذف کنید.");
+      return;
+    }
+    
     const effectiveMethod = methodOverride ?? paymentMethod;
 
     if (!selectedAddress) { setError("لطفاً یک آدرس انتخاب کنید."); return; }
@@ -104,6 +112,10 @@ export default function CheckoutClient({
       selectedColor: i.selectedColor,
       selectedSize: i.selectedSize,
       quantity: i.quantity,
+      isChinaOrder: i.isChinaOrder ?? false,
+      chinaDeliveryText: i.chinaDeliveryText ?? null,
+      chinaTermsText: i.chinaTermsText ?? null,
+      chinaOrderNote: i.chinaOrderNote ?? null,
     }));
 
     if (method === "ONLINE" || fullyCoveredByWallet) {

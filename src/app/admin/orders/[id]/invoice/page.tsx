@@ -33,6 +33,8 @@ export default async function InvoicePage({
 
   if (!order) notFound();
 
+  const isChinaOrder = order.order_type === "CHINA_ORDER";
+
   const logoDataUri = settings?.logo_url ? await fetchImageAsDataUriServer(settings.logo_url) : null;
   const phones = Array.from(
   new Set(
@@ -45,7 +47,7 @@ export default async function InvoicePage({
   const subtotal = order.total_amount - (order.shipping_cost ?? 0);
 
   const html = buildInvoiceHtml({
-    type: "final",
+    type: isChinaOrder ? "china" : "final",
     invoiceNumber: order.order_number,
     date: new Date(order.created_at).toLocaleDateString("fa-IR"),
     storeName: settings?.store_name ?? "سبزفراز",
@@ -53,6 +55,8 @@ export default async function InvoicePage({
     storeAddress: settings?.store_address ?? "",
     logoDataUri,
     storeEmail: settings?.support_email ?? null,
+    chinaDeliveryText: order.china_delivery_text ?? "طبق توافق هنگام ثبت سفارش",
+    chinaTermsText: order.china_terms_text ?? "خریدار با آگاهی از زمان تحویل غیرفوری اقدام به ثبت سفارش نموده است.",
     buyerName: order.profile?.full_name ?? "—",
     buyerPhone: order.address?.phone ?? order.profile?.phone ?? "—",
     buyerAddress: `${order.address?.province ?? ""}، ${order.address?.city ?? ""}، ${order.address?.address_line ?? ""}`,

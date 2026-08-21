@@ -16,10 +16,15 @@ interface CheckoutItem {
   selectedColor: string | null;
   selectedSize: string | null;
   quantity: number;
+  isChinaOrder?: boolean;
+  chinaDeliveryText?: string | null;
+  chinaTermsText?: string | null;
+  chinaOrderNote?: string | null;
 }
 
 async function decrementStockForItems(supabase: Awaited<ReturnType<typeof createClient>>, items: CheckoutItem[]) {
   for (const item of items) {
+    if (item.isChinaOrder) continue;
     try {
       await supabase.rpc("decrement_product_stock", { p_product_id: item.productId, p_qty: item.quantity });
     } catch (e) {
@@ -51,6 +56,10 @@ export async function createOrderAndPay(
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;
+  const isChinaOrder = items.some((i) => i.isChinaOrder);
+  const chinaDeliveryText = items.find((i) => i.isChinaOrder)?.chinaDeliveryText ?? null;
+  const chinaTermsText = items.find((i) => i.isChinaOrder)?.chinaTermsText ?? null;
+  const chinaOrderNote = items.find((i) => i.isChinaOrder)?.chinaOrderNote ?? null;
   const orderNumber = `SF${Date.now()}`;
 
   const { data: order, error: orderError } = await supabase
@@ -63,6 +72,11 @@ export async function createOrderAndPay(
       shipping_cost: shippingCost,
       status: "PENDING",
       payment_status: "PENDING",
+      order_type: isChinaOrder ? "CHINA_ORDER" : "STANDARD",
+      china_terms_accepted_at: isChinaOrder ? new Date().toISOString() : null,
+      china_delivery_text: chinaDeliveryText,
+      china_terms_text: chinaTermsText,
+      china_order_note: chinaOrderNote,
     })
     .select()
     .single();
@@ -180,6 +194,10 @@ export async function createOfflineOrder(
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;
+  const isChinaOrder = items.some((i) => i.isChinaOrder);
+  const chinaDeliveryText = items.find((i) => i.isChinaOrder)?.chinaDeliveryText ?? null;
+  const chinaTermsText = items.find((i) => i.isChinaOrder)?.chinaTermsText ?? null;
+  const chinaOrderNote = items.find((i) => i.isChinaOrder)?.chinaOrderNote ?? null;
   const orderNumber = `SF${Date.now()}`;
 
   const { data: order, error: orderError } = await supabase
@@ -194,6 +212,11 @@ export async function createOfflineOrder(
       payment_status: "PENDING",
       payment_method: paymentMethod,
       bank_account_id: bankAccountId,
+      order_type: isChinaOrder ? "CHINA_ORDER" : "STANDARD",
+      china_terms_accepted_at: isChinaOrder ? new Date().toISOString() : null,
+      china_delivery_text: chinaDeliveryText,
+      china_terms_text: chinaTermsText,
+      china_order_note: chinaOrderNote,
     })
     .select()
     .single();

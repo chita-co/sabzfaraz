@@ -7,7 +7,10 @@ export interface InvoiceItem {
 }
 
 export interface InvoiceParams {
-  type: "proforma" | "final";
+  type: "proforma" | "final" | "china";
+  chinaDeliveryText?: string;
+  chinaTermsText?: string;
+  chinaOrderNote?: string;
   invoiceNumber: string;
   date: string;
   time?: string;
@@ -43,6 +46,7 @@ const ICONS: Record<string, string> = {
   truck: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="5" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
   headset: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 0116 0v5a2 2 0 01-2 2h-1v-6h3"/><rect x="2" y="14" width="4" height="6" rx="1"/><rect x="18" y="14" width="4" height="6" rx="1"/></svg>`,
   card: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`,
+  ship: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h12l3 4H4l-1-4z"/><path d="M6 16h12"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
 };
 
 function cornerBrackets(): string {
@@ -58,7 +62,8 @@ function cornerBrackets(): string {
 export function buildInvoiceHtml(p: InvoiceParams): string {
   const discount = p.discountAmount ?? 0;
   const total = p.subtotal - discount + p.shippingCost;
-  const headerLabel = p.type === "proforma" ? "پیش‌فاکتور" : "فاکتور فروش";
+  const isChina = p.type === "china";
+  const headerLabel = p.type === "proforma" ? "پیش‌فاکتور" : isChina ? "فاکتور سفارش از چین" : "فاکتور فروش";
 
   return `
     <div style="position:relative; width:210mm; box-sizing:border-box; padding:14mm 10mm; background:#ffffff; font-family:Tahoma, Arial, sans-serif; color:#111827; direction:rtl;">
@@ -108,6 +113,18 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
           <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px; border-left:1px solid #d1d5db;"><b>روش پرداخت:</b> ${p.paymentMethodLabel ?? "—"}</div>
           <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px;"><b>کدپستی:</b> ${p.buyerPostalCode ?? "—"}</div>
       </div>
+
+      ${isChina ? `
+      <div style="direction:rtl; margin:0 0 5mm; padding:5mm; border:1.5px solid #2563eb; border-radius:10px; background:#eff6ff; font-size:10.5px; line-height:2;">
+        <div style="display:flex; align-items:center; gap:6px; color:#1d4ed8; font-weight:800; margin-bottom:3mm;">
+          <span style="color:#1d4ed8;">${ICONS.ship}</span>
+          سفارش مدت‌دار از چین (تحویل غیرفوری)
+        </div>
+        <p style="margin:0;"><b>زمان تقریبی تحویل:</b> ${p.chinaDeliveryText ?? "طبق توافق هنگام ثبت سفارش"}</p>
+        <p style="margin:0;"><b>شرایط و قوانین:</b> ${p.chinaTermsText ?? "خریدار با آگاهی از زمان تحویل غیرفوری اقدام به ثبت سفارش نموده است."}</p>
+        ${p.chinaOrderNote ? `<p style="margin:0; color:#6b7280;">${p.chinaOrderNote}</p>` : ""}
+      </div>
+      ` : ""}
 
       <table style="width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:5mm;">
         <thead>

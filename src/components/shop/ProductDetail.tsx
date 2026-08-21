@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, ShoppingCart, Check, ChevronDown } from "lucide-react";
+import { Share2, ShoppingCart, Check, ChevronDown, Ship, Clock, AlertTriangle } from "lucide-react";
 import { Product, ProductQuantityTier, ProductAttribute } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
 import { StarRatingDisplay } from "./StarRating";
 import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
+
+const unitLabelFa: Record<string, string> = { day: "روز", week: "هفته", month: "ماه" };
 
 export default function ProductDetail({
   product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [], attributes = [],
@@ -25,6 +27,13 @@ export default function ProductDetail({
   const [quantityInput, setQuantityInput] = useState(String(minQuantity));
   const [added, setAdded] = useState(false);
   const [showTiersTable, setShowTiersTable] = useState(false);
+
+  // ===== سفارش از چین =====
+  const [chinaTermsAccepted, setChinaTermsAccepted] = useState(false);
+  const [chinaAdded, setChinaAdded] = useState(false);
+  const showInstant = product.fulfillment_type === "INSTANT" || product.fulfillment_type === "BOTH";
+  const showChina = product.fulfillment_type === "CHINA_ORDER" || product.fulfillment_type === "BOTH";
+  const isBothModes = product.fulfillment_type === "BOTH";
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -45,6 +54,16 @@ export default function ProductDetail({
   const accentColor = activeColor?.hex ?? "#2175f5";
   const outOfStock = product.stock !== null && product.stock <= 0;
 
+  const chinaDeliveryText = product.china_delivery_text ||
+    (product.china_delivery_min && product.china_delivery_max
+      ? `بین ${product.china_delivery_min.toLocaleString("fa-IR")} تا ${product.china_delivery_max.toLocaleString("fa-IR")} ${unitLabelFa[product.china_delivery_unit] ?? "روز"}`
+      : null);
+  const chinaTermsMessage = product.china_terms_text ||
+    (chinaDeliveryText
+      ? `مشتری عزیز، شما با آگاهی از این‌که زمان تحویل این محصول فوری نیست و ${chinaDeliveryText} به دست شما خواهد رسید، اقدام به ثبت سفارش می‌نمایید.`
+      : "مشتری عزیز، شما با آگاهی از این‌که این محصول به‌صورت سفارشی و با تأخیر تحویل داده می‌شود، اقدام به ثبت سفارش می‌نمایید.");
+      const chinaOrderNote = product.china_order_note || null;
+
   function handleAddToCart() {
     addItem({
       productId: product.id,
@@ -60,11 +79,37 @@ export default function ProductDetail({
       weightGrams: product.weight_grams,
       unitLabel: product.is_sold_by_unit ? unitLabel : null,
       minQuantity: product.has_min_order_quantity && product.min_order_quantity
-    ? product.min_order_quantity
-    : (product.is_sold_by_unit ? 0.1 : 1),
+        ? product.min_order_quantity
+        : (product.is_sold_by_unit ? 0.1 : 1),
+      isChinaOrder: false,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+  }
+
+  function handleAddChinaOrderToCart() {
+    if (!chinaTermsAccepted || !product.china_price) return;
+    addItem({
+      productId: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: product.images?.[0] ?? "",
+      price: product.china_price,
+      discountPrice: null,
+      selectedColor,
+      selectedSize,
+      quantity: 1,
+      stock: null,
+      weightGrams: product.weight_grams,
+      unitLabel: null,
+      minQuantity: 1,
+      isChinaOrder: true,
+      chinaDeliveryText,
+      chinaTermsText: chinaTermsMessage,
+      chinaOrderNote,
+    });
+    setChinaAdded(true);
+    setTimeout(() => setChinaAdded(false), 2000);
   }
 
   async function handleShare() {
@@ -90,7 +135,7 @@ export default function ProductDetail({
             ) : (
               <div className="product-no-image">بدون تصویر</div>
             )}
-            {product.stock !== null && product.stock <= 0 ? (
+            {product.stock !== null && product.stock <= 0 && showInstant ? (
               <div className="out-of-stock-stamp">
                 <div className="out-of-stock-stamp-inner">
                   <span className="out-of-stock-stamp-text">متاسفانه <br />این محصول تمام شد</span>
@@ -107,7 +152,7 @@ export default function ProductDetail({
             <div className="product-wishlist-overlay">
               <WishlistButton productId={product.id} initialWishlisted={isWishlisted} size={20} />
             </div>
-            {hasDiscount && <span className="product-discount-badge">{discountPercent}%-</span>}
+            {hasDiscount && showInstant && <span className="product-discount-badge">{discountPercent}%-</span>}
           </div>
           {product.images && product.images.length > 1 && (
             <div className="product-thumbs">
@@ -146,6 +191,13 @@ export default function ProductDetail({
             {product.brand && <h3 className="product-brand">{product.brand}</h3>}
           </div>
 
+          {isBothModes && (
+            <div className="china-mixed-warning">
+              <AlertTriangle size={15} />
+              این محصول هم به‌صورت موجود و فوری و هم از طریق سفارش از چین قابل خرید است. توجه: امکان خرید ترکیبی این دو نوع در یک سبد خرید و یک فاکتور وجود ندارد؛ هرکدام باید جداگانه سفارش داده شوند.
+            </div>
+          )}
+
           {product.colors && product.colors.length > 0 && (
             <div className="product-colors">
               <h3 className="product-section-title">رنگ</h3>
@@ -181,134 +233,175 @@ export default function ProductDetail({
             </div>
           )}
 
-          {/* بخش قیمت پیش از انتخاب رنگ/سایز/تعداد — کمترین و بیشترین قیمت */}
-          <div className="product-price-block">
-            {lowestTier ? (
-              <>
-                <div className="price-lowest">
-                  <h1>{lowestTier.unit_price.toLocaleString("fa-IR")} <span>تومان</span></h1>
-                </div>
-                <p className="price-lowest-note">برای سفارش بالای {lowestTier.min_qty.toLocaleString("fa-IR")} عدد</p>
-                <p className="price-reference">{basePrice.toLocaleString("fa-IR")} تومان — برای تعداد ۱ عدد</p>
-                <button type="button" className="qty-tiers-toggle" onClick={() => setShowTiersTable((v) => !v)}>
-                  مشاهده قیمت عمده (تخفیف در تعداد)
-                  <ChevronDown size={14} style={{ transform: showTiersTable ? "rotate(180deg)" : "none", transition: "0.2s" }} />
-                </button>
-                {showTiersTable && (
-                  <table className="qty-tiers-table">
-                    <thead><tr><th>تعداد</th><th>قیمت واحد</th></tr></thead>
-                    <tbody>
-                      {[...quantityTiers].sort((a, b) => a.min_qty - b.min_qty).map((t) => (
-                        <tr key={t.id} className={matchedTier?.id === t.id ? "active" : ""}>
-                          <td>{t.min_qty.toLocaleString("fa-IR")} تا {t.max_qty.toLocaleString("fa-IR")}</td>
-                          <td>{t.unit_price.toLocaleString("fa-IR")} تومان</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          {showInstant && (
+            <>
+              <div className="product-price-block">
+                {lowestTier ? (
+                  <>
+                    <div className="price-lowest">
+                      <h1>{lowestTier.unit_price.toLocaleString("fa-IR")} <span>تومان</span></h1>
+                    </div>
+                    <p className="price-lowest-note">برای سفارش بالای {lowestTier.min_qty.toLocaleString("fa-IR")} عدد</p>
+                    <p className="price-reference">{basePrice.toLocaleString("fa-IR")} تومان — برای تعداد ۱ عدد</p>
+                    <button type="button" className="qty-tiers-toggle" onClick={() => setShowTiersTable((v) => !v)}>
+                      مشاهده قیمت عمده (تخفیف در تعداد)
+                      <ChevronDown size={14} style={{ transform: showTiersTable ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+                    </button>
+                    {showTiersTable && (
+                      <table className="qty-tiers-table">
+                        <thead><tr><th>تعداد</th><th>قیمت واحد</th></tr></thead>
+                        <tbody>
+                          {[...quantityTiers].sort((a, b) => a.min_qty - b.min_qty).map((t) => (
+                            <tr key={t.id} className={matchedTier?.id === t.id ? "active" : ""}>
+                              <td>{t.min_qty.toLocaleString("fa-IR")} تا {t.max_qty.toLocaleString("fa-IR")}</td>
+                              <td>{t.unit_price.toLocaleString("fa-IR")} تومان</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </>
+                ) : (
+                  <div className="price-lowest">
+                    {hasDiscount && <span className="price-reference" style={{ marginLeft: 8 }}>{product.price.toLocaleString("fa-IR")}</span>}
+                    <h1>{finalPrice.toLocaleString("fa-IR")} <span>تومان</span></h1>
+                  </div>
                 )}
-              </>
-            ) : (
-              <div className="price-lowest">
-                {hasDiscount && <span className="price-reference" style={{ marginLeft: 8 }}>{product.price.toLocaleString("fa-IR")}</span>}
-                <h1>{finalPrice.toLocaleString("fa-IR")} <span>تومان</span></h1>
               </div>
-            )}
-          </div>
 
-          <div className="product-qty-row">
-            <h3 className="product-section-title">تعداد</h3>
-            <div className="product-qty-control">
-              <button
-                onClick={() => {
-                  const next = Math.max(minQuantity, quantity - 1);
-                  setQuantity(next);
-                  setQuantityInput(next.toString());
-                }}
-                disabled={quantity <= minQuantity}
-              >
-                −
-              </button>
-              <input
-                type="number"
-                step={product.is_sold_by_unit ? "0.1" : "1"}
-                value={quantityInput}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  setQuantityInput(raw);
-                  const val = product.is_sold_by_unit ? parseFloat(raw) : parseInt(raw, 10);
-                  if (!isNaN(val) && val > 0) {
-                    const clamped = product.stock !== null ? Math.min(val, product.stock) : val;
-                    setQuantity(clamped);
-                  }
-                }}
-                onBlur={() => {
-                  let val = product.is_sold_by_unit ? parseFloat(quantityInput) : parseInt(quantityInput, 10);
-                  if (isNaN(val) || val < minQuantity) val = minQuantity;
-                  if (product.stock !== null && val > product.stock) val = product.stock;
-                  setQuantity(val);
-                  setQuantityInput(val.toString());
-                }}
-                className="qty-input"
-                min={minQuantity}
-                max={product.stock ?? undefined}
-              />
-              {product.is_sold_by_unit && <span className="qty-unit-label">{unitLabel}</span>}
-              <button
-                onClick={() => {
-                  const next = product.stock !== null ? Math.min(product.stock, quantity + 1) : quantity + 1;
-                  setQuantity(next);
-                  setQuantityInput(next.toString());
-                }}
-                disabled={product.stock !== null && quantity >= product.stock}
-              >
-                +
-              </button>
-            </div>
-            <span className="product-stock-note">
-              {outOfStock ? "ناموجود" : product.stock !== null ? `${product.stock.toLocaleString("fa-IR")} عدد موجود` : "موجود در انبار"}
-            </span>
-          </div>
-          {product.has_min_order_quantity && product.min_order_quantity && (
-            <p className="min-order-note">حداقل تعداد سفارش این محصول: {product.min_order_quantity.toLocaleString("fa-IR")} {unitLabel}</p>
-          )}
-
-          <p className="qty-total-preview">
-            جمع کل: <b>{(finalPrice * quantity).toLocaleString("fa-IR")} تومان</b>
-            <span className="qty-total-preview-detail">
-              ({quantity.toLocaleString("fa-IR")} {unitLabel} × {finalPrice.toLocaleString("fa-IR")} تومان)
-            </span>
-          </p>
-
-          {pointsToEarn > 0 && (
-            <div className="points-earn-badge">
-              🎁 با خرید این محصول <b>{pointsToEarn.toLocaleString("fa-IR")} امتیاز</b> می‌گیری!
-              <span>(معادل {(pointsToEarn * pointValueToman).toLocaleString("fa-IR")} تومان اعتبار برای خرید بعدی)</span>
-            </div>
-          )}
-
-          <div className="product-buy-row"></div>
-
-
-          <div className="product-buy-row">
-            <button className="product-buy-btn" onClick={handleAddToCart} disabled={outOfStock}>
-              {added ? (
-                <>
-                  <Check size={18} /> به سبد اضافه شد
-                </>
-              ) : (
-                <>
-                  <ShoppingCart size={18} />
-                  {outOfStock ? "ناموجود" : "افزودن به سبد"}
-                </>
+              <div className="product-qty-row">
+                <h3 className="product-section-title">تعداد</h3>
+                <div className="product-qty-control">
+                  <button
+                    onClick={() => {
+                      const next = Math.max(minQuantity, quantity - 1);
+                      setQuantity(next);
+                      setQuantityInput(next.toString());
+                    }}
+                    disabled={quantity <= minQuantity}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    step={product.is_sold_by_unit ? "0.1" : "1"}
+                    value={quantityInput}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setQuantityInput(raw);
+                      const val = product.is_sold_by_unit ? parseFloat(raw) : parseInt(raw, 10);
+                      if (!isNaN(val) && val > 0) {
+                        const clamped = product.stock !== null ? Math.min(val, product.stock) : val;
+                        setQuantity(clamped);
+                      }
+                    }}
+                    onBlur={() => {
+                      let val = product.is_sold_by_unit ? parseFloat(quantityInput) : parseInt(quantityInput, 10);
+                      if (isNaN(val) || val < minQuantity) val = minQuantity;
+                      if (product.stock !== null && val > product.stock) val = product.stock;
+                      setQuantity(val);
+                      setQuantityInput(val.toString());
+                    }}
+                    className="qty-input"
+                    min={minQuantity}
+                    max={product.stock ?? undefined}
+                  />
+                  {product.is_sold_by_unit && <span className="qty-unit-label">{unitLabel}</span>}
+                  <button
+                    onClick={() => {
+                      const next = product.stock !== null ? Math.min(product.stock, quantity + 1) : quantity + 1;
+                      setQuantity(next);
+                      setQuantityInput(next.toString());
+                    }}
+                    disabled={product.stock !== null && quantity >= product.stock}
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="product-stock-note">
+                  {outOfStock ? "ناموجود" : product.stock !== null ? `${product.stock.toLocaleString("fa-IR")} عدد موجود` : "موجود در انبار"}
+                </span>
+              </div>
+              {product.has_min_order_quantity && product.min_order_quantity && (
+                <p className="min-order-note">حداقل تعداد سفارش این محصول: {product.min_order_quantity.toLocaleString("fa-IR")} {unitLabel}</p>
               )}
-            </button>
-            <div className="product-price">
-              {hasDiscount && <span className="product-price-old">{product.price.toLocaleString("fa-IR")}</span>}
-              <h1>{finalPrice.toLocaleString("fa-IR")}</h1>
-              <span className="product-price-unit">تومان {product.is_sold_by_unit ? `/ هر ${unitLabel}` : ""}</span>
+
+              <p className="qty-total-preview">
+                جمع کل: <b>{(finalPrice * quantity).toLocaleString("fa-IR")} تومان</b>
+                <span className="qty-total-preview-detail">
+                  ({quantity.toLocaleString("fa-IR")} {unitLabel} × {finalPrice.toLocaleString("fa-IR")} تومان)
+                </span>
+              </p>
+
+              {pointsToEarn > 0 && (
+                <div className="points-earn-badge">
+                  🎁 با خرید این محصول <b>{pointsToEarn.toLocaleString("fa-IR")} امتیاز</b> می‌گیری!
+                  <span>(معادل {(pointsToEarn * pointValueToman).toLocaleString("fa-IR")} تومان اعتبار برای خرید بعدی)</span>
+                </div>
+              )}
+
+              <div className="product-buy-row">
+                <button className="product-buy-btn" onClick={handleAddToCart} disabled={outOfStock}>
+                  {added ? (
+                    <>
+                      <Check size={18} /> به سبد اضافه شد
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} />
+                      {outOfStock ? "ناموجود" : "افزودن به سبد"}
+                    </>
+                  )}
+                </button>
+                <div className="product-price">
+                  {hasDiscount && <span className="product-price-old">{product.price.toLocaleString("fa-IR")}</span>}
+                  <h1>{finalPrice.toLocaleString("fa-IR")}</h1>
+                  <span className="product-price-unit">تومان {product.is_sold_by_unit ? `/ هر ${unitLabel}` : ""}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {showChina && (
+            <div className="china-order-box">
+              <div className="china-order-header">
+                <Ship size={17} />
+                <span>خرید و سفارش از چین</span>
+              </div>
+              {chinaDeliveryText && (
+                <div className="china-order-delivery">
+                  <Clock size={14} /> زمان تقریبی تحویل: <b>{chinaDeliveryText}</b>
+                </div>
+              )}
+              <div className="china-order-price">
+                {(product.china_price ?? 0).toLocaleString("fa-IR")} <span>تومان</span>
+              </div>
+
+              <label className="china-order-terms-row">
+                <input type="checkbox" checked={chinaTermsAccepted} onChange={(e) => setChinaTermsAccepted(e.target.checked)} />
+                <span>{chinaTermsMessage}</span>
+              </label>
+
+              <button
+                className="product-buy-btn china-order-btn"
+                onClick={handleAddChinaOrderToCart}
+                disabled={!chinaTermsAccepted || !product.china_price}
+              >
+                {chinaAdded ? (
+                  <>
+                    <Check size={18} /> به سبد سفارش از چین اضافه شد
+                  </>
+                ) : (
+                  <>
+                    <Ship size={18} /> ثبت سفارش از چین
+                  </>
+                )}
+              </button>
+              <p className="china-order-note">
+                این سفارش در فاکتور جداگانه‌ای از سفارش‌های موجود سایت ثبت و پردازش می‌شود.
+              </p>
             </div>
-          </div>
+          )}
 
           <div className="product-description">
             <h3 className="product-section-title">اطلاعات محصول</h3>

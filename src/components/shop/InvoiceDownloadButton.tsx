@@ -28,6 +28,9 @@ export default function InvoiceDownloadButton({
   storePhones,
   storeAddress = "",
   storeEmail,
+  invoiceType,
+  chinaDeliveryText,
+  chinaTermsText,
 }: {
   orderNumber: string;
   createdAt: string;
@@ -44,6 +47,9 @@ export default function InvoiceDownloadButton({
   storePhones?: string[];
   storeAddress?: string;
   storeEmail?: string | null;
+  invoiceType?: "final" | "china";
+  chinaDeliveryText?: string;
+  chinaTermsText?: string;
 }) {
   const [generating, setGenerating] = useState(false);
 
@@ -53,7 +59,7 @@ export default function InvoiceDownloadButton({
       const logoDataUri = logoUrl ? await imageUrlToDataUri(logoUrl) : null;
 
       const html = buildInvoiceHtml({
-        type: "final",
+        type: invoiceType ?? "final",
         invoiceNumber: orderNumber,
         date: new Date(createdAt).toLocaleDateString("fa-IR"),
         storeName,
@@ -61,6 +67,8 @@ export default function InvoiceDownloadButton({
         storeAddress,
         logoDataUri,
         storeEmail,
+        chinaDeliveryText,
+        chinaTermsText,
         buyerName: customerName,
         buyerPhone: phone,
         buyerAddress: address,
