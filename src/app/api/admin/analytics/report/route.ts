@@ -55,9 +55,12 @@ export async function GET(request: NextRequest) {
   const deviceFilter = searchParams.get("device") || "";
   const convertedFilter = searchParams.get("converted") || "";
   const includeAdmin = searchParams.get("includeAdmin") === "true";
+  const sessionsPage = Math.max(1, Number(searchParams.get("page")) || 1);
+  const SESSIONS_PAGE_SIZE = 50;
 
   const now = new Date();
-  const from = fromParam ? new Date(fromParam) : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // اگر تاریخ شروع مشخص نشده باشد یعنی «از ابتدای ثبت آمار تا الان» — بدون محدودیت پایینی
+  const from = fromParam ? new Date(fromParam) : null;
   const to = toParam ? new Date(new Date(toParam).getTime() + 24 * 60 * 60 * 1000 - 1) : now;
 
   const admin = createAdminClient();
@@ -68,27 +71,42 @@ export async function GET(request: NextRequest) {
   const monthStart = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   function countQuery(startDate: Date, endDate?: Date) {
-    let q = admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).gte("started_at", startDate.toISOString());
+    let q = admin
+      .from("analytics_sessions")
+      .select("*", { count: "exact", head: true })
+      .eq("is_bot", false)
+      .gte("started_at", startDate.toISOString());
     if (endDate) q = q.lt("started_at", endDate.toISOString());
     if (!includeAdmin) q = q.eq("is_admin_visit", false);
     return q;
   }
+
+  const adminVisitsQuery = (() => {
+    let q = admin
+      .from("analytics_sessions")
+      .select("*", { count: "exact", head: true })
+      .eq("is_bot", false)
+      .eq("is_admin_visit", true)
+      .lte("started_at", to.toISOString());
+    if (from) q = q.gte("started_at", from.toISOString());
+    return q;
+  })();
 
   const [todayCount, yesterdayCount, weekCount, monthCount, adminVisitsInRange] = await Promise.all([
     countQuery(todayStart),
     countQuery(yesterdayStart, todayStart),
     countQuery(weekStart),
     countQuery(monthStart),
-    admin.from("analytics_sessions").select("*", { count: "exact", head: true }).eq("is_bot", false).eq("is_admin_visit", true).gte("started_at", from.toISOString()).lte("started_at", to.toISOString()),
+    adminVisitsQuery,
   ]);
-
+  
   let query = admin
     .from("analytics_sessions")
     .select("id, visitor_id, user_id, started_at, ended_at, landing_page, exit_page, traffic_source, referrer_domain, device_type, browser, os, page_count, is_converted, is_admin_visit, country_code, country_name, search_keywords, search_engine, profile:profiles(full_name, phone)")
     .eq("is_bot", false)
-    .gte("started_at", from.toISOString())
     .lte("started_at", to.toISOString());
 
+  if (from) query = query.gte("started_at", from.toISOString());
   if (!includeAdmin) query = query.eq("is_admin_visit", false);
   if (sourceFilter) query = query.eq("traffic_source", sourceFilter);
   if (deviceFilter) query = query.eq("device_type", deviceFilter);
@@ -121,7 +139,7 @@ export async function GET(request: NextRequest) {
   const conversionRate = rows.length > 0 ? (convertedCount / rows.length) * 100 : 0;
   const uniqueVisitors = new Set(rows.map((s) => s.visitor_id)).size;
 
-  const rangeDays = (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
+  const rangeDays = from ? (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24) : 999;
   const byHour = rangeDays <= 2;
   const bucketMap = new Map<string, { sessions: number; visitors: Set<string> }>();
 
@@ -175,9 +193,12 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count);
   }
 
-  const recentSessions = [...rows]
-    .sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
-    .slice(0, 50)
+  const sortedSessions = [...rows].sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+  const sessionsTotalCount = sortedSessions.length;
+  const sessionsTotalPages = Math.max(1, Math.ceil(sessionsTotalCount / SESSIONS_PAGE_SIZE));
+  const pagedSessions = sortedSessions.slice((sessionsPage - 1) * SESSIONS_PAGE_SIZE, sessionsPage * SESSIONS_PAGE_SIZE);
+
+  const recentSessions = pagedSessions
     .map((s) => {
       const firstSeen = firstSeenMap.get(s.visitor_id);
       const isReturning = !!firstSeen && new Date(firstSeen).getTime() < new Date(s.started_at).getTime();
@@ -227,5 +248,8 @@ export async function GET(request: NextRequest) {
     countries: bucketizeCountries(),
     recentSessions,
     totalSessions: rows.length,
+    sessionsPage,
+    sessionsTotalPages,
+    sessionsTotalCount,
   });
 }

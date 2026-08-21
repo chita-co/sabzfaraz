@@ -166,3 +166,26 @@ export async function resetPasswordWithOtp(phone: string, code: string, newPassw
 
   return { success: true };
 }
+
+// نسخه‌ی ساده‌شده‌ی بازیابی رمز — بدون نیاز به کد پیامکی یک‌بارمصرف
+export async function resetPasswordByPhoneOnly(phone: string, newPassword: string) {
+  if (!isValidIranianMobile(phone)) {
+    return { error: "شماره موبایل معتبر نیست." };
+  }
+  if (newPassword.length < 6) {
+    return { error: "رمز عبور باید حداقل ۶ کاراکتر باشد." };
+  }
+
+  const adminClient = createAdminClient();
+  const { data: profile } = await adminClient.from("profiles").select("id").eq("phone", phone).maybeSingle();
+  if (!profile) {
+    return { error: "کاربری با این شماره موبایل یافت نشد." };
+  }
+
+  const { error } = await adminClient.auth.admin.updateUserById(profile.id, { password: newPassword });
+  if (error) {
+    return { error: "خطا در تغییر رمز عبور: " + error.message };
+  }
+
+  return { success: true };
+}

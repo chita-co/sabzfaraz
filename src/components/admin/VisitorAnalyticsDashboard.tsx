@@ -30,6 +30,9 @@ interface ReportData {
     searchEngine: string | null; searchKeywords: string | null;
   }[];
   totalSessions: number;
+  sessionsPage: number;
+  sessionsTotalPages: number;
+  sessionsTotalCount: number;
 }
 
 interface LiveSession {
@@ -65,7 +68,6 @@ function downloadCsv(content: string, fileName: string) {
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
-const daysAgoIso = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 const deviceLabel = (d: string) => (d === "mobile" ? "موبایل" : d === "tablet" ? "تبلت" : d === "desktop" ? "دسکتاپ" : d);
 
 const SESSION_CSV_HEADERS = [
@@ -96,37 +98,38 @@ function buildSessionsCsvRows(sessions: ReportData["recentSessions"]) {
 }
 
 export default function VisitorAnalyticsDashboard() {
-  const [from, setFrom] = useState(daysAgoIso(7));
+  const [from, setFrom] = useState("");
   const [to, setTo] = useState(todayIso());
   const [source, setSource] = useState("");
   const [device, setDevice] = useState("");
   const [converted, setConverted] = useState("");
   const [includeAdmin, setIncludeAdmin] = useState(false);
+  const [sessionsPage, setSessionsPage] = useState(1);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
   const [drilldownId, setDrilldownId] = useState<string | null>(null);
 
   useEffect(() => {
-  const timer = setTimeout(() => setLoading(true), 0);
-
-  const params = new URLSearchParams({ from, to });
-  if (source) params.set("source", source);
-  if (device) params.set("device", device);
-  if (converted) params.set("converted", converted);
-  if (includeAdmin) params.set("includeAdmin", "true");
-
-  fetch(`/api/admin/analytics/report?${params.toString()}`)
-    .then((res) => res.json())
-    .then((data) => setData(data))
-    .catch(() => {})
-    .finally(() => {
-      clearTimeout(timer);
-      setLoading(false);
-    });
-
-  return () => clearTimeout(timer);
-}, [from, to, source, device, converted, includeAdmin]);
+    const timer = setTimeout(() => setLoading(true), 0);
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    if (source) params.set("source", source);
+    if (device) params.set("device", device);
+    if (converted) params.set("converted", converted);
+    if (includeAdmin) params.set("includeAdmin", "true");
+    params.set("page", String(sessionsPage));
+    fetch(`/api/admin/analytics/report?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => setData(data))
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(timer);
+        setLoading(false);
+      });
+    return () => clearTimeout(timer);
+  }, [from, to, source, device, converted, includeAdmin, sessionsPage]);
 
   useEffect(() => {
     async function fetchLive() {
@@ -151,15 +154,15 @@ export default function VisitorAnalyticsDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
           <div className="admin-form-group" style={{ marginBottom: 0 }}>
             <label>از تاریخ</label>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setSessionsPage(1); }} />
           </div>
           <div className="admin-form-group" style={{ marginBottom: 0 }}>
             <label>تا تاریخ</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setSessionsPage(1); }} />
           </div>
           <div className="admin-form-group" style={{ marginBottom: 0 }}>
             <label>منبع ترافیک</label>
-            <select value={source} onChange={(e) => setSource(e.target.value)}>
+            <select value={source} onChange={(e) => { setSource(e.target.value); setSessionsPage(1); }}>
               <option value="">همه</option>
               <option value="Direct">مستقیم</option>
               <option value="Organic Search">جستجوی ارگانیک</option>
@@ -172,7 +175,7 @@ export default function VisitorAnalyticsDashboard() {
           </div>
           <div className="admin-form-group" style={{ marginBottom: 0 }}>
             <label>دستگاه</label>
-            <select value={device} onChange={(e) => setDevice(e.target.value)}>
+            <select value={device} onChange={(e) => { setDevice(e.target.value); setSessionsPage(1); }}>
               <option value="">همه</option>
               <option value="mobile">موبایل</option>
               <option value="tablet">تبلت</option>
@@ -181,14 +184,14 @@ export default function VisitorAnalyticsDashboard() {
           </div>
           <div className="admin-form-group" style={{ marginBottom: 0 }}>
             <label>وضعیت تبدیل</label>
-            <select value={converted} onChange={(e) => setConverted(e.target.value)}>
+            <select value={converted} onChange={(e) => { setConverted(e.target.value); setSessionsPage(1); }}>
               <option value="">همه</option>
               <option value="yes">خرید انجام‌شده</option>
               <option value="no">بدون خرید</option>
             </select>
           </div>
           <div className="admin-form-group flex items-center gap-2" style={{ marginBottom: 0, alignSelf: "end" }}>
-            <input type="checkbox" id="includeAdmin" checked={includeAdmin} onChange={(e) => setIncludeAdmin(e.target.checked)} />
+            <input type="checkbox" id="includeAdmin" checked={includeAdmin} onChange={(e) => { setIncludeAdmin(e.target.checked); setSessionsPage(1); }} />
             <label htmlFor="includeAdmin" style={{ marginBottom: 0 }}>نمایش بازدیدهای ادمین</label>
           </div>
         </div>
@@ -395,6 +398,29 @@ export default function VisitorAnalyticsDashboard() {
                 </tbody>
               </table>
             </div>
+
+            {data.sessionsTotalPages > 1 && (
+              <div className="admin-pagination-bar">
+                <button
+                  onClick={() => setSessionsPage((p) => Math.max(1, p - 1))}
+                  disabled={data.sessionsPage <= 1}
+                  className="admin-pagination-arrow"
+                >
+                  قبلی (جدیدتر)
+                </button>
+                <span style={{ fontSize: 12, color: "#6b7280", padding: "0 8px" }}>
+                  صفحه {data.sessionsPage.toLocaleString("fa-IR")} از {data.sessionsTotalPages.toLocaleString("fa-IR")}
+                  {" — "}({data.sessionsTotalCount.toLocaleString("fa-IR")} نشست)
+                </span>
+                <button
+                  onClick={() => setSessionsPage((p) => Math.min(data.sessionsTotalPages, p + 1))}
+                  disabled={data.sessionsPage >= data.sessionsTotalPages}
+                  className="admin-pagination-arrow"
+                >
+                  بعدی (قدیمی‌تر)
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}

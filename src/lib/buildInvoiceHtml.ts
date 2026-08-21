@@ -49,16 +49,6 @@ const ICONS: Record<string, string> = {
   ship: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h12l3 4H4l-1-4z"/><path d="M6 16h12"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
 };
 
-function cornerBrackets(): string {
-  const style = "position:absolute; width:12mm; height:12mm; border-color:#111827;";
-  return `
-    <span style="${style} top:6mm; right:6mm; border-top:2.5px solid; border-right:2.5px solid;"></span>
-    <span style="${style} top:6mm; left:6mm; border-top:2.5px solid; border-left:2.5px solid;"></span>
-    <span style="${style} bottom:6mm; right:6mm; border-bottom:2.5px solid; border-right:2.5px solid;"></span>
-    <span style="${style} bottom:6mm; left:6mm; border-bottom:2.5px solid; border-left:2.5px solid;"></span>
-  `;
-}
-
 export function buildInvoiceHtml(p: InvoiceParams): string {
   const discount = p.discountAmount ?? 0;
   const total = p.subtotal - discount + p.shippingCost;
@@ -67,10 +57,9 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
 
   return `
     <div style="position:relative; width:210mm; box-sizing:border-box; padding:14mm 10mm; background:#ffffff; font-family:Tahoma, Arial, sans-serif; color:#111827; direction:rtl;">
-      ${cornerBrackets()}
 
       <div style="direction:rtl; display:flex; align-items:flex-start; gap:6mm;">
-  <div style="flex:0.8; direction:rtl; text-align:right; font-size:10.5px; line-height:2.1;">
+  <div style="flex:1; direction:rtl; text-align:right; font-size:10.5px; line-height:2.1;">
     <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.globe} <span dir="ltr">sabzfaraz.ir</span></p>
     <p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d; white-space:nowrap;">${ICONS.phone} <span dir="ltr" style="white-space:nowrap;">${p.storePhones.join(" - ") || "—"}</span></p>
     ${p.storeEmail ? `<p style="margin:0; display:flex; align-items:center; gap:6px; color:#15803d;">${ICONS.mail} <span dir="ltr">${p.storeEmail}</span></p>` : ""}
@@ -93,11 +82,11 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
 </div>
 
 <div style="display:flex; align-items:flex-start; gap:6mm; margin:4mm 0 5mm;">
-  <div style="flex:0.8;"></div>
+  <div style="flex:1;"></div>
   <div style="flex:0 0 auto; width:70mm; text-align:center;">
     <div style="display:inline-block; border:1.5px solid #111827; border-radius:12px; padding:5px 34px; font-size:19px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
   </div>
-  <div style="flex:1.2;"></div>
+  <div style="flex:1;"></div>
 </div>
 
       <div style="border:1.5px solid #111827; border-radius:8px; margin-bottom:5mm; overflow:hidden;">
@@ -112,6 +101,7 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
         <div style="direction:ltr; display:flex;">
           <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px; border-left:1px solid #d1d5db;"><b>روش پرداخت:</b> ${p.paymentMethodLabel ?? "—"}</div>
           <div style="direction:rtl; flex:1; padding:6px 12px; font-size:11px;"><b>کدپستی:</b> ${p.buyerPostalCode ?? "—"}</div>
+        </div>
       </div>
 
       ${isChina ? `

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { User, Mail, Phone, X } from "lucide-react";
-import { signIn, signUp, requestPasswordResetOtp, resetPasswordWithOtp } from "./actions";
+import { signIn, signUp, resetPasswordByPhoneOnly } from "./actions";
 import PasswordInput from "./PasswordInput";
 import GridScanBackground from "@/components/backgrounds/GridScanBackground";
 
@@ -33,8 +33,7 @@ export default function AuthCard({
    // State مودال (بازنشانی با OTP)
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [forgotPhone, setForgotPhone] = useState("");
-  const [forgotStep, setForgotStep] = useState<"phone" | "otp" | "newPassword">("phone");
-  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotStep, setForgotStep] = useState<"phone" | "newPassword">("phone");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [forgotError, setForgotError] = useState<string | null>(null);
@@ -62,36 +61,18 @@ export default function AuthCard({
     }
   }
 
-   // مرحله ۱: ارسال کد OTP به شماره موبایل
-  async function handleForgotRequestOtp(e: React.FormEvent) {
+// مرحله ۱: بررسی شماره موبایل و رفتن مستقیم به تنظیم رمز جدید (بدون کد پیامکی)
+  function handleForgotRequestOtp(e: React.FormEvent) {
     e.preventDefault();
     setForgotError(null);
     if (!forgotPhone.trim() || !/^09\d{9}$/.test(forgotPhone.trim())) {
       setForgotError("شماره موبایل معتبر نیست. مثال: 09123456789");
       return;
     }
-    setForgotLoading(true);
-    const result = await requestPasswordResetOtp(forgotPhone.trim());
-    setForgotLoading(false);
-    if (result?.error) {
-      setForgotError(result.error);
-    } else {
-      setForgotStep("otp");
-    }
-  }
-
-  // مرحله ۲: تأیید کد OTP
-  async function handleForgotVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setForgotError(null);
-    if (!forgotOtp.trim()) {
-      setForgotError("کد تأیید را وارد کنید.");
-      return;
-    }
     setForgotStep("newPassword");
   }
 
-  // مرحله ۳: تنظیم رمز جدید
+  // مرحله ۲: تنظیم رمز جدید
   async function handleForgotSetPassword(e: React.FormEvent) {
     e.preventDefault();
     setForgotError(null);
@@ -104,7 +85,7 @@ export default function AuthCard({
       return;
     }
     setForgotLoading(true);
-    const result = await resetPasswordWithOtp(forgotPhone.trim(), forgotOtp.trim(), forgotNewPassword);
+    const result = await resetPasswordByPhoneOnly(forgotPhone.trim(), forgotNewPassword);
     setForgotLoading(false);
     if (result?.error) {
       setForgotError(result.error);
@@ -113,7 +94,6 @@ export default function AuthCard({
       setTimeout(() => {
         setIsForgotModalOpen(false);
         setForgotPhone("");
-        setForgotOtp("");
         setForgotNewPassword("");
         setForgotConfirmPassword("");
         setForgotStep("phone");
@@ -333,31 +313,9 @@ return (
                 </div>
                 {forgotError && <p className="forgot-error-message">{forgotError}</p>}
                 <div className="forgot-input-box">
-                  <button className="forgot-btn" type="submit" disabled={forgotLoading}>
-                    {forgotLoading ? "در حال ارسال..." : "ارسال کد بازیابی"}
+                  <button className="forgot-btn" type="submit">
+                    ادامه
                   </button>
-                </div>
-              </form>
-            ) : forgotStep === "otp" ? (
-              <form onSubmit={handleForgotVerifyOtp} className="forgot-form">
-                <p className="text-sm text-gray-300 mb-2">
-                  کد ۶ رقمی به شماره {forgotPhone} پیامک شد.
-                </p>
-                <div className="forgot-input-box">
-                  <input
-                    type="text"
-                    value={forgotOtp}
-                    onChange={(e) => setForgotOtp(e.target.value)}
-                    dir="ltr"
-                    maxLength={6}
-                    required
-                    placeholder=" "
-                  />
-                  <label>کد بازیابی</label>
-                </div>
-                {forgotError && <p className="forgot-error-message">{forgotError}</p>}
-                <div className="forgot-input-box">
-                  <button className="forgot-btn" type="submit">تأیید کد</button>
                 </div>
               </form>
             ) : (

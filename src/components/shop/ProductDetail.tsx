@@ -30,6 +30,7 @@ export default function ProductDetail({
 
   // ===== سفارش از چین =====
   const [chinaTermsAccepted, setChinaTermsAccepted] = useState(false);
+  const [showChinaTerms, setShowChinaTerms] = useState(false);
   const [chinaAdded, setChinaAdded] = useState(false);
   const showInstant = product.fulfillment_type === "INSTANT" || product.fulfillment_type === "BOTH";
   const showChina = product.fulfillment_type === "CHINA_ORDER" || product.fulfillment_type === "BOTH";
@@ -377,10 +378,25 @@ export default function ProductDetail({
                 {(product.china_price ?? 0).toLocaleString("fa-IR")} <span>تومان</span>
               </div>
 
-              <label className="china-order-terms-row">
-                <input type="checkbox" checked={chinaTermsAccepted} onChange={(e) => setChinaTermsAccepted(e.target.checked)} />
-                <span>{chinaTermsMessage}</span>
-              </label>
+              <div className="china-order-terms-row">
+                <button
+                  type="button"
+                  onClick={() => setShowChinaTerms(true)}
+                  className="text-blue-600 underline text-xs font-bold"
+                >
+                  قبل از سفارش، قوانین را مطالعه فرمایید
+                </button>
+
+                <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer mt-2">
+                  <input
+                    type="checkbox"
+                    checked={chinaTermsAccepted}
+                    onChange={(e) => setChinaTermsAccepted(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>با انتخاب این گزینه، قوانین سفارش مدت‌دار را می‌پذیرم.</span>
+                </label>
+              </div>
 
               <button
                 className="product-buy-btn china-order-btn"
@@ -400,6 +416,44 @@ export default function ProductDetail({
               <p className="china-order-note">
                 این سفارش در فاکتور جداگانه‌ای از سفارش‌های موجود سایت ثبت و پردازش می‌شود.
               </p>
+              {showChinaTerms && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                  onClick={() => setShowChinaTerms(false)}
+                >
+                  <div
+                    className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                      <h3 className="font-bold text-gray-900">
+                        قوانین سفارش مدت‌دار
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowChinaTerms(false)}
+                        className="text-gray-500 hover:text-gray-800 text-lg"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="overflow-y-auto p-4 text-sm text-gray-700 leading-7">
+                      {chinaTermsMessage}
+                    </div>
+
+                    <div className="p-3 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setShowChinaTerms(false)}
+                        className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
+                      >
+                        بستن
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

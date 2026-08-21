@@ -5,7 +5,7 @@ import { parseUserAgent } from "@/lib/analytics/parseUserAgent";
 import { isBotUserAgent } from "@/lib/analytics/botDetection";
 import { classifyTraffic } from "@/lib/analytics/trafficSource";
 import { hashIp, getClientIp } from "@/lib/analytics/hashIp";
-import { lookupIpCountry } from "@/lib/analytics/geoLookup";
+import { getCountryNameFa } from "@/lib/analytics/geoLookup";
 import { extractSearchInfo } from "@/lib/analytics/searchKeywords";
 
 export const runtime = "nodejs";
@@ -71,7 +71,11 @@ export async function POST(request: NextRequest) {
     } else {
       const { source, domain } = classifyTraffic(referrer || null, pageUrl, utmSource || null, utmMedium || null);
       const { keywords: searchKeywords, engine: searchEngine } = extractSearchInfo(referrer || null);
-      const geo = await lookupIpCountry(ip);
+      // موقعیت جغرافیایی رایگان و آماده‌ی خودِ Vercel — بدون نیاز به هیچ فراخوانی بیرونی
+      const countryCode = request.headers.get("x-vercel-ip-country");
+      const countryCityHeader = request.headers.get("x-vercel-ip-city");
+      const countryName = getCountryNameFa(countryCode);
+      const city = countryCityHeader ? decodeURIComponent(countryCityHeader) : null;
 
       const { data: created, error } = await admin
         .from("analytics_sessions")
@@ -99,9 +103,9 @@ export async function POST(request: NextRequest) {
           is_admin_visit: isAdminVisit,
           user_id: user?.id ?? null,
           page_count: 1,
-          country_code: geo.countryCode,
-          country_name: geo.countryName,
-          city: geo.city,
+          country_code: countryCode,
+          country_name: countryName,
+          city,
           search_keywords: searchKeywords,
           search_engine: searchEngine,
         })
