@@ -42,9 +42,9 @@ const ICONS: Record<string, string> = {
   phone: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z"/></svg>`,
   mail: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>`,
-  shield: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>`,
+  shield: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>`,
   truck: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="5" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
-  headset: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z"/><path d="M21 11h-3a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-5Z"/><path d="M3 11a9 9 0 0 1 18 0"/></svg>`,
+  headset: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 0116 0v5a2 2 0 01-2 2h-1v-6h3"/><rect x="2" y="14" width="4" height="6" rx="1"/><rect x="18" y="14" width="4" height="6" rx="1"/></svg>`,
   card: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`,
   ship: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h12l3 4H4l-1-4z"/><path d="M6 16h12"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
 };
@@ -82,11 +82,11 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
 </div>
 
 <div style="display:flex; align-items:flex-start; gap:6mm; margin:4mm 0 5mm;">
-  <div style="flex:0.8;"></div>
-  <div style="flex:0 0 auto; width:50mm; text-align:center;">
-    <div style="display:inline-block; border:1.5px solid #111827; border-radius:10px; padding:3px 16px; font-size:16px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
+  <div style="flex:1;"></div>
+  <div style="flex:0 0 auto; width:70mm; text-align:center;">
+    <div style="display:inline-block; border:1.5px solid #111827; border-radius:12px; padding:5px 34px; font-size:19px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
   </div>
-  <div style="flex:1.2;"></div>
+  <div style="flex:1;"></div>
 </div>
 
       <div style="border:1.5px solid #111827; border-radius:8px; margin-bottom:5mm; overflow:hidden;">
@@ -164,17 +164,18 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
           ${p.note ? p.note : "—"}
         </div>
 
-        <div style="direction:rtl; width:38mm; flex-shrink:0; text-align:center; border:1px solid #d1d5db; border-radius:8px; padding:6px 8px 10px; display:flex; flex-direction:row; align-items:flex-start; justify-content:center; gap:6px; min-height:20mm; box-sizing:border-box;">
-  <span style="font-size:10.5px; font-weight:700;">مهر و امضاء فروشگاه</span>
-  <span style="width:18px; height:18px; border-radius:50%; border:1.5px solid #15803d; color:#15803d; display:flex; align-items:center; justify-content:center;">${ICONS.shield}</span>
-</div>
+        <div style="direction:rtl; width:38mm; flex-shrink:0; text-align:center; border:1px solid #d1d5db; border-radius:8px; padding:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
+          <span style="font-size:10.5px; font-weight:700;">مهر و امضاء فروشگاه</span>
+          <span style="width:40px; height:40px; border-radius:50%; border:2px solid #15803d; color:#15803d; display:flex; align-items:center; justify-content:center;">${ICONS.shield}</span>
+        </div>
+      </div>
 
-      <div style="direction:ltr; border-top:2px solid #111827; padding-top:5mm; display:flex; align-items:center; justify-content:center; gap:4mm;">
+      <div style="direction:ltr; border-top:2px solid #111827; padding-top:5mm; display:flex; align-items:center; gap:4mm;">
         <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.shield}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">ضمانت اصالت کالا</p><p style="margin:0; font-size:8px; color:#6b7280;">تضمین کیفیت و اصالت</p></div>
         <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.truck}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">ارسال سریع</p><p style="margin:0; font-size:8px; color:#6b7280;">ارسال به سراسر کشور</p></div>
         <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.headset}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">پشتیبانی مطمئن</p><p style="margin:0; font-size:8px; color:#6b7280;">پاسخگوی نیاز شما</p></div>
         <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.card}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">پرداخت امن</p><p style="margin:0; font-size:8px; color:#6b7280;">درگاه پرداخت معتبر</p></div>
-        <div style="direction:rtl; flex:1; text-align:center; border:1px solid #d1d5db; border-radius:10px; padding:6px 8px; font-size:9.5px; font-weight:700; color:#111827;">
+        <div style="direction:rtl; flex:1.4; text-align:center; border:1px solid #d1d5db; border-radius:10px; padding:6px 8px; font-size:9.5px; font-weight:700; color:#111827;">
           از اعتماد شما سپاسگزاریم<br/>${p.storeName}، سبز بمانید
         </div>
       </div>
