@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { translatePageLabel, extractPathname } from "@/lib/analytics/pageLabels";
 
 export const runtime = "nodejs";
 
@@ -155,19 +156,6 @@ export async function GET(request: NextRequest) {
   }
   const chart = Array.from(bucketMap.entries()).map(([label, v]) => ({ label, sessions: v.sessions, uniqueVisitors: v.visitors.size }));
 
-  const landingMap = new Map<string, { visits: number; sameExit: number }>();
-  for (const s of rows) {
-    const key = s.landing_page || "—";
-    if (!landingMap.has(key)) landingMap.set(key, { visits: 0, sameExit: 0 });
-    const entry = landingMap.get(key)!;
-    entry.visits++;
-    if (s.exit_page === s.landing_page) entry.sameExit++;
-  }
-  const landingPages = Array.from(landingMap.entries())
-    .map(([page, v]) => ({ page, visits: v.visits, exitRate: v.visits > 0 ? Math.round((v.sameExit / v.visits) * 100) : 0 }))
-    .sort((a, b) => b.visits - a.visits)
-    .slice(0, 15);
-
   function bucketize(field: "traffic_source" | "browser" | "os" | "device_type") {
     const map = new Map<string, number>();
     for (const s of rows) {
@@ -193,6 +181,46 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count);
   }
 
+    // برای ترجمه‌ی صفحات محصول/دسته‌بندی به نام فارسی واقعی
+  const productSlugs = new Set<string>();
+  const categorySlugs = new Set<string>();
+  for (const s of rows) {
+    for (const rawUrl of [s.landing_page, s.exit_page]) {
+      const pathname = extractPathname(rawUrl || "");
+      const pMatch = pathname.match(/^\/products\/([^/]+)$/);
+      if (pMatch) productSlugs.add(pMatch[1]);
+      const cMatch = pathname.match(/^\/category\/([^/]+)$/);
+      if (cMatch) categorySlugs.add(cMatch[1]);
+    }
+  }
+
+  const productNames = new Map<string, string>();
+  const categoryNames = new Map<string, string>();
+  if (productSlugs.size > 0) {
+    const { data: productsData } = await admin.from("products").select("slug, name").in("slug", Array.from(productSlugs));
+    for (const p of productsData ?? []) productNames.set(p.slug, p.name);
+  }
+  if (categorySlugs.size > 0) {
+    const { data: categoriesData } = await admin.from("categories").select("slug, name").in("slug", Array.from(categorySlugs));
+    for (const c of categoriesData ?? []) categoryNames.set(c.slug, c.name);
+  }
+
+  const landingMap = new Map<string, { visits: number; sameExit: number }>();
+  for (const s of rows) {
+    const landingLabel = translatePageLabel(s.landing_page, productNames, categoryNames);
+    const exitLabel = translatePageLabel(s.exit_page, productNames, categoryNames);
+    const key = landingLabel;
+    if (!landingMap.has(key)) landingMap.set(key, { visits: 0, sameExit: 0 });
+    const entry = landingMap.get(key)!;
+    entry.visits++;
+    if (exitLabel === landingLabel) entry.sameExit++;
+  }
+
+  const landingPages = Array.from(landingMap.entries())
+    .map(([page, v]) => ({ page, visits: v.visits, exitRate: v.visits > 0 ? Math.round((v.sameExit / v.visits) * 100) : 0 }))
+    .sort((a, b) => b.visits - a.visits)
+    .slice(0, 15);
+
   const sortedSessions = [...rows].sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
   const sessionsTotalCount = sortedSessions.length;
   const sessionsTotalPages = Math.max(1, Math.ceil(sessionsTotalCount / SESSIONS_PAGE_SIZE));
@@ -204,9 +232,10 @@ export async function GET(request: NextRequest) {
       const isReturning = !!firstSeen && new Date(firstSeen).getTime() < new Date(s.started_at).getTime();
       return {
         id: s.id,
+        visitorId: s.visitor_id,
         startedAt: s.started_at,
-        landingPage: s.landing_page,
-        exitPage: s.exit_page,
+        landingPage: translatePageLabel(s.landing_page, productNames, categoryNames),
+        exitPage: translatePageLabel(s.exit_page, productNames, categoryNames),
         referrerDomain: s.referrer_domain,
         device: s.device_type,
         browser: s.browser,

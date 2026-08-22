@@ -21,7 +21,7 @@ interface ReportData {
   devices: { name: string; count: number; percent: number }[];
   countries: { name: string; countryCode: string | null; count: number; percent: number }[];
   recentSessions: {
-    id: string; startedAt: string; landingPage: string; exitPage: string; referrerDomain: string | null;
+    id: string; visitorId: string; startedAt: string; landingPage: string; exitPage: string; referrerDomain: string | null;
     device: string; browser: string; os: string; source: string;
     pageCount: number; durationSeconds: number; converted: boolean;
     isGuest: boolean; isAdmin: boolean; isReturning: boolean;
@@ -36,12 +36,16 @@ interface ReportData {
 }
 
 interface LiveSession {
-  id: string; exit_page: string; device_type: string; browser: string; traffic_source: string; ended_at: string;
+  id: string; visitor_id: string; exit_page: string; exit_page_label: string; device_type: string; browser: string; traffic_source: string; ended_at: string;
   user_id: string | null;
   is_admin_visit: boolean;
   country_code: string | null;
   country_name: string | null;
   profile: { full_name: string | null } | null;
+}
+
+function guestCode(visitorId: string): string {
+  return visitorId.replace(/-/g, "").slice(0, 6).toUpperCase();
 }
 
 function formatDuration(seconds: number) {
@@ -77,7 +81,7 @@ const SESSION_CSV_HEADERS = [
 
 function buildSessionsCsvRows(sessions: ReportData["recentSessions"]) {
   return sessions.map((s) => ({
-    "کاربر": s.isAdmin ? "ادمین" : s.isGuest ? "مهمان" : (s.customerName ?? "بدون نام"),
+    "کاربر": s.isAdmin ? "ادمین" : s.isGuest ? `مهمان #${guestCode(s.visitorId)}` : (s.customerName ?? "بدون نام"),
     "تلفن": s.customerPhone ?? "",
     "بازگشتی": s.isReturning ? "بله" : "خیر",
     "تاریخ شروع": new Date(s.startedAt).toLocaleString("fa-IR"),
@@ -263,10 +267,10 @@ export default function VisitorAnalyticsDashboard() {
                         ) : s.profile?.full_name ? (
                           s.profile.full_name
                         ) : (
-                          <span className="text-gray-400">مهمان</span>
+                          <span className="text-gray-400">مهمان #{guestCode(s.visitor_id)}</span>
                         )}
                       </td>
-                      <td dir="ltr" className="text-left text-xs">{s.exit_page}</td>
+                      <td className="text-xs">{s.exit_page_label}</td>
                       <td>{deviceLabel(s.device_type)}</td>
                       <td>{s.browser}</td>
                       <td className="text-xs">{s.country_code ? `${countryCodeToFlagEmoji(s.country_code)} ${s.country_name ?? s.country_code}` : "—"}</td>
@@ -290,7 +294,7 @@ export default function VisitorAnalyticsDashboard() {
               <thead><tr><th>صفحه</th><th>تعداد ورود</th><th>نرخ خروج از همین صفحه</th></tr></thead>
               <tbody>
                 {data.landingPages.map((p, i) => (
-                  <tr key={i}><td dir="ltr" className="text-left text-xs">{p.page}</td><td>{p.visits.toLocaleString("fa-IR")}</td><td>{p.exitRate.toLocaleString("fa-IR")}٪</td></tr>
+                  <tr key={i}><td className="text-xs">{p.page}</td><td>{p.visits.toLocaleString("fa-IR")}</td><td>{p.exitRate.toLocaleString("fa-IR")}٪</td></tr>
                 ))}
               </tbody>
             </table>
@@ -363,8 +367,8 @@ export default function VisitorAnalyticsDashboard() {
                         <div className="flex items-center gap-1 flex-wrap">
                           {s.isAdmin ? (
                             <span className="badge badge-warning">ادمین</span>
-                          ) : s.isGuest ? (
-                            <span className="badge badge-info">مهمان</span>
+                           ) : s.isGuest ? (
+                            <span className="badge badge-info">مهمان #{guestCode(s.visitorId)}</span>
                           ) : (
                             <div>
                               <div className="font-medium text-gray-800">{s.customerName ?? "بدون نام"}</div>
@@ -375,7 +379,7 @@ export default function VisitorAnalyticsDashboard() {
                         </div>
                       </td>
                       <td className="text-xs text-gray-500">{new Date(s.startedAt).toLocaleString("fa-IR")}</td>
-                      <td dir="ltr" className="text-left text-xs">{s.landingPage}</td>
+                      <td className="text-xs">{s.landingPage}</td>
                       <td dir="ltr" className="text-left text-xs">{s.referrerDomain ?? "—"}</td>
                       <td>{s.source}</td>
                       <td>{deviceLabel(s.device)}</td>

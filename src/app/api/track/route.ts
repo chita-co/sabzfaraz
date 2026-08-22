@@ -72,10 +72,18 @@ export async function POST(request: NextRequest) {
       const { source, domain } = classifyTraffic(referrer || null, pageUrl, utmSource || null, utmMedium || null);
       const { keywords: searchKeywords, engine: searchEngine } = extractSearchInfo(referrer || null);
       // موقعیت جغرافیایی رایگان و آماده‌ی خودِ Vercel — بدون نیاز به هیچ فراخوانی بیرونی
-      const countryCode = request.headers.get("x-vercel-ip-country");
+      let countryCode = request.headers.get("x-vercel-ip-country");
       const countryCityHeader = request.headers.get("x-vercel-ip-city");
-      const countryName = getCountryNameFa(countryCode);
+      let countryName = getCountryNameFa(countryCode);
       const city = countryCityHeader ? decodeURIComponent(countryCityHeader) : null;
+
+      // برای کاربران واردشده، چون شماره موبایل ایرانی هنگام ثبت‌نام تأیید شده،
+      // کشور را «ایران» در نظر می‌گیریم — چون پایگاه‌داده‌ی موقعیت‌مکانی Vercel/MaxMind
+      // گاهی بازه‌های آی‌پی ایرانی را به‌اشتباه به کشورهای همسایه (رایج‌ترین: آذربایجان) نسبت می‌دهد
+      if (user?.id) {
+        countryCode = "IR";
+        countryName = "ایران";
+      }
 
       const { data: created, error } = await admin
         .from("analytics_sessions")
