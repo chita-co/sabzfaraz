@@ -22,3 +22,14 @@ export function getCountryNameFa(countryCode: string | null | undefined): string
   if (!countryCode) return null;
   return COUNTRY_NAMES_FA[countryCode.toUpperCase()] ?? countryCode.toUpperCase();
 }
+
+const IRAN_CONFUSABLE_COUNTRIES = ["AZ", "AM", "TM", "GE", "IQ", "AE"];
+
+export function refineGuestCountry(countryCode: string | null, acceptLanguageHeader: string): string | null {
+  if (!countryCode) return countryCode;
+  const isPersianBrowser = /fa(-IR)?/i.test(acceptLanguageHeader);
+  if (IRAN_CONFUSABLE_COUNTRIES.includes(countryCode.toUpperCase()) && isPersianBrowser) {
+    return "IR";
+  }
+  return countryCode;
+}

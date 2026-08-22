@@ -5,7 +5,7 @@ import { parseUserAgent } from "@/lib/analytics/parseUserAgent";
 import { isBotUserAgent } from "@/lib/analytics/botDetection";
 import { classifyTraffic } from "@/lib/analytics/trafficSource";
 import { hashIp, getClientIp } from "@/lib/analytics/hashIp";
-import { getCountryNameFa } from "@/lib/analytics/geoLookup";
+import { getCountryNameFa, refineGuestCountry } from "@/lib/analytics/geoLookup";
 import { extractSearchInfo } from "@/lib/analytics/searchKeywords";
 
 export const runtime = "nodejs";
@@ -77,12 +77,16 @@ export async function POST(request: NextRequest) {
       let countryName = getCountryNameFa(countryCode);
       const city = countryCityHeader ? decodeURIComponent(countryCityHeader) : null;
 
-      // برای کاربران واردشده، چون شماره موبایل ایرانی هنگام ثبت‌نام تأیید شده،
-      // کشور را «ایران» در نظر می‌گیریم — چون پایگاه‌داده‌ی موقعیت‌مکانی Vercel/MaxMind
-      // گاهی بازه‌های آی‌پی ایرانی را به‌اشتباه به کشورهای همسایه (رایج‌ترین: آذربایجان) نسبت می‌دهد
+      // برای کاربران واردشده، چون شماره موبایل ایرانی هنگام ثبت‌نام تأیید شده، قطعاً ایران است
       if (user?.id) {
         countryCode = "IR";
         countryName = "ایران";
+      } else {
+        // برای مهمان‌ها: اگر کشور گزارش‌شده یکی از همسایه‌های پرتکرار اشتباه بود و زبان مرورگر
+        // فارسی بود، به‌عنوان ایران در نظر می‌گیریم (حدس منطقی، نه قطعیت صددرصد)
+        const acceptLanguage = request.headers.get("accept-language") || "";
+        countryCode = refineGuestCountry(countryCode, acceptLanguage);
+        countryName = getCountryNameFa(countryCode);
       }
 
       const { data: created, error } = await admin

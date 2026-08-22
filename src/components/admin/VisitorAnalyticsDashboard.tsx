@@ -379,7 +379,7 @@ export default function VisitorAnalyticsDashboard() {
                         </div>
                       </td>
                       <td className="text-xs text-gray-500">{new Date(s.startedAt).toLocaleString("fa-IR")}</td>
-                      <td className="text-xs">{s.landingPage}</td>
+                      <td dir="ltr" className="text-left text-xs">{s.landingPage}</td>
                       <td dir="ltr" className="text-left text-xs">{s.referrerDomain ?? "—"}</td>
                       <td>{s.source}</td>
                       <td>{deviceLabel(s.device)}</td>
@@ -455,7 +455,7 @@ interface SessionDetail {
 function SessionDrilldownModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
   const [details, setDetails] = useState<{
     session: SessionDetail | null;
-    pageviews: { id: string; page_url: string; time_on_page_seconds: number | null; viewed_at: string }[];
+    pageviews: { id: string; page_url: string; page_label: string; time_on_page_seconds: number | null; viewed_at: string }[];
     conversions: { id: string; event_type: string; value: number | null; created_at: string }[];
   } | null>(null);
 
@@ -511,7 +511,7 @@ function SessionDrilldownModal({ sessionId, onClose }: { sessionId: string; onCl
               <tbody>
                 {details.pageviews.map((p) => (
                   <tr key={p.id}>
-                    <td dir="ltr" className="text-left text-xs">{p.page_url}</td>
+                    <td className="text-xs">{p.page_label}</td>
                     <td className="text-xs text-gray-500">{new Date(p.viewed_at).toLocaleTimeString("fa-IR")}</td>
                     <td>{p.time_on_page_seconds != null ? formatDuration(p.time_on_page_seconds) : "—"}</td>
                   </tr>
