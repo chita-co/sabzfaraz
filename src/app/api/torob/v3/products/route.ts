@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
+
+export const maxDuration = 60;
+
+const PRODUCT_SELECT = `id, sku, slug, name, name_en, price, discount_price, stock, images, short_description, created_at, updated_at, category:categories!products_category_id_fkey(name)`;
 
 const PAGE_SIZE = 100;
 
@@ -28,7 +32,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // ===== حالت ۱: دریافت اطلاعات چند محصول با page_urls =====
   if (Array.isArray(body.page_urls) && body.page_urls.length > 0) {
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const { data: products } = await supabase
       .from("products")
-      .select("*, category:categories!products_category_id_fkey(name)")
+      .select(PRODUCT_SELECT)
       .eq("is_active", true)
       .in("slug", slugs);
 
@@ -55,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     const { data: products } = await supabase
       .from("products")
-      .select("*, category:categories!products_category_id_fkey(name)")
+      .select(PRODUCT_SELECT)
       .eq("is_active", true)
       .in("sku", uniques);
 
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     let query = supabase
       .from("products")
-      .select("*, category:categories!products_category_id_fkey(name)", { count: "exact" })
+      .select(PRODUCT_SELECT, { count: "exact" })
       .eq("is_active", true);
 
     if (sort === "date_added_desc") {
@@ -117,7 +121,7 @@ interface TorobProductRow {
   short_description: string | null;
   created_at: string;
   updated_at: string;
-  category: { name: string } | null;
+  category: { name: string } | { name: string }[] | null;
 }
 
 function buildTorobResponse(
@@ -127,7 +131,8 @@ function buildTorobResponse(
   maxPages: number
 ) {
   const mapped = products.map((p) => {
-    const categoryName = p.category?.name ?? "";
+    const categoryObject = Array.isArray(p.category) ? p.category[0] : p.category;
+    const categoryName = categoryObject?.name ?? "";
     const images = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
     const currentPrice = p.discount_price ?? p.price;
     const oldPrice = p.discount_price ? p.price : null;
