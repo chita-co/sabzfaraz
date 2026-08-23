@@ -83,11 +83,11 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
 </div>
 
 <div style="display:flex; align-items:flex-start; gap:6mm; margin:3mm 0 4mm;">
-  <div style="flex:0.8;"></div>
+  <div style="flex:1;"></div>
   <div style="flex:0 0 auto; width:70mm; text-align:center;">
     <div style="display:inline-block; border:1px solid #111827; border-radius:8px; padding:3px 17px; font-size:10.5px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
   </div>
-  <div style="flex:1.2;"></div>
+  <div style="flex:1;"></div>
 </div>
 
       <div style="border:1.5px solid #111827; border-radius:8px; margin-bottom:5mm; overflow:hidden;">
