@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import Breadcrumb from "@/components/shop/Breadcrumb";
+import OrderNoteBox from "@/components/shop/OrderNoteBox";
 
 export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
   const items = useCartStore((s) => s.items);
@@ -92,6 +93,8 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
           </div>
         ))}
       </div>
+
+      <OrderNoteBox />
 
       <div className="rounded-xl border border-gray-200 bg-white p-5">
         <div className="flex items-center justify-between">

@@ -40,6 +40,7 @@ export async function createOrderAndPay(
   loyaltyPointsToRedeem: number = 0,
   discountCodeId: string | null = null,
   walletAmountToUse: number = 0,
+  customerNote: string = "",
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -72,6 +73,7 @@ export async function createOrderAndPay(
       shipping_cost: shippingCost,
       status: "PENDING",
       payment_status: "PENDING",
+      customer_note: customerNote || null,
       order_type: isChinaOrder ? "CHINA_ORDER" : "STANDARD",
       china_terms_accepted_at: isChinaOrder ? new Date().toISOString() : null,
       china_delivery_text: chinaDeliveryText,
@@ -174,6 +176,7 @@ export async function createOfflineOrder(
   loyaltyPointsToRedeem: number = 0,
   discountCodeId: string | null = null,
   walletAmountToUse: number = 0,
+  customerNote: string = "",
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -212,6 +215,7 @@ export async function createOfflineOrder(
       payment_status: "PENDING",
       payment_method: paymentMethod,
       bank_account_id: bankAccountId,
+      customer_note: customerNote || null,
       order_type: isChinaOrder ? "CHINA_ORDER" : "STANDARD",
       china_terms_accepted_at: isChinaOrder ? new Date().toISOString() : null,
       china_delivery_text: chinaDeliveryText,

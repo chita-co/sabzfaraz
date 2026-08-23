@@ -84,6 +84,13 @@ export default async function AdminOrderDetailPage({
         </div>
       </div>
 
+      {order.customer_note && (
+        <div className="admin-card mb-5" style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
+          <h2 className="font-bold text-amber-800 mb-2 text-sm">📝 توضیحات مشتری</h2>
+          <p className="text-sm text-amber-900 whitespace-pre-line">{order.customer_note}</p>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 admin-card">
           <h2 className="font-bold text-gray-800 mb-4">اقلام سفارش</h2>

@@ -29,6 +29,7 @@ export default function CheckoutClient({
   walletBalance?: number;
 }) {
   const items = useCartStore((s) => s.items);
+  const orderNote = useCartStore((s) => s.orderNote);
   const cartWeightGrams = useCartWeight();
 
   const [pendingOfflineMethod, setPendingOfflineMethod] = useState<PaymentMethod | null>(null);
@@ -126,6 +127,7 @@ export default function CheckoutClient({
         loyaltyPoints,
         discountCodeId,
         walletUseAmount,
+        orderNote,
       );
       if (result?.error) { setError(result.error); setLoading(false); }
     } else {
@@ -138,6 +140,7 @@ export default function CheckoutClient({
         loyaltyPoints,
         discountCodeId,
         walletUseAmount,
+        orderNote,
       );
       if (result?.error) { setError(result.error); setLoading(false); }
     }

@@ -30,6 +30,8 @@ interface CartState {
   updateQuantity: (productId: string, color: string | null, size: string | null, quantity: number) => void;
   clearCart: () => void;
   restoreItems: (items: CartItem[]) => void;
+  orderNote: string;
+  setOrderNote: (note: string) => void;
 }
 
 function sameLine(a: CartItem, productId: string, color: string | null, size: string | null) {
@@ -40,6 +42,7 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      orderNote: "",
       addItem: (item) => {
         const existing = get().items.find((i) => sameLine(i, item.productId, item.selectedColor, item.selectedSize));
         if (existing) {
@@ -68,6 +71,7 @@ export const useCartStore = create<CartState>()(
       },
       clearCart: () => set({ items: [] }),
       restoreItems: (items) => set({ items: [...get().items, ...items] }),
+      setOrderNote: (note) => set({ orderNote: note }),
     }),
     { name: "sabzfaraz-cart" }
   )
