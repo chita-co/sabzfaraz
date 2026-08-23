@@ -129,11 +129,9 @@
 
 /* منوی کشویی دسته‌بندی‌ها - به سمت پایین باز می‌شود */
 .gooey-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 10px;
-  min-width: 180px;
+  /* موقعیت (fixed/top/right) اکنون به‌صورت inline توسط خود کامپوننت تنظیم می‌شود
+     تا هیچ‌وقت زیر overflow والدهای هدر (در سایزهای میانی صفحه) بریده/پنهان نشود */
+  min-width: 190px;
   max-height: 320px;
   overflow-y: auto;
   background: #ffffff;
@@ -144,21 +142,24 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  z-index: 50;
 }
 .gooey-dropdown-menu a {
   display: block;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   color: #111827 !important;
   text-decoration: none;
   white-space: nowrap;
+  border-right: 2px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, padding-right 0.15s ease, border-color 0.15s ease;
 }
 .gooey-dropdown-menu a:hover {
-  background: #f3f4f6;
-  color: #111827 !important;
+  background: #f0fdf4;
+  color: #16a34a !important;
+  border-right-color: #16a34a;
+  padding-right: 16px;
 }
 
 /* هاور ملایم روی آیتم‌های غیرفعال منو برای هماهنگی بصری با بقیه دکمه‌ها */
@@ -168,10 +169,8 @@
 
 /* ===== مگامنوی دسته‌بندی‌ها (چندستونی، شامل زیرمجموعه‌ها) ===== */
 .gooey-mega-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 10px;
+  /* موقعیت (fixed/top/right) اکنون به‌صورت inline توسط خود کامپوننت تنظیم می‌شود
+     تا در هیچ عرضی از صفحه زیر overflow والدها بریده نشود */
   width: min(760px, 92vw);
   max-height: 420px;
   overflow-y: auto;
@@ -180,7 +179,6 @@
   border-radius: 14px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
   padding: 18px;
-  z-index: 50;
 }
 .gooey-mega-grid {
   display: grid;
@@ -192,6 +190,12 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  padding: 4px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+.gooey-mega-group:hover {
+  background: #fafafa;
 }
 .gooey-mega-group-title {
   font-size: 13.5px;
@@ -201,9 +205,14 @@
   padding-bottom: 6px;
   margin-bottom: 4px;
   border-bottom: 2px solid #f0fdf4;
+  transition: color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.gooey-mega-group-title:hover {
+/* وقتی روی خودِ عنوان یا هرکدام از زیرمجموعه‌های همان دسته هاور شود،
+   عنوان با دو خط سبز رنگ به‌جای یک خط کم‌رنگ برجسته می‌شود */
+.gooey-mega-group:hover .gooey-mega-group-title {
   color: #16a34a !important;
+  border-bottom-color: transparent;
+  box-shadow: 0 2px 0 0 #16a34a, 0 5px 0 0 #bbf7d0;
 }
 .gooey-mega-sublist {
   display: flex;
@@ -212,7 +221,7 @@
 }
 .gooey-mega-sublist a {
   display: block;
-  padding: 5px 6px;
+  padding: 6px 8px;
   border-radius: 6px;
   font-size: 12.5px;
   font-weight: 500;
@@ -221,10 +230,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-right: 2px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, padding-right 0.15s ease;
 }
+/* حالت روشن و مشخص «موس دقیقاً روی همین گزینه است» */
 .gooey-mega-sublist a:hover {
-  background: #f3f4f6;
+  background: #f0fdf4;
   color: #16a34a !important;
+  border-right-color: #16a34a;
+  padding-right: 12px;
 }
 
 @media (max-width: 900px) {

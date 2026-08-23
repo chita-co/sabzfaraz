@@ -44,7 +44,7 @@ const ICONS: Record<string, string> = {
   pin: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>`,
   shield: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>`,
   truck: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="5" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
-  headset: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 0116 0v5a2 2 0 01-2 2h-1v-6h3"/><rect x="2" y="14" width="4" height="6" rx="1"/><rect x="18" y="14" width="4" height="6" rx="1"/></svg>`,
+  headset: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13v-1a8 8 0 0116 0v1"/><rect x="2" y="13" width="4" height="7" rx="2"/><rect x="18" y="13" width="4" height="7" rx="2"/></svg>`,
   card: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`,
   ship: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h12l3 4H4l-1-4z"/><path d="M6 16h12"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>`,
 };
@@ -52,8 +52,9 @@ const ICONS: Record<string, string> = {
 export function buildInvoiceHtml(p: InvoiceParams): string {
   const discount = p.discountAmount ?? 0;
   const total = p.subtotal - discount + p.shippingCost;
-  const isChina = p.type === "china";
+ const isChina = p.type === "china";
   const headerLabel = p.type === "proforma" ? "پیش‌فاکتور" : isChina ? "فاکتور سفارش از چین" : "فاکتور فروش";
+  const invoiceNumberLabel = p.type === "proforma" ? "شماره پیش‌فاکتور" : isChina ? "شماره فاکتور سفارش از چین" : "شماره فاکتور";
 
   return `
     <div style="position:relative; width:210mm; box-sizing:border-box; padding:14mm 10mm; background:#ffffff; font-family:Tahoma, Arial, sans-serif; color:#111827; direction:rtl;">
@@ -73,7 +74,7 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
   </div>
 
   <div style="flex:1; direction:rtl; text-align:right; border:1.5px dashed #9ca3af; border-radius:10px; padding:6px 14px; font-size:10.5px; line-height:2.1;">
-    <p style="margin:0;">شماره فاکتور: <b>${p.invoiceNumber}</b></p>
+    <p style="margin:0;">${invoiceNumberLabel}: <b>${p.invoiceNumber}</b></p>
     <p style="margin:0;">تاریخ: ${p.date}</p>
     ${p.time ? `<p style="margin:0;">ساعت: ${p.time}</p>` : ""}
     ${p.trackingCode ? `<p style="margin:0;">شماره پیگیری: ${p.trackingCode}</p>` : ""}
@@ -81,12 +82,12 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
   </div>
 </div>
 
-<div style="display:flex; align-items:flex-start; gap:6mm; margin:4mm 0 5mm;">
-  <div style="flex:1;"></div>
+<div style="display:flex; align-items:flex-start; gap:6mm; margin:3mm 0 4mm;">
+  <div style="flex:0.8;"></div>
   <div style="flex:0 0 auto; width:70mm; text-align:center;">
-    <div style="display:inline-block; border:1.5px solid #111827; border-radius:12px; padding:5px 34px; font-size:19px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
+    <div style="display:inline-block; border:1px solid #111827; border-radius:8px; padding:3px 17px; font-size:10.5px; font-weight:800; background:#f9fafb;">${headerLabel}</div>
   </div>
-  <div style="flex:1;"></div>
+  <div style="flex:1.2;"></div>
 </div>
 
       <div style="border:1.5px solid #111827; border-radius:8px; margin-bottom:5mm; overflow:hidden;">
@@ -164,17 +165,33 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
           ${p.note ? p.note : "—"}
         </div>
 
-        <div style="direction:rtl; width:38mm; flex-shrink:0; text-align:center; border:1px solid #d1d5db; border-radius:8px; padding:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
-          <span style="font-size:10.5px; font-weight:700;">مهر و امضاء فروشگاه</span>
-          <span style="width:40px; height:40px; border-radius:50%; border:2px solid #15803d; color:#15803d; display:flex; align-items:center; justify-content:center;">${ICONS.shield}</span>
+        <div style="direction:rtl; width:38mm; flex-shrink:0; align-self:flex-start; text-align:center; border:1px solid #d1d5db; border-radius:8px; padding:6px; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px;">
+          <span style="font-size:9.5px; font-weight:700; white-space:nowrap;">مهر و امضاء فروشگاه</span>
+          <span style="width:20px; height:20px; flex-shrink:0; border-radius:50%; border:1.5px solid #15803d; color:#15803d; display:flex; align-items:center; justify-content:center;">${ICONS.shield}</span>
         </div>
       </div>
 
-      <div style="direction:ltr; border-top:2px solid #111827; padding-top:5mm; display:flex; align-items:center; gap:4mm;">
-        <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.shield}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">ضمانت اصالت کالا</p><p style="margin:0; font-size:8px; color:#6b7280;">تضمین کیفیت و اصالت</p></div>
-        <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.truck}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">ارسال سریع</p><p style="margin:0; font-size:8px; color:#6b7280;">ارسال به سراسر کشور</p></div>
-        <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.headset}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">پشتیبانی مطمئن</p><p style="margin:0; font-size:8px; color:#6b7280;">پاسخگوی نیاز شما</p></div>
-        <div style="flex:1; text-align:center; color:#374151;"><span style="color:#15803d;">${ICONS.card}</span><p style="margin:3px 0 0; font-size:9px; font-weight:700;">پرداخت امن</p><p style="margin:0; font-size:8px; color:#6b7280;">درگاه پرداخت معتبر</p></div>
+      <div style="direction:ltr; border-top:2px solid #111827; padding-top:5mm; display:flex; align-items:flex-start; gap:4mm;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; color:#374151;">
+          <span style="color:#15803d; display:inline-flex;">${ICONS.shield}</span>
+          <p style="margin:3px 0 0; font-size:9px; font-weight:700;">ضمانت اصالت کالا</p>
+          <p style="margin:0; font-size:8px; color:#6b7280;">تضمین کیفیت و اصالت</p>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; color:#374151;">
+          <span style="color:#15803d; display:inline-flex;">${ICONS.truck}</span>
+          <p style="margin:3px 0 0; font-size:9px; font-weight:700;">ارسال سریع</p>
+          <p style="margin:0; font-size:8px; color:#6b7280;">ارسال به سراسر کشور</p>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; color:#374151;">
+          <span style="color:#15803d; display:inline-flex;">${ICONS.headset}</span>
+          <p style="margin:3px 0 0; font-size:9px; font-weight:700;">پشتیبانی مطمئن</p>
+          <p style="margin:0; font-size:8px; color:#6b7280;">پاسخگوی نیاز شما</p>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; color:#374151;">
+          <span style="color:#15803d; display:inline-flex;">${ICONS.card}</span>
+          <p style="margin:3px 0 0; font-size:9px; font-weight:700;">پرداخت امن</p>
+          <p style="margin:0; font-size:8px; color:#6b7280;">درگاه پرداخت معتبر</p>
+        </div>
         <div style="direction:rtl; flex:1.4; text-align:center; border:1px solid #d1d5db; border-radius:10px; padding:6px 8px; font-size:9.5px; font-weight:700; color:#111827;">
           از اعتماد شما سپاسگزاریم<br/>${p.storeName}، سبز بمانید
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import ShinyText from "@/components/ShinyText";
@@ -17,7 +18,6 @@ export interface GooeyNavItem {
   href?: string;
   type?: "link" | "dropdown";
   children?: GooeyNavChildItem[];
-  /** اگر true باشد، متن آیتم با افکت درخشش ملایم (ShinyText) رندر می‌شود */
   shiny?: boolean;
 }
 
@@ -45,7 +45,65 @@ export default function GooeyNav({
   const filterRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
+
+  // ===== منطق منوی کشویی/مگامنوی دسته‌بندی‌ها =====
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const triggerRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const cancelClose = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
+
+  // به‌جای بستن فوری با mouseleave، یک تأخیر کوتاه می‌گذاریم تا اگر موس در همان لحظه
+  // به سمت پنل باز‌شده حرکت کند (حتی از میان فاصله‌ی خالی بین دکمه و پنل)، بسته نشود
+  const scheduleClose = useCallback(() => {
+    cancelClose();
+    closeTimeoutRef.current = setTimeout(() => setOpenDropdownIndex(null), 220);
+  }, [cancelClose]);
+
+  const openDropdownAt = useCallback((index: number) => {
+    cancelClose();
+    const el = triggerRefs.current[index];
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    // موقعیت با position:fixed و بر اساس فاصله از لبه‌ی راست صفحه محاسبه می‌شود
+    // (سازگار با راست‌چین بودن سایت) و کاملاً مستقل از overflow والدهای هدر —
+    // یعنی در هر عرضی از صفحه به‌درستی باز می‌شود
+    setDropdownPos({ top: rect.bottom + 8, right: Math.max(8, window.innerWidth - rect.right) });
+    setOpenDropdownIndex(index);
+  }, [cancelClose]);
+
+  const closeDropdownNow = useCallback(() => {
+    cancelClose();
+    setOpenDropdownIndex(null);
+  }, [cancelClose]);
+
+  // برای جلوگیری از نادرست‌شدن موقعیت، با اسکرول یا تغییر اندازه‌ی صفحه پنل بسته می‌شود
+  useEffect(() => {
+    if (openDropdownIndex === null) return;
+    function handleWindowChange() {
+      closeDropdownNow();
+    }
+    window.addEventListener("resize", handleWindowChange);
+    window.addEventListener("scroll", handleWindowChange, true);
+    return () => {
+      window.removeEventListener("resize", handleWindowChange);
+      window.removeEventListener("scroll", handleWindowChange, true);
+    };
+  }, [openDropdownIndex, closeDropdownNow]);
+
+  useEffect(() => () => cancelClose(), [cancelClose]);
 
   // در صورت ناوبری واقعی به صفحه‌ی دیگر (تغییر initialActiveIndex از سمت والد)، پیل فعال هم‌گام شود
   useEffect(() => {
@@ -184,6 +242,41 @@ export default function GooeyNav({
     return () => resizeObserver.disconnect();
   }, [activeIndex]);
 
+  function renderDropdownContent(item: GooeyNavItem) {
+    const hasMegaGroups = !!item.children?.some((c) => c.children && c.children.length > 0);
+    if (hasMegaGroups) {
+      return (
+        <div className="gooey-mega-grid">
+          {item.children!.map((group) => (
+            <div key={group.href} className="gooey-mega-group">
+              <Link href={group.href} className="gooey-mega-group-title" onClick={closeDropdownNow}>
+                {group.label}
+              </Link>
+              {group.children && group.children.length > 0 && (
+                <div className="gooey-mega-sublist">
+                  {group.children.map((sub) => (
+                    <Link key={sub.href} href={sub.href} onClick={closeDropdownNow}>
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <>
+        {item.children?.map((child) => (
+          <Link key={child.href} href={child.href} onClick={closeDropdownNow}>
+            {child.label}
+          </Link>
+        ))}
+      </>
+    );
+  }
+
   return (
     <div className="gooey-nav-container" ref={containerRef}>
       <nav>
@@ -197,57 +290,31 @@ export default function GooeyNav({
               return (
                 <li
                   key={index}
+                  ref={(el) => { triggerRefs.current[index] = el; }}
                   className={`dropdown-item${activeIndex === index ? " active" : ""}${isOpen ? " open" : ""}`}
-                  onMouseEnter={() => setOpenDropdownIndex(index)}
-                  onMouseLeave={() => setOpenDropdownIndex((cur) => (cur === index ? null : cur))}
+                  onMouseEnter={() => openDropdownAt(index)}
+                  onMouseLeave={scheduleClose}
                 >
                   <button
                     type="button"
                     className="gooey-dropdown-trigger"
-                    onClick={() => setOpenDropdownIndex((cur) => (cur === index ? null : index))}
+                    onClick={() => (isOpen ? closeDropdownNow() : openDropdownAt(index))}
                   >
                     {item.label} <ChevronDown size={14} />
                   </button>
-                  {isOpen && item.children && item.children.length > 0 && (
-                    hasMegaGroups ? (
-                      <div className="gooey-mega-menu">
-                        <div className="gooey-mega-grid">
-                          {item.children.map((group) => (
-                            <div key={group.href} className="gooey-mega-group">
-                              <Link
-                                href={group.href}
-                                className="gooey-mega-group-title"
-                                onClick={() => setOpenDropdownIndex(null)}
-                              >
-                                {group.label}
-                              </Link>
-                              {group.children && group.children.length > 0 && (
-                                <div className="gooey-mega-sublist">
-                                  {group.children.map((sub) => (
-                                    <Link
-                                      key={sub.href}
-                                      href={sub.href}
-                                      onClick={() => setOpenDropdownIndex(null)}
-                                    >
-                                      {sub.label}
-                                    </Link>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="gooey-dropdown-menu">
-                        {item.children.map((child) => (
-                          <Link key={child.href} href={child.href} onClick={() => setOpenDropdownIndex(null)}>
-                            {child.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )
-                  )}
+
+                  {mounted && isOpen && dropdownPos && item.children && item.children.length > 0 &&
+                    createPortal(
+                      <div
+                        className={hasMegaGroups ? "gooey-mega-menu" : "gooey-dropdown-menu"}
+                        style={{ position: "fixed", top: dropdownPos.top, right: dropdownPos.right, zIndex: 9999 }}
+                        onMouseEnter={cancelClose}
+                        onMouseLeave={scheduleClose}
+                      >
+                        {renderDropdownContent(item)}
+                      </div>,
+                      document.body
+                    )}
                 </li>
               );
             }
