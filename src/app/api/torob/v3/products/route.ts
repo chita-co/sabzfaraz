@@ -140,7 +140,7 @@ function buildTorobResponse(
 
     return {
       page_unique: p.sku ?? p.id,
-      page_url: `https://sabzfaraz.ir/products/${p.slug}`,
+      page_url: `https://www.sabzfaraz.ir/products/${p.slug}`,
       product_group_id: p.id,
       title: p.name,
       subtitle: p.name_en ?? null,
