@@ -92,14 +92,21 @@ export default function GooeyNav({
   // برای جلوگیری از نادرست‌شدن موقعیت، با اسکرول یا تغییر اندازه‌ی صفحه پنل بسته می‌شود
   useEffect(() => {
     if (openDropdownIndex === null) return;
-    function handleWindowChange() {
+    const index = openDropdownIndex;
+    function reposition() {
+      const el = triggerRefs.current[index];
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 8, right: Math.max(8, window.innerWidth - rect.right) });
+    }
+    function handleResize() {
       closeDropdownNow();
     }
-    window.addEventListener("resize", handleWindowChange);
-    window.addEventListener("scroll", handleWindowChange, true);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("resize", handleWindowChange);
-      window.removeEventListener("scroll", handleWindowChange, true);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", handleResize);
     };
   }, [openDropdownIndex, closeDropdownNow]);
 
