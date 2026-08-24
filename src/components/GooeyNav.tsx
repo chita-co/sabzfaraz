@@ -209,6 +209,18 @@ export default function GooeyNav({
     Object.assign(filterRef.current.style, styles);
     Object.assign(textRef.current.style, styles);
     textRef.current.innerText = element.innerText;
+
+    // لایه‌ی شناور متن باید دقیقاً همون فونت/فاصله‌ی حروف/ارتفاع خط متن واقعی دکمه رو داشته باشه
+    // تا هیچ‌وقت — فارغ از سایزی که shop.css یا هرجای دیگه تعریف کرده — به‌صورت سایه‌ی محو زیر متن اصلی دیده نشه
+    const linkEl = element.querySelector("a");
+    if (linkEl) {
+      const computed = window.getComputedStyle(linkEl);
+      textRef.current.style.fontSize = computed.fontSize;
+      textRef.current.style.fontWeight = computed.fontWeight;
+      textRef.current.style.letterSpacing = computed.letterSpacing;
+      textRef.current.style.lineHeight = computed.lineHeight;
+      textRef.current.style.fontFamily = computed.fontFamily;
+    }
   };
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, index: number) => {
