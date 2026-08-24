@@ -620,7 +620,7 @@
   border-radius: 14px;
   padding: 16px;
   margin-bottom: 18px;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .product-form-section-title {
@@ -637,21 +637,21 @@
 
 /* رنگ‌بندی کادرهای فرم محصول */
 .product-form-section--green {
-  background: #f0fdf4;
+  background: #ffffff;
   border-color: #bbf7d0;
 }
 
 .product-form-section--blue {
-  background: #eff6ff;
+  background: #ffffff;
   border-color: #bfdbfe;
 }
 
 .product-form-section--amber {
-  background: #fffbeb;
+  background: #ffffff;
   border-color: #fde68a;
 }
 
 .product-form-section--purple {
-  background: #faf5ff;
+  background: #ffffff;
   border-color: #e9d5ff;
 }
