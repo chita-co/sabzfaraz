@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Plus, ShoppingBag } from "lucide-react";
+import DescriptionModal from "./DescriptionModal";
+import { BULK_ORDER_GUIDE_TITLE, BULK_ORDER_GUIDE_TEXT } from "@/lib/bulkOrderGuide";
 
 const statusLabels: Record<string, string> = {
   PENDING_REVIEW: "در انتظار بررسی", SUPPLY_POSSIBLE: "قابل تأمین — منتظر پرداخت",
@@ -22,11 +24,14 @@ export default function BulkOrderHub({ requests }: { requests: Request[] }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="flex items-center gap-2 mb-2">
-        <ShoppingBag size={22} className="text-green-400" />
-        <h1 className="text-xl font-bold text-white">سفارش جمعی از بازار الکترونیک</h1>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <ShoppingBag size={22} className="text-green-400" />
+          <h1 className="text-xl font-bold text-white">سفارش جمعی از بازار الکترونیک</h1>
+        </div>
+        <DescriptionModal title={BULK_ORDER_GUIDE_TITLE} description={BULK_ORDER_GUIDE_TEXT} />
       </div>
-      <p className="text-gray-300 text-sm mb-6">ترکیبی از کالاهای فروشگاه و کالاهایی که در سایت نیست رو درخواست بده — ما از بازار برات تهیه می‌کنیم.</p>
+      <p className="text-gray-300 text-sm mb-6">هر کالای الکترونیکی که نیاز دارید — چه در فروشگاه ما موجود باشد و چه فقط در بازار پیدا شود — در یک لیست واحد ثبت کنید تا با پرداخت بیعانه، همه را با هم برایتان تهیه و ارسال کنیم.</p>
 
       <div className="flex gap-2 mb-6">
         <button onClick={() => setTab("previous")} className={`order-tab${tab === "previous" ? " active" : ""}`}>سفارش‌های پیشین</button>

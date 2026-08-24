@@ -4,7 +4,10 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import BulkOrderHub from "@/components/shop/BulkOrderHub";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
-export const metadata = { title: "سفارش جمعی از بازار | سبزفراز" };
+export const metadata = {
+  title: "سفارش جمعی از بازار الکترونیک | سبزفراز",
+  description: "در سبزفراز کالاهای موجود فروشگاه و کالاهای قابل تهیه از بازار الکترونیک را در یک درخواست سفارش جمعی ثبت کنید؛ پرداخت بیعانه پس از تأیید کارشناسان.",
+};
 
 export default async function BulkOrderPage() {
   const supabase = await createClient();

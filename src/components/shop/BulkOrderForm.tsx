@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Search, ShoppingBag, PackageSearch } from "lucide-react";
+import DescriptionModal from "./DescriptionModal";
+import { BULK_ORDER_GUIDE_TITLE, BULK_ORDER_GUIDE_TEXT } from "@/lib/bulkOrderGuide";
 import { searchStoreProducts, submitBulkOrderRequest, type StoreItemInput, type MarketItemInput } from "@/app/(shop)/bulk-order/actions";
 
 interface StoreRow extends StoreItemInput { id: string; }
@@ -93,12 +95,15 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="flex items-center gap-2 mb-2">
-        <ShoppingBag size={22} className="text-green-400" />
-        <h1 className="text-xl font-bold text-white">سفارش جمعی از بازار الکترونیک</h1>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <ShoppingBag size={22} className="text-green-400" />
+          <h1 className="text-xl font-bold text-white">سفارش جمعی از بازار الکترونیک</h1>
+        </div>
+        <DescriptionModal title={BULK_ORDER_GUIDE_TITLE} description={BULK_ORDER_GUIDE_TEXT} />
       </div>
       <p className="text-gray-300 text-sm mb-8">
-        ترکیبی از کالاهای موجود در فروشگاه و کالاهایی که در سایت نیست رو انتخاب کن — کارشناسان ما امکان تأمین رو بررسی می‌کنن.
+        هر کالای الکترونیکی که نیاز دارید — چه در فروشگاه ما موجود باشد و چه فقط در بازار پیدا شود — در یک لیست واحد ثبت کنید تا کارشناسان ما امکان تأمین را بررسی کنند.
       </p>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
