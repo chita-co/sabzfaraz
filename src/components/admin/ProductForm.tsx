@@ -471,6 +471,8 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
+          <section className="product-form-section product-form-section--purple">
+  <h2 className="product-form-section-title">اطلاعات اولیه و توضیحات محصول</h2>
           {bulkMode ? (
             <div className="admin-form-group">
               <label>
@@ -608,6 +610,10 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
               <input type="file" accept="image/*" multiple onChange={handleDescFileChange} disabled={descUploading} className="hidden" />
             </label>
           </div>
+          </section>
+
+          <section className="product-form-section product-form-section--amber">
+  <h2 className="product-form-section-title">قیمت، ارسال و دسته‌بندی</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="admin-form-group">
@@ -676,6 +682,10 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
               onChange={setExtraCategoryIds}
             />
           )}
+          </section>
+
+          <section className="product-form-section product-form-section--green">
+  <h2 className="product-form-section-title">توضیح کوتاه و برچسب‌ها</h2>
 
           <div className="admin-form-group">
             <label>توضیح کوتاه (برای نمایش در لیست محصولات و خلاصه گوگل)</label>
@@ -686,6 +696,10 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
             <label>برچسب‌ها (با ویرگول جدا کنید — برای سئو و جستجوی داخلی)</label>
             <input type="text" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="مثلاً: سنسور، آردوینو، اولتراسونیک" />
           </div>
+          </section>
+
+          <section className="product-form-section product-form-section--blue">
+            <h2 className="product-form-section-title">عنوان سئو، توضیحات متا و کلمه کلیدی</h2>
 
           <div className="admin-form-group">
             <label>عنوان سئو (Meta Title — حداکثر ۶۰ کاراکتر)</label>
@@ -703,6 +717,7 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
             <label>کلمه کلیدی کانونی (اختیاری)</label>
             <input type="text" value={focusKeyword} onChange={(e) => setFocusKeyword(e.target.value)} />
           </div>
+          </section>
 
           <div className="admin-form-group flex items-center gap-2">
             <input
