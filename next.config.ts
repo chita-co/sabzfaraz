@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "s3.ir-thr-at1.arvanstorage.ir" },
       { protocol: "https", hostname: "**.arvanstorage.ir" },
