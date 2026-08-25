@@ -8,7 +8,13 @@ export default async function AdminBlogSettingsPage() {
   return (
     <div className="admin-card" style={{ maxWidth: 640 }}>
       <h1 style={{ fontSize: 18, fontWeight: 800, marginBottom: 18 }}>تنظیمات ربات تولید محتوا</h1>
-      <form action={async (formData) => { await updateBlogBotSettingsAction(formData); }} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <form
+        action={async (formData) => {
+          "use server";
+          await updateBlogBotSettingsAction(formData);
+        }}
+        style={{ display: "flex", flexDirection: "column", gap: 16 }}
+      >
         <label className="admin-switch">
           <input type="checkbox" name="enabled" defaultChecked={settings?.enabled} />
           <span className="admin-switch-track" />
