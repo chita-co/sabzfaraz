@@ -18,7 +18,7 @@ export default function ProductCtaBox({ product }: { product: BlogPostProduct | 
           {product.discount_price && <s>{product.price.toLocaleString("fa-IR")} تومان</s>}
           <strong>{finalPrice.toLocaleString("fa-IR")} تومان</strong>
         </div>
-        <Link href={`/product/${product.slug}`} className="blog-product-cta-btn"><ShoppingCart size={16} /> مشاهده و خرید</Link>
+        <Link href={`/products/${product.slug}`} className="blog-product-cta-btn"><ShoppingCart size={16} /> مشاهده و خرید</Link>
       </div>
     </div>
   );
