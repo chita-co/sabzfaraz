@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     google: "BI5RoL6RuvmrwnG5vgJndjwmWQf6Pa9R5ks6E8YSYBw",
     other: {
       "enamad": "17737796",
+      "msvalidate.01": "0147EAAA6AFD09373328DA12666E26BF",
     },
   },
 };
