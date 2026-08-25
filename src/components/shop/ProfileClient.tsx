@@ -6,6 +6,7 @@ import { Trash2, Plus, Pencil, Package, X } from "lucide-react";
 import { updateProfile, addAddress, updateAddress, deleteAddress } from "@/app/(shop)/profile/actions";
 import ProvinceCitySelect from "@/components/shared/ProvinceCitySelect";
 import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
+import UserBadgesShowcase from "@/components/blog/UserBadgesShowcase";
 
 interface AddressRow {
   id: string;
@@ -22,11 +23,15 @@ export default function ProfileClient({
   fullName,
   phone,
   addresses,
+  badges,
+  earnedBadgeIds,
 }: {
   email: string;
   fullName: string | null;
   phone: string | null;
   addresses: AddressRow[];
+  badges: { id: string; code: string; title: string; description: string | null; icon: string; requirement_value: number }[];
+  earnedBadgeIds: string[];
 }) {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
@@ -106,6 +111,7 @@ export default function ProfileClient({
           <p className="profile-orders-subtitle">مشاهده تاریخچه سفارش‌ها و پیگیری مرسوله</p>
         </div>
       </Link>
+            <UserBadgesShowcase badges={badges} earnedIds={earnedBadgeIds} />
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="font-bold text-gray-800 mb-4">اطلاعات حساب</h2>

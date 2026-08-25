@@ -10,6 +10,7 @@ import { getLoyaltySettings } from "@/lib/loyalty/settings";
 import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
 import Breadcrumb from "@/components/shop/Breadcrumb";
+import { getPostsForProduct } from "@/lib/blog/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,8 @@ export default async function ProductPage({
     .single();
 
   if (!product) notFound();
+
+  const relatedArticles = await getPostsForProduct(product.id);
 
 // ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
   const categoryChain: { name: string; slug: string }[] = [];
@@ -198,6 +201,7 @@ export default async function ProductPage({
         tomanPerPoint={loyaltySettings.tomanPerPoint}
         pointsMultiplier={loyaltyMultiplier}
         pointValueToman={loyaltySettings.pointValueToman}
+        relatedArticles={relatedArticles}
       />
 
       <div className="mx-auto max-w-7xl px-4">

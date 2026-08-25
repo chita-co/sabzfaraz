@@ -7,6 +7,7 @@
     { "path": "/api/cron/run-auction-bots", "schedule": "0 4 * * *" },
     { "path": "/api/cron/finalize-auctions", "schedule": "0 5 * * *" },
     { "path": "/api/cron/expire-auction-winner-payments", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/expire-reverse-auctions", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/expire-reverse-auctions", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/generate-blog-posts", "schedule": "0 */6 * * *" }
   ]
 }

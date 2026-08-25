@@ -724,3 +724,18 @@
     display: none !important;
   }
 }
+
+.blog-editor-wrap { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+.blog-editor-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+.blog-editor-toolbar button { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; color: #374151; cursor: pointer; }
+.blog-editor-toolbar button:hover { background: #e5e7eb; }
+.blog-editor-toolbar button.active { background: #16a34a; color: #fff; }
+.blog-editor-sep { width: 1px; background: #e5e7eb; margin: 4px 4px; }
+.blog-editor-content { min-height: 340px; padding: 16px; font-size: 14.5px; line-height: 2; direction: rtl; }
+.blog-editor-content:focus { outline: none; }
+.blog-editor-content h2 { font-size: 18px; font-weight: 800; margin: 16px 0 8px; }
+.blog-editor-content h3 { font-size: 16px; font-weight: 700; margin: 12px 0 6px; }
+.blog-editor-content p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #9ca3af; float: right; pointer-events: none; height: 0; }
+.blog-editor-content ul, .blog-editor-content ol { padding-right: 20px; }
+.blog-editor-content blockquote { border-right: 3px solid #16a34a; padding: 6px 12px; background: #f0fdf4; border-radius: 6px; }
+.blog-editor-image { max-width: 100%; border-radius: 8px; }

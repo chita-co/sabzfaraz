@@ -18,6 +18,7 @@ import {
   Gift,
   Film,
   Gavel,
+  Newspaper,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import PendingWalletBadge from "./PendingWalletBadge";
@@ -66,6 +67,7 @@ const navConfig: NavItem[] = [
     children: [
       { href: "/admin/products", label: "لیست محصولات" },
       { href: "/admin/products/new", label: "افزودن محصول" },
+      { href: "/admin/products/bulk-price-update", label: "به‌روزرسانی گروهی قیمت‌ها" },
       { href: "/admin/categories", label: "دسته‌بندی‌ها" },
       { href: "/admin/deals", label: "جشنواره تخفیف" },
       { href: "/admin/banners", label: "بنرهای اسلایدی" },
@@ -106,6 +108,16 @@ const navConfig: NavItem[] = [
       { href: "/admin/loyalty/settings", label: "تنظیمات امتیازدهی" },
       { href: "/admin/loyalty/tiers", label: "سطوح مشتریان" },
       { href: "/admin/loyalty/transactions", label: "دفتر کل امتیازها" },
+    ],
+  },
+  {
+    id: "blog",
+    label: "بلاگ هوشمند",
+    icon: Newspaper,
+    children: [
+      { href: "/admin/blog", label: "مقالات" },
+      { href: "/admin/blog/categories", label: "دسته‌بندی‌های بلاگ" },
+      { href: "/admin/blog/settings", label: "تنظیمات ربات محتوا" },
     ],
   },
   {

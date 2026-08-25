@@ -110,6 +110,7 @@ export default async function Footer() {
             <Link href="/">صفحه اصلی</Link>
             <Link href="/deals">جشنواره تخفیف</Link>
             <Link href="/unboxing">آنباکس مشتریان</Link>
+            <Link href="/blog">مقالات</Link>
             <Link href="/cart">سبد خرید</Link>
             <Link href="/wishlist">علاقه‌مندی‌ها</Link>
           </div>

@@ -652,3 +652,30 @@ export async function getProductPriceHistory(id: string) {
     .limit(20);
   return data ?? [];
 }
+
+export async function bulkAdjustProductPrices(input: {
+  categoryIds: string[]; // آرایه‌ی خالی یعنی همه‌ی محصولات
+  adjustType: "percent" | "fixed";
+  direction: "increase" | "decrease";
+  amount: number;
+  applyToDiscount: boolean;
+  roundingStep: number; // 0 یعنی فقط گرد به عدد صحیح تومان، بدون گام خاص
+  roundingMode: "up" | "down" | "nearest";
+}) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("bulk_adjust_product_prices", {
+    p_category_ids: input.categoryIds.length > 0 ? input.categoryIds : null,
+    p_adjust_type: input.adjustType,
+    p_direction: input.direction,
+    p_amount: input.amount,
+    p_apply_to_discount: input.applyToDiscount,
+    p_rounding_step: input.roundingStep || 0,
+    p_rounding_mode: input.roundingMode,
+  });
+  if (error) return { error: error.message };
+  const result = data as { success?: boolean; error?: string; updatedCount?: number };
+  if (result.error) return { error: result.error };
+  revalidatePath("/admin/products");
+  revalidatePath("/");
+  return { success: true, updatedCount: result.updatedCount ?? 0 };
+}

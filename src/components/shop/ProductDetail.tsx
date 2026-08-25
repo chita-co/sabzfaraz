@@ -7,14 +7,16 @@ import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
 import { StarRatingDisplay } from "./StarRating";
 import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
+import RelatedArticlesForProduct from "@/components/blog/RelatedArticlesForProduct";
+import type { BlogPost } from "@/types/blog";
 
 const unitLabelFa: Record<string, string> = { day: "روز", week: "هفته", month: "ماه" };
 
 export default function ProductDetail({
-  product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [], attributes = [],
+  product, isWishlisted, avgRating = 0, reviewCount = 0, quantityTiers = [], attributes = [], relatedArticles = [],
   tomanPerPoint = 1000, pointsMultiplier = 1, pointValueToman = 100,
 }: {
-  product: Product; isWishlisted: boolean; avgRating?: number; reviewCount?: number; quantityTiers?: ProductQuantityTier[]; attributes?: ProductAttribute[];
+  product: Product; isWishlisted: boolean; avgRating?: number; reviewCount?: number; quantityTiers?: ProductQuantityTier[]; attributes?: ProductAttribute[]; relatedArticles?: BlogPost[];
   tomanPerPoint?: number; pointsMultiplier?: number; pointValueToman?: number;
 }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -488,6 +490,8 @@ export default function ProductDetail({
               </table>
             </div>
           )}
+
+          <RelatedArticlesForProduct posts={relatedArticles} />
         </div>
       </div>
     </div>
