@@ -4,6 +4,7 @@ import ProductSortSelect from "@/components/shop/ProductSortSelect";
 import Pagination from "@/components/shop/Pagination";
 import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
 import { Product } from "@/types";
+import SimilarSearchSuggestions from "@/components/shop/SimilarSearchSuggestions";
 
 const PAGE_SIZE = 20;
 
@@ -18,15 +19,18 @@ export default async function SearchPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  const normalizedQ = q?.trim().replace(/\s+/g, " ") || "";
+
   let products: Product[] = [];
   let count = 0;
+  let similarProducts: Product[] = [];
 
-  if (q) {
+  if (normalizedQ) {
     let query = supabase
       .from("products")
       .select("*", { count: "exact" })
       .eq("is_active", true)
-      .ilike("name", `%${q}%`);
+      .ilike("name", `%${normalizedQ}%`);
 
     if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
     else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
@@ -38,6 +42,15 @@ export default async function SearchPage({
     const { data, count: c } = await query.range(from, to);
     products = (data as Product[]) ?? [];
     count = c ?? 0;
+
+    if (products.length < 4) {
+      const { data: similar } = await supabase.rpc("search_products_similar", {
+        p_query: normalizedQ,
+        p_exclude_ids: products.map((p) => p.id),
+        p_limit: 8,
+      });
+      similarProducts = (similar as Product[]) ?? [];
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
@@ -84,9 +97,13 @@ export default async function SearchPage({
             totalPages={totalPages}
             extraParams={{ q: q ?? "", sort }}
           />
+          <SimilarSearchSuggestions products={similarProducts} wishlistIds={wishlistIds} />
         </>
       ) : (
-        <p className="text-gray-500">محصولی با این نام پیدا نشد.</p>
+        <>
+          <p className="text-gray-500">محصولی با نام «{q}» پیدا نشد.</p>
+          <SimilarSearchSuggestions products={similarProducts} wishlistIds={wishlistIds} />
+        </>
       )}
     </div>
   );

@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { getPostBySlug, getRelatedPosts, incrementPostView, getCommentsForPost } from "@/lib/blog/queries";
 import ArticleBody from "@/components/blog/ArticleBody";
 import ProductCtaBox from "@/components/blog/ProductCtaBox";
 import RelatedPostsGrid from "@/components/blog/RelatedPostsGrid";
 import ArticleReactions from "@/components/blog/ArticleReactions";
-import "../blog.css";
 import ReadingProgressBar from "@/components/blog/ReadingProgressBar";
 import TableOfContents from "@/components/blog/TableOfContents";
 import ArticleImageLightbox from "@/components/blog/ArticleImageLightbox";
 import CommentsSection from "@/components/blog/CommentsSection";
 import NextArticle from "@/components/blog/NextArticle";
 import UserBadgesWidget from "@/components/blog/UserBadgesWidget";
-
+import "../blog.css";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -37,8 +37,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   incrementPostView(post.id).catch(() => {});
-  const related = await getRelatedPosts(post.id, 6);
-  const comments = await getCommentsForPost(post.id);
+
+  const supabase = await createClient();
+  const [related, comments, { data: { user } }] = await Promise.all([
+    getRelatedPosts(post.id, 6),
+    getCommentsForPost(post.id),
+    supabase.auth.getUser(),
+  ]);
+  const isLoggedIn = !!user;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -76,19 +82,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div className="blog-article-layout">
         <TableOfContents />
         <div className="blog-article-body-wrap">
-        <ArticleBody content={post.content} ctaComponent={<ProductCtaBox product={post.product ?? null} />} />
-        <ArticleImageLightbox />
-        <ArticleReactions postId={post.id} initialLikes={post.like_count} initialBookmarks={post.bookmark_count} />
-        <UserBadgesWidget postId={post.id} />
-        {post.product && <div className="blog-article-bottom-cta"><ProductCtaBox product={post.product} /></div>}
-        {related.length > 0 && <NextArticle post={related[0]} />}
-        {related.length > 0 && (
-          <section className="blog-related">
-            <h2>مقالات مرتبط</h2>
-            <RelatedPostsGrid posts={related} />
-          </section>
-        )}
-        <CommentsSection postId={post.id} initialComments={comments} />
+          <ArticleBody content={post.content} ctaComponent={<ProductCtaBox product={post.product ?? null} />} />
+          <ArticleImageLightbox />
+          <ArticleReactions postId={post.id} initialLikes={post.like_count} initialBookmarks={post.bookmark_count} isLoggedIn={isLoggedIn} />
+          <UserBadgesWidget postId={post.id} />
+          {post.product && <div className="blog-article-bottom-cta"><ProductCtaBox product={post.product} /></div>}
+          {related.length > 0 && <NextArticle post={related[0]} />}
+          {related.length > 0 && (
+            <section className="blog-related">
+              <h2>مقالات مرتبط</h2>
+              <RelatedPostsGrid posts={related} />
+            </section>
+          )}
+          <CommentsSection postId={post.id} initialComments={comments} isLoggedIn={isLoggedIn} />
         </div>
       </div>
     </article>

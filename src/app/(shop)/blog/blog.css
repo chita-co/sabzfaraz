@@ -133,3 +133,11 @@
 .exit-intent-body span { font-size: 11.5px; color: #16a34a; font-weight: 700; }
 .exit-intent-body h3 { font-size: 15.5px; font-weight: 800; margin: 6px 0 14px; color: #111827; }
 .exit-intent-body a { display: block; text-align: center; background: #16a34a; color: #fff; text-decoration: none; padding: 10px; border-radius: 10px; font-size: 13.5px; font-weight: 700; }
+
+.login-prompt-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-prompt-card { background: #fff; border-radius: 20px; padding: 28px 24px; max-width: 320px; width: 100%; text-align: center; position: relative; }
+.login-prompt-close { position: absolute; top: 12px; left: 12px; background: #f3f4f6; border: none; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.login-prompt-icon { width: 54px; height: 54px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.login-prompt-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; color: #111827; }
+.login-prompt-card p { font-size: 13px; color: #6b7280; margin-bottom: 18px; line-height: 1.8; }
+.login-prompt-btn { display: block; background: #16a34a; color: #fff; text-decoration: none; padding: 10px; border-radius: 10px; font-size: 13.5px; font-weight: 700; }

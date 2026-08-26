@@ -1,43 +1,83 @@
 "use client";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import BlogEditor from "./BlogEditor";
-import { updatePostAction } from "@/app/admin/blog/actions";
+import { updatePostAction, createPostAction, searchProductsForArticleAction } from "@/app/admin/blog/actions";
 
-interface BlogEditPost {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  content: string | null;
-  meta_title: string | null;
-  meta_description: string | null;
-  tags: string[] | null;
-  main_image_url: string | null;
-  status: string;
-}
+interface CategoryOption { id: string; name: string; }
+interface ProductOption { id: string; name: string; price: number; slug: string; }
 
-export default function BlogEditForm({ post }: { post: BlogEditPost }) {
-  const [title, setTitle] = useState(post.title);
-  const [excerpt, setExcerpt] = useState(post.excerpt ?? "");
-  const [content, setContent] = useState(post.content ?? "");
-  const [metaTitle, setMetaTitle] = useState(post.meta_title ?? "");
-  const [metaDescription, setMetaDescription] = useState(post.meta_description ?? "");
-  const [tags, setTags] = useState((post.tags ?? []).join(", "));
-  const [mainImage, setMainImage] = useState(post.main_image_url ?? "");
-  const [status, setStatus] = useState(post.status);
+type BlogPostFormData = {
+  id?: string;
+  title?: string;
+  excerpt?: string;
+  content?: string;
+  meta_title?: string;
+  meta_description?: string;
+  tags?: string[];
+  main_image_url?: string;
+  status?: string;
+  categoryIds?: string[];
+  product_id?: string;
+};
+
+export default function BlogEditForm({
+  post, categories, mode,
+}: {
+  post?: BlogPostFormData;
+  categories: CategoryOption[];
+  mode: "create" | "edit";
+}) {
+  const router = useRouter();
+  const [title, setTitle] = useState(post?.title ?? "");
+  const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
+  const [content, setContent] = useState(post?.content ?? "");
+  const [metaTitle, setMetaTitle] = useState(post?.meta_title ?? "");
+  const [metaDescription, setMetaDescription] = useState(post?.meta_description ?? "");
+  const [tags, setTags] = useState((post?.tags ?? []).join(", "));
+  const [mainImage, setMainImage] = useState(post?.main_image_url ?? "");
+  const [status, setStatus] = useState(post?.status ?? "draft");
+  const [categoryIds, setCategoryIds] = useState<string[]>(post?.categoryIds ?? []);
+  const [productQuery, setProductQuery] = useState("");
+  const [productResults, setProductResults] = useState<ProductOption[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(post?.product_id ?? null);
   const [isPending, startTransition] = useTransition();
 
+  function toggleCategory(id: string) {
+    setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  }
+
+  async function handleProductSearch(q: string) {
+    setProductQuery(q);
+    if (q.trim().length < 2) { setProductResults([]); return; }
+    setProductResults(await searchProductsForArticleAction(q));
+  }
+
   function save() {
+    if (!title.trim()) return toast.error("عنوان مقاله را وارد کنید");
+    const payload = { title, excerpt, content, meta_title: metaTitle, meta_description: metaDescription, tags, main_image_url: mainImage, status, categoryIds, productId: selectedProductId };
+
+    if (mode === "edit" && !post?.id) {
+      toast.error("شناسه مقاله مشخص نیست");
+      return;
+    }
+    const editId = mode === "edit" ? post!.id : null;
+
     startTransition(async () => {
-      const res = await updatePostAction(post.id, { title, excerpt, content, meta_title: metaTitle, meta_description: metaDescription, tags, main_image_url: mainImage, status });
-      if (res.error) toast.error(res.error);
-      else toast.success("ذخیره شد");
+       const res = mode === "edit" ? await updatePostAction(editId as string, payload) : await createPostAction(payload);
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("ذخیره شد");
+      if (mode === "create" && "postId" in res && res.postId) router.push(`/admin/blog/${res.postId}`);
     });
   }
 
   return (
     <div style={{ maxWidth: 900 }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>ویرایش مقاله</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{mode === "edit" ? "ویرایش مقاله" : "افزودن مقاله دستی"}</h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <input className="admin-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان" />
@@ -45,10 +85,36 @@ export default function BlogEditForm({ post }: { post: BlogEditPost }) {
 
         <BlogEditor value={content} onChange={setContent} />
 
-        <input className="admin-input" value={mainImage} onChange={(e) => setMainImage(e.target.value)} placeholder="آدرس تصویر کاور" />
+        <input className="admin-input" value={mainImage} onChange={(e) => setMainImage(e.target.value)} placeholder="آدرس تصویر کاور (یا داخل ادیتور آپلود کن و لینکش رو اینجا بچسبون)" />
         <input className="admin-input" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="عنوان سئو" />
         <textarea className="admin-input" value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} rows={2} placeholder="توضیح متا" />
         <input className="admin-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="برچسب‌ها (با کاما جدا کنید)" />
+
+        <div>
+          <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 6 }}>دسته‌بندی‌ها</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {categories.map((c) => (
+              <button key={c.id} type="button" onClick={() => toggleCategory(c.id)} className={`blog-cat-pill${categoryIds.includes(c.id) ? " blog-cat-pill-active" : ""}`} style={{ cursor: "pointer", border: "none" }}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 6 }}>لینک محصول (اختیاری — باکس خرید در انتهای مقاله نشون داده می‌شه)</label>
+          <input className="admin-input" value={productQuery} onChange={(e) => handleProductSearch(e.target.value)} placeholder="جستجوی محصول..." />
+          {productResults.length > 0 && (
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, marginTop: 6 }}>
+              {productResults.map((p) => (
+                <button key={p.id} type="button" onClick={() => { setSelectedProductId(p.id); setProductResults([]); setProductQuery(p.name); }} style={{ display: "block", width: "100%", textAlign: "right", padding: "8px 12px", fontSize: 13, border: "none", background: "transparent", cursor: "pointer" }}>
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          )}
+          {selectedProductId && <p style={{ fontSize: 12, color: "#16a34a", marginTop: 4 }}>محصول انتخاب شد ✓ <button type="button" onClick={() => setSelectedProductId(null)} style={{ color: "#dc2626" }}>حذف</button></p>}
+        </div>
 
         <select className="admin-input" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="draft">پیش‌نویس</option>
@@ -58,7 +124,7 @@ export default function BlogEditForm({ post }: { post: BlogEditPost }) {
         </select>
 
         <button className="admin-btn admin-btn-primary" disabled={isPending} onClick={save} style={{ alignSelf: "flex-start", padding: "10px 26px" }}>
-          {isPending ? "در حال ذخیره..." : "ذخیره تغییرات"}
+          {isPending ? "در حال ذخیره..." : "ذخیره"}
         </button>
       </div>
     </div>

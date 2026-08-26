@@ -739,3 +739,8 @@
 .blog-editor-content ul, .blog-editor-content ol { padding-right: 20px; }
 .blog-editor-content blockquote { border-right: 3px solid #16a34a; padding: 6px 12px; background: #f0fdf4; border-radius: 6px; }
 .blog-editor-image { max-width: 100%; border-radius: 8px; }
+
+.blog-bot-status { padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; }
+.blog-bot-status.running { background: #dcfce7; color: #15803d; }
+.blog-bot-status.limited { background: #fef3c7; color: #b45309; }
+.blog-bot-status.idle { background: #f3f4f6; color: #6b7280; }

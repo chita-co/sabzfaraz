@@ -2,15 +2,18 @@
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { addCommentAction } from "@/app/(shop)/blog/actions";
+import LoginPromptModal from "./LoginPromptModal";
 
 interface Comment { id: string; user_name: string; content: string; created_at: string; }
 
-export default function CommentsSection({ postId, initialComments }: { postId: string; initialComments: Comment[] }) {
+export default function CommentsSection({ postId, initialComments, isLoggedIn }: { postId: string; initialComments: Comment[]; isLoggedIn: boolean }) {
   const [comments, setComments] = useState(initialComments);
   const [text, setText] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   function submit() {
+    if (!isLoggedIn) return setShowLoginPrompt(true);
     if (!text.trim()) return;
     startTransition(async () => {
       const res = await addCommentAction(postId, text);
@@ -28,7 +31,7 @@ export default function CommentsSection({ postId, initialComments }: { postId: s
     <section className="blog-comments">
       <h2>نظرات ({comments.length.toLocaleString("fa-IR")})</h2>
       <div className="blog-comment-form">
-        <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="نظر خود را بنویسید..." rows={3} />
+        <textarea value={text} onFocus={() => !isLoggedIn && setShowLoginPrompt(true)} onChange={(e) => setText(e.target.value)} placeholder="نظر خود را بنویسید..." rows={3} />
         <button onClick={submit} disabled={isPending}>{isPending ? "در حال ارسال..." : "ارسال نظر"}</button>
       </div>
       <div className="blog-comment-list">
@@ -43,6 +46,7 @@ export default function CommentsSection({ postId, initialComments }: { postId: s
         ))}
         {comments.length === 0 && <p className="blog-empty">اولین نفری باشید که نظر می‌دهد.</p>}
       </div>
+      <LoginPromptModal open={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} message="برای ثبت نظر باید وارد حساب کاربری‌تان شوید." />
     </section>
   );
 }

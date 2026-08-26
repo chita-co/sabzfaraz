@@ -8,6 +8,14 @@ export default async function AdminBlogSettingsPage() {
   return (
     <div className="admin-card" style={{ maxWidth: 640 }}>
       <h1 style={{ fontSize: 18, fontWeight: 800, marginBottom: 18 }}>تنظیمات ربات تولید محتوا</h1>
+      {settings?.is_running ? (
+        <div className="blog-bot-status running">🟢 ربات همین الان در حال نوشتن مقاله است (شروع: {new Date(settings.last_run_started_at).toLocaleTimeString("fa-IR")})</div>
+      ) : settings?.rate_limited_until && new Date(settings.rate_limited_until) > new Date() ? (
+        <div className="blog-bot-status limited">🟠 سهمیه‌ی رایگان تمام شده — تا {new Date(settings.rate_limited_until).toLocaleString("fa-IR")} صبر می‌کند</div>
+      ) : (
+        <div className="blog-bot-status idle">⚪ ربات آماده و منتظر اجراست</div>
+      )}
+      {settings?.last_run_summary && <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 14 }}>آخرین اجرا: {settings.last_run_summary}</p>}
       <form
         action={async (formData) => {
           "use server";

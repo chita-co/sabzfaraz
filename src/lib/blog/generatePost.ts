@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateArticleWithGemini } from "./ai/gemini";
+import { generateArticleWithGemini, generateArticleFromTopic } from "./ai/gemini";
 import { generateAndUploadCoverImage } from "./ai/image";
 import { generateUniqueBlogSlug } from "./slug";
 
@@ -43,13 +43,9 @@ export async function generateBlogPostForProduct(productId: string) {
 
   let categoryId: string | null = null;
   let pendingCategoryName: string | null = null;
-
-  const { data: matchedCategory } = await admin
-    .from("blog_categories").select("id").ilike("name", article.suggested_category).eq("status", "active").maybeSingle();
-
-  if (matchedCategory) {
-    categoryId = matchedCategory.id;
-  } else if (article.is_new_category) {
+  const { data: matchedCategory } = await admin.from("blog_categories").select("id").ilike("name", article.suggested_category).eq("status", "active").maybeSingle();
+  if (matchedCategory) categoryId = matchedCategory.id;
+  else if (article.is_new_category) {
     await admin.from("blog_category_requests").insert({ name: article.suggested_category, suggested_by: "ai", status: "pending" });
     pendingCategoryName = article.suggested_category;
   }
@@ -82,10 +78,87 @@ export async function generateBlogPostForProduct(productId: string) {
   return { skipped: false, postId: inserted.id, title: article.title };
 }
 
-export async function runBlogBot(limit = 3) {
+export async function generateBlogPostFromTopic(topic: string, briefing: string, productId: string | null) {
   const admin = createAdminClient();
-  const { data: settings } = await admin.from("blog_bot_settings").select("enabled").eq("id", 1).single();
+
+  const { data: settings } = await admin.from("blog_bot_settings").select("*").eq("id", 1).single();
+  const { data: categoriesRows } = await admin.from("blog_categories").select("name").eq("status", "active");
+  const existingCategories = (categoriesRows ?? []).map((c) => c.name);
+
+  let recommendedProduct: { id: string; name: string; price: number; description: string | null; images: string[] } | null = null;
+  if (productId) {
+    const { data: p } = await admin.from("products").select("id, name, price, description, images").eq("id", productId).maybeSingle();
+    recommendedProduct = p;
+  }
+
+  const article = await generateArticleFromTopic({
+    topic,
+    briefing,
+    existingCategories,
+    tone: settings?.tone ?? "رسمی، قابل‌اعتماد و جذاب",
+    minWords: settings?.min_words ?? 800,
+    maxWords: settings?.max_words ?? 1400,
+    recommendedProduct: recommendedProduct ? { name: recommendedProduct.name, price: recommendedProduct.price, description: recommendedProduct.description ?? "" } : null,
+  });
+
+  const slug = await generateUniqueBlogSlug(admin, article.slug || article.title);
+
+  let coverUrl: string | null = null;
+  if (settings?.generate_cover_image !== false) coverUrl = await generateAndUploadCoverImage(article.image_prompt, slug);
+  if (!coverUrl && recommendedProduct?.images?.[0]) coverUrl = recommendedProduct.images[0];
+
+  let categoryId: string | null = null;
+  let pendingCategoryName: string | null = null;
+  const { data: matchedCategory } = await admin.from("blog_categories").select("id").ilike("name", article.suggested_category).eq("status", "active").maybeSingle();
+  if (matchedCategory) categoryId = matchedCategory.id;
+  else if (article.is_new_category) {
+    await admin.from("blog_category_requests").insert({ name: article.suggested_category, suggested_by: "ai", status: "pending" });
+    pendingCategoryName = article.suggested_category;
+  }
+
+  const contentWithCta = recommendedProduct
+    ? article.content.replaceAll("[PRODUCT_CTA]", `<div data-product-cta="${recommendedProduct.id}"></div>`)
+    : article.content.replaceAll("[PRODUCT_CTA]", "");
+
+  const { data: inserted, error } = await admin.from("blog_posts").insert({
+    title: article.title,
+    slug,
+    excerpt: article.excerpt,
+    content: contentWithCta,
+    main_image_url: coverUrl,
+    product_id: recommendedProduct?.id ?? null,
+    status: "pending_review",
+    meta_title: article.meta_title,
+    meta_description: article.meta_description,
+    tags: article.tags ?? [],
+    read_time: article.read_time ?? 5,
+    ai_generated: true,
+    pending_category_name: pendingCategoryName,
+  }).select("id").single();
+
+  if (error || !inserted) throw new Error(`ذخیره مقاله ناموفق بود: ${error?.message}`);
+  if (categoryId) await admin.from("blog_post_categories").insert({ post_id: inserted.id, category_id: categoryId });
+
+  return inserted.id as string;
+}
+
+export async function runBlogBot(limit = 3, options: { force?: boolean } = {}) {
+  const admin = createAdminClient();
+  const { data: settings } = await admin.from("blog_bot_settings").select("*").eq("id", 1).single();
   if (!settings?.enabled) return { ran: false, reason: "ربات غیرفعال است", results: [] as unknown[] };
+
+  if (settings.is_running && settings.last_run_started_at) {
+    const startedAgo = Date.now() - new Date(settings.last_run_started_at).getTime();
+    if (startedAgo < 10 * 60 * 1000) {
+      return { ran: false, reason: "ربات همین الان در حال نوشتن مقاله است", results: [] as unknown[] };
+    }
+  }
+
+  if (!options.force && settings.rate_limited_until && new Date(settings.rate_limited_until) > new Date()) {
+    return { ran: false, reason: `ربات به‌دلیل محدودیت سهمیه تا ${new Date(settings.rate_limited_until).toLocaleString("fa-IR")} متوقف است`, results: [] as unknown[] };
+  }
+
+  await admin.from("blog_bot_settings").update({ is_running: true, last_run_started_at: new Date().toISOString(), last_error: null }).eq("id", 1);
 
   const { data: postedProductIds } = await admin.from("blog_posts").select("product_id").not("product_id", "is", null);
   const excludeIds = (postedProductIds ?? []).map((r) => r.product_id).filter(Boolean) as string[];
@@ -95,13 +168,32 @@ export async function runBlogBot(limit = 3) {
   const { data: candidateProducts } = await query;
 
   const results: unknown[] = [];
+  let rateLimitHit = false;
+
   for (const p of candidateProducts ?? []) {
+    if (rateLimitHit) break;
     try {
       results.push({ productId: p.id, ...(await generateBlogPostForProduct(p.id)) });
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "خطای ناشناخته";
-      results.push({ productId: p.id, skipped: true, reason: message });
+      const err = e as Error & { isRateLimit?: boolean; retryAfterSeconds?: number };
+      if (err?.isRateLimit) {
+        rateLimitHit = true;
+        const until = new Date(Date.now() + (err.retryAfterSeconds ? err.retryAfterSeconds * 1000 : 60 * 60 * 1000)).toISOString();
+        await admin.from("blog_bot_settings").update({ rate_limited_until: until, last_error: err.message }).eq("id", 1);
+        results.push({ productId: p.id, skipped: true, reason: `محدودیت سهمیه؛ تا ${new Date(until).toLocaleString("fa-IR")} صبر می‌کند` });
+      } else {
+        results.push({ productId: p.id, skipped: true, reason: err.message });
+        await admin.from("blog_bot_settings").update({ last_error: err.message }).eq("id", 1);
+      }
     }
   }
+
+  const successCount = results.filter((r) => !(r as { skipped?: boolean }).skipped).length;
+  await admin.from("blog_bot_settings").update({
+    is_running: false,
+    last_run_finished_at: new Date().toISOString(),
+    last_run_summary: `${successCount} مقاله ساخته شد از ${results.length} بررسی‌شده`,
+  }).eq("id", 1);
+
   return { ran: true, results };
 }
