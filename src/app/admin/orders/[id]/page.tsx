@@ -194,7 +194,7 @@ export default async function AdminOrderDetailPage({
             )}
             {!isOfflinePayment && (
               <p className="text-sm text-gray-600 mt-2">
-                پرداخت آنلاین (درگاه زرین‌پال)
+               پرداخت آنلاین (درگاه پرداخت SEP)
               </p>
             )}
           </div>

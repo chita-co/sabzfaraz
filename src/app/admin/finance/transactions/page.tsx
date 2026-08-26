@@ -19,7 +19,8 @@ type TransactionRow = {
   order_number: string;
   total_amount: number;
   payment_status: string;
-  zarinpal_ref_id: string | null;
+  zarinpal_ref_id?: string | null;
+  sep_ref_num?: string | null;
   created_at: string;
   profile: { full_name: string | null } | null;
 };
@@ -74,7 +75,7 @@ export default async function TransactionsPage({
               <th>مشتری</th>
               <th>مبلغ</th>
               <th>وضعیت پرداخت</th>
-              <th>کد پیگیری زرین‌پال</th>
+              <th>کد پیگیری درگاه</th>
               <th>تاریخ</th>
             </tr>
           </thead>
@@ -92,7 +93,7 @@ export default async function TransactionsPage({
                   </span>
                 </td>
                 <td dir="ltr" className="text-left text-xs">
-                  {o.zarinpal_ref_id || "—"}
+                   {o.sep_ref_num || o.zarinpal_ref_id || "—"}
                 </td>
                 <td className="text-xs text-gray-500">
                   {new Date(o.created_at).toLocaleDateString("fa-IR")}

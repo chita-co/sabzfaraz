@@ -98,26 +98,22 @@ export async function createOrderFromPendingCheckout(
   );
   if (itemsError) return { error: "خطا در ثبت اقلام سفارش: " + itemsError.message };
 
-  const { requestPayment } = await import("@/lib/zarinpal");
+  const { requestPayment } = await import("@/lib/sep");
   const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback?orderId=${order.id}`;
 
   let payment;
   try {
     payment = await requestPayment({
       amount: totalAmount,
-      description: `پرداخت سفارش ${orderNumber}`,
-      callbackUrl,
+      resNum: order.id,
+      redirectUrl: callbackUrl,
       mobile: address.phone,
     });
   } catch {
-    return { error: "خطا در اتصال به درگاه پرداخت زرین‌پال." };
+    return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
-  if (payment.status !== 100 || !payment.url) {
-    return { error: "اتصال به درگاه پرداخت با خطا مواجه شد." };
-  }
-
-  await supabase.from("orders").update({ zarinpal_authority: payment.authority }).eq("id", order.id);
+  await supabase.from("orders").update({ sep_token: payment.token }).eq("id", order.id);
 
   const { redirect } = await import("next/navigation");
   redirect(payment.url);

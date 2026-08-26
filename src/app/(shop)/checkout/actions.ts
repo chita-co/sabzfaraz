@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { requestPayment } from "@/lib/zarinpal";
+import { requestPayment } from "@/lib/sep";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
@@ -150,19 +150,15 @@ export async function createOrderAndPay(
   try {
     payment = await requestPayment({
       amount: remainder,
-      description: `پرداخت سفارش ${orderNumber}`,
-      callbackUrl,
+      resNum: order.id,
+      redirectUrl: callbackUrl,
       mobile: address.phone,
     });
   } catch {
-    return { error: "خطا در اتصال به درگاه پرداخت زرین‌پال." };
+    return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
-  if (payment.status !== 100 || !payment.url) {
-    return { error: "اتصال به درگاه پرداخت با خطا مواجه شد." };
-  }
-
-  await supabase.from("orders").update({ zarinpal_authority: payment.authority }).eq("id", order.id);
+  await supabase.from("orders").update({ sep_token: payment.token }).eq("id", order.id);
 
   redirect(payment.url);
 }

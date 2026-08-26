@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { requestPayment } from "@/lib/zarinpal";
+import { requestPayment } from "@/lib/sep";
 import { redirect } from "next/navigation";
 import { notifyAllAdmins } from "@/lib/notifications";
 
@@ -23,17 +23,15 @@ export async function payDepositOnline(requestId: string) {
   try {
     payment = await requestPayment({
       amount: request.deposit_amount,
-      description: `پرداخت بیعانه سفارش جمعی ${request.request_number}`,
-      callbackUrl,
+      resNum: requestId,
+      redirectUrl: callbackUrl,
       mobile: profile?.phone ?? "",
     });
   } catch {
     return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
-  if (payment.status !== 100 || !payment.url) return { error: "اتصال به درگاه پرداخت با خطا مواجه شد." };
-
-  await supabase.from("bulk_order_requests").update({ zarinpal_authority: payment.authority }).eq("id", requestId);
+  await supabase.from("bulk_order_requests").update({ sep_token: payment.token }).eq("id", requestId);
   redirect(payment.url);
 }
 

@@ -248,7 +248,7 @@ useEffect(() => {
 
               <button
                 onClick={handlePayOnline}
-                disabled={true}
+                disabled={payingOnline}
                 className="w-full rounded-full bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 mb-5 flex items-center justify-center gap-2"
               >
                 {payingOnline && <Loader2 size={16} className="animate-spin" />}{" "}

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requestPayment } from "@/lib/zarinpal";
+import { requestPayment } from "@/lib/sep";
 import { createNotification } from "@/lib/notifications";
 
 export async function getMyWalletData() {
@@ -49,15 +49,20 @@ export async function topUpWalletOnline(amount: number) {
 
   let payment;
   try {
-    payment = await requestPayment({ amount, description: "شارژ کیف پول سبزفراز", callbackUrl, mobile: profile?.phone ?? "" });
+    payment = await requestPayment({
+      amount,
+      resNum: request.id,
+      redirectUrl: callbackUrl,
+      mobile: profile?.phone ?? "",
+    });
   } catch {
     return { error: "خطا در اتصال به درگاه پرداخت." };
   }
-  if (payment.status !== 100 || !payment.url) return { error: "اتصال به درگاه پرداخت با خطا مواجه شد." };
 
-  await supabase.from("wallet_topup_requests").update({ zarinpal_authority: payment.authority }).eq("id", request.id);
+  await supabase.from("wallet_topup_requests").update({ sep_token: payment.token }).eq("id", request.id);
   redirect(payment.url);
 }
+
 
 async function notifyAdminsOfTopupRequest(
   supabase: Awaited<ReturnType<typeof createClient>>,

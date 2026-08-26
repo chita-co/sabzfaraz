@@ -1,28 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyPayment } from "@/lib/zarinpal";
+import { verifyPayment } from "@/lib/sep";
 import { sendSms } from "@/lib/sms";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const orderId = searchParams.get("orderId");
-  const authority = searchParams.get("Authority");
-  const status = searchParams.get("Status");
-  if (!orderId || !authority) return NextResponse.redirect(`${origin}/profile/orders?payment=invalid`);
+  const formData = await request.formData();
+  const refNum = formData.get("RefNum") as string | null;
+  const state = formData.get("State") as string | null;
+  if (!orderId || !refNum) return NextResponse.redirect(`${origin}/profile/orders?payment=invalid`);
 
   const admin = createAdminClient();
   const { data: order } = await admin.from("orders").select("*, address:addresses(phone)").eq("id", orderId).single();
   if (!order || !order.related_reverse_auction_id) return NextResponse.redirect(`${origin}/profile/orders?payment=notfound`);
 
-  if (status !== "OK") {
+  if (state !== "OK") {
     await admin.from("orders").update({ payment_status: "FAILED" }).eq("id", orderId);
     return NextResponse.redirect(`${origin}/reverse-auctions/${order.related_reverse_auction_id}/pay?payment=failed`);
   }
 
   try {
-    const result = await verifyPayment({ amount: order.total_amount, authority });
-    if (result.status === 100 || result.status === 101) {
-      await admin.from("orders").update({ payment_status: "PAID", zarinpal_ref_id: String(result.refId ?? "") }).eq("id", orderId);
+    const result = await verifyPayment({ amount: order.total_amount, refNum });
+    if (result.ok) {
+      await admin.from("orders").update({ payment_status: "PAID", sep_ref_num: refNum }).eq("id", orderId);
 
       await admin.rpc("finalize_reverse_auction_order", { p_reverse_auction_id: order.related_reverse_auction_id, p_order_id: orderId });
 

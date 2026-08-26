@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { requestPayment } from "@/lib/zarinpal";
+import { requestPayment } from "@/lib/sep";
 import { uploadImage } from "@/lib/arvan";
 import { createNotification } from "@/lib/notifications";
 
@@ -64,15 +64,15 @@ export async function createReverseAuctionOrderOnline(reverseAuctionId: string, 
   if (itemError) return { error: "خطا در ثبت اقلام سفارش: " + itemError.message };
 
   const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/reverse-auctions/payment/callback?orderId=${order.id}`;
+
   let payment;
   try {
-    payment = await requestPayment({ amount: total, description: `پرداخت خرید حراج معکوس «${auction.title}»`, callbackUrl, mobile: address.phone });
+    payment = await requestPayment({ amount: total, resNum: order.id, redirectUrl: callbackUrl, mobile: address.phone });
   } catch {
-    return { error: "خطا در اتصال به درگاه پرداخت زرین‌پال." };
+    return { error: "خطا در اتصال به درگاه پرداخت." };
   }
-  if (payment.status !== 100 || !payment.url) return { error: "اتصال به درگاه پرداخت با خطا مواجه شد." };
 
-  await supabase.from("orders").update({ zarinpal_authority: payment.authority }).eq("id", order.id);
+  await supabase.from("orders").update({ sep_token: payment.token }).eq("id", order.id);
   redirect(payment.url);
 }
 

@@ -35,7 +35,7 @@ export default async function AdminWalletTopupsHistoryPage() {
                 <td>{r.amount.toLocaleString("fa-IR")} تومان</td>
                 <td>{r.method === "ONLINE" ? "درگاه آنلاین" : r.method === "CARD_TO_CARD" ? "کارت به کارت" : "شبا"}</td>
                 <td className="text-xs text-gray-500" dir="ltr">
-                  {r.method === "ONLINE" ? (r.zarinpal_ref_id || r.zarinpal_authority || "—") : (r.bank_account?.bank_name ?? "—")}
+                  {r.method === "ONLINE" ? (r.sep_ref_num || r.sep_token || "—") : (r.bank_account?.bank_name ?? "—")}
                 </td>
                 <td className="text-xs text-gray-500">{new Date(r.created_at).toLocaleString("fa-IR")}</td>
                 <td className="text-xs text-gray-500">{r.reviewed_at ? new Date(r.reviewed_at).toLocaleString("fa-IR") : "—"}</td>

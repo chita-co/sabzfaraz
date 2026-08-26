@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyPayment } from "@/lib/zarinpal";
+import { verifyPayment } from "@/lib/sep";
 import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const orderId = searchParams.get("orderId");
-  const authority = searchParams.get("Authority");
-  const status = searchParams.get("Status");
+  const formData = await request.formData();
+  const refNum = formData.get("RefNum") as string | null;
+  const state = formData.get("State") as string | null;
 
-  if (!orderId || !authority) {
+  if (!orderId || !refNum) {
     return NextResponse.redirect(`${origin}/checkout?error=invalid`);
   }
 
@@ -23,19 +24,19 @@ export async function GET(request: NextRequest) {
     .single();
   if (!order) return NextResponse.redirect(`${origin}/checkout?error=notfound`);
 
-  if (status !== "OK") {
+  if (state !== "OK") {
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   }
 
   try {
-    const result = await verifyPayment({ amount: order.total_amount, authority });
-    if (result.status === 100 || result.status === 101) {
+    const result = await verifyPayment({ amount: order.total_amount, refNum });
+    if (result.ok) {
       await supabase.from("orders").update({
         payment_status: "PAID",
         status: "PROCESSING",
-        zarinpal_ref_id: String(result.refId ?? ""),
+        sep_ref_num: refNum,
       }).eq("id", orderId);
       
       const { data: orderItemsForStock } = await supabase

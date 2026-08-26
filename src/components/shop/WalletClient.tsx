@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, Landmark, Loader2, Info } from "lucide-react";
-import { submitManualTopupRequest } from "@/app/(shop)/profile/wallet/actions";
+import { Wallet, CreditCard, Landmark, Loader2 } from "lucide-react";
+import { submitManualTopupRequest, topUpWalletOnline } from "@/app/(shop)/profile/wallet/actions";;
 
 const typeLabels: Record<string, string> = { credit: "شارژ", debit: "برداشت", refund: "بازگشت وجه" };
 const statusLabels: Record<string, string> = { PENDING: "در انتظار", APPROVED: "تأیید شده", REJECTED: "رد شده" };
@@ -22,7 +22,7 @@ export default function WalletClient({
   const [bankAccountId, setBankAccountId] = useState(bankAccounts[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [onlineNotice, setOnlineNotice] = useState(false);
+  const [payingOnline, setPayingOnline] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<"CARD_TO_CARD" | "SHEBA" | null>(null);
 
   function validateAmount(): number | null {
@@ -30,6 +30,18 @@ export default function WalletClient({
     if (!n || n < minTopup) { setError(`حداقل مبلغ شارژ ${minTopup.toLocaleString("fa-IR")} تومان است.`); return null; }
     if (maxTopup && n > maxTopup) { setError(`حداکثر مبلغ شارژ ${maxTopup.toLocaleString("fa-IR")} تومان است.`); return null; }
     return n;
+  }
+
+  async function handleOnlineTopup() {
+    setError(null);
+    const n = validateAmount();
+    if (!n) return;
+    setPayingOnline(true);
+    const result = await topUpWalletOnline(n);
+    if (result?.error) {
+      setError(result.error);
+      setPayingOnline(false);
+    }
   }
 
   function handleClickPay(m: "CARD_TO_CARD" | "SHEBA") {
@@ -70,21 +82,19 @@ export default function WalletClient({
         </div>
 
         <div className="payment-method-tabs">
-          <div className="payment-method-tab disabled" onClick={() => setOnlineNotice(true)}>
-            پرداخت آنلاین (به‌زودی)
+          <div
+            className="payment-method-tab active"
+            onClick={handleOnlineTopup}
+            style={{ cursor: "pointer" }}
+          >
+            {payingOnline ? "در حال اتصال به درگاه..." : "پرداخت آنلاین"}
           </div>
           {manualTopupEnabled && (
-            <div className="payment-method-tab active" onClick={() => setOnlineNotice(false)}>
+            <div className="payment-method-tab">
               کارت به کارت / شبا
             </div>
           )}
         </div>
-
-        {onlineNotice && (
-          <div className="offline-payment-warning flex items-center gap-2" style={{ marginBottom: 14 }}>
-            <Info size={15} /> فعلاً درگاه پرداخت آنلاین برای شارژ کیف پول راه‌اندازی نشده است. لطفاً از طریق کارت‌به‌کارت یا شبا اقدام کنید.
-          </div>
-        )}
 
         {manualTopupEnabled && (
           <div className="mt-2 space-y-3">
