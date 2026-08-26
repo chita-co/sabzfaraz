@@ -2,8 +2,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { X } from "lucide-react";
-import { searchProductsForArticleAction, generateArticleFromTopicAction } from "@/app/admin/blog/actions";
+import { X, Link as LinkIcon } from "lucide-react";
+import { searchProductsForArticleAction, generateArticleFromTopicAction, resolveProductByUrlOrSlugAction } from "@/app/admin/blog/actions";
 
 interface ProductOption { id: string; name: string; price: number; slug: string; }
 
@@ -13,6 +13,8 @@ export default function BlogSuggestForm() {
   const [briefing, setBriefing] = useState("");
   const [productQuery, setProductQuery] = useState("");
   const [productResults, setProductResults] = useState<ProductOption[]>([]);
+  const [productUrl, setProductUrl] = useState("");
+  const [resolvingUrl, setResolvingUrl] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -20,6 +22,17 @@ export default function BlogSuggestForm() {
     setProductQuery(q);
     if (q.trim().length < 2) { setProductResults([]); return; }
     setProductResults(await searchProductsForArticleAction(q));
+  }
+
+  async function handleResolveUrl() {
+    if (!productUrl.trim()) return;
+    setResolvingUrl(true);
+    const res = await resolveProductByUrlOrSlugAction(productUrl);
+    setResolvingUrl(false);
+    if (res.error || !res.product) return toast.error(res.error ?? "پیدا نشد");
+    setSelectedProduct(res.product);
+    setProductUrl("");
+    toast.success("محصول پیدا و انتخاب شد");
   }
 
   function submit() {
@@ -55,17 +68,26 @@ export default function BlogSuggestForm() {
             <button onClick={() => setSelectedProduct(null)}><X size={16} /></button>
           </div>
         ) : (
-          <div style={{ position: "relative" }}>
-            <input className="admin-input" value={productQuery} onChange={(e) => handleProductSearch(e.target.value)} placeholder="جستجوی محصول برای معرفی در انتهای مقاله..." />
-            {productResults.length > 0 && (
-              <div style={{ position: "absolute", top: "100%", right: 0, left: 0, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, marginTop: 4, zIndex: 10, maxHeight: 220, overflowY: "auto" }}>
-                {productResults.map((p) => (
-                  <button key={p.id} onClick={() => { setSelectedProduct(p); setProductResults([]); setProductQuery(""); }} style={{ display: "block", width: "100%", textAlign: "right", padding: "8px 12px", fontSize: 13, border: "none", background: "transparent", cursor: "pointer" }}>
-                    {p.name} — {p.price.toLocaleString("fa-IR")} تومان
-                  </button>
-                ))}
-              </div>
-            )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ position: "relative" }}>
+              <input className="admin-input" value={productQuery} onChange={(e) => handleProductSearch(e.target.value)} placeholder="جستجوی محصول با نام..." />
+              {productResults.length > 0 && (
+                <div style={{ position: "absolute", top: "100%", right: 0, left: 0, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, marginTop: 4, zIndex: 10, maxHeight: 220, overflowY: "auto" }}>
+                  {productResults.map((p) => (
+                    <button key={p.id} onClick={() => { setSelectedProduct(p); setProductResults([]); setProductQuery(""); }} style={{ display: "block", width: "100%", textAlign: "right", padding: "8px 12px", fontSize: 13, border: "none", background: "transparent", cursor: "pointer" }}>
+                      {p.name} — {p.price.toLocaleString("fa-IR")} تومان
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#9ca3af" }}><span style={{ flex: 1, height: 1, background: "#e5e7eb" }} /> یا <span style={{ flex: 1, height: 1, background: "#e5e7eb" }} /></div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input className="admin-input" style={{ flex: 1 }} value={productUrl} onChange={(e) => setProductUrl(e.target.value)} placeholder="لینک محصول را اینجا بچسبانید (مثلاً sabzfaraz.ir/products/xyz)" dir="ltr" />
+              <button className="admin-btn" disabled={resolvingUrl} onClick={handleResolveUrl} style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+                <LinkIcon size={14} /> {resolvingUrl ? "..." : "اتصال"}
+              </button>
+            </div>
           </div>
         )}
         <p style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>اگه محصولی انتخاب نکنی، مقاله فقط آموزشی/توضیحی می‌مونه و به هیچ محصولی لینک نمی‌شه.</p>

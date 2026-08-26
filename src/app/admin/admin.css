@@ -744,3 +744,14 @@
 .blog-bot-status.running { background: #dcfce7; color: #15803d; }
 .blog-bot-status.limited { background: #fef3c7; color: #b45309; }
 .blog-bot-status.idle { background: #f3f4f6; color: #6b7280; }
+
+.blog-cat-tree-row { display: flex; align-items: center; gap: 6px; padding: 6px 4px; border-radius: 8px; }
+.blog-cat-tree-row:hover { background: #f9fafb; }
+.blog-cat-tree-toggle { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #6b7280; cursor: pointer; }
+.blog-cat-tree-name { display: flex; align-items: center; gap: 6px; background: transparent; border: none; font-size: 13px; font-weight: 600; color: #111827; cursor: pointer; padding: 4px 0; }
+.blog-cat-tree-count { font-size: 10.5px; color: #6b7280; background: #f3f4f6; padding: 1px 7px; border-radius: 999px; }
+.blog-cat-tree-actions { margin-right: auto; display: flex; align-items: center; gap: 6px; }
+.blog-cat-tree-actions button { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 6px; cursor: pointer; }
+.blog-cat-tree-actions button:hover { background: #e5e7eb; }
+.blog-cat-tree-move { font-size: 11px; padding: 3px 6px; width: 130px; }
+.blog-cat-tree-add-form { display: flex; gap: 6px; padding: 6px 4px; align-items: center; }

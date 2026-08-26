@@ -2,6 +2,26 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateArticleWithGemini, generateArticleFromTopic } from "./ai/gemini";
 import { generateAndUploadCoverImage } from "./ai/image";
 import { generateUniqueBlogSlug } from "./slug";
+import { buildCategoryTreeLabels, type CategoryLite } from "./categoryTree";
+
+async function resolveCategoryForArticle(admin: ReturnType<typeof createAdminClient>, suggestedCategory: string, isNew: boolean, parentHint?: string | null) {
+  let categoryId: string | null = null;
+  let pendingCategoryName: string | null = null;
+
+  const { data: matchedCategory } = await admin.from("blog_categories").select("id").ilike("name", suggestedCategory).eq("status", "active").maybeSingle();
+  if (matchedCategory) {
+    categoryId = matchedCategory.id;
+  } else if (isNew) {
+    let parentId: string | null = null;
+    if (parentHint) {
+      const { data: parentMatch } = await admin.from("blog_categories").select("id").ilike("name", parentHint).eq("status", "active").maybeSingle();
+      parentId = parentMatch?.id ?? null;
+    }
+    await admin.from("blog_category_requests").insert({ name: suggestedCategory, suggested_by: "ai", status: "pending", parent_id: parentId });
+    pendingCategoryName = suggestedCategory;
+  }
+  return { categoryId, pendingCategoryName };
+}
 
 export async function generateBlogPostForProduct(productId: string) {
   const admin = createAdminClient();
@@ -19,8 +39,8 @@ export async function generateBlogPostForProduct(productId: string) {
   const { data: settings } = await admin.from("blog_bot_settings").select("*").eq("id", 1).single();
   if (!settings?.enabled) return { skipped: true, reason: "ربات غیرفعال است" };
 
-  const { data: categoriesRows } = await admin.from("blog_categories").select("name").eq("status", "active");
-  const existingCategories = (categoriesRows ?? []).map((c) => c.name);
+  const { data: categoriesRows } = await admin.from("blog_categories").select("id, name, parent_id").eq("status", "active");
+  const existingCategories = buildCategoryTreeLabels((categoriesRows ?? []) as CategoryLite[]);
 
   const article = await generateArticleWithGemini({
     productName: product.name,
@@ -41,15 +61,7 @@ export async function generateBlogPostForProduct(productId: string) {
   if (settings.generate_cover_image) coverUrl = await generateAndUploadCoverImage(article.image_prompt, slug);
   if (!coverUrl) coverUrl = product.images?.[0] ?? null;
 
-  let categoryId: string | null = null;
-  let pendingCategoryName: string | null = null;
-  const { data: matchedCategory } = await admin.from("blog_categories").select("id").ilike("name", article.suggested_category).eq("status", "active").maybeSingle();
-  if (matchedCategory) categoryId = matchedCategory.id;
-  else if (article.is_new_category) {
-    await admin.from("blog_category_requests").insert({ name: article.suggested_category, suggested_by: "ai", status: "pending" });
-    pendingCategoryName = article.suggested_category;
-  }
-
+  const { categoryId, pendingCategoryName } = await resolveCategoryForArticle(admin, article.suggested_category, article.is_new_category, article.parent_category_hint);
   const contentWithCta = article.content.replaceAll("[PRODUCT_CTA]", `<div data-product-cta="${product.id}"></div>`);
 
   const { data: inserted, error: insertError } = await admin
@@ -82,8 +94,8 @@ export async function generateBlogPostFromTopic(topic: string, briefing: string,
   const admin = createAdminClient();
 
   const { data: settings } = await admin.from("blog_bot_settings").select("*").eq("id", 1).single();
-  const { data: categoriesRows } = await admin.from("blog_categories").select("name").eq("status", "active");
-  const existingCategories = (categoriesRows ?? []).map((c) => c.name);
+  const { data: categoriesRows } = await admin.from("blog_categories").select("id, name, parent_id").eq("status", "active");
+  const existingCategories = buildCategoryTreeLabels((categoriesRows ?? []) as CategoryLite[]);
 
   let recommendedProduct: { id: string; name: string; price: number; description: string | null; images: string[] } | null = null;
   if (productId) {
@@ -107,14 +119,7 @@ export async function generateBlogPostFromTopic(topic: string, briefing: string,
   if (settings?.generate_cover_image !== false) coverUrl = await generateAndUploadCoverImage(article.image_prompt, slug);
   if (!coverUrl && recommendedProduct?.images?.[0]) coverUrl = recommendedProduct.images[0];
 
-  let categoryId: string | null = null;
-  let pendingCategoryName: string | null = null;
-  const { data: matchedCategory } = await admin.from("blog_categories").select("id").ilike("name", article.suggested_category).eq("status", "active").maybeSingle();
-  if (matchedCategory) categoryId = matchedCategory.id;
-  else if (article.is_new_category) {
-    await admin.from("blog_category_requests").insert({ name: article.suggested_category, suggested_by: "ai", status: "pending" });
-    pendingCategoryName = article.suggested_category;
-  }
+  const { categoryId, pendingCategoryName } = await resolveCategoryForArticle(admin, article.suggested_category, article.is_new_category, article.parent_category_hint);
 
   const contentWithCta = recommendedProduct
     ? article.content.replaceAll("[PRODUCT_CTA]", `<div data-product-cta="${recommendedProduct.id}"></div>`)

@@ -2,8 +2,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { Wand2, Link as LinkIcon, X } from "lucide-react";
 import BlogEditor from "./BlogEditor";
-import { updatePostAction, createPostAction, searchProductsForArticleAction } from "@/app/admin/blog/actions";
+import {
+  updatePostAction, createPostAction, searchProductsForArticleAction,
+  resolveProductByUrlOrSlugAction, suggestCategoryForArticleAction, createCategoryAction,
+} from "@/app/admin/blog/actions";
 
 interface CategoryOption { id: string; name: string; }
 interface ProductOption { id: string; name: string; price: number; slug: string; }
@@ -41,7 +45,12 @@ export default function BlogEditForm({
   const [categoryIds, setCategoryIds] = useState<string[]>(post?.categoryIds ?? []);
   const [productQuery, setProductQuery] = useState("");
   const [productResults, setProductResults] = useState<ProductOption[]>([]);
+  const [productUrl, setProductUrl] = useState("");
+  const [resolvingUrl, setResolvingUrl] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(post?.product_id ?? null);
+  const [selectedProductLabel, setSelectedProductLabel] = useState<string | null>(null);
+  const [suggestingCategory, setSuggestingCategory] = useState(false);
+  const [localCategories, setLocalCategories] = useState(categories);
   const [isPending, startTransition] = useTransition();
 
   function toggleCategory(id: string) {
@@ -54,10 +63,45 @@ export default function BlogEditForm({
     setProductResults(await searchProductsForArticleAction(q));
   }
 
+  async function handleResolveUrl() {
+    if (!productUrl.trim()) return;
+    setResolvingUrl(true);
+    const res = await resolveProductByUrlOrSlugAction(productUrl);
+    setResolvingUrl(false);
+    if (res.error || !res.product) return toast.error(res.error ?? "پیدا نشد");
+    setSelectedProductId(res.product.id);
+    setSelectedProductLabel(res.product.name);
+    setProductUrl("");
+    toast.success("محصول پیدا و انتخاب شد");
+  }
+
+  async function handleSuggestCategory() {
+    if (!title.trim()) return toast.error("اول عنوان مقاله را وارد کنید");
+    setSuggestingCategory(true);
+    const res = await suggestCategoryForArticleAction(title, excerpt);
+    setSuggestingCategory(false);
+    if (res.error) return toast.error(res.error);
+
+    if (res.matchedCategoryId) {
+      setCategoryIds((prev) => (prev.includes(res.matchedCategoryId!) ? prev : [...prev, res.matchedCategoryId!]));
+      return toast.success(`دسته‌ی «${res.matchedCategoryName}» انتخاب شد`);
+    }
+    if (res.newCategoryName) {
+      const confirmMsg = res.parentName
+        ? `دسته‌ی جدید «${res.newCategoryName}» زیرمجموعه‌ی «${res.parentName}» پیشنهاد شد. ساخته و انتخاب شود؟`
+        : `دسته‌ی جدید «${res.newCategoryName}» پیشنهاد شد. ساخته و انتخاب شود؟`;
+      if (!confirm(confirmMsg)) return;
+      const createRes = await createCategoryAction(res.newCategoryName, res.parentId ?? null);
+      if (createRes.error || !createRes.categoryId) return toast.error(createRes.error ?? "خطا در ساخت دسته");
+      setLocalCategories((prev) => [...prev, { id: createRes.categoryId!, name: res.newCategoryName! }]);
+      setCategoryIds((prev) => [...prev, createRes.categoryId!]);
+      toast.success("دسته ساخته و انتخاب شد");
+    }
+  }
+
   function save() {
     if (!title.trim()) return toast.error("عنوان مقاله را وارد کنید");
     const payload = { title, excerpt, content, meta_title: metaTitle, meta_description: metaDescription, tags, main_image_url: mainImage, status, categoryIds, productId: selectedProductId };
-
     if (mode === "edit" && !post?.id) {
       toast.error("شناسه مقاله مشخص نیست");
       return;
@@ -65,7 +109,7 @@ export default function BlogEditForm({
     const editId = mode === "edit" ? post!.id : null;
 
     startTransition(async () => {
-       const res = mode === "edit" ? await updatePostAction(editId as string, payload) : await createPostAction(payload);
+      const res = mode === "edit" ? await updatePostAction(editId as string, payload) : await createPostAction(payload);
       if (res.error) {
         toast.error(res.error);
         return;
@@ -91,29 +135,51 @@ export default function BlogEditForm({
         <input className="admin-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="برچسب‌ها (با کاما جدا کنید)" />
 
         <div>
-          <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 6 }}>دسته‌بندی‌ها</label>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 700 }}>دسته‌بندی‌ها</label>
+            <button type="button" onClick={handleSuggestCategory} disabled={suggestingCategory} className="admin-btn" style={{ padding: "4px 10px", fontSize: 11.5, display: "flex", alignItems: "center", gap: 4 }}>
+              <Wand2 size={13} /> {suggestingCategory ? "در حال تشخیص..." : "پیشنهاد دسته‌بندی با هوش مصنوعی"}
+            </button>
+          </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {categories.map((c) => (
+            {localCategories.map((c) => (
               <button key={c.id} type="button" onClick={() => toggleCategory(c.id)} className={`blog-cat-pill${categoryIds.includes(c.id) ? " blog-cat-pill-active" : ""}`} style={{ cursor: "pointer", border: "none" }}>
                 {c.name}
               </button>
             ))}
+            {localCategories.length === 0 && <span style={{ fontSize: 12, color: "#9ca3af" }}>هنوز دسته‌بندی‌ای نساختید — از دکمه‌ی بالا یا صفحه‌ی دسته‌بندی‌ها بسازید.</span>}
           </div>
         </div>
 
         <div>
           <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 6 }}>لینک محصول (اختیاری — باکس خرید در انتهای مقاله نشون داده می‌شه)</label>
-          <input className="admin-input" value={productQuery} onChange={(e) => handleProductSearch(e.target.value)} placeholder="جستجوی محصول..." />
-          {productResults.length > 0 && (
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, marginTop: 6 }}>
-              {productResults.map((p) => (
-                <button key={p.id} type="button" onClick={() => { setSelectedProductId(p.id); setProductResults([]); setProductQuery(p.name); }} style={{ display: "block", width: "100%", textAlign: "right", padding: "8px 12px", fontSize: 13, border: "none", background: "transparent", cursor: "pointer" }}>
-                  {p.name}
+          {selectedProductId ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "8px 12px" }}>
+              <span style={{ fontSize: 13 }}>{selectedProductLabel ?? "محصول انتخاب شد"}</span>
+              <button type="button" onClick={() => { setSelectedProductId(null); setSelectedProductLabel(null); }}><X size={16} /></button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ position: "relative" }}>
+                <input className="admin-input" value={productQuery} onChange={(e) => handleProductSearch(e.target.value)} placeholder="جستجوی محصول با نام..." />
+                {productResults.length > 0 && (
+                  <div style={{ position: "absolute", top: "100%", right: 0, left: 0, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, marginTop: 4, zIndex: 10, maxHeight: 220, overflowY: "auto" }}>
+                    {productResults.map((p) => (
+                      <button key={p.id} type="button" onClick={() => { setSelectedProductId(p.id); setSelectedProductLabel(p.name); setProductResults([]); setProductQuery(""); }} style={{ display: "block", width: "100%", textAlign: "right", padding: "8px 12px", fontSize: 13, border: "none", background: "transparent", cursor: "pointer" }}>
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input className="admin-input" style={{ flex: 1 }} value={productUrl} onChange={(e) => setProductUrl(e.target.value)} placeholder="یا لینک محصول را بچسبانید (مثلاً sabzfaraz.ir/products/xyz)" dir="ltr" />
+                <button type="button" className="admin-btn" disabled={resolvingUrl} onClick={handleResolveUrl} style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+                  <LinkIcon size={14} /> {resolvingUrl ? "..." : "اتصال"}
                 </button>
-              ))}
+              </div>
             </div>
           )}
-          {selectedProductId && <p style={{ fontSize: 12, color: "#16a34a", marginTop: 4 }}>محصول انتخاب شد ✓ <button type="button" onClick={() => setSelectedProductId(null)} style={{ color: "#dc2626" }}>حذف</button></p>}
         </div>
 
         <select className="admin-input" value={status} onChange={(e) => setStatus(e.target.value)}>

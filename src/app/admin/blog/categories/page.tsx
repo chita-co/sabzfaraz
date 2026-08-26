@@ -4,10 +4,9 @@ import CategoryManagerClient from "@/components/admin/blog/CategoryManagerClient
 
 export default async function AdminBlogCategoriesPage() {
   const admin = createAdminClient();
-  const [{ data: categories }, { data: requests }, { data: unassignedPosts }] = await Promise.all([
-    admin.from("blog_categories").select("*").order("name"),
+  const [{ data: categories }, { data: requests }] = await Promise.all([
+    admin.rpc("get_blog_categories_with_counts"),
     admin.from("blog_category_requests").select("*").eq("status", "pending").order("created_at", { ascending: false }),
-    admin.from("blog_posts").select("id, title, pending_category_name").not("pending_category_name", "is", null),
   ]);
 
   return (
@@ -33,7 +32,7 @@ export default async function AdminBlogCategoriesPage() {
         </div>
       )}
 
-      <CategoryManagerClient categories={categories ?? []} unassignedPosts={unassignedPosts ?? []} />
+      <CategoryManagerClient categories={categories ?? []} />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import sharp from "sharp";
 import { uploadImage } from "@/lib/arvan";
 import { runBlogBot, generateBlogPostFromTopic } from "@/lib/blog/generatePost";
 import { generateUniqueBlogSlug } from "@/lib/blog/slug";
+import { classifyArticleCategory } from "@/lib/blog/ai/gemini";
+import { buildCategoryTreeLabels, type CategoryLite } from "@/lib/blog/categoryTree";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -15,6 +17,8 @@ async function requireAdmin() {
   if (profile?.role !== "ADMIN") throw new Error("دسترسی غیرمجاز");
   return user;
 }
+
+// ---------- مقالات ----------
 
 export async function updatePostStatusAction(postId: string, status: "published" | "rejected" | "draft") {
   await requireAdmin();
@@ -78,80 +82,23 @@ export async function searchProductsForArticleAction(query: string) {
   return data ?? [];
 }
 
-export async function approveCategoryRequestAction(requestId: string, parentId?: string | null) {
+export async function resolveProductByUrlOrSlugAction(input: string) {
   await requireAdmin();
   const admin = createAdminClient();
-  const { data: request } = await admin.from("blog_category_requests").select("*").eq("id", requestId).single();
-  if (!request) return { error: "درخواست یافت نشد" };
+  let slug = input.trim();
+  try {
+    if (slug.startsWith("http")) {
+      const url = new URL(slug);
+      const parts = url.pathname.split("/").filter(Boolean);
+      slug = parts[parts.length - 1] ?? slug;
+    } else if (slug.includes("/")) {
+      slug = slug.split("/").filter(Boolean).pop() ?? slug;
+    }
+  } catch { /* اسلاگ خام بود */ }
 
-  const slug = request.name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || `cat-${Date.now()}`;
-  const { data: newCat, error: catError } = await admin.from("blog_categories")
-    .insert({ name: request.name, slug, description: request.description, parent_id: parentId ?? request.parent_id, status: "active" })
-    .select("id").single();
-  if (catError || !newCat) return { error: catError?.message ?? "خطا در ساخت دسته" };
-
-  await admin.from("blog_category_requests").update({ status: "approved" }).eq("id", requestId);
-
-  const { data: postsToLink } = await admin.from("blog_posts").select("id").eq("pending_category_name", request.name);
-  for (const p of postsToLink ?? []) {
-    await admin.from("blog_post_categories").upsert({ post_id: p.id, category_id: newCat.id }, { onConflict: "post_id,category_id" });
-  }
-  await admin.from("blog_posts").update({ pending_category_name: null }).eq("pending_category_name", request.name);
-
-  revalidatePath("/admin/blog/categories");
-  return { success: true };
-}
-
-export async function rejectCategoryRequestAction(requestId: string) {
-  await requireAdmin();
-  const admin = createAdminClient();
-  const { error } = await admin.from("blog_category_requests").update({ status: "rejected" }).eq("id", requestId);
-  if (error) return { error: error.message };
-  revalidatePath("/admin/blog/categories");
-  return { success: true };
-}
-
-export async function createCategoryAction(name: string) {
-  await requireAdmin();
-  const admin = createAdminClient();
-  const slug = name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || `cat-${Date.now()}`;
-  const { error } = await admin.from("blog_categories").insert({ name: name.trim(), slug, status: "active" });
-  if (error) return { error: error.message };
-  revalidatePath("/admin/blog/categories");
-  return { success: true };
-}
-
-export async function renameCategoryAction(categoryId: string, newName: string) {
-  await requireAdmin();
-  const admin = createAdminClient();
-  const { error } = await admin.from("blog_categories").update({ name: newName.trim() }).eq("id", categoryId);
-  if (error) return { error: error.message };
-  revalidatePath("/admin/blog/categories");
-  return { success: true };
-}
-
-export async function moveCategoryPostsAction(fromCategoryId: string, toCategoryId: string) {
-  await requireAdmin();
-  const admin = createAdminClient();
-  const { data: links } = await admin.from("blog_post_categories").select("post_id").eq("category_id", fromCategoryId);
-  const postIds = (links ?? []).map((l) => l.post_id);
-  if (postIds.length === 0) return { success: true, count: 0 };
-
-  await admin.from("blog_post_categories").delete().eq("category_id", fromCategoryId);
-  for (const postId of postIds) {
-    await admin.from("blog_post_categories").upsert({ post_id: postId, category_id: toCategoryId }, { onConflict: "post_id,category_id" });
-  }
-  revalidatePath("/admin/blog/categories");
-  return { success: true, count: postIds.length };
-}
-
-export async function assignPostToCategoryAction(postId: string, categoryId: string) {
-  await requireAdmin();
-  const admin = createAdminClient();
-  await admin.from("blog_post_categories").upsert({ post_id: postId, category_id: categoryId }, { onConflict: "post_id,category_id" });
-  await admin.from("blog_posts").update({ pending_category_name: null }).eq("id", postId);
-  revalidatePath("/admin/blog/categories");
-  return { success: true };
+  const { data } = await admin.from("products").select("id, name, price, slug").eq("slug", slug).maybeSingle();
+  if (!data) return { error: "محصولی با این لینک/اسلاگ پیدا نشد" };
+  return { product: data };
 }
 
 export async function getPostForEditAction(postId: string) {
@@ -239,4 +186,162 @@ export async function uploadEditorImageAction(formData: FormData) {
   const key = `blog/content/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
   const url = await uploadImage(webpBuffer, key);
   return { url };
+}
+
+// ---------- دسته‌بندی‌ها ----------
+
+export async function approveCategoryRequestAction(requestId: string, parentId?: string | null) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { data: request } = await admin.from("blog_category_requests").select("*").eq("id", requestId).single();
+  if (!request) return { error: "درخواست یافت نشد" };
+
+  const slug = request.name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || `cat-${Date.now()}`;
+  const { data: newCat, error: catError } = await admin.from("blog_categories")
+    .insert({ name: request.name, slug, description: request.description, parent_id: parentId ?? request.parent_id, status: "active" })
+    .select("id").single();
+  if (catError || !newCat) return { error: catError?.message ?? "خطا در ساخت دسته" };
+
+  await admin.from("blog_category_requests").update({ status: "approved" }).eq("id", requestId);
+
+  const { data: postsToLink } = await admin.from("blog_posts").select("id").eq("pending_category_name", request.name);
+  for (const p of postsToLink ?? []) {
+    await admin.from("blog_post_categories").upsert({ post_id: p.id, category_id: newCat.id }, { onConflict: "post_id,category_id" });
+  }
+  await admin.from("blog_posts").update({ pending_category_name: null }).eq("pending_category_name", request.name);
+
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function rejectCategoryRequestAction(requestId: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin.from("blog_category_requests").update({ status: "rejected" }).eq("id", requestId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function createCategoryAction(name: string, parentId?: string | null) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const slug = name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || `cat-${Date.now()}`;
+  const { data, error } = await admin.from("blog_categories").insert({ name: name.trim(), slug, status: "active", parent_id: parentId ?? null }).select("id").single();
+  if (error) return { error: error.message };
+  revalidatePath("/admin/blog/categories");
+  return { success: true, categoryId: data.id };
+}
+
+export async function renameCategoryAction(categoryId: string, newName: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin.from("blog_categories").update({ name: newName.trim() }).eq("id", categoryId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function reparentCategoryAction(categoryId: string, newParentId: string | null) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  if (newParentId === categoryId) return { error: "دسته نمی‌تواند والد خودش باشد" };
+  if (newParentId) {
+    let cursor: string | null = newParentId;
+    for (let i = 0; i < 20 && cursor; i++) {
+      const { data: rawNode } = await admin.from("blog_categories").select("parent_id").eq("id", cursor).maybeSingle();
+      const node = rawNode as { parent_id: string | null } | null;
+      if (!node) break;
+      if (node.parent_id === categoryId) return { error: "این جابه‌جایی باعث ایجاد حلقه در دسته‌بندی‌ها می‌شود" };
+      cursor = node.parent_id;
+    }
+  }
+  const { error } = await admin.from("blog_categories").update({ parent_id: newParentId }).eq("id", categoryId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function deleteCategoryAction(categoryId: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin.from("blog_categories").delete().eq("id", categoryId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function moveCategoryPostsAction(fromCategoryId: string, toCategoryId: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { data: links } = await admin.from("blog_post_categories").select("post_id").eq("category_id", fromCategoryId);
+  const postIds = (links ?? []).map((l) => l.post_id);
+  if (postIds.length === 0) return { success: true, count: 0 };
+
+  await admin.from("blog_post_categories").delete().eq("category_id", fromCategoryId);
+  for (const postId of postIds) {
+    await admin.from("blog_post_categories").upsert({ post_id: postId, category_id: toCategoryId }, { onConflict: "post_id,category_id" });
+  }
+  revalidatePath("/admin/blog/categories");
+  return { success: true, count: postIds.length };
+}
+
+export async function assignPostToCategoryAction(postId: string, categoryId: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  await admin.from("blog_post_categories").upsert({ post_id: postId, category_id: categoryId }, { onConflict: "post_id,category_id" });
+  await admin.from("blog_posts").update({ pending_category_name: null }).eq("id", postId);
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function getPostsInCategoryAction(categoryId: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { data: links } = await admin.from("blog_post_categories").select("blog_posts(id, title, status)").eq("category_id", categoryId);
+  return (links ?? []).map((l) => (l as { blog_posts: unknown }).blog_posts).filter(Boolean);
+}
+
+export async function removePostFromCategoryAction(postId: string, categoryId: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin.from("blog_post_categories").delete().eq("post_id", postId).eq("category_id", categoryId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/blog/categories");
+  return { success: true };
+}
+
+export async function searchPostsForCategoryAction(query: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  if (!query || query.trim().length < 2) return [];
+  const { data } = await admin.from("blog_posts").select("id, title, status").ilike("title", `%${query.trim()}%`).limit(10);
+  return data ?? [];
+}
+
+export async function suggestCategoryForArticleAction(title: string, excerpt: string) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { data: categories } = await admin.from("blog_categories").select("id, name, parent_id").eq("status", "active");
+  const tree = buildCategoryTreeLabels((categories ?? []) as CategoryLite[]);
+
+  try {
+    const suggestion = await classifyArticleCategory({ title, excerpt, categoryTree: tree });
+    if (suggestion.matched_category) {
+      const match = (categories ?? []).find((c) => c.name === suggestion.matched_category);
+      if (match) return { matchedCategoryId: match.id, matchedCategoryName: match.name };
+    }
+    if (suggestion.is_new_category && suggestion.new_category_name) {
+      let parentId: string | null = null;
+      if (suggestion.parent_category_hint) {
+        const parentMatch = (categories ?? []).find((c) => c.name === suggestion.parent_category_hint);
+        parentId = parentMatch?.id ?? null;
+      }
+      return { newCategoryName: suggestion.new_category_name, parentId, parentName: suggestion.parent_category_hint ?? null };
+    }
+    return { error: "پیشنهادی پیدا نشد" };
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "خطای ناشناخته";
+    return { error: message };
+  }
 }
