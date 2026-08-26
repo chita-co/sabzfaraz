@@ -21,20 +21,28 @@ interface SepTokenError {
 export async function requestPayment({
   amount, resNum, redirectUrl, mobile,
 }: { amount: number; resNum: string; redirectUrl: string; mobile?: string }) {
-  const res = await fetch(SEP_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "token",
-      TerminalId: process.env.SEP_TERMINAL_ID,
-      Amount: Math.round(amount * RIAL_PER_TOMAN),
-      ResNum: resNum,
-      RedirectUrl: redirectUrl,
-      CellNumber: mobile || "",
-    }),
-  });
+  let data: SepTokenSuccess | SepTokenError;
 
-  const data = (await res.json()) as SepTokenSuccess | SepTokenError;
+  try {
+    const res = await fetch(SEP_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "token",
+        TerminalId: process.env.SEP_TERMINAL_ID,
+        Amount: Math.round(amount * RIAL_PER_TOMAN),
+        ResNum: resNum,
+        RedirectUrl: redirectUrl,
+        CellNumber: mobile || "",
+      }),
+    });
+
+    data = (await res.json()) as SepTokenSuccess | SepTokenError;
+    console.error("SEP token response:", data);
+  } catch (e) {
+    console.error("SEP fetch error:", e);
+    throw new Error("خطا در اتصال به درگاه پرداخت");
+  }
 
   if (data.status !== 1 || !("token" in data)) {
     const msg = "errorDesc" in data ? data.errorDesc : "خطا در دریافت توکن از درگاه پرداخت";
