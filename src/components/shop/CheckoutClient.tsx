@@ -44,7 +44,7 @@ export default function CheckoutClient({
   const [discountAmount, setDiscountAmount] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CARD_TO_CARD");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ONLINE");
   const [bankAccountId, setBankAccountId] = useState(bankAccounts[0]?.id ?? "");
 
   // صفحه‌ی تکمیل خرید همیشه بر اساس سبد خرید زنده ساخته می‌شود — هیچ اسنپ‌شات قدیمی جایگزینش نمی‌شود
@@ -165,7 +165,7 @@ export default function CheckoutClient({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">تکمیل خرید</h1>
+      <h1 className="text-xl font-bold text-white mb-6">تکمیل خرید</h1>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
         <h2 className="font-bold text-gray-800 mb-4">انتخاب آدرس ارسال</h2>
@@ -312,7 +312,7 @@ export default function CheckoutClient({
       ) : paymentMethod === "ONLINE" ? (
         <button
           onClick={() => handlePay("ONLINE")}
-          disabled={true}
+          disabled={loading}
           className="w-full rounded-full bg-green-600 py-3.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
         >
           {loading ? "در حال پردازش..." : "پرداخت و ثبت نهایی سفارش"}
