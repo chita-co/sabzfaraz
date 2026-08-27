@@ -14,7 +14,7 @@ export default function FloatingSupportButton() {
           width: "165%",
           height: "165%",
           objectFit: "cover",
-          objectPosition: "center 35%",
+          objectPosition: "center 25%",
           display: "block",
         }}
       />
