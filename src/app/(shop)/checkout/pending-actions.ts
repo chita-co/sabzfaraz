@@ -64,6 +64,9 @@ export async function createOrderFromPendingCheckout(
     .from("addresses").select("*").eq("id", addressId).eq("user_id", user.id).single();
   if (!address) return { error: "آدرس انتخابی معتبر نیست." };
 
+  const { data: pendingCheckout } = await supabase
+    .from("pending_checkouts").select("shipping_method_id").eq("id", pendingCheckoutId).single();
+
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;
   const orderNumber = `SF${Date.now()}`;
@@ -76,6 +79,7 @@ export async function createOrderFromPendingCheckout(
       address_id: addressId,
       total_amount: totalAmount,
       shipping_cost: shippingCost,
+      shipping_method_id: pendingCheckout?.shipping_method_id ?? null,
       status: "PENDING",
       payment_status: "PENDING",
     })

@@ -30,6 +30,7 @@ export interface InvoiceParams {
   items: InvoiceItem[];
   subtotal: number;
   shippingCost: number;
+  shippingLabel?: string;
   discountAmount?: number;
   note?: string;
 }
@@ -156,7 +157,7 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
         <table style="direction:rtl; width:56mm; border-collapse:collapse; font-size:10.5px; flex-shrink:0;">
           <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">جمع کل (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(p.subtotal)}</td></tr>
           <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">تخفیف (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(discount)}</td></tr>
-          <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">هزینه ارسال (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(p.shippingCost)}</td></tr>
+          <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">${p.shippingLabel ?? "هزینه ارسال"} (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(p.shippingCost)}</td></tr>
           <tr><td style="padding:6px; border:1px solid #111827; background:#111827; color:#fff; font-weight:800;">مبلغ قابل پرداخت (ریال)</td><td style="padding:6px; border:1px solid #111827; background:#f3f4f6; text-align:left; font-weight:800;">${toRial(total)}</td></tr>
         </table>
 

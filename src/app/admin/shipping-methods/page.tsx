@@ -9,7 +9,7 @@ export default async function AdminShippingMethodsPage() {
   ]);
 
   const combined = (methods ?? []).map((m) => ({
-    id: m.id, name: m.name, is_active: m.is_active,
+    id: m.id, name: m.name, is_active: m.is_active, invoice_label: m.invoice_label,
     tiers: (tiers ?? []).filter((t) => t.method_id === m.id),
   }));
 

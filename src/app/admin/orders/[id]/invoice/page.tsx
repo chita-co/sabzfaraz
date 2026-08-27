@@ -25,7 +25,7 @@ export default async function InvoicePage({
   const [{ data: order }, { data: settings }] = await Promise.all([
     supabase
       .from("orders")
-      .select("*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*)")
+      .select("*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*), shipping_method:shipping_methods(name, invoice_label)")
       .eq("id", id)
       .single(),
     supabase.from("site_settings").select("store_name, support_phone, support_phone_2, store_address, logo_url, support_email").eq("id", 1).single(),
@@ -69,6 +69,7 @@ export default async function InvoicePage({
     })),
     subtotal,
     shippingCost: order.shipping_cost ?? 0,
+    shippingLabel: order.shipping_method?.invoice_label || undefined,
   });
 
   return (

@@ -37,7 +37,7 @@ export default async function MyOrderDetailPage({
   const [{ data: order }, { data: settings }] = await Promise.all([
     supabase
       .from("orders")
-      .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
+      .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name), shipping_method:shipping_methods(invoice_label)")
       .eq("id", id)
       .eq("user_id", user.id)
       .single(),
@@ -105,6 +105,7 @@ export default async function MyOrderDetailPage({
             customerName={order.profile?.full_name ?? ""}
             address={`${order.address?.province}، ${order.address?.city}، ${order.address?.address_line}`}
             postalCode={order.address?.postal_code ?? undefined}
+            shippingLabel={order.shipping_method?.invoice_label ?? undefined}
             phone={order.address?.phone ?? ""}
             items={order.items.map((i: OrderItem) => ({
               name: i.product_name,

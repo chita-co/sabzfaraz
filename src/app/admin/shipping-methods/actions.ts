@@ -26,6 +26,17 @@ export async function deleteShippingMethod(id: string) {
   return { success: true };
 }
 
+export async function updateShippingMethod(id: string, name: string, invoiceLabel: string | null) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("shipping_methods")
+    .update({ name: name.trim(), invoice_label: invoiceLabel?.trim() || null })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/shipping-methods");
+  return { success: true };
+}
+
 export async function addWeightTier(methodId: string, minGrams: number, maxGrams: number, cost: number) {
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_weight_tiers").insert({

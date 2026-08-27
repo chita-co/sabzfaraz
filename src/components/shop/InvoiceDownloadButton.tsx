@@ -23,6 +23,7 @@ export default function InvoiceDownloadButton({
   items,
   subtotal,
   shippingCost,
+  shippingLabel,
   logoUrl,
   storeName = "سبزفراز",
   storePhones,
@@ -41,6 +42,7 @@ export default function InvoiceDownloadButton({
   items: InvoiceLineItem[];
   subtotal: number;
   shippingCost: number;
+  shippingLabel?: string;
   total: number;
   logoUrl: string | null;
   storeName?: string;
@@ -76,6 +78,7 @@ export default function InvoiceDownloadButton({
         items: items.map((i) => ({ name: i.name, variant: i.variant, quantity: i.quantity, unitPrice: i.price })),
         subtotal,
         shippingCost,
+        shippingLabel,
       });
 
       await renderInvoiceToPdf(html, `invoice-${orderNumber}.pdf`);

@@ -5,7 +5,7 @@ import "../../app/admin/item-labels.css";
 interface LabelItem { name: string; quantity: number; variant?: string | null; }
 
 export default function AdminItemLabelsView({
-  orderNumber, storeName, storeAddress, items,
+  orderNumber, storeName, items,
 }: { orderNumber: string; storeName: string; storeAddress: string; items: LabelItem[] }) {
   const labels = items.flatMap((item) => Array.from({ length: Math.max(1, item.quantity) }, () => item));
 
@@ -24,10 +24,10 @@ export default function AdminItemLabelsView({
             <div className="item-label-body">
               <p className="item-label-store">{storeName}</p>
               <p className="item-label-product">{item.name}{item.variant ? ` — ${item.variant}` : ""}</p>
+              <p className="item-label-qty">{item.quantity.toLocaleString("fa-IR")} عدد</p>
               <p className="item-label-order" dir="ltr">{orderNumber}</p>
             </div>
             <p className="item-label-site" dir="ltr">sabzfaraz.ir</p>
-            <p className="item-label-address">{storeAddress}</p>
           </div>
         ))}
       </div>

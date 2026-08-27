@@ -128,6 +128,7 @@ export default function CheckoutClient({
         discountCodeId,
         walletUseAmount,
         orderNote,
+        selectedMethodId,
       );
       if (result?.error) { setError(result.error); setLoading(false); }
     } else {
@@ -141,6 +142,7 @@ export default function CheckoutClient({
         discountCodeId,
         walletUseAmount,
         orderNote,
+        selectedMethodId,
       );
       if (result?.error) { setError(result.error); setLoading(false); }
     }

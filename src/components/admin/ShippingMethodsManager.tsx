@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import {
-  createShippingMethod, toggleShippingMethodActive, deleteShippingMethod,
+  createShippingMethod, toggleShippingMethodActive, deleteShippingMethod, updateShippingMethod,
   addWeightTier, deleteWeightTier, updateWeightTier,
 } from "@/app/admin/shipping-methods/actions";
 import AdminSwitch from "./AdminSwitch";
 
 interface Tier { id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
-interface Method { id: string; name: string; is_active: boolean; tiers: Tier[]; }
+interface Method { id: string; name: string; is_active: boolean; invoice_label: string | null; tiers: Tier[]; }
 
 export default function ShippingMethodsManager({ methods }: { methods: Method[] }) {
   const [list, setList] = useState(methods);
@@ -19,7 +19,7 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
     if (!newMethodName.trim()) return;
     const result = await createShippingMethod(newMethodName.trim());
     if (!result?.error) {
-      setList((prev) => [...prev, { id: crypto.randomUUID(), name: newMethodName.trim(), is_active: true, tiers: [] }]);
+      setList((prev) => [...prev, { id: crypto.randomUUID(), name: newMethodName.trim(), is_active: true, invoice_label: null, tiers: [] }]);
       setNewMethodName("");
     }
   }
@@ -35,6 +35,11 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
     await deleteShippingMethod(id);
   }
 
+  async function handleUpdateMethod(id: string, name: string, invoiceLabel: string) {
+    setList((prev) => prev.map((m) => (m.id === id ? { ...m, name, invoice_label: invoiceLabel || null } : m)));
+    await updateShippingMethod(id, name, invoiceLabel || null);
+  }
+
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-5">روش‌های ارسال و هزینه بر اساس وزن</h1>
@@ -48,7 +53,7 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
       </div>
 
       <div className="space-y-5">
-        {list.map((m) => <MethodCard key={m.id} method={m} onToggle={handleToggle} onDelete={handleDeleteMethod} />)}
+        {list.map((m) => <MethodCard key={m.id} method={m} onToggle={handleToggle} onDelete={handleDeleteMethod} onUpdate={handleUpdateMethod} />)}
         {list.length === 0 && <p className="text-gray-500 text-sm">هنوز روش ارسالی ثبت نشده.</p>}
       </div>
     </div>
@@ -56,8 +61,13 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
 }
 
 function MethodCard({
-  method, onToggle, onDelete,
-}: { method: Method; onToggle: (id: string, value: boolean) => void; onDelete: (id: string) => void }) {
+  method, onToggle, onDelete, onUpdate,
+}: {
+  method: Method;
+  onToggle: (id: string, value: boolean) => void;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, name: string, invoiceLabel: string) => void;
+}) {
   const [tiers, setTiers] = useState(method.tiers);
   const [minKg, setMinKg] = useState("");
   const [maxKg, setMaxKg] = useState("");
@@ -67,6 +77,22 @@ function MethodCard({
   const [editMinKg, setEditMinKg] = useState("");
   const [editMaxKg, setEditMaxKg] = useState("");
   const [editCost, setEditCost] = useState("");
+
+  const [editingMethod, setEditingMethod] = useState(false);
+  const [editMethodName, setEditMethodName] = useState(method.name);
+  const [editInvoiceLabel, setEditInvoiceLabel] = useState(method.invoice_label ?? "");
+
+  function startEditMethod() {
+    setEditMethodName(method.name);
+    setEditInvoiceLabel(method.invoice_label ?? "");
+    setEditingMethod(true);
+  }
+
+  function saveMethodEdit() {
+    if (!editMethodName.trim()) return;
+    onUpdate(method.id, editMethodName.trim(), editInvoiceLabel.trim());
+    setEditingMethod(false);
+  }
 
   async function handleAddTier() {
     if (!minKg || !maxKg || !cost) return;
@@ -104,11 +130,31 @@ function MethodCard({
 
   return (
     <div className="admin-card">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-bold text-gray-800">{method.name}</h2>
+      <div className="flex items-center justify-between mb-4" style={{ flexWrap: "wrap", gap: 10 }}>
+        {editingMethod ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 220 }}>
+            <input type="text" value={editMethodName} onChange={(e) => setEditMethodName(e.target.value)} className="admin-input" placeholder="نام روش ارسال" style={{ fontWeight: 700 }} />
+            <input type="text" value={editInvoiceLabel} onChange={(e) => setEditInvoiceLabel(e.target.value)} className="admin-input" placeholder="عنوان این هزینه در فاکتور (مثلاً: هزینه ارسال و بسته‌بندی)" />
+          </div>
+        ) : (
+          <div>
+            <h2 className="font-bold text-gray-800">{method.name}</h2>
+            <p className="text-xs text-gray-400 mt-1">در فاکتور با عنوان «{method.invoice_label || "هزینه ارسال"}» نمایش داده می‌شود</p>
+          </div>
+        )}
         <div className="flex items-center gap-3">
-          <AdminSwitch checked={method.is_active} onChange={(v) => onToggle(method.id, v)} label={method.is_active ? "فعال" : "غیرفعال"} />
-          <button onClick={() => onDelete(method.id)} className="admin-btn admin-btn-danger"><Trash2 size={14} /></button>
+          {editingMethod ? (
+            <>
+              <button onClick={saveMethodEdit} className="admin-btn admin-btn-primary"><Check size={14} /></button>
+              <button onClick={() => setEditingMethod(false)} className="admin-btn admin-btn-secondary"><X size={14} /></button>
+            </>
+          ) : (
+            <>
+              <AdminSwitch checked={method.is_active} onChange={(v) => onToggle(method.id, v)} label={method.is_active ? "فعال" : "غیرفعال"} />
+              <button onClick={startEditMethod} className="admin-btn admin-btn-secondary"><Pencil size={14} /></button>
+              <button onClick={() => onDelete(method.id)} className="admin-btn admin-btn-danger"><Trash2 size={14} /></button>
+            </>
+          )}
         </div>
       </div>
 

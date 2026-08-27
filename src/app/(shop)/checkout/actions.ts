@@ -41,6 +41,7 @@ export async function createOrderAndPay(
   discountCodeId: string | null = null,
   walletAmountToUse: number = 0,
   customerNote: string = "",
+  shippingMethodId: string | null = null,
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -71,6 +72,7 @@ export async function createOrderAndPay(
       address_id: addressId,
       total_amount: totalAmount,
       shipping_cost: shippingCost,
+      shipping_method_id: shippingMethodId,
       status: "PENDING",
       payment_status: "PENDING",
       customer_note: customerNote || null,
@@ -173,6 +175,7 @@ export async function createOfflineOrder(
   discountCodeId: string | null = null,
   walletAmountToUse: number = 0,
   customerNote: string = "",
+  shippingMethodId: string | null = null,
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -207,6 +210,7 @@ export async function createOfflineOrder(
       address_id: addressId,
       total_amount: totalAmount,
       shipping_cost: shippingCost,
+      shipping_method_id: shippingMethodId,
       status: "PENDING",
       payment_status: "PENDING",
       payment_method: paymentMethod,
