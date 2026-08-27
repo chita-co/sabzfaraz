@@ -11,8 +11,8 @@ export default function FloatingSupportButton() {
         src="/p-icon.png"
         alt="پشتیبانی"
         style={{
-          width: "155%",
-          height: "155%",
+          width: "165%",
+          height: "165%",
           objectFit: "cover",
           objectPosition: "center 35%",
           display: "block",
