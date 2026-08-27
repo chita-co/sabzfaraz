@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Image as ImageIcon, Lock, Trash2 } from "lucide-react";
 import { sendAdminMessage, closeTicket, deleteTicket, getAdminTicketMessages } from "@/app/admin/support/actions";
+import { markTicketSeenByAdminAction } from "@/app/admin/support/actions";
 
 interface Message {
   id: string; sender_role: string; sender_name: string; message: string | null; image_url: string | null; created_at: string;
@@ -28,7 +29,10 @@ export default function AdminSupportChat({
     return () => clearInterval(timer);
   }, [ticketId]);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    markTicketSeenByAdminAction(ticketId).catch(() => {});
+  }, [messages.length, ticketId]);
 
   async function handleSend(imageUrl: string | null = null) {
     if (!text.trim() && !imageUrl) return;

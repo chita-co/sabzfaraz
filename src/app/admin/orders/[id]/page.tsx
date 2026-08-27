@@ -3,9 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Printer } from "lucide-react";
+import { Printer, Tags } from "lucide-react";
 import OrderStatusControl from "@/components/admin/OrderStatusControl";
 import StartTrackingButton from "@/components/admin/StartTrackingButton";
+import MarkOrderViewed from "@/components/admin/MarkOrderViewed";
 
 type OrderItem = {
   id: string;
@@ -60,6 +61,7 @@ export default async function AdminOrderDetailPage({
 
   return (
     <div>
+      <MarkOrderViewed orderId={id} />
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-bold text-gray-900">
           سفارش {order.order_number}
@@ -80,6 +82,14 @@ export default async function AdminOrderDetailPage({
           >
             <Printer size={16} />
             چاپ برچسب مرسوله
+          </Link>
+          <Link
+            href={`/admin/orders/${id}/item-labels`}
+            target="_blank"
+            className="admin-btn admin-btn-secondary flex items-center gap-2"
+          >
+            <Tags size={16} />
+            چاپ اتیکت محصولات
           </Link>
         </div>
       </div>

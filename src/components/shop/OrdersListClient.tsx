@@ -27,6 +27,7 @@ interface TrackingSettings {
 const statusLabels: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
   PROCESSING: "در حال پردازش",
+  PACKING: "آماده‌سازی و بسته‌بندی",
   SHIPPED: "ارسال شده",
   DELIVERED: "تحویل داده شده",
   CANCELLED: "لغو شده",

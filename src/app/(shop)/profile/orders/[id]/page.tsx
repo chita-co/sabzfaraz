@@ -6,6 +6,7 @@ import { getTrackingMessage, getTrackingStageNumber } from "@/lib/tracking";
 const statusLabels: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
   PROCESSING: "در حال پردازش",
+  PACKING: "آماده‌سازی و بسته‌بندی",
   SHIPPED: "ارسال شده",
   DELIVERED: "تحویل داده شده",
   CANCELLED: "لغو شده",
@@ -103,6 +104,7 @@ export default async function MyOrderDetailPage({
             createdAt={order.created_at}
             customerName={order.profile?.full_name ?? ""}
             address={`${order.address?.province}، ${order.address?.city}، ${order.address?.address_line}`}
+            postalCode={order.address?.postal_code ?? undefined}
             phone={order.address?.phone ?? ""}
             items={order.items.map((i: OrderItem) => ({
               name: i.product_name,

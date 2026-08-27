@@ -2,26 +2,30 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import OrderDeleteButton from "@/components/admin/OrderDeleteButton";
 
-const statusLabels: Record<string, string> = {
-  PENDING: "در انتظار پرداخت",
-  PROCESSING: "در حال پردازش",
-  SHIPPED: "ارسال شده",
-  DELIVERED: "تحویل داده شده",
-  CANCELLED: "لغو شده",
-};
 
 const statusColors: Record<string, string> = {
   PENDING: "text-yellow-600",
   PROCESSING: "text-blue-600",
+  PACKING: "text-orange-600",
   SHIPPED: "text-purple-600",
   DELIVERED: "text-green-600",
   CANCELLED: "text-red-600",
+};
+
+const statusLabels: Record<string, string> = {
+  PENDING: "در انتظار پرداخت",
+  PROCESSING: "در حال پردازش",
+  PACKING: "آماده‌سازی و بسته‌بندی",
+  SHIPPED: "ارسال شده",
+  DELIVERED: "تحویل داده شده",
+  CANCELLED: "لغو شده",
 };
 
 const tabs = [
   { value: "", label: "همه" },
   { value: "PENDING", label: "در انتظار پرداخت" },
   { value: "PROCESSING", label: "در حال پردازش" },
+  { value: "PACKING", label: "آماده‌سازی و بسته‌بندی" },
   { value: "SHIPPED", label: "ارسال شده" },
   { value: "DELIVERED", label: "تحویل داده شده" },
   { value: "CANCELLED", label: "لغو شده" },
@@ -35,6 +39,7 @@ type OrderRow = {
   status: string;
   payment_status: string;
   created_at: string;
+  admin_viewed_at: string | null;
   profile: { full_name: string | null } | null;
 };
 
@@ -48,13 +53,14 @@ export default async function AdminOrdersPage({
 
   let query = supabase
     .from("orders")
-    .select("*, profile:profiles(full_name)")
+    .select("*, admin_viewed_at, profile:profiles(full_name)")
     .order("created_at", { ascending: false });
 
   if (status) {
     query = query.eq("status", status);
   }
 
+  query = query.select("*, profile:profiles(full_name)");
   const { data: orders } = await query;
 
   return (
@@ -89,7 +95,10 @@ export default async function AdminOrdersPage({
           <tbody>
             {(orders ?? []).map((o: OrderRow) => (
               <tr key={o.id}>
-                <td dir="ltr" className="text-left">{o.order_number}</td>
+                <td dir="ltr" className="text-left" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: o.admin_viewed_at ? "#16a34a" : "#dc2626" }} title={o.admin_viewed_at ? "دیده‌شده" : "سفارش جدید"} />
+                  {o.order_number}
+                </td>
                 <td>{o.profile?.full_name ?? "—"}</td>
                 <td>{o.total_amount.toLocaleString("fa-IR")} تومان</td>
                 <td>

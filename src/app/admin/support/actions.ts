@@ -47,3 +47,9 @@ export async function getAdminTicketMessages(ticketId: string) {
     .from("support_messages").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true });
   return data ?? [];
 }
+
+export async function markTicketSeenByAdminAction(ticketId: string) {
+  const supabase = await createClient();
+  await supabase.from("support_tickets").update({ admin_last_seen_at: new Date().toISOString() }).eq("id", ticketId);
+  return { success: true };
+}

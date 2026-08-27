@@ -111,7 +111,7 @@ export default function AdminShippingLabelView({
               <p className="sl-field" dir="ltr"><b>تلفن همراه:</b> {receiver.phone}</p>
               <div className="sl-postal-row">
                 <b>کدپستی:</b>
-                <div className="sl-postal-boxes">
+                <div className="sl-postal-boxes" dir="ltr">
                   {postalDigits.map((d, i) => <span key={i} className="sl-postal-box">{d.trim()}</span>)}
                 </div>
               </div>

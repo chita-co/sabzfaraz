@@ -7,16 +7,22 @@ import FerrofluidBackground from "@/components/backgrounds/FerrofluidBackground"
 
 const statusLabels: Record<string, string> = { OPEN: "باز", CLOSED: "بسته‌شده" };
 
+type UserSupportTicket = {
+  id: string;
+  subject: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  is_unread: boolean;
+};
+
 export default async function SupportPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: tickets } = await supabase
-    .from("support_tickets")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("updated_at", { ascending: false });
+  const { data: tickets } = await supabase.rpc("get_user_support_tickets_with_unread", { p_user_id: user.id });
+  const typedTickets = (tickets ?? []) as UserSupportTicket[];
 
    return (
     <>
@@ -38,9 +44,14 @@ export default async function SupportPage() {
       </div>
 
       <div className="space-y-3">
-        {(tickets ?? []).map((t) => (
+        {typedTickets.map((t) => (
           <Link key={t.id} href={`/support/${t.id}`} className="support-ticket-row">
-            <div className="support-ticket-icon"><MessageCircle size={18} /></div>
+            <div className="support-ticket-icon" style={{ position: "relative" }}>
+              <MessageCircle size={18} />
+              {t.is_unread && (
+                <span style={{ position: "absolute", top: -3, left: -3, width: 9, height: 9, borderRadius: "50%", background: "#dc2626", border: "2px solid #fff" }} />
+              )}
+            </div>
             <div className="flex-1">
               <p className="font-medium text-gray-800">{t.subject}</p>
               <p className="text-xs text-gray-500">{new Date(t.created_at).toLocaleDateString("fa-IR")}</p>

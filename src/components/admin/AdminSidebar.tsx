@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import PendingWalletBadge from "./PendingWalletBadge";
+import SupportUnreadBadge from "./SupportUnreadBadge";
+import NewOrdersBadge from "./NewOrdersBadge";
 
 interface NavChild {
   href: string;
@@ -217,6 +219,7 @@ export default function AdminSidebar({
                 >
                   <Icon size={18} />
                   <span>{item.label}</span>
+                  {item.href === "/admin/support" && <SupportUnreadBadge />}
                 </Link>
               );
             }
@@ -249,6 +252,7 @@ export default function AdminSidebar({
                         >
                           <span>{child.label}</span>
                           {child.href === "/admin/wallet-requests" && <PendingWalletBadge />}
+                          {child.href === "/admin/orders" && <NewOrdersBadge />}
                         </Link>
                       );
                     })}

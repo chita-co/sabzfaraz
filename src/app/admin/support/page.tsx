@@ -10,15 +10,13 @@ type TicketRow = {
   subject: string;
   status: string;
   updated_at: string;
-  profile: { full_name: string | null } | null;
+  user_full_name: string | null;
+  is_unread: boolean;
 };
 
 export default async function AdminSupportPage() {
   const supabase = await createClient();
-  const { data: tickets } = await supabase
-    .from("support_tickets")
-    .select("*, profile:profiles(full_name)")
-    .order("updated_at", { ascending: false });
+  const { data: tickets } = await supabase.rpc("get_admin_support_tickets_with_unread");
 
   return (
     <div>
@@ -37,7 +35,10 @@ export default async function AdminSupportPage() {
           <tbody>
             {(tickets ?? []).map((t: TicketRow) => (
               <tr key={t.id}>
-                <td>{t.profile?.full_name ?? "—"}</td>
+                <td style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {t.is_unread && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", flexShrink: 0 }} />}
+                  {t.user_full_name ?? "—"}
+                </td>
                 <td>{t.subject}</td>
                 <td>
                   <span

@@ -60,6 +60,7 @@ export default async function InvoicePage({
     buyerName: order.profile?.full_name ?? "—",
     buyerPhone: order.address?.phone ?? order.profile?.phone ?? "—",
     buyerAddress: `${order.address?.province ?? ""}، ${order.address?.city ?? ""}، ${order.address?.address_line ?? ""}`,
+    buyerPostalCode: order.address?.postal_code ?? undefined,
     items: (order.items as InvoiceItem[]).map((i) => ({
       name: i.product_name,
       variant: [i.selected_color, i.selected_size].filter(Boolean).join(" / ") || undefined,

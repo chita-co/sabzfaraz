@@ -1,0 +1,36 @@
+"use client";
+import { Printer } from "lucide-react";
+import "../../app/admin/item-labels.css";
+
+interface LabelItem { name: string; quantity: number; variant?: string | null; }
+
+export default function AdminItemLabelsView({
+  orderNumber, storeName, storeAddress, items,
+}: { orderNumber: string; storeName: string; storeAddress: string; items: LabelItem[] }) {
+  const labels = items.flatMap((item) => Array.from({ length: Math.max(1, item.quantity) }, () => item));
+
+  return (
+    <div className="item-labels-page">
+      <div className="no-print flex gap-2 mb-4">
+        <button onClick={() => window.print()} className="admin-btn admin-btn-primary flex items-center gap-2">
+          <Printer size={16} /> چاپ اتیکت‌ها ({labels.length.toLocaleString("fa-IR")} برچسب)
+        </button>
+      </div>
+      <div className="item-labels-grid">
+        {labels.map((item, i) => (
+          <div key={i} className="item-label-card">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-invoice.png" alt={storeName} className="item-label-logo" />
+            <div className="item-label-body">
+              <p className="item-label-store">{storeName}</p>
+              <p className="item-label-product">{item.name}{item.variant ? ` — ${item.variant}` : ""}</p>
+              <p className="item-label-order" dir="ltr">{orderNumber}</p>
+            </div>
+            <p className="item-label-site" dir="ltr">sabzfaraz.ir</p>
+            <p className="item-label-address">{storeAddress}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

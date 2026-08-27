@@ -14,6 +14,8 @@ export default async function SupportTicketPage({
     .from("support_tickets").select("*").eq("id", id).eq("user_id", user.id).single();
   if (!ticket) notFound();
 
+  await supabase.from("support_tickets").update({ user_last_seen_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
+
   const { data: messages } = await supabase
     .from("support_messages").select("*").eq("ticket_id", id).order("created_at", { ascending: true });
 

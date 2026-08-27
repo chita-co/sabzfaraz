@@ -50,3 +50,9 @@ export async function deleteOrder(id: string) {
   revalidatePath("/admin/orders");
   return { success: true };
 }
+
+export async function markOrderViewedAction(orderId: string) {
+  const supabase = await createClient();
+  await supabase.from("orders").update({ admin_viewed_at: new Date().toISOString() }).eq("id", orderId);
+  return { success: true };
+}
