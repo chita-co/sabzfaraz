@@ -60,7 +60,6 @@ export default async function AdminOrdersPage({
     query = query.eq("status", status);
   }
 
-  query = query.select("*, profile:profiles(full_name)");
   const { data: orders } = await query;
 
   return (

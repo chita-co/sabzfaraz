@@ -660,6 +660,7 @@
 @media (max-width: 900px) {
   .admin-panel {
     display: block !important;
+    overflow-x: hidden !important;
   }
 
   .admin-mobile-toggle {
@@ -714,6 +715,15 @@
     width: 100% !important;
     margin: 0 !important;
     padding: 70px 14px 24px !important;
+  }
+
+  .admin-card {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .admin-table {
+    min-width: 640px;
   }
 }
 
