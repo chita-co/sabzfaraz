@@ -2030,3 +2030,39 @@
   background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 999px;
   padding: 6px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
+
+@media (max-width: 900px) {
+  .footer-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 28px !important;
+  }
+  .footer-brand, .footer-col, .footer-contact-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .footer-inner {
+    overflow-x: hidden !important;
+    padding: 32px 16px !important;
+  }
+  .footer-social {
+    justify-content: center !important;
+  }
+  .footer-trust-row {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 10px !important;
+  }
+  .footer-bottom {
+    flex-direction: column !important;
+    gap: 8px !important;
+    text-align: center !important;
+  }
+}
+
+.site-dropdown-menu.site-dropdown-left {
+  left: 0 !important;
+  right: auto !important;
+  max-width: calc(100vw - 24px) !important;
+}

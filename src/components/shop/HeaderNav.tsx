@@ -214,13 +214,11 @@ export default function HeaderNav({
           .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
           .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
         }
-        @media (max-width: 1150px) and (min-width: 1025px) {
-          .site-search { display: none !important; }
-        }
+        
 
         /* بازه‌ی میانی جدید (۶۴۱ تا ۱۰۲۴): به‌جای پنهان شدن پشت همبرگر، منو و سرچ در
            ردیف‌های جداگانه‌ی زیر آیکون‌ها نمایش داده می‌شوند و اسکرول‌پذیرند. */
-        @media (max-width: 1024px) and (min-width: 641px) {
+        @media (max-width: 1150px) and (min-width: 641px) {
           .site-header-inner {
             flex-wrap: wrap !important;
             height: auto !important;
