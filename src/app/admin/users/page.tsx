@@ -35,7 +35,10 @@ export default async function AdminUsersPage() {
               <tr key={p.id}>
                 <td>{p.full_name ?? "—"}</td>
                 <td dir="ltr" className="text-left">
-                  {emailMap.get(p.id) ?? "—"}
+                  {(() => {
+                    const em = emailMap.get(p.id);
+                    return em?.endsWith("@sabzfaraz-users.ir") ? "—" : (em ?? "—");
+                  })()}
                 </td>
                 <td>{p.phone ?? "—"}</td>
                 <td>

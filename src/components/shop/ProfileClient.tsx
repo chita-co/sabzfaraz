@@ -95,6 +95,8 @@ export default function ProfileClient({
     await deleteAddress(id);
   }
 
+    const displayEmail = email.endsWith("@sabzfaraz-users.ir") ? "—" : email;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       {/* Breadcrumb یکپارچه شده */}
@@ -120,7 +122,7 @@ export default function ProfileClient({
             <label className="block text-sm text-gray-600 mb-1">ایمیل</label>
             <input
               type="email"
-              value={email}
+              value={displayEmail}
               disabled
               dir="ltr"
               className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500"
