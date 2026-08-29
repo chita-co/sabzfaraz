@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await verifyPayment({ amount: order.total_amount, refNum });
+    const result = await verifyPayment({ amount: order.gateway_amount ?? order.total_amount, refNum });
     if (result.ok) {
       await supabase.from("orders").update({
         payment_status: "PAID",
@@ -46,10 +46,14 @@ export async function POST(request: NextRequest) {
 
       if (orderItemsForStock) {
         for (const item of orderItemsForStock) {
-          await supabase.rpc("decrement_product_stock", {
-            p_product_id: item.product_id,
-            p_qty: item.quantity,
-          });
+          try {
+            await supabase.rpc("decrement_product_stock", {
+              p_product_id: item.product_id,
+              p_qty: item.quantity,
+            });
+          } catch (e) {
+            console.error("خطا در کسر موجودی محصول:", e);
+          }
         }
       }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import OrderDeleteButton from "@/components/admin/OrderDeleteButton";
+import StaleOrdersCleanupButton from "@/components/admin/StaleOrdersCleanupButton";
 
 
 const statusColors: Record<string, string> = {
@@ -64,7 +65,10 @@ export default async function AdminOrdersPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-5">مدیریت سفارش‌ها</h1>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <h1 className="text-xl font-bold text-gray-900">مدیریت سفارش‌ها</h1>
+        <StaleOrdersCleanupButton />
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-5">
         {tabs.map((t) => (

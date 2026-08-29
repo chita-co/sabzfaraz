@@ -14,6 +14,20 @@ export async function submitReview(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "برای ثبت نظر باید وارد شوید." };
 
+  const { data: existing } = await supabase
+    .from("product_reviews")
+    .select("created_at")
+    .eq("user_id", user.id)
+    .eq("product_id", productId)
+    .maybeSingle();
+
+  if (existing) {
+    const hoursPassed = (Date.now() - new Date(existing.created_at).getTime()) / (1000 * 60 * 60);
+    if (hoursPassed > 24) {
+      return { error: "مهلت ۲۴ ساعته برای ویرایش این نظر به پایان رسیده است." };
+    }
+  }
+
   const { error } = await supabase.from("product_reviews").upsert(
     {
       product_id: productId,

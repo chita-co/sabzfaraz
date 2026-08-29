@@ -117,7 +117,7 @@ export async function createOrderFromPendingCheckout(
     return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
-  await supabase.from("orders").update({ sep_token: payment.token }).eq("id", order.id);
+  await supabase.from("orders").update({ sep_token: payment.token, gateway_amount: totalAmount }).eq("id", order.id);
 
   const { redirect } = await import("next/navigation");
   redirect(payment.url);

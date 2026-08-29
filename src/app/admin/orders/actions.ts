@@ -87,3 +87,19 @@ export async function markOrderViewedAction(orderId: string) {
   await supabase.from("orders").update({ admin_viewed_at: new Date().toISOString() }).eq("id", orderId);
   return { success: true };
 }
+
+export async function deleteStaleOrdersAction(daysOld: number) {
+  const supabase = await createClient();
+  const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("payment_status", "PENDING")
+    .lt("created_at", cutoff)
+    .select("id");
+
+  if (error) return { error: "خطا در حذف سفارش‌های رهاشده: " + error.message };
+  revalidatePath("/admin/orders");
+  return { success: true, count: data?.length ?? 0 };
+}

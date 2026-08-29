@@ -25,6 +25,7 @@ type MyReview = {
   product_id: string;
   rating: number;
   comment: string | null;
+  created_at: string;
 };
 
 export default async function MyOrdersPage() {
@@ -52,9 +53,9 @@ export default async function MyOrdersPage() {
         .select("items:order_items(product_id, product_name, product_image)")
         .eq("user_id", user.id)
         .eq("payment_status", "PAID"),
-      supabase
+       supabase
         .from("product_reviews")
-        .select("product_id, rating, comment")
+        .select("product_id, rating, comment, created_at")
         .eq("user_id", user.id),
     ]);
 

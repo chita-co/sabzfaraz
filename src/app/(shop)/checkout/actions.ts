@@ -142,6 +142,7 @@ export async function createOrderAndPay(
   }
 
   if (remainder === 0) {
+    await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
     redirect(`/order/${order.id}?payment=success`);
   }
@@ -160,7 +161,7 @@ export async function createOrderAndPay(
     return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
-  await supabase.from("orders").update({ sep_token: payment.token }).eq("id", order.id);
+  await supabase.from("orders").update({ sep_token: payment.token, gateway_amount: remainder }).eq("id", order.id);
 
   redirect(payment.url);
 }
@@ -280,6 +281,7 @@ export async function createOfflineOrder(
   }
 
   if (remainder === 0) {
+    await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
     redirect(`/order/${order.id}?payment=success`);
   }
