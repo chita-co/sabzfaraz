@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { earnPointsForOrder, refundRedeemedPoints, reverseEarnedPoints } from "@/lib/loyalty/ledger";
 import { createNotification } from "@/lib/notifications";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
@@ -75,9 +76,13 @@ export async function startOrderTracking(orderId: string) {
 }
 
 export async function deleteOrder(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("orders").delete().eq("id", id);
+  const admin = createAdminClient();
+
+  await admin.from("order_items").delete().eq("order_id", id);
+
+  const { error } = await admin.from("orders").delete().eq("id", id);
   if (error) return { error: "خطا در حذف سفارش: " + error.message };
+
   revalidatePath("/admin/orders");
   return { success: true };
 }
@@ -89,17 +94,23 @@ export async function markOrderViewedAction(orderId: string) {
 }
 
 export async function deleteStaleOrdersAction(daysOld: number) {
-  const supabase = await createClient();
+  const admin = createAdminClient();
   const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
+  const { data: staleOrders } = await admin
     .from("orders")
-    .delete()
+    .select("id")
     .eq("payment_status", "PENDING")
-    .lt("created_at", cutoff)
-    .select("id");
+    .lt("created_at", cutoff);
 
+  const ids = (staleOrders ?? []).map((o) => o.id);
+  if (ids.length === 0) return { success: true, count: 0 };
+
+  await admin.from("order_items").delete().in("order_id", ids);
+
+  const { error } = await admin.from("orders").delete().in("id", ids);
   if (error) return { error: "خطا در حذف سفارش‌های رهاشده: " + error.message };
+
   revalidatePath("/admin/orders");
-  return { success: true, count: data?.length ?? 0 };
+  return { success: true, count: ids.length };
 }

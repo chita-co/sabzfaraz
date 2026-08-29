@@ -7,6 +7,8 @@ import { Printer, Tags } from "lucide-react";
 import OrderStatusControl from "@/components/admin/OrderStatusControl";
 import StartTrackingButton from "@/components/admin/StartTrackingButton";
 import MarkOrderViewed from "@/components/admin/MarkOrderViewed";
+import ConfirmOfflinePaymentButton from "@/components/admin/ConfirmOfflinePaymentButton";
+import RejectOfflinePaymentButton from "@/components/admin/RejectOfflinePaymentButton";
 
 type OrderItem = {
   id: string;
@@ -39,16 +41,20 @@ export default async function AdminOrderDetailPage({
   const isOfflinePayment =
     order.payment_method === "CARD_TO_CARD" || order.payment_method === "SHEBA";
 
-  // ترجمهٔ وضعیت پرداخت
+  // ترجمهٔ وضعیت پرداخت — با نمایش دقیق روش پرداخت واقعی
   const paymentStatusLabel = (() => {
     switch (order.payment_status) {
       case "PAID":
-        return "پرداخت‌شده";
+        if (order.payment_method === "CARD_TO_CARD") return "پرداخت‌شده (کارت به کارت)";
+        if (order.payment_method === "SHEBA") return "پرداخت‌شده (واریز به شبا)";
+        return order.sep_token ? "پرداخت‌شده (درگاه پرداخت)" : "پرداخت‌شده (کیف پول)";
       case "AWAITING_CONFIRMATION":
         return "در انتظار تأیید (پرداخت آفلاین)";
+      case "FAILED":
+        return "پرداخت نشده";
       case "PENDING":
       default:
-        return "پرداخت‌نشده";
+        return "در انتظار پرداخت";
     }
   })();
 
@@ -202,9 +208,15 @@ export default async function AdminOrderDetailPage({
                   )}
               </div>
             )}
+            {isOfflinePayment && order.payment_status === "AWAITING_CONFIRMATION" && (
+              <div className="flex gap-2 mt-3">
+                <ConfirmOfflinePaymentButton orderId={order.id} />
+                <RejectOfflinePaymentButton orderId={order.id} />
+              </div>
+            )}
             {!isOfflinePayment && (
               <p className="text-sm text-gray-600 mt-2">
-               پرداخت آنلاین (درگاه پرداخت SEP)
+                {order.sep_token ? "پرداخت آنلاین (درگاه پرداخت SEP)" : "پرداخت از طریق کیف پول"}
               </p>
             )}
           </div>

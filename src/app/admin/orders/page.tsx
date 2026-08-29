@@ -39,10 +39,18 @@ type OrderRow = {
   total_amount: number;
   status: string;
   payment_status: string;
+  payment_method: string | null;
+  sep_token: string | null;
   created_at: string;
   admin_viewed_at: string | null;
   profile: { full_name: string | null } | null;
 };
+
+function getPaidMethodLabel(o: OrderRow) {
+  if (o.payment_method === "CARD_TO_CARD") return "کارت به کارت";
+  if (o.payment_method === "SHEBA") return "واریز به شبا";
+  return o.sep_token ? "درگاه پرداخت" : "کیف پول";
+}
 
 export default async function AdminOrdersPage({
   searchParams,
@@ -106,11 +114,13 @@ export default async function AdminOrdersPage({
                 <td>{o.total_amount.toLocaleString("fa-IR")} تومان</td>
                 <td>
                   {o.payment_status === "PAID" ? (
-                    <span className="text-green-600 text-xs font-medium">پرداخت‌شده</span>
+                    <span className="text-green-600 text-xs font-medium">{getPaidMethodLabel(o)}</span>
                   ) : o.payment_status === "FAILED" ? (
-                    <span className="text-red-600 text-xs font-medium">ناموفق</span>
+                    <span className="text-red-600 text-xs font-medium">پرداخت نشده</span>
+                  ) : o.payment_status === "AWAITING_CONFIRMATION" ? (
+                    <span className="text-yellow-600 text-xs font-medium">در انتظار تأیید</span>
                   ) : (
-                    <span className="text-yellow-600 text-xs font-medium">در انتظار</span>
+                    <span className="text-yellow-600 text-xs font-medium">در انتظار پرداخت</span>
                   )}
                 </td>
                 <td>

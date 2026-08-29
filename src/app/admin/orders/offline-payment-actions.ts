@@ -55,3 +55,26 @@ const order = data as OrderWithAddress | null;
   revalidatePath(`/admin/orders/${orderId}`);
   return { success: true };
 }
+
+export async function rejectOfflinePayment(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("orders").update({ payment_status: "FAILED" }).eq("id", orderId);
+  if (error) return { error: error.message };
+
+  const { data } = await supabase
+    .from("orders").select("order_number, address:addresses(phone)").eq("id", orderId).single();
+
+  const order = data as OrderWithAddress | null;
+  const phone = order?.address?.phone;
+  if (phone && order) {
+    try {
+      await sendSms(phone, `فروشگاه سبز فراز\nپرداخت شما تأیید نشد. لطفاً برای پیگیری با پشتیبانی تماس بگیرید.\nکد سفارش: ${order.order_number}`);
+    } catch (e) {
+      console.error("خطا در ارسال پیامک رد پرداخت:", e);
+    }
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+  return { success: true };
+}
