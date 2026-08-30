@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { getCurrentPartner } from "@/lib/partners/auth";
 import PartnerSidebar from "@/components/partner/PartnerSidebar";
 import "./partner.css";
@@ -9,7 +8,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
   // فقط صفحات ورود/ثبت‌نام بدون احراز هویت قابل دسترسن
   // (این چک داخل خود صفحه‌ی login/register هم هست؛ اینجا برای بقیه‌ی مسیرهای partner/*)
 
-  if (!partner) redirect("/partner/login");
+  if (!partner) return <>{children}</>;
 
   if (partner.status === "PENDING_REVIEW") {
     return (
