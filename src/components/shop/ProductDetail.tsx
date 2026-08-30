@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, ShoppingCart, Check, ChevronDown, Ship, Clock, AlertTriangle } from "lucide-react";
+import { Share2, ShoppingCart, Check, ChevronDown, Ship, Clock, AlertTriangle, Store } from "lucide-react";
 import { Product, ProductQuantityTier, ProductAttribute } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
@@ -193,6 +193,16 @@ export default function ProductDetail({
             )}
             {product.brand && <h3 className="product-brand">{product.brand}</h3>}
           </div>
+
+          {product.partner_id && product.partner && (
+            <div className="partner-supplied-badge">
+              <Store size={15} />
+              <div>
+                <span>تأمین‌شده توسط <a href={`/partner-store/${product.partner_id}`} style={{ fontWeight: 700, textDecoration: "underline" }}>{product.partner.business_name}</a> {product.partner.rating_avg > 0 && `⭐ ${product.partner.rating_avg.toFixed(1)}`}</span>
+                <p>این محصول توسط یکی از همکاران سبزفراز تأمین می‌شود و ممکن است ارسال آن ۱ تا ۲ روز کاری تأخیر داشته باشد.</p>
+              </div>
+            </div>
+          )}
 
           {isBothModes && (
             <div className="china-mixed-warning">

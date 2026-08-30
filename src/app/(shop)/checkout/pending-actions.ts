@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { CartItem } from "@/store/cart-store";
+import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
 
 export async function createPendingCheckout(items: CartItem[], shippingMethodId: string | null, shippingCost: number) {
   const supabase = await createClient();
@@ -88,6 +89,7 @@ export async function createOrderFromPendingCheckout(
 
   if (orderError || !order) return { error: "خطا در ثبت سفارش: " + orderError?.message };
 
+  const partnerInfoMap = await attachPartnerInfoToItems(supabase, items);
   const { error: itemsError } = await supabase.from("order_items").insert(
     items.map((i) => ({
       order_id: order.id,
@@ -98,6 +100,8 @@ export async function createOrderFromPendingCheckout(
       quantity: i.quantity,
       selected_color: i.selectedColor,
       selected_size: i.selectedSize,
+      partner_id: partnerInfoMap.get(i.productId)?.partnerId ?? null,
+      partner_cost_price: partnerInfoMap.get(i.productId)?.partnerCostPrice ?? null,
     }))
   );
   if (itemsError) return { error: "خطا در ثبت اقلام سفارش: " + itemsError.message };

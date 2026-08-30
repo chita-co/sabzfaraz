@@ -4,6 +4,7 @@ import { verifyPayment } from "@/lib/sep";
 import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
+import { creditPartnersForOrder } from "@/lib/partners/wallet";
 
 export async function POST(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -55,6 +56,12 @@ export async function POST(request: NextRequest) {
             console.error("خطا در کسر موجودی محصول:", e);
           }
         }
+      }
+
+      try {
+        await creditPartnersForOrder(orderId);
+      } catch (e) {
+        console.error("خطا در واریز به کیف پول همکار:", e);
       }
 
       const phone = order.address?.phone;

@@ -28,15 +28,19 @@ export function getKeyFromUrl(url: string) {
   return url.startsWith(prefix) ? url.slice(prefix.length) : url;
 }
 
-export async function uploadImage(buffer: Buffer, key: string) {
+export async function uploadImage(
+  buffer: Buffer,
+  key: string,
+  contentType: string = "image/webp"
+) {
   await s3.send(
     new PutObjectCommand({
       Bucket: ARVAN_BUCKET,
       Key: key,
       Body: buffer,
-      ContentType: "image/webp",
+      ContentType: contentType,
       ACL: "public-read",
-      CacheControl: "public, max-age=31536000, immutable", // ← همین خط اضافه شود
+      CacheControl: "public, max-age=31536000, immutable",
     })
   );
   return getPublicUrl(key);

@@ -19,6 +19,7 @@ import {
   Film,
   Gavel,
   Newspaper,
+  Handshake
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import PendingWalletBadge from "./PendingWalletBadge";
@@ -125,6 +126,21 @@ const navConfig: NavItem[] = [
       { href: "/admin/blog/settings", label: "تنظیمات ربات محتوا" },
     ],
   },
+
+    {
+    id: "partners",
+    label: "همکاران فروشگاه",
+    icon: Handshake, // این آیکون رو هم به import بالای فایل اضافه کن
+    children: [
+      { href: "/admin/partners", label: "لیست همکاران" },
+      { href: "/admin/partners/products", label: "محصولات در انتظار بررسی" },
+      { href: "/admin/partners/withdrawals", label: "درخواست‌های برداشت" },
+      { href: "/admin/partners/settings", label: "تنظیمات همکاران" },
+      { href: "/admin/partners/support", label: "پیام‌های همکاران" },
+      { href: "/admin/partners/reports", label: "گزارش‌های مالی" }
+    ],
+  },
+
   {
     id: "auctions",
     label: "مزایده و جمعه بازار",

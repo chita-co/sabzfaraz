@@ -78,6 +78,8 @@ export interface Product {
   china_terms_text: string | null;
   china_delivery_text: string | null;
   china_order_note: string | null;
+  partner_id: string | null;
+  partner?: { business_name: string; rating_avg: number } | null;
   created_at: string;
   updated_at: string;
 }

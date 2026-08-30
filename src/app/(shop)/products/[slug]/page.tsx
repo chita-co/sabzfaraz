@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient();
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name)")
+    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name), partner:partners(business_name, rating_avg)")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
@@ -47,7 +47,7 @@ export default async function ProductPage({
   // ۱. دریافت محصول به‌همراه شناسه و نام و والد دسته‌اش
   const { data: product } = await supabase
     .from("products")
-    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name)")
+    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name), partner:partners(business_name, rating_avg)")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
