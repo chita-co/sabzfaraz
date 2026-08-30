@@ -60,23 +60,52 @@ export async function registerPartnerAction(input: RegisterInput) {
 
   const admin = createAdminClient();
 
-  const { data: existing } = await admin.from("partners").select("id").eq("phone", input.phone.trim()).maybeSingle();
-  if (existing) return { error: "همکاری با این شماره موبایل قبلاً ثبت‌نام کرده است." };
+  const { data: existingPartner } = await admin
+    .from("partners")
+    .select("id")
+    .eq("phone", input.phone.trim())
+    .maybeSingle();
+
+  if (existingPartner) {
+    return { error: "همکاری با این شماره موبایل قبلاً ثبت‌نام کرده است." };
+  }
+
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("phone", input.phone.trim())
+    .maybeSingle();
 
   const email = input.email?.trim() || `${input.phone.trim()}@partner.sabzfaraz-users.ir`;
-  const { data: created, error: authError } = await admin.auth.admin.createUser({
-    email,
-    phone: input.phone.trim(),
-    password: input.password,
-    email_confirm: true,
-    phone_confirm: true,
-  });
-  if (authError || !created.user) return { error: "خطا در ساخت حساب: " + (authError?.message ?? "") };
 
-  await admin.from("profiles").upsert({ id: created.user.id, full_name: input.businessName.trim() }, { onConflict: "id" }).select().maybeSingle();
+  let userId = existingProfile?.id ?? null;
+
+  if (!userId) {
+    const { data: created, error: authError } = await admin.auth.admin.createUser({
+      email,
+      phone: input.phone.trim(),
+      password: input.password,
+      email_confirm: true,
+      phone_confirm: true,
+    });
+
+    if (authError || !created.user) {
+      return { error: "خطا در ساخت حساب: " + (authError?.message ?? "") };
+    }
+
+    userId = created.user.id;
+
+    await admin
+      .from("profiles")
+      .upsert({ id: userId, full_name: input.businessName.trim() }, { onConflict: "id" })
+      .select()
+      .maybeSingle();
+  }
+
+  if (!userId) return { error: "خطا در ساخت حساب." };
 
   const { error: insertError } = await admin.from("partners").insert({
-    id: created.user.id,
+    id: userId,
     business_name: input.businessName.trim(),
     contact_name: input.contactName.trim() || null,
     phone: input.phone.trim(),
@@ -89,13 +118,16 @@ export async function registerPartnerAction(input: RegisterInput) {
     card_number: input.cardNumber.trim() || null,
     status: "PENDING_REVIEW",
   });
+
   if (insertError) {
-    await admin.auth.admin.deleteUser(created.user.id);
+    if (!existingProfile && userId) {
+      await admin.auth.admin.deleteUser(userId);
+    }
     return { error: "خطا در ثبت اطلاعات: " + insertError.message };
   }
 
   for (const categoryId of input.categoryIds) {
-    await admin.from("partner_categories").insert({ partner_id: created.user.id, category_id: categoryId });
+    await admin.from("partner_categories").insert({ partner_id: userId, category_id: categoryId });
   }
 
   try {
