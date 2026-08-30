@@ -24,6 +24,7 @@ import { signOut } from "@/app/(auth)/actions";
 import PendingWalletBadge from "./PendingWalletBadge";
 import SupportUnreadBadge from "./SupportUnreadBadge";
 import NewOrdersBadge from "./NewOrdersBadge";
+import PendingOfflinePaymentsBadge from "./PendingOfflinePaymentsBadge";
 
 interface NavChild {
   href: string;
@@ -84,6 +85,7 @@ const navConfig: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { href: "/admin/orders", label: "همه سفارش‌ها" },
+      { href: "/admin/orders/trash", label: "سطل زباله سفارش‌ها" },
       { href: "/admin/finance/invoices", label: "مدیریت فاکتورها" },
       { href: "/admin/bulk-orders", label: "سفارشات جمعی" },
     ],
@@ -94,6 +96,7 @@ const navConfig: NavItem[] = [
     icon: Wallet,
     children: [
       { href: "/admin/finance/transactions", label: "تراکنش‌ها" },
+      { href: "/admin/finance/offline-payments", label: "تأییدیه‌های کارت به کارت / شبا" },
       { href: "/admin/finance/wallet-transactions", label: "تراکنش‌های کیف پول" },
       { href: "/admin/finance/wallet-withdrawals", label: "برداشت کیف پول (تسویه)" },
       { href: "/admin/finance/wallet-income", label: "کیف پول ادمین (درآمد دریافتی)" },
@@ -253,6 +256,7 @@ export default function AdminSidebar({
                           <span>{child.label}</span>
                           {child.href === "/admin/wallet-requests" && <PendingWalletBadge />}
                           {child.href === "/admin/orders" && <NewOrdersBadge />}
+                          {child.href === "/admin/finance/offline-payments" && <PendingOfflinePaymentsBadge />}
                         </Link>
                       );
                     })}

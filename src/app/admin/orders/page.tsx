@@ -63,6 +63,7 @@ export default async function AdminOrdersPage({
   let query = supabase
     .from("orders")
     .select("*, admin_viewed_at, profile:profiles(full_name)")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (status) {
@@ -75,7 +76,10 @@ export default async function AdminOrdersPage({
     <div>
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <h1 className="text-xl font-bold text-gray-900">مدیریت سفارش‌ها</h1>
-        <StaleOrdersCleanupButton />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link href="/admin/orders/trash" className="admin-btn admin-btn-secondary">سطل زباله سفارش‌ها</Link>
+          <StaleOrdersCleanupButton />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-5">

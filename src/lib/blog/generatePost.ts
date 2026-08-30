@@ -4,23 +4,49 @@ import { generateAndUploadCoverImage } from "./ai/image";
 import { generateUniqueBlogSlug } from "./slug";
 import { buildCategoryTreeLabels, type CategoryLite } from "./categoryTree";
 
-async function resolveCategoryForArticle(admin: ReturnType<typeof createAdminClient>, suggestedCategory: string, isNew: boolean, parentHint?: string | null) {
-  let categoryId: string | null = null;
-  let pendingCategoryName: string | null = null;
+async function generateUniqueCategorySlug(admin: ReturnType<typeof createAdminClient>, name: string) {
+  let base = name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-\u0600-\u06FF]/g, "");
+  if (!base) base = `cat-${Date.now()}`;
+  let candidate = base;
+  let suffix = 2;
+  while (true) {
+    const { data: dup } = await admin.from("blog_categories").select("id").eq("slug", candidate).maybeSingle();
+    if (!dup) break;
+    candidate = `${base}-${suffix}`;
+    suffix++;
+  }
+  return candidate;
+}
 
+async function resolveCategoryForArticle(admin: ReturnType<typeof createAdminClient>, suggestedCategory: string, isNew: boolean, parentHint?: string | null) {
   const { data: matchedCategory } = await admin.from("blog_categories").select("id").ilike("name", suggestedCategory).eq("status", "active").maybeSingle();
   if (matchedCategory) {
-    categoryId = matchedCategory.id;
-  } else if (isNew) {
-    let parentId: string | null = null;
-    if (parentHint) {
-      const { data: parentMatch } = await admin.from("blog_categories").select("id").ilike("name", parentHint).eq("status", "active").maybeSingle();
-      parentId = parentMatch?.id ?? null;
-    }
-    await admin.from("blog_category_requests").insert({ name: suggestedCategory, suggested_by: "ai", status: "pending", parent_id: parentId });
-    pendingCategoryName = suggestedCategory;
+    return { categoryId: matchedCategory.id, pendingCategoryName: null };
   }
-  return { categoryId, pendingCategoryName };
+
+  if (!isNew) {
+    return { categoryId: null, pendingCategoryName: null };
+  }
+
+  let parentId: string | null = null;
+  if (parentHint) {
+    const { data: parentMatch } = await admin.from("blog_categories").select("id").ilike("name", parentHint).eq("status", "active").maybeSingle();
+    parentId = parentMatch?.id ?? null;
+  }
+
+  const slug = await generateUniqueCategorySlug(admin, suggestedCategory);
+  const { data: newCategory, error } = await admin
+    .from("blog_categories")
+    .insert({ name: suggestedCategory.trim(), slug, parent_id: parentId, status: "active" })
+    .select("id")
+    .single();
+
+  if (error || !newCategory) {
+    console.error("خطا در ساخت خودکار دسته‌بندی:", error?.message);
+    return { categoryId: null, pendingCategoryName: null };
+  }
+
+  return { categoryId: newCategory.id, pendingCategoryName: null };
 }
 
 export async function generateBlogPostForProduct(productId: string) {

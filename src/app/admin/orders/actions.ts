@@ -2,10 +2,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { earnPointsForOrder, refundRedeemedPoints, reverseEarnedPoints } from "@/lib/loyalty/ledger";
 import { createNotification } from "@/lib/notifications";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
@@ -75,21 +75,20 @@ export async function startOrderTracking(orderId: string) {
   return { success: true };
 }
 
-export async function deleteOrder(id: string) {
-  const admin = createAdminClient();
-
-  await admin.from("order_items").delete().eq("order_id", id);
-
-  const { error } = await admin.from("orders").delete().eq("id", id);
-  if (error) return { error: "خطا در حذف سفارش: " + error.message };
-
-  revalidatePath("/admin/orders");
-  return { success: true };
-}
-
 export async function markOrderViewedAction(orderId: string) {
   const supabase = await createClient();
   await supabase.from("orders").update({ admin_viewed_at: new Date().toISOString() }).eq("id", orderId);
+  return { success: true };
+}
+
+// ---------- سطل زباله ----------
+
+export async function deleteOrder(id: string) {
+  const admin = createAdminClient();
+  const { error } = await admin.from("orders").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) return { error: "خطا در انتقال سفارش به سطل زباله: " + error.message };
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders/trash");
   return { success: true };
 }
 
@@ -97,20 +96,48 @@ export async function deleteStaleOrdersAction(daysOld: number) {
   const admin = createAdminClient();
   const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data: staleOrders } = await admin
+  const { data, error } = await admin
     .from("orders")
-    .select("id")
+    .update({ deleted_at: new Date().toISOString() })
     .eq("payment_status", "PENDING")
-    .lt("created_at", cutoff);
+    .lt("created_at", cutoff)
+    .is("deleted_at", null)
+    .select("id");
 
-  const ids = (staleOrders ?? []).map((o) => o.id);
+  if (error) return { error: "خطا در انتقال سفارش‌های رهاشده به سطل زباله: " + error.message };
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders/trash");
+  return { success: true, count: data?.length ?? 0 };
+}
+
+export async function restoreOrderAction(id: string) {
+  const admin = createAdminClient();
+  const { error } = await admin.from("orders").update({ deleted_at: null }).eq("id", id);
+  if (error) return { error: "خطا در بازگردانی سفارش: " + error.message };
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders/trash");
+  return { success: true };
+}
+
+export async function permanentlyDeleteOrderAction(id: string) {
+  const admin = createAdminClient();
+  await admin.from("order_items").delete().eq("order_id", id);
+  const { error } = await admin.from("orders").delete().eq("id", id);
+  if (error) return { error: "خطا در حذف کامل سفارش: " + error.message };
+  revalidatePath("/admin/orders/trash");
+  return { success: true };
+}
+
+export async function emptyOrdersTrashAction() {
+  const admin = createAdminClient();
+  const { data: trashed } = await admin.from("orders").select("id").not("deleted_at", "is", null);
+  const ids = (trashed ?? []).map((o) => o.id);
   if (ids.length === 0) return { success: true, count: 0 };
 
   await admin.from("order_items").delete().in("order_id", ids);
-
   const { error } = await admin.from("orders").delete().in("id", ids);
-  if (error) return { error: "خطا در حذف سفارش‌های رهاشده: " + error.message };
+  if (error) return { error: "خطا در خالی‌کردن سطل زباله: " + error.message };
 
-  revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders/trash");
   return { success: true, count: ids.length };
 }

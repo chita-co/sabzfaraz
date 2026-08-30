@@ -10,13 +10,14 @@ export default function OrderDeleteButton({ orderId }: { orderId: string }) {
   const router = useRouter();
 
   async function handleDelete() {
-    if (!confirm("آیا از حذف این سفارش مطمئن هستید؟ این عملیات غیرقابل بازگشت است.")) return;
+    if (!confirm("این سفارش به سطل زباله منتقل می‌شود و بعداً هم قابل بازگردانی است. ادامه می‌دهید؟")) return;
     setLoading(true);
     const result = await deleteOrder(orderId);
     setLoading(false);
     if (result?.error) {
       alert(result.error);
     } else {
+      window.dispatchEvent(new Event("admin-orders-changed"));
       router.refresh();
     }
   }

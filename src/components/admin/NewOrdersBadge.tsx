@@ -1,24 +1,29 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export default function NewOrdersBadge() {
   const [count, setCount] = useState<number | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    async function fetchCount() {
-      try {
-        const res = await fetch("/api/admin/new-orders-count");
-        const data = await res.json();
-        if (active) setCount(data.count ?? 0);
-      } catch {
-        if (active) setCount(0);
-      }
+  const fetchCount = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/new-orders-count");
+      const data = await res.json();
+      setCount(data.count ?? 0);
+    } catch {
+      setCount(0);
     }
-    fetchCount();
-    const timer = setInterval(fetchCount, 20000);
-    return () => { active = false; clearInterval(timer); };
   }, []);
+
+  useEffect(() => {
+    const initialFetch = setTimeout(() => fetchCount(), 0);
+    const interval = setInterval(fetchCount, 20000);
+    window.addEventListener("admin-orders-changed", fetchCount);
+    return () => {
+      clearTimeout(initialFetch);
+      clearInterval(interval);
+      window.removeEventListener("admin-orders-changed", fetchCount);
+    };
+  }, [fetchCount]);
 
   if (!count) return null;
   return (

@@ -8,11 +8,11 @@ export default function StaleOrdersCleanupButton() {
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
-    if (!confirm(`همه‌ی سفارش‌های «در انتظار پرداخت» که بیش از ${days} روز از ثبتشون گذشته حذف بشن؟ این عملیات غیرقابل بازگشته.`)) return;
+    if (!confirm(`همه‌ی سفارش‌های «در انتظار پرداخت» که بیش از ${days} روز از ثبتشون گذشته به سطل زباله منتقل بشن؟`)) return;
     startTransition(async () => {
       const res = await deleteStaleOrdersAction(days);
       if (res.error) return alert(res.error);
-      alert(`${res.count} سفارش رهاشده حذف شد.`);
+      alert(`${res.count} سفارش رهاشده به سطل زباله منتقل شد.`);
       window.location.reload();
     });
   }
@@ -22,7 +22,7 @@ export default function StaleOrdersCleanupButton() {
       <input type="number" min={1} value={days} onChange={(e) => setDays(Number(e.target.value) || 1)} className="admin-input" style={{ width: 70 }} />
       <span style={{ fontSize: 12.5, color: "#6b7280" }}>روز بدون پرداخت</span>
       <button onClick={handleClick} disabled={isPending} className="admin-btn admin-btn-danger" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <Trash2 size={14} /> {isPending ? "در حال حذف..." : "حذف سفارش‌های رهاشده"}
+        <Trash2 size={14} /> {isPending ? "در حال انتقال..." : "انتقال سفارش‌های رهاشده به سطل زباله"}
       </button>
     </div>
   );

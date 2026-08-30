@@ -9,6 +9,12 @@ export async function GET() {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "ADMIN") return NextResponse.json({ count: 0 });
 
-  const { count } = await supabase.from("orders").select("id", { count: "exact", head: true }).is("admin_viewed_at", null).is("deleted_at", null);
+  const { count } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .in("payment_method", ["CARD_TO_CARD", "SHEBA"])
+    .eq("payment_status", "AWAITING_CONFIRMATION")
+    .is("deleted_at", null);
+
   return NextResponse.json({ count: count ?? 0 });
 }
