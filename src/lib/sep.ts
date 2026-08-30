@@ -1,5 +1,6 @@
 // lib/sep.ts
 // مستندات: راهنمای استفاده از درگاه پرداخت اینترنتی سپ (سامان) - نگارش 3.6
+import { ProxyAgent, type Dispatcher } from "undici";
 
 const SEP_TOKEN_URL = "https://sep.shaparak.ir/onlinepg/onlinepg";
 const SEP_VERIFY_URL = "https://sep.shaparak.ir/verifyTxnRandomSessionkey/ipg/VerifyTransaction";
@@ -18,13 +19,29 @@ interface SepTokenError {
   errorDesc: string;
 }
 
+interface SepFetchOptions extends RequestInit {
+  dispatcher?: Dispatcher;
+}
+
 export async function requestPayment({
-  amount, resNum, redirectUrl, mobile,
-}: { amount: number; resNum: string; redirectUrl: string; mobile?: string }) {
+  amount,
+  resNum,
+  redirectUrl,
+  mobile,
+}: {
+  amount: number;
+  resNum: string;
+  redirectUrl: string;
+  mobile?: string;
+}) {
   let data: SepTokenSuccess | SepTokenError;
 
+  const dispatcher = process.env.NOBLE_PROXY_URL
+    ? new ProxyAgent(process.env.NOBLE_PROXY_URL)
+    : undefined;
+
   try {
-    const res = await fetch(SEP_TOKEN_URL, {
+    const fetchOptions: SepFetchOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -35,7 +52,10 @@ export async function requestPayment({
         RedirectUrl: redirectUrl,
         CellNumber: mobile || "",
       }),
-    });
+      dispatcher,
+    };
+
+    const res = await fetch(SEP_TOKEN_URL, fetchOptions);
 
     data = (await res.json()) as SepTokenSuccess | SepTokenError;
     console.error("SEP token response:", data);
@@ -45,7 +65,10 @@ export async function requestPayment({
   }
 
   if (data.status !== 1 || !("token" in data)) {
-    const msg = "errorDesc" in data ? data.errorDesc : "خطا در دریافت توکن از درگاه پرداخت";
+    const msg =
+      "errorDesc" in data
+        ? data.errorDesc
+        : "خطا در دریافت توکن از درگاه پرداخت";
     throw new Error(msg);
   }
 
@@ -71,16 +94,27 @@ interface SepVerifyResponse {
 }
 
 export async function verifyPayment({
-  amount, refNum,
-}: { amount: number; refNum: string }) {
-  const res = await fetch(SEP_VERIFY_URL, {
+  amount,
+  refNum,
+}: {
+  amount: number;
+  refNum: string;
+}) {
+  const dispatcher = process.env.NOBLE_PROXY_URL
+    ? new ProxyAgent(process.env.NOBLE_PROXY_URL)
+    : undefined;
+
+  const fetchOptions: SepFetchOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       RefNum: refNum,
       TerminalNumber: Number(process.env.SEP_TERMINAL_ID),
     }),
-  });
+    dispatcher,
+  };
+
+  const res = await fetch(SEP_VERIFY_URL, fetchOptions);
 
   const data = (await res.json()) as SepVerifyResponse;
   const expectedRial = Math.round(amount * RIAL_PER_TOMAN);
@@ -90,7 +124,7 @@ export async function verifyPayment({
   const ok =
     data.ResultCode === 0 &&
     data.Success === true &&
-    data.TransactionDetail?.OriginalAmount === expectedRial
+    data.TransactionDetail?.OriginalAmount === expectedRial;
 
   return { ok, raw: data };
 }
