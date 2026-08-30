@@ -1,6 +1,6 @@
 // lib/sep.ts
 // مستندات: راهنمای استفاده از درگاه پرداخت اینترنتی سپ (سامان) - نگارش 3.6
-import { ProxyAgent, type Dispatcher } from "undici";
+import { fetch as undiciFetch, ProxyAgent, type Dispatcher } from "undici";
 
 const SEP_TOKEN_URL = "https://sep.shaparak.ir/onlinepg/onlinepg";
 const SEP_VERIFY_URL = "https://sep.shaparak.ir/verifyTxnRandomSessionkey/ipg/VerifyTransaction";
@@ -19,9 +19,9 @@ interface SepTokenError {
   errorDesc: string;
 }
 
-interface SepFetchOptions extends RequestInit {
+type SepFetchOptions = Parameters<typeof undiciFetch>[1] & {
   dispatcher?: Dispatcher;
-}
+};
 
 export async function requestPayment({
   amount,
@@ -55,7 +55,7 @@ export async function requestPayment({
       dispatcher,
     };
 
-    const res = await fetch(SEP_TOKEN_URL, fetchOptions);
+    const res = await undiciFetch(SEP_TOKEN_URL, fetchOptions);
 
     data = (await res.json()) as SepTokenSuccess | SepTokenError;
     console.error("SEP token response:", data);
@@ -114,7 +114,7 @@ export async function verifyPayment({
     dispatcher,
   };
 
-  const res = await fetch(SEP_VERIFY_URL, fetchOptions);
+  const res = await undiciFetch(SEP_VERIFY_URL, fetchOptions);
 
   const data = (await res.json()) as SepVerifyResponse;
   const expectedRial = Math.round(amount * RIAL_PER_TOMAN);
