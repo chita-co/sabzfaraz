@@ -42,10 +42,21 @@ export default function PartnerAuthForm({
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleLogin() {
+    console.log("handleLogin called", loginPhone);
     setLoading(true);
-    const res = await loginPartnerAction(loginPhone, loginPassword);
-    setLoading(false);
-    if (res?.error) toast.error(res.error);
+    try {
+      const res = await loginPartnerAction(loginPhone, loginPassword);
+      console.log("login result:", res);
+      setLoading(false);
+      if (res?.error) {
+        alert(res.error);
+        toast.error(res.error);
+      }
+    } catch (e) {
+      console.error("login error:", e);
+      setLoading(false);
+      alert("خطا در ورود: " + (e instanceof Error ? e.message : "نامشخص"));
+    }
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -65,16 +76,39 @@ export default function PartnerAuthForm({
   }
 
   async function handleRegister() {
+    console.log("handleRegister called");
     setLoading(true);
-    const res = await registerPartnerAction({
-      businessName, contactName, phone, email, nationalId, address,
-      logoUrl, bio, shebaNumber: sheba, cardNumber: card, password,
-      categoryIds: selectedCategories, termsAccepted,
-    });
-    setLoading(false);
-    if (res?.error) return toast.error(res.error);
-    toast.success("ثبت‌نام با موفقیت انجام شد. پس از تأیید ادمین می‌توانید وارد شوید.");
-    setMode("login");
+    try {
+      const res = await registerPartnerAction({
+        businessName,
+        contactName,
+        phone,
+        email,
+        nationalId,
+        address,
+        logoUrl,
+        bio,
+        shebaNumber: sheba,
+        cardNumber: card,
+        password,
+        categoryIds: selectedCategories,
+        termsAccepted,
+      });
+      console.log("register result:", res);
+      setLoading(false);
+      if (res?.error) {
+        alert(res.error);
+        toast.error(res.error);
+        return;
+      }
+      alert("ثبت‌نام با موفقیت انجام شد.");
+      toast.success("ثبت‌نام با موفقیت انجام شد. پس از تأیید ادمین می‌توانید وارد شوید.");
+      setMode("login");
+    } catch (e) {
+      console.error("register error:", e);
+      setLoading(false);
+      alert("خطا در ثبت‌نام: " + (e instanceof Error ? e.message : "نامشخص"));
+    }
   }
 
   async function handleForgotRequest() {
@@ -111,7 +145,7 @@ export default function PartnerAuthForm({
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input className="partner-input" placeholder="شماره موبایل" dir="ltr" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
           <input className="partner-input" type="password" placeholder="رمز عبور" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-          <button onClick={handleLogin} disabled={loading} className="partner-btn partner-btn-primary">{loading ? "در حال ورود..." : "ورود"}</button>
+          <button type="button" onClick={handleLogin} disabled={loading} className="partner-btn partner-btn-primary">{loading ? "در حال ورود..." : "ورود"}</button>
           <button onClick={() => setMode("forgot")} style={{ fontSize: 12.5, color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}>رمز عبور را فراموش کرده‌ام</button>
         </div>
       )}
@@ -178,7 +212,7 @@ export default function PartnerAuthForm({
             قوانین همکاری را می‌پذیرم
           </label>
 
-          <button onClick={handleRegister} disabled={loading || !termsAccepted} className="partner-btn partner-btn-primary">
+          <button type="button" onClick={handleRegister} disabled={loading || !termsAccepted} className="partner-btn partner-btn-primary">
             {loading ? "در حال ثبت..." : "ثبت‌نام"}
           </button>
         </div>
