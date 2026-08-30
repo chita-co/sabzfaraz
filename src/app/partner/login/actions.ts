@@ -6,9 +6,26 @@ import { sendSms } from "@/lib/sms";
 import { redirect } from "next/navigation";
 
 export async function loginPartnerAction(phone: string, password: string) {
+  const admin = createAdminClient();
+
+  const { data: partner } = await admin
+    .from("partners")
+    .select("id")
+    .eq("phone", phone.trim())
+    .maybeSingle();
+
+  if (!partner) return { error: "شماره موبایل یا رمز عبور اشتباه است." };
+
+  const { data: authUserData } = await admin.auth.admin.getUserById(partner.id);
+  const email = authUserData?.user?.email;
+
+  if (!email) return { error: "خطا در یافتن حساب کاربری." };
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ phone: phone.trim(), password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
   if (error) return { error: "شماره موبایل یا رمز عبور اشتباه است." };
+
   redirect("/partner");
 }
 
@@ -46,9 +63,12 @@ export async function registerPartnerAction(input: RegisterInput) {
   const { data: existing } = await admin.from("partners").select("id").eq("phone", input.phone.trim()).maybeSingle();
   if (existing) return { error: "همکاری با این شماره موبایل قبلاً ثبت‌نام کرده است." };
 
+  const email = input.email?.trim() || `${input.phone.trim()}@partner.sabzfaraz-users.ir`;
   const { data: created, error: authError } = await admin.auth.admin.createUser({
+    email,
     phone: input.phone.trim(),
     password: input.password,
+    email_confirm: true,
     phone_confirm: true,
   });
   if (authError || !created.user) return { error: "خطا در ساخت حساب: " + (authError?.message ?? "") };
@@ -60,7 +80,7 @@ export async function registerPartnerAction(input: RegisterInput) {
     business_name: input.businessName.trim(),
     contact_name: input.contactName.trim() || null,
     phone: input.phone.trim(),
-    email: input.email.trim() || null,
+    email,
     national_id: input.nationalId.trim(),
     address: input.address.trim(),
     logo_url: input.logoUrl,

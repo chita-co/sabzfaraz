@@ -22,6 +22,6 @@ export async function requireActivePartner(): Promise<Partner> {
 // برای Layout/صفحات: ریدایرکت می‌کنه
 export async function requirePartnerForPage(): Promise<Partner> {
   const partner = await getCurrentPartner();
-  if (!partner) redirect("/partner/login");
+  if (!partner || partner.status !== "ACTIVE") redirect("/partner/login");
   return partner;
 }
