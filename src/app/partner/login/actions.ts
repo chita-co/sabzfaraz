@@ -5,6 +5,24 @@ import { notifyAllAdmins } from "@/lib/notifications";
 import { sendSms } from "@/lib/sms";
 import { redirect } from "next/navigation";
 
+function toE164(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.startsWith("0098")) {
+    return "+" + digits.slice(2);
+  }
+
+  if (digits.startsWith("0")) {
+    return "+98" + digits.slice(1);
+  }
+
+  if (digits.startsWith("98")) {
+    return "+" + digits;
+  }
+
+  return "+" + digits;
+}
+
 export async function loginPartnerAction(phone: string, password: string) {
   const admin = createAdminClient();
 
@@ -83,7 +101,7 @@ export async function registerPartnerAction(input: RegisterInput) {
   if (!userId) {
     const { data: created, error: authError } = await admin.auth.admin.createUser({
       email,
-      phone: input.phone.trim(),
+      phone: toE164(input.phone.trim()),
       password: input.password,
       email_confirm: true,
       phone_confirm: true,
