@@ -14,7 +14,10 @@ export default function RegenerateImagesButton() {
       if ('error' in res) {
         return setResult("خطا: " + res.error);
       }
-      setResult(`${res.successCount} از ${res.total} تصویر با موفقیت بازتولید شد.${res.failCount ? ` (${res.failCount} خطا)` : ""}`);
+      setResult(
+        `${res.successCount} تصویر همین الان پردازش شد.${res.failCount ? ` (${res.failCount} خطا)` : ""}` +
+        (res.remaining > 0 ? ` — ${res.remaining} تصویر باقی‌مانده هر ۱۵ دقیقه به‌صورت خودکار پردازش می‌شن.` : " همه‌ی تصاویر بازتولید شدن.")
+      );
     });
   }
 

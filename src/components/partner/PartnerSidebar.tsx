@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Star, LogOut , MessageCircle } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Wallet, Star, MessageCircle, Settings, LogOut } from "lucide-react";
 import { partnerSignOut } from "@/app/partner/login/actions";
 
 const nav = [
@@ -11,6 +11,7 @@ const nav = [
   { href: "/partner/wallet", label: "کیف پول", icon: Wallet },
   { href: "/partner/rating", label: "امتیاز من", icon: Star },
   { href: "/partner/support", label: "پشتیبانی", icon: MessageCircle }, // MessageCircle رو به ایمپورت lucide-react بالای فایل اضافه کن
+  { href: "/partner/settings", label: "تنظیمات پروفایل", icon: Settings },
 ];
 
 export default function PartnerSidebar({ businessName, logoUrl }: { businessName: string; logoUrl: string | null }) {

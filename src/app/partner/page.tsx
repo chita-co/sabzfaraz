@@ -2,17 +2,20 @@ import Link from "next/link";
 import { requirePartnerForPage } from "@/lib/partners/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Package, ShoppingCart, Wallet, PlusCircle } from "lucide-react";
+import { getPartnerWeeklySales } from "@/lib/partners/stats";
+import PartnerSalesChart from "@/components/partner/PartnerSalesChart";
 
 export default async function PartnerDashboardPage() {
   const partner = await requirePartnerForPage();
   const admin = createAdminClient();
 
-  const [{ count: activeCount }, { count: pendingCount }, { count: newOrdersCount }, { data: recentItems }, { data: recentNotifs }] = await Promise.all([
+  const [{ count: activeCount }, { count: pendingCount }, { count: newOrdersCount }, { data: recentItems }, { data: recentNotifs }, weeklySales] = await Promise.all([
     admin.from("products").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_approval_status", "APPROVED"),
     admin.from("products").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_approval_status", "PENDING_REVIEW"),
     admin.from("order_items").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_fulfillment_status", "PENDING"),
     admin.from("order_items").select("id, product_name, quantity, order:orders(order_number)").eq("partner_id", partner.id).order("id", { ascending: false }).limit(5),
     admin.from("notifications").select("id, title, message").eq("user_id", partner.id).order("created_at", { ascending: false }).limit(5),
+    getPartnerWeeklySales(partner.id),
   ]);
 
   return (
@@ -31,6 +34,10 @@ export default async function PartnerDashboardPage() {
         <Link href="/partner/products/new" className="partner-btn partner-btn-primary" style={{ display: "flex", alignItems: "center", gap: 6 }}><PlusCircle size={15} /> ثبت محصول جدید</Link>
         <Link href="/partner/products" className="partner-btn partner-btn-secondary">مدیریت محصولات</Link>
         <Link href="/partner/wallet" className="partner-btn partner-btn-secondary">درخواست برداشت</Link>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <PartnerSalesChart data={weeklySales} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>

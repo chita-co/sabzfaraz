@@ -44,6 +44,7 @@ export async function uploadFrameTemplateAction(formData: FormData) {
   }
 
   await admin.from("partner_settings").update(payload).eq("id", 1);
+  await admin.from("partner_product_image_sources").update({ needs_regeneration: true, regeneration_attempts: 0 });
   revalidatePath("/admin/partners/settings");
 }
 
@@ -66,7 +67,7 @@ export async function deleteAiKeyAction(id: string) {
 export async function triggerImageRegenerationAction() {
   const { regenerateAllPartnerProductImages } = await import("@/lib/partners/regenerateImages");
   try {
-    const result = await regenerateAllPartnerProductImages();
+     const result = await regenerateAllPartnerProductImages(50);
     return { success: true, ...result };
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "خطای نامشخص";

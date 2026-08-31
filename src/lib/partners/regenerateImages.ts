@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadImage } from "@/lib/arvan";
 import sharp from "sharp";
 
-export async function regenerateAllPartnerProductImages() {
+export async function regenerateAllPartnerProductImages(limit = 20) {
   const admin = createAdminClient();
   const { data: settings } = await admin.from("partner_settings").select("*").eq("id", 1).single();
   if (!settings?.frame_template_url) throw new Error("قالب تصویر تنظیم نشده است.");
@@ -18,7 +18,13 @@ export async function regenerateAllPartnerProductImages() {
 
   const frameResized = await sharp(frameBuffer).resize(outputSize, outputSize).ensureAlpha().toBuffer();
 
-  const { data: sources } = await admin.from("partner_product_image_sources").select("*");
+  const { data: sources } = await admin
+    .from("partner_product_image_sources")
+    .select("*")
+    .eq("needs_regeneration", true)
+    .lt("regeneration_attempts", 3)
+    .order("created_at", { ascending: true })
+    .limit(limit);
   let successCount = 0, failCount = 0;
 
   for (const src of sources ?? []) {
@@ -38,7 +44,11 @@ export async function regenerateAllPartnerProductImages() {
         .toBuffer();
 
       const newUrl = await uploadImage(finalBuffer, `partners/products/regenerated-${src.id}-${Date.now()}.webp`);
-      await admin.from("partner_product_image_sources").update({ final_image_url: newUrl }).eq("id", src.id);
+      await admin.from("partner_product_image_sources").update({
+        final_image_url: newUrl,
+        needs_regeneration: false,
+        regeneration_attempts: 0,
+      }).eq("id", src.id);
 
       const { data: product } = await admin.from("products").select("id, images").eq("id", src.product_id).single();
       if (product) {
@@ -48,8 +58,22 @@ export async function regenerateAllPartnerProductImages() {
       successCount++;
     } catch (e) {
       console.error(`خطا در بازتولید تصویر محصول ${src.product_id}:`, e);
+      await admin.from("partner_product_image_sources").update({
+        regeneration_attempts: (src.regeneration_attempts ?? 0) + 1,
+      }).eq("id", src.id);
       failCount++;
     }
   }
-  return { successCount, failCount, total: (sources ?? []).length };
+  const { count: remaining } = await admin
+    .from("partner_product_image_sources")
+    .select("id", { count: "exact", head: true })
+    .eq("needs_regeneration", true)
+    .lt("regeneration_attempts", 3);
+
+  return {
+    successCount,
+    failCount,
+    total: (sources ?? []).length,
+    remaining: remaining ?? 0,
+  };
 }
