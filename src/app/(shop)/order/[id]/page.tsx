@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import ClearCartOnSuccess from "@/components/shop/ClearCartOnSuccess";
 import InvoiceDownloadButton from "@/components/shop/InvoiceDownloadButton";
 import IridescenceBackground from "@/components/backgrounds/IridescenceBackground";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // نوع اقلام سفارش
 type OrderItem = {
@@ -32,20 +33,37 @@ export default async function OrderResultPage({
   // اگر کاربر مهمان باشد و query پارامتر payment نداشته باشد، به لاگین بفرست
   if (!user && !payment) redirect("/login");
 
-  let orderQuery = supabase
-    .from("orders")
-    .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
-    .eq("id", id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let order: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let settings: any = null;
 
-  // اگر کاربر لاگین است، فقط سفارش‌های خودش را ببیند
   if (user) {
-    orderQuery = orderQuery.eq("user_id", user.id);
+    const [{ data: userOrder }, { data: siteSettings }] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single(),
+      supabase.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address, support_email").eq("id", 1).single(),
+    ]);
+    order = userOrder;
+    settings = siteSettings;
+  } else if (payment) {
+    const admin = createAdminClient();
+    const [{ data: guestOrder }, { data: siteSettings }] = await Promise.all([
+      admin
+        .from("orders")
+        .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
+        .eq("id", id)
+        .single(),
+      admin.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address, support_email").eq("id", 1).single(),
+    ]);
+    order = guestOrder;
+    settings = siteSettings;
   }
 
-  const [{ data: order }, { data: settings }] = await Promise.all([
-    orderQuery.single(),
-    supabase.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address, support_email").eq("id", 1).single()
-  ]);
   if (!order) notFound();
 
   const isChinaOrder = order.order_type === "CHINA_ORDER";
