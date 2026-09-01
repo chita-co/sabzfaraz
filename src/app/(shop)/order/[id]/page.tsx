@@ -29,15 +29,21 @@ export default async function OrderResultPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // اگر کاربر مهمان باشد و query پارامتر payment نداشته باشد، به لاگین بفرست
+  if (!user && !payment) redirect("/login");
+
+  let orderQuery = supabase
+    .from("orders")
+    .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
+    .eq("id", id);
+
+  // اگر کاربر لاگین است، فقط سفارش‌های خودش را ببیند
+  if (user) {
+    orderQuery = orderQuery.eq("user_id", user.id);
+  }
 
   const [{ data: order }, { data: settings }] = await Promise.all([
-    supabase
-      .from("orders")
-      .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single(),
+    orderQuery.single(),
     supabase.from("site_settings").select("logo_url, store_name, support_phone, support_phone_2, store_address, support_email").eq("id", 1).single()
   ]);
   if (!order) notFound();
