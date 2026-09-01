@@ -1,9 +1,6 @@
 // lib/sep.ts
-// مستندات: راهنمای استفاده از درگاه پرداخت اینترنتی سپ (سامان) - نگارش 3.6
-import { fetch as undiciFetch, ProxyAgent, type Dispatcher } from "undici";
+import { fetch as undiciFetch } from "undici";
 
-const SEP_TOKEN_URL = "https://sep.shaparak.ir/onlinepg/onlinepg";
-const SEP_VERIFY_URL = "https://sep.shaparak.ir/verifyTxnRandomSessionkey/ipg/VerifyTransaction";
 const SEP_GATEWAY_REDIRECT = "https://sep.shaparak.ir/OnlinePG/SendToken";
 
 // دیتابیس ما مبلغ رو به تومان نگه می‌داره، ولی سپ ریال می‌خواد
@@ -19,9 +16,7 @@ interface SepTokenError {
   errorDesc: string;
 }
 
-type SepFetchOptions = Parameters<typeof undiciFetch>[1] & {
-  dispatcher?: Dispatcher;
-};
+type SepFetchOptions = Parameters<typeof undiciFetch>[1];
 
 export async function requestPayment({
   amount,
@@ -36,14 +31,17 @@ export async function requestPayment({
 }) {
   let data: SepTokenSuccess | SepTokenError;
 
-  const dispatcher = process.env.NOBLE_PROXY_URL
-    ? new ProxyAgent(process.env.NOBLE_PROXY_URL)
-    : undefined;
+  if (!process.env.PROXY_URL || !process.env.PROXY_TOKEN) {
+    throw new Error("تنظیمات پروکسی پرداخت ناقص است.");
+  }
 
   try {
     const fetchOptions: SepFetchOptions = {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Proxy-Token": process.env.PROXY_TOKEN,
+      },
       body: JSON.stringify({
         action: "token",
         TerminalId: process.env.SEP_TERMINAL_ID,
@@ -52,11 +50,9 @@ export async function requestPayment({
         RedirectUrl: redirectUrl,
         CellNumber: mobile || "",
       }),
-      dispatcher,
     };
 
-    const res = await undiciFetch(SEP_TOKEN_URL, fetchOptions);
-
+    const res = await undiciFetch(process.env.PROXY_URL, fetchOptions);
     data = (await res.json()) as SepTokenSuccess | SepTokenError;
     console.error("SEP token response:", data);
   } catch (e) {
@@ -100,27 +96,28 @@ export async function verifyPayment({
   amount: number;
   refNum: string;
 }) {
-  const dispatcher = process.env.NOBLE_PROXY_URL
-    ? new ProxyAgent(process.env.NOBLE_PROXY_URL)
-    : undefined;
+  if (!process.env.PROXY_URL || !process.env.PROXY_TOKEN) {
+    throw new Error("تنظیمات پروکسی پرداخت ناقص است.");
+  }
+
+  const verifyUrl = `${process.env.PROXY_URL}?verify=1`;
 
   const fetchOptions: SepFetchOptions = {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Proxy-Token": process.env.PROXY_TOKEN,
+    },
     body: JSON.stringify({
       RefNum: refNum,
       TerminalNumber: Number(process.env.SEP_TERMINAL_ID),
     }),
-    dispatcher,
   };
 
-  const res = await undiciFetch(SEP_VERIFY_URL, fetchOptions);
-
+  const res = await undiciFetch(verifyUrl, fetchOptions);
   const data = (await res.json()) as SepVerifyResponse;
   const expectedRial = Math.round(amount * RIAL_PER_TOMAN);
 
-  // طبق مستند رسمی سپ: فقط وقتی ResultCode === 0 *و* مبلغ برگشتی دقیقاً برابر
-  // مبلغ درخواستی ماست، تراکنش واقعاً موفق و قابل‌اتکاست
   const ok =
     data.ResultCode === 0 &&
     data.Success === true &&
