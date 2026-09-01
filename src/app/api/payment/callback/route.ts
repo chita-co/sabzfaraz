@@ -5,7 +5,6 @@ import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
 import { creditPartnersForOrder } from "@/lib/partners/wallet";
-import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -97,10 +96,6 @@ export async function POST(request: NextRequest) {
       } catch (e) {
         console.error("خطا در ثبت تبدیل آماری:", e);
       }
-
-            // ✅ تازه‌سازی session کاربر قبل از redirect به صفحه موفقیت
-      const userSupabase = await createClient();
-      await userSupabase.auth.getUser();
 
       return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
     }
