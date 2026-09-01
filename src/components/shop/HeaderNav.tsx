@@ -125,7 +125,6 @@ export default function HeaderNav({
        ) : (
           <>
             <Link href="/login" onClick={() => setMobileOpen(false)}>ورود / ثبت‌نام</Link>
-            <Link href="/partner/login" onClick={() => setMobileOpen(false)}>همکاری با ما</Link>
           </>
         )}
       </div>
@@ -189,14 +188,6 @@ export default function HeaderNav({
               <Link href="/login" className="site-login-btn">ورود / ثبت‌نام</Link>
             )}
           </div>
-
-          <Link
-            href="/partner/login"
-            className="site-login-btn"
-            style={{ marginRight: 6 }}
-          >
-            همکاری با ما
-          </Link>
 
           <button className="site-mobile-toggle" onClick={() => setMobileOpen(true)}><Menu size={22} /></button>
         </div>

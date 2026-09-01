@@ -122,6 +122,7 @@ export default async function Footer() {
             <Link href="/faq">سوالات متداول</Link>
             <Link href="/terms">قوانین و مقررات</Link>
             <Link href="/privacy">حریم خصوصی</Link>
+            <Link href="/partner/login">همکاری با ما</Link>
           </div>
 
           <div className="footer-col footer-contact-col">
