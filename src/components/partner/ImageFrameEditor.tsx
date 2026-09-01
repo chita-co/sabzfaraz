@@ -83,7 +83,8 @@ export default function ImageFrameEditor({
 
     const frameImg = new Image();
     frameImg.crossOrigin = "anonymous";
-    await new Promise((resolve) => { frameImg.onload = resolve; frameImg.src = config.frameUrl; });
+    const proxiedFrameUrl = `/api/image-proxy?url=${encodeURIComponent(config.frameUrl)}`;
+await new Promise((resolve) => { frameImg.onload = resolve; frameImg.src = proxiedFrameUrl; });
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
     canvas.toBlob((blob) => { if (blob) onComposited(blob, rawCropBlob); }, "image/webp", 0.9);

@@ -214,6 +214,7 @@ product?: any;
   const profitPercent = Number(sellPrice) > 0 ? (profit / Number(sellPrice)) * 100 : 0;
 
   async function handleSubmit() {
+    console.log("Submit clicked", { title, categoryId, suggestingNewCategory, images: images.length, sellPrice, partnerCostPrice, stock, stockUnlimited });
     if (!title.trim() || title.trim().length < 3) return toast.error("عنوان محصول باید حداقل ۳ کاراکتر باشد.");
     if (!categoryId && !suggestingNewCategory) return toast.error("دسته‌بندی را انتخاب کنید یا دسته‌ی جدید پیشنهاد دهید.");
     if (suggestingNewCategory && !newCategoryName.trim()) return toast.error("نام دسته‌بندی پیشنهادی را بنویسید.");
