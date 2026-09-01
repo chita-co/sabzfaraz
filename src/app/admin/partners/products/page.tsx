@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { approvePartnerProductAction, rejectPartnerProductAction } from "./actions";
+import Link from "next/link";
 
 export default async function AdminPartnerProductsQueuePage() {
   const admin = createAdminClient();
@@ -45,6 +46,7 @@ export default async function AdminPartnerProductsQueuePage() {
                     <div dangerouslySetInnerHTML={{ __html: p.description }} style={{ fontSize: 12, color: "#4b5563", marginTop: 6, maxHeight: 80, overflow: "hidden" }} />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <Link href={`/admin/products/${p.id}/edit`} className="admin-btn admin-btn-secondary" style={{ textAlign: "center" }}>ویرایش کامل</Link>
                     <form action={async () => { "use server"; await approvePartnerProductAction(p.id); }}>
                       <button className="admin-btn admin-btn-primary" style={{ width: "100%" }}>تأیید و انتشار</button>
                     </form>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { suspendPartnerAction, activatePartnerAction, applyPenaltyAction, overrideRatingAction } from "../actions";
 import { recordSettlementAction } from "./actions";
+import PartnerInfoEditForm from "@/components/admin/PartnerInfoEditForm";
 
 export default async function AdminPartnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +20,7 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+       <PartnerInfoEditForm partner={partner} />
       <div className="admin-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
           <div>

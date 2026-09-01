@@ -141,6 +141,8 @@ const [chinaDeliveryUnit, setChinaDeliveryUnit] = useState<"day" | "week" | "mon
 const [chinaTermsText, setChinaTermsText] = useState(product?.china_terms_text ?? "");
 const [chinaDeliveryText, setChinaDeliveryText] = useState(product?.china_delivery_text ?? "");
 const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?? "");
+const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_price?.toString() ?? "");
+
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -438,6 +440,7 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
       chinaTermsText: chinaTermsText || null,
       chinaDeliveryText: chinaDeliveryText || null,
       chinaOrderNote: chinaOrderNote || null,
+      ...(product?.partner_id ? { partnerCostPrice: partnerCostPrice ? Number(partnerCostPrice) : null } : {}),
     };
 
     const result =
@@ -636,6 +639,18 @@ const [chinaOrderNote, setChinaOrderNote] = useState(product?.china_order_note ?
               />
             </div>
           </div>
+
+          {product?.partner_id && (
+            <div className="admin-form-group" style={{ background: "#fffbeb", padding: 10, borderRadius: 8, border: "1px solid #fde68a" }}>
+              <label>قیمتی که به همکار پرداخت می‌شود (تومان) — این محصول متعلق به یک همکار است</label>
+              <input type="number" value={partnerCostPrice} onChange={(e) => setPartnerCostPrice(e.target.value)} min={0} />
+              {Number(price) > 0 && Number(partnerCostPrice) > 0 && (
+                <p style={{ fontSize: 11, color: "#b45309", marginTop: 4 }}>
+                  سود سایت: {(Number(price) - Number(partnerCostPrice)).toLocaleString("fa-IR")} تومان ({(((Number(price) - Number(partnerCostPrice)) / Number(price)) * 100).toFixed(1)}٪)
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="admin-form-group">

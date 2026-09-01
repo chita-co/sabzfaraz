@@ -10,60 +10,71 @@ import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 
 export async function uploadPartnerLogoAction(formData: FormData) {
-  const file = formData.get("file") as File | null;
-  if (!file) return { error: "فایلی انتخاب نشده" };
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const webp = await sharp(buffer).resize(300, 300, { fit: "cover" }).webp({ quality: 85 }).toBuffer();
-  const url = await uploadImage(webp, `partners/logos/${Date.now()}.webp`);
-  return { url };
+  try {
+    const file = formData.get("file") as File | null;
+    if (!file) return { error: "فایلی انتخاب نشده" };
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const webp = await sharp(buffer).resize(300, 300, { fit: "cover" }).webp({ quality: 85 }).toBuffer();
+    const url = await uploadImage(webp, `partners/logos/${Date.now()}.webp`);
+    return { url };
+  } catch (e: unknown) {
+  const message = e instanceof Error ? e.message : "خطا در آپلود لوگو";
+  return { error: message };
+}
 }
 
 export async function uploadPartnerProductImageAction(formData: FormData) {
-  await requireActivePartner();
-  const file = formData.get("file") as File | null;
-  if (!file) return { error: "فایلی انتخاب نشده" };
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const webp = await sharp(buffer).webp({ quality: 90 }).toBuffer();
-  const url = await uploadImage(webp, `partners/products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`);
-  return { url };
+  try {
+    await requireActivePartner();
+    const file = formData.get("file") as File | null;
+    if (!file) return { error: "فایلی انتخاب نشده" };
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const webp = await sharp(buffer).webp({ quality: 90 }).toBuffer();
+    const url = await uploadImage(webp, `partners/products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`);
+    return { url };
+   } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "خطا در آپلود تصویر";
+    return { error: message };
+  }
 }
 
 export async function autofillProductWithAiAction(title: string) {
-  const partner = await requireActivePartner();
-  if (!title || title.trim().length < 3) return { error: "ابتدا عنوان محصول را با جزئیات کافی وارد کنید." };
+  try {
+    const partner = await requireActivePartner();
+    if (!title || title.trim().length < 3) return { error: "ابتدا عنوان محصول را با جزئیات کافی وارد کنید." };
 
-  const settings = await getPartnerSettings();
-  const admin = createAdminClient();
+    const settings = await getPartnerSettings();
+    const admin = createAdminClient();
 
-  const aiDailyRequestLimit = (partner as { ai_daily_request_limit?: number }).ai_daily_request_limit;
-  if (aiDailyRequestLimit) {
-    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
-    // شمارش ساده بر اساس محصولات ai_autofilled امروز این همکار (بدون نیاز به جدول جدید)
-    const { count } = await admin.from("products").select("id", { count: "exact", head: true })
-      .eq("partner_id", partner.id).eq("ai_autofilled", true).gte("created_at", startOfDay.toISOString());
-    if ((count ?? 0) >= aiDailyRequestLimit) {
-      return { error: "سقف روزانه‌ی استفاده از پرکردن خودکار برای شما به پایان رسیده است." };
+    if (partner.ai_daily_request_limit) {
+      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+      const { count } = await admin.from("products").select("id", { count: "exact", head: true })
+        .eq("partner_id", partner.id).eq("ai_autofilled", true).gte("created_at", startOfDay.toISOString());
+      if ((count ?? 0) >= partner.ai_daily_request_limit) {
+        return { error: "سقف روزانه‌ی استفاده از پرکردن خودکار برای شما به پایان رسیده است." };
+      }
     }
-  }
 
-  const { data: categories } = await admin.from("categories").select("name").eq("partner_allowed", true).eq("is_active", true);
-  const categoryNames = (categories ?? []).map((c) => c.name);
+    const { data: allowedCategories } = await admin.from("partner_categories").select("categories(name)").eq("partner_id", partner.id);
+    const categoryNames = (allowedCategories ?? []).flatMap((r: { categories: { name: string }[] | null }) => r.categories?.map(c => c.name) ?? []).filter(Boolean);
 
-  const prompt = `
+    const prompt = `
 ${settings.ai_default_prompt}
 
 عنوان محصول: ${title}
-دسته‌بندی‌های موجود: ${categoryNames.join("، ") || "نامشخص"}
+دسته‌بندی‌های مجاز برای این همکار: ${categoryNames.join("، ") || "نامشخص"}
 
-فقط یک JSON با این ساختار دقیق برگردان (بدون Markdown fence):
+فقط یک JSON با این ساختار دقیق برگردان (بدون Markdown fence، بدون توضیح اضافه):
 {
-  "short_description": "خلاصه یک‌خطی جذاب",
-  "description": "توضیح کامل HTML ساده (h3, p, ul, li) شامل ویژگی‌ها، کاربردها و مشخصات فنی",
-  "tags": ["برچسب۱", "برچسب۲"],
-  "suggested_category": "نزدیک‌ترین نام از لیست دسته‌بندی‌های موجود، یا null"
+  "short_description": "خلاصه یک یا دو جمله‌ی جذاب برای لیست محصولات",
+  "description": "توضیح کامل HTML ساده (h3, p, ul, li) شامل ویژگی‌ها، کاربردها و مشخصات فنی محصول",
+  "tags": ["برچسب۱", "برچسب۲", "برچسب۳"],
+  "meta_title": "عنوان سئو (حداکثر ۶۰ کاراکتر)",
+  "meta_description": "توضیح متا (حداکثر ۱۶۰ کاراکتر)",
+  "focus_keyword": "کلمه کلیدی اصلی",
+  "suggested_category": "نزدیک‌ترین نام از دسته‌بندی‌های مجاز بالا، یا null اگر هیچ‌کدام مناسب نیست"
 }`.trim();
 
-  try {
     const raw = await callAiWithRotation(prompt, settings.ai_rotation_mode);
     const parsed = JSON.parse(raw);
     return { success: true, ...parsed };
@@ -74,128 +85,194 @@ ${settings.ai_default_prompt}
 }
 
 interface PartnerProductInput {
-  title: string;
-  description: string;
-  shortDescription: string;
-  categoryId: string;
-  sellPrice: number;
-  partnerCostPrice: number;
-  stock: number;
-  stockUnlimited: boolean;
-  images: string[];
-  imageSources: { finalUrl: string; rawCropUrl: string }[];
-  tags: string[];
+  title: string; nameEn: string | null; description: string; shortDescription: string | null; tags: string[];
+  categoryId: string | null; extraCategoryIds: string[]; suggestedCategoryName: string | null;
+  sellPrice: number; discountSellPrice: number | null; partnerCostPrice: number;
+  stock: number; stockUnlimited: boolean; brand: string | null; weightGrams: number | null;
+  isSoldByUnit: boolean; unitLabel: string | null; hasMinOrderQty: boolean; minOrderQuantity: number | null;
+  quantityTiers: { minQty: number; maxQty: number; unitPrice: number }[];
+  metaTitle: string | null; metaDescription: string | null; focusKeyword: string | null;
+  colors: { name: string; hex: string }[]; sizes: string[];
+  attributes: { key: string; value: string }[];
+  showInNewest: boolean; isPopular: boolean; isStock: boolean; showInFeed: boolean; reviewsEnabled: boolean;
+  displayPriority: number; maxPurchaseQty: number | null;
+  packageLengthCm: number | null; packageWidthCm: number | null; packageHeightCm: number | null;
+  gtin: string | null; modelVersion: string | null;
+  fulfillmentType: "INSTANT" | "CHINA_ORDER" | "BOTH";
+  chinaPrice: number | null; chinaDeliveryMin: number | null; chinaDeliveryMax: number | null;
+  chinaDeliveryUnit: "day" | "week" | "month"; chinaTermsText: string | null; chinaDeliveryText: string | null; chinaOrderNote: string | null;
+  images: string[]; imageAltTexts: string[]; imageSources: { finalUrl: string; rawCropUrl: string }[];
   aiAutofilled: boolean;
 }
 
-export async function createPartnerProductAction(input: PartnerProductInput) {
-  const partner = await requireActivePartner();
-  const settings = await getPartnerSettings();
-  const admin = createAdminClient();
+async function savePartnerProductCategories(
+  admin: ReturnType<typeof createAdminClient>,
+  productId: string,
+  primaryCategoryId: string,
+  extraCategoryIds: string[]
+) {
+  // حذف تمام دسته‌های قبلی محصول
+  await admin.from("product_categories").delete().eq("product_id", productId);
 
-  if (!input.title.trim() || input.title.trim().length < 3) return { error: "عنوان محصول باید حداقل ۳ کاراکتر باشد." };
-  if (!input.categoryId) return { error: "دسته‌بندی را انتخاب کنید." };
-  if (input.images.length === 0) return { error: "حداقل یک تصویر محصول لازم است." };
-  if (!input.stockUnlimited && input.stock < settings.min_allowed_stock) {
-    return { error: "موجودی واردشده معتبر نیست." };
+  // ساخت ردیف‌ها شامل دسته‌ی اصلی و فرعی
+  const rows = [
+    { product_id: productId, category_id: primaryCategoryId, is_primary: true },
+    ...extraCategoryIds
+      .filter((id) => id !== primaryCategoryId)
+      .map((id) => ({ product_id: productId, category_id: id, is_primary: false })),
+  ];
+
+  if (rows.length > 0) {
+    await admin.from("product_categories").insert(rows);
   }
-
-  const profit = input.sellPrice - input.partnerCostPrice;
-  const profitPercent = input.sellPrice > 0 ? (profit / input.sellPrice) * 100 : 0;
-  if (profitPercent < settings.min_profit_percent) {
-    return { error: "سود سایت برای این محصول کمتر از حد مجاز است. لطفاً قیمت فروش را افزایش دهید یا مبلغ دریافتی خود را کاهش دهید." };
-  }
-
-  const { data: categoryCheck } = await admin.from("categories").select("id").eq("id", input.categoryId).eq("partner_allowed", true).maybeSingle();
-  if (!categoryCheck) return { error: "این دسته‌بندی برای همکاران مجاز نیست." };
-
-  const slug = await generateUniqueSlug(admin, input.title);
-
-  const { data: product, error } = await admin.from("products").insert({
-    name: input.title.trim(),
-    slug,
-    description: input.description,
-    short_description: input.shortDescription || null,
-    category_id: input.categoryId,
-    price: input.sellPrice,
-    images: input.images,
-    tags: input.tags,
-    stock: input.stockUnlimited ? 999999 : input.stock,
-    is_active: false,
-    partner_id: partner.id,
-    partner_cost_price: input.partnerCostPrice,
-    partner_stock_unlimited: input.stockUnlimited,
-    partner_approval_status: "PENDING_REVIEW",
-    ai_autofilled: input.aiAutofilled,
-  }).select("id").single();
-
-  if (error || !product) return { error: "خطا در ثبت محصول: " + error?.message };
-
-  if (input.imageSources.length > 0) {
-    await admin.from("partner_product_image_sources").insert(
-      input.imageSources.map((s) => ({ product_id: product.id, final_image_url: s.finalUrl, raw_crop_url: s.rawCropUrl }))
-    );
-  }
-
-  try {
-    await notifyAllAdmins("محصول جدید همکار در انتظار بررسی 📦", `«${partner.business_name}» محصول «${input.title}» را ثبت کرد.`);
-  } catch (e) { console.error(e); }
-
-  revalidatePath("/partner/products");
-  return { success: true, productId: product.id };
 }
 
-export async function updatePartnerProductAction(productId: string, input: Partial<PartnerProductInput>) {
-  const partner = await requireActivePartner();
-  const admin = createAdminClient();
+export async function createPartnerProductAction(input: PartnerProductInput) {
+  try {
+    const partner = await requireActivePartner();
+    const settings = await getPartnerSettings();
+    const admin = createAdminClient();
 
-  const { data: existing } = await admin.from("products").select("*").eq("id", productId).eq("partner_id", partner.id).single();
-  if (!existing) return { error: "محصول یافت نشد یا متعلق به شما نیست." };
+    if (!input.title.trim() || input.title.trim().length < 3) return { error: "عنوان محصول باید حداقل ۳ کاراکتر باشد." };
+    if (!input.categoryId && !input.suggestedCategoryName) return { error: "دسته‌بندی را انتخاب یا پیشنهاد دهید." };
+    if (input.images.length === 0) return { error: "حداقل یک تصویر محصول لازم است." };
 
-  const settings = await getPartnerSettings();
+    if (partner.max_active_products) {
+      const { count } = await admin.from("products").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_approval_status", "APPROVED");
+      if ((count ?? 0) >= partner.max_active_products) return { error: `شما به سقف مجاز ${partner.max_active_products} محصول فعال رسیده‌اید.` };
+    }
 
-  const payload: Record<string, unknown> = {};
-  if (input.title !== undefined) payload.name = input.title.trim();
-  if (input.description !== undefined) payload.description = input.description;
-  if (input.shortDescription !== undefined) payload.short_description = input.shortDescription || null;
-  if (input.images !== undefined) payload.images = input.images;
-  if (input.tags !== undefined) payload.tags = input.tags;
+    const profit = input.sellPrice - input.partnerCostPrice;
+    const profitPercent = input.sellPrice > 0 ? (profit / input.sellPrice) * 100 : 0;
+    if (profitPercent < settings.min_profit_percent) {
+      return { error: "سود سایت برای این محصول کمتر از حد مجاز است. لطفاً قیمت فروش را افزایش دهید یا مبلغ دریافتی خود را کاهش دهید." };
+    }
 
-  // موجودی: مطابق مشخصات، بدون نیاز به تأیید مجدد ولی ثبت در لاگ محصول (فیلد ai_autofilled بدون تغییر باقی می‌مونه)
-  if (input.stock !== undefined || input.stockUnlimited !== undefined) {
-    const unlimited = input.stockUnlimited ?? existing.partner_stock_unlimited;
-    payload.stock = unlimited ? 999999 : (input.stock ?? existing.stock);
-    payload.partner_stock_unlimited = unlimited;
-    if (payload.stock === 0) payload.is_active = false;
+    let categoryId = input.categoryId;
+    if (categoryId) {
+      const { data: categoryCheck } = await admin.from("partner_categories").select("category_id").eq("partner_id", partner.id).eq("category_id", categoryId).maybeSingle();
+      if (!categoryCheck) return { error: "این دسته‌بندی برای شما مجاز نیست." };
+    } else {
+      const { data: fallback } = await admin.from("categories").select("id").eq("is_active", true).order("created_at").limit(1).maybeSingle();
+      categoryId = fallback?.id ?? null;
+      if (!categoryId) return { error: "خطای داخلی: دسته‌بندی پیش‌فرض یافت نشد. با پشتیبانی تماس بگیرید." };
+    }
+
+    const slug = await generateUniqueSlug(admin, input.title);
+
+    const { data: product, error } = await admin.from("products").insert({
+      name: input.title.trim(), name_en: input.nameEn, slug,
+      description: input.description, short_description: input.shortDescription,
+      category_id: categoryId, price: input.sellPrice, discount_price: input.discountSellPrice,
+      images: input.images, image_alt_texts: input.imageAltTexts, tags: input.tags,
+      stock: input.stockUnlimited ? 999999 : input.stock, is_active: false,
+      brand: input.brand, weight_grams: input.weightGrams,
+      is_sold_by_unit: input.isSoldByUnit, unit_label: input.unitLabel,
+      has_min_order_quantity: input.hasMinOrderQty, min_order_quantity: input.minOrderQuantity,
+      meta_title: input.metaTitle, meta_description: input.metaDescription, focus_keyword: input.focusKeyword,
+      colors: input.colors, sizes: input.sizes,
+      show_in_newest: input.showInNewest, is_popular: input.isPopular, is_stock: input.isStock,
+      show_in_feed: input.showInFeed, reviews_enabled: input.reviewsEnabled,
+      display_priority: input.displayPriority, max_purchase_qty: input.maxPurchaseQty,
+      package_length_cm: input.packageLengthCm, package_width_cm: input.packageWidthCm, package_height_cm: input.packageHeightCm,
+      gtin: input.gtin, model_version: input.modelVersion,
+      fulfillment_type: input.fulfillmentType, china_price: input.chinaPrice,
+      china_delivery_min: input.chinaDeliveryMin, china_delivery_max: input.chinaDeliveryMax, china_delivery_unit: input.chinaDeliveryUnit,
+      china_terms_text: input.chinaTermsText, china_delivery_text: input.chinaDeliveryText, china_order_note: input.chinaOrderNote,
+      partner_id: partner.id, partner_cost_price: input.partnerCostPrice,
+      partner_stock_unlimited: input.stockUnlimited, partner_approval_status: "PENDING_REVIEW",
+      ai_autofilled: input.aiAutofilled,
+    }).select("id").single();
+
+    if (error || !product) return { error: "خطا در ثبت محصول: " + (error?.message ?? "نامشخص") };
+
+    await savePartnerProductCategories(admin, product.id, categoryId, input.extraCategoryIds);
+
+    if (input.quantityTiers.length > 0) {
+      await admin.from("product_quantity_tiers").insert(input.quantityTiers.map((t) => ({ product_id: product.id, min_qty: t.minQty, max_qty: t.maxQty, unit_price: t.unitPrice })));
+    }
+    if (input.attributes.length > 0) {
+      await admin.from("product_attributes").insert(input.attributes.map((a, i) => ({ product_id: product.id, attr_key: a.key, attr_value: a.value, sort_order: i })));
+    }
+    if (input.imageSources.length > 0) {
+      await admin.from("partner_product_image_sources").insert(input.imageSources.map((s) => ({ product_id: product.id, final_image_url: s.finalUrl, raw_crop_url: s.rawCropUrl })));
+    }
+    if (input.suggestedCategoryName) {
+      await admin.from("partner_category_suggestions").insert({ partner_id: partner.id, product_id: product.id, suggested_name: input.suggestedCategoryName });
+    }
+
+    try {
+      await notifyAllAdmins("محصول جدید همکار در انتظار بررسی 📦", `«${partner.business_name}» محصول «${input.title}» را ثبت کرد.`);
+    } catch (e) { console.error(e); }
+
+    revalidatePath("/partner/products");
+    return { success: true, productId: product.id };
+  } catch (e: unknown) {
+    console.error("createPartnerProductAction:", e);
+    const message = e instanceof Error ? e.message : "خطای غیرمنتظره‌ای رخ داد. لطفاً دوباره تلاش کنید.";
+    return { error: message };
   }
+}
 
-  // قیمت: تغییر مهم — نیاز به تأیید مجدد مدیر
-  if (input.sellPrice !== undefined || input.partnerCostPrice !== undefined) {
-    const newSell = input.sellPrice ?? existing.price;
-    const newCost = input.partnerCostPrice ?? existing.partner_cost_price;
-    const profitPercent = newSell > 0 ? ((newSell - newCost) / newSell) * 100 : 0;
+export async function updatePartnerProductAction(productId: string, input: PartnerProductInput) {
+  try {
+    const partner = await requireActivePartner();
+    const settings = await getPartnerSettings();
+    const admin = createAdminClient();
+
+    const { data: existing } = await admin.from("products").select("id").eq("id", productId).eq("partner_id", partner.id).single();
+    if (!existing) return { error: "محصول یافت نشد یا متعلق به شما نیست." };
+
+    if (!input.categoryId) return { error: "دسته‌بندی اصلی الزامی است." };
+
+    const profit = input.sellPrice - input.partnerCostPrice;
+    const profitPercent = input.sellPrice > 0 ? (profit / input.sellPrice) * 100 : 0;
     if (profitPercent < settings.min_profit_percent) {
       return { error: "سود سایت برای این محصول کمتر از حد مجاز است." };
     }
-    payload.price = newSell;
-    payload.partner_cost_price = newCost;
-    payload.partner_approval_status = "PENDING_REVIEW";
-    payload.is_active = false;
+
+    const { error } = await admin.from("products").update({
+      name: input.title.trim(), name_en: input.nameEn, description: input.description, short_description: input.shortDescription,
+      category_id: input.categoryId, price: input.sellPrice, discount_price: input.discountSellPrice,
+      images: input.images, image_alt_texts: input.imageAltTexts, tags: input.tags,
+      stock: input.stockUnlimited ? 999999 : input.stock, brand: input.brand, weight_grams: input.weightGrams,
+      is_sold_by_unit: input.isSoldByUnit, unit_label: input.unitLabel,
+      has_min_order_quantity: input.hasMinOrderQty, min_order_quantity: input.minOrderQuantity,
+      meta_title: input.metaTitle, meta_description: input.metaDescription, focus_keyword: input.focusKeyword,
+      colors: input.colors, sizes: input.sizes,
+      show_in_newest: input.showInNewest, is_popular: input.isPopular, is_stock: input.isStock,
+      show_in_feed: input.showInFeed, reviews_enabled: input.reviewsEnabled,
+      display_priority: input.displayPriority, max_purchase_qty: input.maxPurchaseQty,
+      package_length_cm: input.packageLengthCm, package_width_cm: input.packageWidthCm, package_height_cm: input.packageHeightCm,
+      gtin: input.gtin, model_version: input.modelVersion,
+      fulfillment_type: input.fulfillmentType, china_price: input.chinaPrice,
+      china_delivery_min: input.chinaDeliveryMin, china_delivery_max: input.chinaDeliveryMax, china_delivery_unit: input.chinaDeliveryUnit,
+      china_terms_text: input.chinaTermsText, china_delivery_text: input.chinaDeliveryText, china_order_note: input.chinaOrderNote,
+      partner_cost_price: input.partnerCostPrice, partner_stock_unlimited: input.stockUnlimited,
+      partner_approval_status: "PENDING_REVIEW", is_active: false,
+    }).eq("id", productId);
+
+    if (error) return { error: error.message };
+
+    await savePartnerProductCategories(admin, productId, input.categoryId, input.extraCategoryIds);
+
+    revalidatePath("/partner/products");
+    return { success: true };
+  } catch (e: unknown) {
+    console.error("updatePartnerProductAction:", e);
+    const message = e instanceof Error ? e.message : "خطای غیرمنتظره‌ای رخ داد.";
+    return { error: message };
   }
-
-  const { error } = await admin.from("products").update(payload).eq("id", productId);
-  if (error) return { error: error.message };
-
-  revalidatePath("/partner/products");
-  return { success: true };
 }
 
 export async function getMyAllowedCategoriesAction() {
-  const partner = await requireActivePartner();
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("partner_categories")
-    .select("categories(id, name)")
-    .eq("partner_id", partner.id);
-  return (data ?? []).map((r: { categories: unknown }) => r.categories).filter(Boolean);
+  try {
+    const partner = await requireActivePartner();
+    const admin = createAdminClient();
+    const { data } = await admin.from("partner_categories").select("categories(id, name)").eq("partner_id", partner.id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+return (data ?? []).map((r: any) => r.categories).filter(Boolean);
+  } catch {
+    return [];
+  }
 }

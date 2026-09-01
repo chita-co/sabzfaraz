@@ -20,7 +20,17 @@ export interface Partner {
   wallet_pending_balance: number;
   wallet_available_balance: number;
   reserve_balance: number;
+  stock_out_violation_count: number;
+  max_active_products: number | null;
+  max_active_orders: number | null;
+  ai_daily_request_limit: number | null;
+  approved_at: string | null;
   created_at: string;
+}
+
+export interface PartnerCategoryOption {
+  id: string;
+  name: string;
 }
 
 export interface PartnerSettings {

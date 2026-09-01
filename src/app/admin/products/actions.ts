@@ -66,6 +66,7 @@ interface ProductInput {
   chinaTermsText?: string | null;
   chinaDeliveryText?: string | null;
   chinaOrderNote?: string | null;
+  partnerCostPrice?: number | null;
 }
 
 async function generateUniqueSku(
@@ -218,6 +219,7 @@ export async function createProduct(input: ProductInput) {
       china_terms_text: input.chinaTermsText ?? null,
       china_delivery_text: input.chinaDeliveryText ?? null,
       china_order_note: input.chinaOrderNote ?? null,
+      ...(input.partnerCostPrice !== undefined ? { partner_cost_price: input.partnerCostPrice } : {}),
     })
     .select()
     .single();
@@ -295,6 +297,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       china_terms_text: input.chinaTermsText ?? null,
       china_delivery_text: input.chinaDeliveryText ?? null,
       china_order_note: input.chinaOrderNote ?? null,
+      ...(input.partnerCostPrice !== undefined ? { partner_cost_price: input.partnerCostPrice } : {}),
     })
     .eq("id", id);
 

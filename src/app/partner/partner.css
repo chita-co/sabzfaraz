@@ -15,3 +15,7 @@
 .partner-btn-primary { background: #16a34a; color: #fff; }
 .partner-btn-secondary { background: #f3f4f6; color: #374151; }
 .partner-stat-card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
+.image-drag-item { cursor: grab; position: relative; }
+.image-drag-item:active { cursor: grabbing; }
+.image-drag-handle { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.5); color: #fff; border-radius: 4px; padding: 2px; display: flex; align-items: center; justify-content: center; z-index: 1; }
