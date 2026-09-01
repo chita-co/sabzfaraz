@@ -90,6 +90,7 @@ export async function uploadPartnerNationalCardAction(formData: FormData) {
 
 export async function registerPartnerAction(input: RegisterInput) {
   if (!input.termsAccepted) return { error: "برای ثبت‌نام باید قوانین همکاری را بپذیرید." };
+  if (!input.nationalCardImageUrl) return { error: "تصویر کارت ملی الزامی است." };
   if (!input.businessName.trim() || !input.phone.trim() || !input.address.trim() || !input.nationalId.trim() || !input.shebaNumber.trim()) {
     return { error: "همه‌ی فیلدهای اجباری را تکمیل کنید." };
   }

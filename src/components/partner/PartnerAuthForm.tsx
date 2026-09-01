@@ -92,6 +92,10 @@ export default function PartnerAuthForm({
 
   async function handleRegister() {
     console.log("handleRegister called");
+    if (!nationalCardImageUrl) {
+      toast.error("لطفاً تصویر کارت ملی خود را آپلود کنید.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await registerPartnerAction({
@@ -209,7 +213,7 @@ export default function PartnerAuthForm({
           </div>
 
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>تصویر کارت ملی (اختیاری اما پیشنهادی)</label>
+            <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>تصویر کارت ملی *</label>
             <input type="file" accept="image/*" onChange={handleNationalCardUpload} disabled={uploadingNationalCard} />
             {uploadingNationalCard && <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>در حال آپلود...</p>}
             {/* eslint-disable-next-line @next/next/no-img-element */}
