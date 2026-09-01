@@ -6,6 +6,7 @@ import {
   requestPasswordResetAction, confirmPasswordResetAction,
 } from "@/app/partner/login/actions";
 import { uploadPartnerLogoAction } from "@/app/partner/products/actions";
+import { uploadPartnerNationalCardAction } from "@/app/partner/login/actions";
 
 interface CategoryOption { id: string; name: string; }
 
@@ -39,6 +40,8 @@ export default function PartnerAuthForm({
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [nationalCardImageUrl, setNationalCardImageUrl] = useState<string | null>(null);
+  const [uploadingNationalCard, setUploadingNationalCard] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleLogin() {
@@ -75,6 +78,18 @@ export default function PartnerAuthForm({
     setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   }
 
+  async function handleNationalCardUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setUploadingNationalCard(true);
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await uploadPartnerNationalCardAction(fd);
+  setUploadingNationalCard(false);
+  if (res.url) setNationalCardImageUrl(res.url);
+  else toast.error(res.error ?? "خطا در آپلود تصویر کارت ملی");
+}
+
   async function handleRegister() {
     console.log("handleRegister called");
     setLoading(true);
@@ -93,6 +108,7 @@ export default function PartnerAuthForm({
         password,
         categoryIds: selectedCategories,
         termsAccepted,
+        nationalCardImageUrl,
       });
       console.log("register result:", res);
       setLoading(false);
@@ -190,6 +206,14 @@ export default function PartnerAuthForm({
             <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {logoUrl && <img src={logoUrl} alt="لوگو" style={{ width: 50, height: 50, borderRadius: 8, marginTop: 6, objectFit: "cover" }} />}
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>تصویر کارت ملی (اختیاری اما پیشنهادی)</label>
+            <input type="file" accept="image/*" onChange={handleNationalCardUpload} disabled={uploadingNationalCard} />
+            {uploadingNationalCard && <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>در حال آپلود...</p>}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {nationalCardImageUrl && <img src={nationalCardImageUrl} alt="کارت ملی" style={{ width: 80, height: 50, borderRadius: 6, marginTop: 6, objectFit: "cover" }} />}
           </div>
 
           <div>

@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyAllAdmins } from "@/lib/notifications";
 import { sendSms } from "@/lib/sms";
 import { redirect } from "next/navigation";
+import sharp from "sharp";
+import { uploadImage } from "@/lib/arvan";
 
 function toE164(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -67,6 +69,23 @@ interface RegisterInput {
   password: string;
   categoryIds: string[];
   termsAccepted: boolean;
+  nationalCardImageUrl: string | null;
+}
+
+export async function uploadPartnerNationalCardAction(formData: FormData) {
+  const file = formData.get("file") as File | null;
+  if (!file) return { error: "فایلی انتخاب نشده" };
+  if (!file.type.startsWith("image/")) return { error: "فقط تصویر مجاز است" };
+  if (file.size > 5 * 1024 * 1024) return { error: "حداکثر حجم تصویر ۵ مگابایت است" };
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const webp = await sharp(buffer)
+    .resize(1200, undefined, { withoutEnlargement: true })
+    .webp({ quality: 85 })
+    .toBuffer();
+
+  const url = await uploadImage(webp, `partners/national-cards/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`);
+  return { url };
 }
 
 export async function registerPartnerAction(input: RegisterInput) {
@@ -135,6 +154,7 @@ export async function registerPartnerAction(input: RegisterInput) {
     sheba_number: input.shebaNumber.trim(),
     card_number: input.cardNumber.trim() || null,
     status: "PENDING_REVIEW",
+    national_card_image_url: input.nationalCardImageUrl,
   });
 
   if (insertError) {
