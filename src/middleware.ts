@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 
 const OLD_DOMAIN = "sabzfaraz.vercel.app";
 const NEW_DOMAIN = "sabzfaraz.ir";
+const WWW_DOMAIN = "www.sabzfaraz.ir";
 const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/", "/badge-company"]);
 
 export async function middleware(request: NextRequest) {
@@ -11,6 +12,13 @@ export async function middleware(request: NextRequest) {
 
   if (host === OLD_DOMAIN && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
     const url = request.nextUrl.clone();
+    url.protocol = "https:";
+    url.host = NEW_DOMAIN;
+    return NextResponse.redirect(url, 301);
+  }
+
+  if (host === WWW_DOMAIN) {
+   const url = request.nextUrl.clone();
     url.protocol = "https:";
     url.host = NEW_DOMAIN;
     return NextResponse.redirect(url, 301);
