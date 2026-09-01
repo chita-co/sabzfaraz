@@ -6,6 +6,7 @@ import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Analytics from "./analytics";
+import { Toaster } from "react-hot-toast";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -60,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <Analytics />
+        <Toaster position="bottom-center" reverseOrder={false} />
         <Suspense fallback={null}>
           <AnalyticsTracker />
         </Suspense>

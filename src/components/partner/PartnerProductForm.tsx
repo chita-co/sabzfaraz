@@ -135,9 +135,16 @@ product?: any;
       setMetaTitle(res.meta_title ?? "");
       setMetaDescription(res.meta_description ?? "");
       setFocusKeyword(res.focus_keyword ?? "");
-      if (res.suggested_category) {
-        const match = categories.find((c) => c.name === res.suggested_category);
-        if (match) setCategoryId(match.id);
+       if (res.suggested_category) {
+        const suggested = res.suggested_category.trim();
+        const match = categories.find((c) => c.name.trim() === suggested);
+        if (match) {
+          setCategoryId(match.id);
+        } else {
+          setSuggestingNewCategory(true);
+          setNewCategoryName(suggested);
+          toast.success("دسته‌بندی پیشنهادی جدیدی اضافه شد؛ لطفاً تأیید کنید.");
+        }
       }
       toast.success("فیلدها با هوش مصنوعی پر شد — می‌توانید ویرایش کنید.");
     } catch {

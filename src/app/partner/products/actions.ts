@@ -55,8 +55,11 @@ export async function autofillProductWithAiAction(title: string) {
       }
     }
 
-    const { data: allowedCategories } = await admin.from("partner_categories").select("categories(name)").eq("partner_id", partner.id);
-    const categoryNames = (allowedCategories ?? []).flatMap((r: { categories: { name: string }[] | null }) => r.categories?.map(c => c.name) ?? []).filter(Boolean);
+    const { data: allowedCategories } = await admin.from("categories")
+  .select("name")
+  .eq("partner_allowed", true)
+  .eq("is_active", true);
+const categoryNames = (allowedCategories ?? []).map((c: { name: string }) => c.name).filter(Boolean);
 
     const prompt = `
 ${settings.ai_default_prompt}
@@ -149,14 +152,27 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
     }
 
     let categoryId = input.categoryId;
-    if (categoryId) {
-      const { data: categoryCheck } = await admin.from("partner_categories").select("category_id").eq("partner_id", partner.id).eq("category_id", categoryId).maybeSingle();
-      if (!categoryCheck) return { error: "این دسته‌بندی برای شما مجاز نیست." };
-    } else {
-      const { data: fallback } = await admin.from("categories").select("id").eq("is_active", true).order("created_at").limit(1).maybeSingle();
+    if (!categoryId) {
+      const { data: fallback } = await admin.from("categories")
+        .select("id")
+        .eq("partner_allowed", true)
+        .eq("is_active", true)
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
       categoryId = fallback?.id ?? null;
-      if (!categoryId) return { error: "خطای داخلی: دسته‌بندی پیش‌فرض یافت نشد. با پشتیبانی تماس بگیرید." };
+      if (!categoryId) return { error: "خطای داخلی: دسته‌بندی پیش‌فرض یافت نشد." };
     }
+    if (categoryId) {
+      const { data: categoryCheck } = await admin.from("categories")
+        .select("id")
+        .eq("id", categoryId)
+        .eq("partner_allowed", true)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!categoryCheck) return { error: "این دسته‌بندی برای همکاران مجاز نیست." };
+    }
+
 
     const slug = await generateUniqueSlug(admin, input.title);
 
@@ -267,11 +283,13 @@ export async function updatePartnerProductAction(productId: string, input: Partn
 
 export async function getMyAllowedCategoriesAction() {
   try {
-    const partner = await requireActivePartner();
     const admin = createAdminClient();
-    const { data } = await admin.from("partner_categories").select("categories(id, name)").eq("partner_id", partner.id);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-return (data ?? []).map((r: any) => r.categories).filter(Boolean);
+    const { data } = await admin.from("categories")
+      .select("id, name")
+      .eq("partner_allowed", true)
+      .eq("is_active", true)
+      .order("name");
+    return data ?? [];
   } catch {
     return [];
   }
