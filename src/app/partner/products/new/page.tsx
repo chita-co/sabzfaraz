@@ -10,7 +10,7 @@ export default async function NewPartnerProductPage() {
   return (
     <div>
       <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>ثبت محصول جدید</h1>
-      <PartnerProductForm categories={categories} frameConfig={settings ? {
+      <PartnerProductForm mode="create" categories={categories} frameConfig={settings ? {
         frameUrl: settings.frame_template_url ?? "",
         centerX: settings.frame_center_x, centerY: settings.frame_center_y,
         centerWidth: settings.frame_center_width, centerHeight: settings.frame_center_height,
