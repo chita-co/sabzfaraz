@@ -12,6 +12,15 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const refNum = formData.get("RefNum") as string | null;
   const state = formData.get("State") as string | null;
+  const status = formData.get("Status") as string | null;
+
+  console.log("CALLBACK RECEIVED", {
+    orderId,
+    refNum,
+    state,
+    status,
+    allFields: Object.fromEntries(formData.entries()),
+  });
 
   if (!orderId || !refNum) {
     return NextResponse.redirect(`${origin}/checkout?error=invalid`);
@@ -25,7 +34,8 @@ export async function POST(request: NextRequest) {
     .single();
   if (!order) return NextResponse.redirect(`${origin}/checkout?error=notfound`);
 
-  if (state !== "OK") {
+  if (state !== "OK" || status !== "2") {
+    console.log("CALLBACK FAILED STATE", { state, status });
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
@@ -33,6 +43,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await verifyPayment({ amount: order.gateway_amount ?? order.total_amount, refNum });
+
+    console.log("VERIFY RESULT", {
+  refNum,
+  ok: result.ok,
+  raw: result.raw,
+});
+
     if (result.ok) {
       await supabase.from("orders").update({
         payment_status: "PAID",

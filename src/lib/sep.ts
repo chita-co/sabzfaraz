@@ -83,7 +83,8 @@ interface SepVerifyResponse {
     RefNum: string;
     MaskedPan: string;
     TerminalNumber: number;
-    OriginalAmount: number;
+    OriginalAmount?: number;
+    OrginalAmount?: number;
     AffectiveAmount: number;
     StraceNo: string;
   };
@@ -118,10 +119,14 @@ export async function verifyPayment({
   const data = (await res.json()) as SepVerifyResponse;
   const expectedRial = Math.round(amount * RIAL_PER_TOMAN);
 
+  const transactionAmount =
+    data.TransactionDetail?.OriginalAmount ??
+    data.TransactionDetail?.OrginalAmount;
+
   const ok =
     data.ResultCode === 0 &&
     data.Success === true &&
-    data.TransactionDetail?.OriginalAmount === expectedRial;
+    transactionAmount === expectedRial;
 
   return { ok, raw: data };
 }
