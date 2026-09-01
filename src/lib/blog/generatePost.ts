@@ -3,10 +3,11 @@ import { generateArticleWithGemini, generateArticleFromTopic } from "./ai/gemini
 import { generateAndUploadCoverImage } from "./ai/image";
 import { generateUniqueBlogSlug } from "./slug";
 import { buildCategoryTreeLabels, type CategoryLite } from "./categoryTree";
+import { slugify } from "@/lib/slug";
 
 async function generateUniqueCategorySlug(admin: ReturnType<typeof createAdminClient>, name: string) {
-  let base = name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-\u0600-\u06FF]/g, "");
-  if (!base) base = `cat-${Date.now()}`;
+  let base = slugify(name);
+  if (!base || base.length < 2) base = `cat-${Date.now()}`;
   let candidate = base;
   let suffix = 2;
   while (true) {
