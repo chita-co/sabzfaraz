@@ -2,19 +2,19 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const html = `<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" style="height:100%;">
 <head>
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow" />
   <title>نماد اعتماد شرکت</title>
 </head>
-<body style="margin:0; display:flex; justify-content:center; align-items:center; background:transparent;">
-  <a referrerPolicy="origin" target="_blank" href="https://trustseal.enamad.ir/?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk">
+<body style="margin:0; height:100%; display:flex; justify-content:center; align-items:center; background:transparent;">
+  <a referrerPolicy="origin" target="_blank" href="https://trustseal.enamad.ir/?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk" style="display:flex; width:100%; height:100%; justify-content:center; align-items:center;">
     <img
       referrerPolicy="origin"
       src="https://trustseal.enamad.ir/logo.aspx?id=771198&Code=xJTGAB5Hqaj2vITUvbXueKZ5VdtlPdHk"
       alt="نماد اعتماد شرکت"
-      style="display:block; max-width:150px; height:auto;"
+      style="display:block; width:100%; height:100%; object-fit:contain;"
     />
   </a>
 </body>

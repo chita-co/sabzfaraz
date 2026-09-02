@@ -53,7 +53,7 @@ export default function PaymentGatewayBadges() {
             onClick={() => setOpenKey(b.key)}
             style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
-            <span className="enamad-badge-media">
+            <span className="payment-badge-media">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={b.img} alt={b.alt} />
             </span>
