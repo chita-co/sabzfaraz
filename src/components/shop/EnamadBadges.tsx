@@ -45,7 +45,7 @@ function BadgeFrame({ src, title }: { src: string; title: string }) {
           src={src}
           title={title}
           style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-          scrolling="auto"
+          scrolling="no"
           referrerPolicy="origin"
         />
       </div>

@@ -99,12 +99,6 @@ export default async function Footer() {
                 <AparatIcon size={24} />
               </a>
             </div>
-            <div className="footer-trust-row">
-              <EnamadBadges />
-              <EmallsBadge />
-              <PaymentGatewayBadges />
-              <TrustBadges />
-            </div>
           </div>
 
           <div className="footer-col">
@@ -141,6 +135,14 @@ export default async function Footer() {
           </div>
         </div>
 
+        <div className="footer-trust-section">
+         <div className="footer-trust-row">
+            <EnamadBadges />
+            <EmallsBadge />
+           <PaymentGatewayBadges />
+           <TrustBadges />
+          </div>
+       </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {storeName}. تمامی حقوق محفوظ است.</span>
           <span>ساخته‌شده با ❤ برای علاقه‌مندان الکترونیک</span>

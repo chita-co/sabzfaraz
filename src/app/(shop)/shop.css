@@ -1878,13 +1878,23 @@
   }
 }
 
+/* ===== بخش مستقل نشان‌ها، قبل از خط پایانی فوتر ===== */
+.footer-trust-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* ===== چیدمان کلی نشان‌ها در فوتر ===== */
 .footer-trust-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-top: 16px;
-  flex-wrap: nowrap;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* ===== ردیف اینمادها ===== */
@@ -1912,9 +1922,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
-  padding: 6px;
+  width: 84px;
+  height: 84px;
+  padding: 8px;
   border: 1.5px solid rgba(212, 175, 55, 0.7);
   border-radius: 8px;
   background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
@@ -1962,8 +1972,8 @@
 
 /* ===== دکمه‌های TrustBadges هم‌سایز با کادر لوگوی اینماد ===== */
 .trust-badge-btn {
-  width: 60px;
-  height: 60px;
+  width: 84px;
+  height: 84px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1986,9 +1996,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
-  padding: 6px;
+  width: 84px;
+  height: 84px;
+  padding: 8px;
   border: 1.5px solid rgba(212, 175, 55, 0.7);
   border-radius: 8px;
   background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
