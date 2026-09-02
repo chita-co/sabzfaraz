@@ -2002,7 +2002,7 @@
   background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
   box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 4px 14px rgba(212, 175, 55, 0.12);
   cursor: pointer;
-  padding: 6px;
+  padding: 0px;
   flex-shrink: 0;
 }
 
