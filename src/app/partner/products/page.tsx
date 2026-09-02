@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PartnerProductDeleteButton from "@/components/partner/PartnerProductDeleteButton";
 import { requirePartnerForPage } from "@/lib/partners/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -44,7 +45,10 @@ export default async function PartnerProductsPage() {
                   </span>
                   {p.partner_rejection_reason && <p style={{ fontSize: 10.5, color: "#dc2626" }}>{p.partner_rejection_reason}</p>}
                 </td>
-                <td style={{ padding: 8 }}><Link href={`/partner/products/${p.id}/edit`} className="partner-btn partner-btn-secondary" style={{ padding: "4px 12px", fontSize: 12 }}>ویرایش</Link></td>
+                <td style={{ padding: 8, display: "flex", gap: 6 }}>
+  <Link href={`/partner/products/${p.id}/edit`} className="partner-btn partner-btn-secondary" style={{ padding: "4px 12px", fontSize: 12 }}>ویرایش</Link>
+  <PartnerProductDeleteButton productId={p.id} />
+</td>
               </tr>
             ))}
           </tbody>

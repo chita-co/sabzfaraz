@@ -27,13 +27,14 @@ interface FrameConfig { frameUrl: string; centerX: number; centerY: number; cent
 interface ImageEntry { finalUrl: string; rawCropUrl: string; alt: string; }
 
 export default function PartnerProductForm({
-  mode, product, categories, frameConfig,
+  mode, product, categories, frameConfig, watermarkConfig,
 }: {
   mode: "create" | "edit";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 product?: any;
   categories: PartnerCategoryOption[];
   frameConfig: FrameConfig | null;
+  watermarkConfig?: { enabled: boolean; watermarkUrl: string | null; opacity: number; rotation: number; scalePercent: number };
 }) {
   const router = useRouter();
 
@@ -466,7 +467,7 @@ product?: any;
               قالب تصویر هنوز توسط مدیر سایت تنظیم نشده است. تا وقتی این قالب تنظیم نشه، امکان افزودن عکس (و در نتیجه ثبت محصول) وجود نداره — لطفاً با پشتیبانی سبزفراز هماهنگ کنید.
             </p>
           )}
-          {frameConfig?.frameUrl && <ImageFrameEditor config={frameConfig} onComposited={handleImageComposited} />}
+          {frameConfig?.frameUrl && <ImageFrameEditor config={frameConfig} watermarkConfig={watermarkConfig} onComposited={handleImageComposited} />}
 
           {images.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px,1fr))", gap: 10, marginTop: 14 }}>

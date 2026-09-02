@@ -18,6 +18,35 @@ export async function regenerateAllPartnerProductImages(limit = 20) {
 
   const frameResized = await sharp(frameBuffer).resize(outputSize, outputSize).ensureAlpha().toBuffer();
 
+  // لایه‌ی واترمارک (اگر فعال باشد) — یک‌بار ساخته می‌شود و برای همه‌ی تصاویر همین دسته استفاده می‌شود
+  let watermarkLayer: Buffer | null = null;
+  if (settings.watermark_enabled && settings.watermark_url) {
+    try {
+      const wmRes = await fetch(settings.watermark_url);
+      const wmRawBuffer = Buffer.from(await wmRes.arrayBuffer());
+      const wmTargetWidth = Math.round((settings.watermark_scale_percent / 100) * outputSize);
+
+      const wmResized = await sharp(wmRawBuffer).resize({ width: wmTargetWidth }).ensureAlpha().toBuffer();
+      const wmRotated = await sharp(wmResized)
+        .rotate(settings.watermark_rotation, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .linear([1, 1, 1, settings.watermark_opacity], [0, 0, 0, 0])
+        .toBuffer();
+      const wmRotatedMeta = await sharp(wmRotated).metadata();
+      const wmW = wmRotatedMeta.width ?? wmTargetWidth;
+      const wmH = wmRotatedMeta.height ?? wmTargetWidth;
+
+      watermarkLayer = await sharp({
+        create: { width: outputSize, height: outputSize, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+      })
+        .composite([{ input: wmRotated, left: Math.round((outputSize - wmW) / 2), top: Math.round((outputSize - wmH) / 2) }])
+        .png()
+        .toBuffer();
+    } catch (e) {
+      console.error("خطا در ساخت لایه‌ی واترمارک:", e);
+      watermarkLayer = null;
+    }
+  }
+
   const { data: sources } = await admin
     .from("partner_product_image_sources")
     .select("*")
@@ -33,13 +62,16 @@ export async function regenerateAllPartnerProductImages(limit = 20) {
       const rawBuffer = Buffer.from(await rawRes.arrayBuffer());
       const resizedCrop = await sharp(rawBuffer).resize(centerWpx, centerHpx, { fit: "cover" }).toBuffer();
 
+      const compositeLayers: { input: Buffer; left: number; top: number }[] = [
+        { input: resizedCrop, left: centerXpx, top: centerYpx },
+        { input: frameResized, left: 0, top: 0 },
+      ];
+      if (watermarkLayer) compositeLayers.push({ input: watermarkLayer, left: 0, top: 0 });
+
       const finalBuffer = await sharp({
         create: { width: outputSize, height: outputSize, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
       })
-        .composite([
-          { input: resizedCrop, left: centerXpx, top: centerYpx },
-          { input: frameResized, left: 0, top: 0 },
-        ])
+        .composite(compositeLayers)
         .webp({ quality: 90 })
         .toBuffer();
 

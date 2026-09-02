@@ -8,11 +8,13 @@ interface FrameConfig {
   outputSize: number;
 }
 
+interface WatermarkConfig { enabled: boolean; watermarkUrl: string | null; opacity: number; rotation: number; scalePercent: number; }
+
 const PREVIEW_SIZE = 260;
 
 export default function ImageFrameEditor({
-  config, onComposited,
-}: { config: FrameConfig; onComposited: (finalBlob: Blob, rawCropBlob: Blob) => void }) {
+  config, watermarkConfig, onComposited,
+}: { config: FrameConfig; watermarkConfig?: WatermarkConfig; onComposited: (finalBlob: Blob, rawCropBlob: Blob) => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoSrc, setPhotoSrc] = useState<string | null>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -87,8 +89,25 @@ export default function ImageFrameEditor({
 await new Promise((resolve) => { frameImg.onload = resolve; frameImg.src = proxiedFrameUrl; });
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
+    if (watermarkConfig?.enabled && watermarkConfig.watermarkUrl) {
+      const wmImg = new Image();
+      wmImg.crossOrigin = "anonymous";
+      await new Promise((resolve) => { wmImg.onload = resolve; wmImg.src = watermarkConfig.watermarkUrl as string; });
+
+      const wmWidth = (watermarkConfig.scalePercent / 100) * canvas.width;
+      const wmHeight = wmWidth * (wmImg.height / wmImg.width);
+
+      ctx.save();
+      ctx.globalAlpha = watermarkConfig.opacity;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((watermarkConfig.rotation * Math.PI) / 180);
+      ctx.drawImage(wmImg, -wmWidth / 2, -wmHeight / 2, wmWidth, wmHeight);
+      ctx.restore();
+    }
+
+
     canvas.toBlob((blob) => { if (blob) onComposited(blob, rawCropBlob); }, "image/webp", 0.9);
-  }, [photoSrc, offset, zoom, config, onComposited]);
+  }, [photoSrc, offset, zoom, config, onComposited, watermarkConfig]);
 
   return (
     <div>

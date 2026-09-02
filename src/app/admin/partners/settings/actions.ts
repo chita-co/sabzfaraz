@@ -74,3 +74,27 @@ export async function triggerImageRegenerationAction() {
     return { error: message };
   }
 }
+
+export async function uploadWatermarkAction(formData: FormData) {
+  const admin = createAdminClient();
+  const file = formData.get("file") as File | null;
+
+  const payload: Record<string, unknown> = {
+    watermark_enabled: formData.get("watermark_enabled") === "on",
+    watermark_opacity: Number(formData.get("watermark_opacity")) || 0.35,
+    watermark_rotation: Number(formData.get("watermark_rotation")) || -30,
+    watermark_scale_percent: Number(formData.get("watermark_scale_percent")) || 45,
+  };
+
+  if (file && file.size > 0) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const png = await sharp(buffer).png().toBuffer();
+    const url = await uploadImage(png, `partners/watermark-${Date.now()}.png`,"image/png");
+    payload.watermark_url = url;
+  }
+
+  await admin.from("partner_settings").update(payload).eq("id", 1);
+  await admin.from("partner_product_image_sources").update({ needs_regeneration: true, regeneration_attempts: 0 });
+
+  revalidatePath("/admin/partners/settings");
+}

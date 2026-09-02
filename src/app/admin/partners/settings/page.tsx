@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updatePartnerSettingsAction, uploadFrameTemplateAction, addAiKeyAction, deleteAiKeyAction } from "./actions";
 import RegenerateImagesButton from "@/components/admin/RegenerateImagesButton";
+import { uploadWatermarkAction } from "./actions";
 
 export default async function AdminPartnerSettingsPage() {
   const admin = createAdminClient();
@@ -47,6 +48,27 @@ export default async function AdminPartnerSettingsPage() {
           <button className="admin-btn admin-btn-primary" style={{ alignSelf: "flex-start" }}>ذخیره قالب</button>
         </form>
         <RegenerateImagesButton />
+      </div>
+
+      <div className="admin-card" style={{ maxWidth: 640 }}>
+        <h2 style={{ fontWeight: 800, marginBottom: 6 }}>واترمارک تصاویر محصولات همکاران</h2>
+        <p style={{ fontSize: 11.5, color: "#6b7280", marginBottom: 12 }}>یک تصویر PNG با پس‌زمینه‌ی شفاف (مثلاً نوشته‌ی «sabzfaraz.ir») آپلود کنید. این نشان روی تمام تصاویر محصولات همکاران، وسط تصویر، مورب و محو قرار می‌گیرد.</p>
+        <form action={uploadWatermarkAction} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {settings?.watermark_url && <img src={settings.watermark_url} alt="واترمارک فعلی" style={{ width: 140, borderRadius: 8, border: "1px solid #e5e7eb", background: "#111827", padding: 8 }} />}
+          <input type="file" name="file" accept="image/png" />
+          <label className="admin-switch">
+            <input type="checkbox" name="watermark_enabled" defaultChecked={settings?.watermark_enabled} />
+            <span className="admin-switch-track" />
+            <span>واترمارک روی تصاویر همکاران فعال باشد</span>
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            <label className="admin-form-group"><span>شفافیت (۰ تا ۱)</span><input className="admin-input" name="watermark_opacity" type="number" step="0.05" min="0" max="1" defaultValue={settings?.watermark_opacity ?? 0.35} /></label>
+            <label className="admin-form-group"><span>زاویه چرخش (درجه)</span><input className="admin-input" name="watermark_rotation" type="number" defaultValue={settings?.watermark_rotation ?? -30} /></label>
+            <label className="admin-form-group"><span>اندازه نسبت به عکس (٪)</span><input className="admin-input" name="watermark_scale_percent" type="number" defaultValue={settings?.watermark_scale_percent ?? 45} /></label>
+          </div>
+          <button className="admin-btn admin-btn-primary" style={{ alignSelf: "flex-start" }}>ذخیره واترمارک</button>
+        </form>
       </div>
 
       <div className="admin-card" style={{ maxWidth: 640 }}>

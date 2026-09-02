@@ -46,7 +46,7 @@ export default async function EditPartnerProductPage({
   // دریافت تنظیمات قاب تصویر
   const { data: settings } = await admin
     .from("partner_settings")
-    .select("frame_template_url, frame_center_x, frame_center_y, frame_center_width, frame_center_height, frame_output_size")
+    .select("frame_template_url, frame_center_x, frame_center_y, frame_center_width, frame_center_height, frame_output_size, watermark_url, watermark_enabled, watermark_opacity, watermark_rotation, watermark_scale_percent")
     .eq("id", 1)
     .single();
 
@@ -77,6 +77,11 @@ export default async function EditPartnerProductPage({
       }
     : null;
 
+  const watermarkConfig = settings ? {
+    enabled: settings.watermark_enabled, watermarkUrl: settings.watermark_url,
+    opacity: settings.watermark_opacity, rotation: settings.watermark_rotation, scalePercent: settings.watermark_scale_percent,
+  } : undefined;
+
   return (
     <div>
       <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>
@@ -87,6 +92,7 @@ export default async function EditPartnerProductPage({
         product={productForForm}
         categories={categories}
         frameConfig={frameConfig}
+        watermarkConfig={watermarkConfig}
       />
     </div>
   );

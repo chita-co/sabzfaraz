@@ -34,6 +34,11 @@ export interface PartnerCategoryOption {
 }
 
 export interface PartnerSettings {
+  watermark_url: string | null;
+  watermark_enabled: boolean;
+  watermark_opacity: number;
+  watermark_rotation: number;
+  watermark_scale_percent: number;
   min_profit_percent: number;
   min_allowed_stock: number;
   settlement_hold_days: number;
