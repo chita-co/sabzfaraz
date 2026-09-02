@@ -6,11 +6,14 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPartnerProductsQueuePage() {
   const admin = createAdminClient();
-  const { data: products } = await admin
-  .from("products")
-  .select("id, name, description, price, partner_cost_price, stock, images, category:categories(name), partner:partners(business_name, phone), partner_approval_status, is_active")
-  .not("partner_id", "is", null)
-  .order("created_at", { ascending: true });
+  const { data: products, error } = await admin
+    .from("products")
+    .select("id, name, description, price, partner_cost_price, stock, images, category:categories!products_category_id_fkey(name), partner:partners(business_name, phone), partner_approval_status, is_active")
+    .not("partner_id", "is", null)
+    .eq("partner_approval_status", "PENDING_REVIEW")
+    .order("created_at", { ascending: true });
+
+  if (error) console.error("خطا در دریافت صف بررسی محصولات همکاران:", error.message);
 
   return (
     <div>

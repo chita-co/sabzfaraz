@@ -111,13 +111,15 @@ await new Promise((resolve) => { frameImg.onload = resolve; frameImg.src = proxi
             <div
               style={{
                 position: "absolute",
-                left: `calc(${config.centerX}% + ${offset.x}px)`,
-                top: `calc(${config.centerY}% + ${offset.y}px)`,
-                width: `${config.centerWidth * zoom}%`,
-                height: `${config.centerHeight * zoom}%`,
+                left: `${config.centerX}%`,
+                top: `${config.centerY}%`,
+                width: `${config.centerWidth}%`,
+                height: `${config.centerHeight}%`,
                 backgroundImage: `url(${photoSrc})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                transformOrigin: "center",
               }}
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
