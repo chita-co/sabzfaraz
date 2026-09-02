@@ -4,6 +4,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 import TrustBadges from "./TrustBadges";
 import EnamadBadges from "./EnamadBadges";
 import EmallsBadge from "./EmallsBadge";
+import PaymentGatewayBadges from "./PaymentGatewayBadges";
 
 // آیکون SVG اینستاگرام جایگزین (به دلیل حذف از lucide-react)
 function InstagramIcon({ size = 16 }: { size?: number }) {
@@ -101,6 +102,7 @@ export default async function Footer() {
             <div className="footer-trust-row">
               <EnamadBadges />
               <EmallsBadge />
+              <PaymentGatewayBadges />
               <TrustBadges />
             </div>
           </div>

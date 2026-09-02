@@ -1882,7 +1882,7 @@
 .footer-trust-row {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 8px;
   margin-top: 16px;
   flex-wrap: nowrap;
 }
@@ -1912,11 +1912,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 160px;      /* کمی عریض‌تر برای جا دادن کامل لوگو */
-  height: 160px;     /* ارتفاع بیشتر تا ستاره‌های اینماد هم دیده شوند */
-  padding: 10px;
+  width: 60px;
+  height: 60px;
+  padding: 6px;
   border: 1.5px solid rgba(212, 175, 55, 0.7);
-  border-radius: 14px;
+  border-radius: 8px;
   background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
   box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 4px 14px rgba(212, 175, 55, 0.12);
   flex-shrink: 0;
@@ -1933,7 +1933,7 @@
 
 /* ===== کادر طلایی فقط دور متن زیر هر اینماد ===== */
 .enamad-badge-label {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
   color: #fde68a;
   text-align: center;
@@ -1942,7 +1942,7 @@
   white-space: pre-line;
   border: 1px solid rgba(212, 175, 55, 0.5);
   border-radius: 999px;
-  padding: 5px 14px;
+  padding: 3px 8px;
   background: rgba(212, 175, 55, 0.1);
 }
 
@@ -1953,11 +1953,18 @@
   gap: 14px;
 }
 
+/* ===== ردیف نشان‌های درگاه پرداخت (سامان + شاپرک) ===== */
+.payment-badges-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 /* ===== دکمه‌های TrustBadges هم‌سایز با کادر لوگوی اینماد ===== */
 .trust-badge-btn {
-  width: 160px;      /* هم‌سایز با enamad-badge-media */
-  height: 160px;
-  border-radius: 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
@@ -1979,11 +1986,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 160px;
-  height: 160px;
-  padding: 10px;
+  width: 60px;
+  height: 60px;
+  padding: 6px;
   border: 1.5px solid rgba(212, 175, 55, 0.7);
-  border-radius: 14px;
+  border-radius: 8px;
   background: linear-gradient(145deg, rgba(255, 215, 0, 0.08), rgba(212, 175, 55, 0.02));
   box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.15), 0 4px 14px rgba(212, 175, 55, 0.12);
   flex-shrink: 0;
@@ -2005,7 +2012,8 @@
   }
 
   .enamad-badges-row,
-  .trust-badges-row {
+  .trust-badges-row,
+  .payment-badges-row {
     width: 100%;
     justify-content: center;
   }
@@ -2065,4 +2073,59 @@
   left: 0 !important;
   right: auto !important;
   max-width: calc(100vw - 24px) !important;
+}
+
+.gateway-badge-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.gateway-badge-modal {
+  background: #fff;
+  border-radius: 18px;
+  max-width: 420px;
+  width: 100%;
+  padding: 24px;
+  position: relative;
+  text-align: center;
+  direction: rtl;
+}
+.gateway-badge-modal-close {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+}
+.gateway-badge-modal-img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  margin: 0 auto 14px;
+  display: block;
+  border-radius: 10px;
+}
+.gateway-badge-modal h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 10px;
+}
+.gateway-badge-modal p {
+  font-size: 12.5px;
+  color: #4b5563;
+  line-height: 1.9;
+  margin-bottom: 8px;
 }
