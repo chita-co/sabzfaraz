@@ -22,6 +22,7 @@ export default async function PartnerProductsPage() {
         <div style={{ display: "flex", gap: 8 }}>
           <Link href="/partner/products/new" className="partner-btn partner-btn-primary">+ افزودن محصول جدید</Link>
           <Link href="/partner/products/bulk-upload" className="partner-btn partner-btn-secondary">افزودن گروهی با اکسل</Link>
+          <Link href="/partner/products/bulk-price-update" className="partner-btn partner-btn-secondary">تغییر قیمت گروهی</Link>
         </div>
       </div>
       <div className="partner-card">

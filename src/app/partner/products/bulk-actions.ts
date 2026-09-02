@@ -56,5 +56,6 @@ export async function bulkCreatePartnerProductsAction(rows: BulkRow[]) {
   }
 
   revalidatePath("/partner/products");
+  revalidatePath("/admin/partners/products");
   return { results };
 }

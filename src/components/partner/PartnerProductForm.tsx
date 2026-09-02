@@ -129,13 +129,27 @@ product?: any;
       const res = await autofillProductWithAiAction(title);
       setAutofilling(false);
       if (res.error) return toast.error(res.error);
+
+      // عنوان فارسی اصلاح‌شده و نام انگلیسی
+      if (res.title) setTitle(res.title);
+      if (res.name_en) setNameEn(res.name_en);
+
+      // برند و وزن
+      if (res.brand) setBrand(res.brand);
+      if (res.weight_grams !== undefined && res.weight_grams !== null) {
+        setWeightGrams(String(res.weight_grams));
+      }
+
+      // توضیحات، توضیح کوتاه، برچسب‌ها و سئو
       setDescription(res.description ?? "");
       setShortDescription(res.short_description ?? "");
       setTagsInput((res.tags ?? []).join("، "));
       setMetaTitle(res.meta_title ?? "");
       setMetaDescription(res.meta_description ?? "");
       setFocusKeyword(res.focus_keyword ?? "");
-       if (res.suggested_category) {
+
+      // دسته‌بندی
+      if (res.suggested_category) {
         const suggested = res.suggested_category.trim();
         const match = categories.find((c) => c.name.trim() === suggested);
         if (match) {
@@ -146,6 +160,43 @@ product?: any;
           toast.success("دسته‌بندی پیشنهادی جدیدی اضافه شد؛ لطفاً تأیید کنید.");
         }
       }
+
+      // رنگ‌ها
+      if (Array.isArray(res.colors)) {
+        const colorRows = res.colors
+          .filter((c: { name?: string; hex?: string }) => c?.name)
+          .map((c: { name: string; hex?: string }) => ({
+            name: c.name,
+            hex: c.hex || "#c0c0c0",
+          }));
+        if (colorRows.length > 0) setColors(colorRows);
+      }
+
+      // سایزها
+      if (Array.isArray(res.sizes)) {
+        setSizes(res.sizes.filter((s: unknown) => typeof s === "string" && s.trim()).map((s: string) => s.trim()));
+      }
+
+      // ویژگی‌های فنی
+      if (Array.isArray(res.attributes)) {
+        const attrRows: AttributeRow[] = res.attributes
+          .filter((a: { key?: string; value?: string }) => a?.key && a?.value)
+          .map((a: { key: string; value: string }) => ({
+            id: crypto.randomUUID(),
+            key: a.key,
+            value: a.value,
+          }));
+        if (attrRows.length > 0) setAttributes(attrRows);
+      }
+
+      // فروش واحدی و حداقل سفارش
+      if (typeof res.is_sold_by_unit === "boolean") setIsSoldByUnit(res.is_sold_by_unit);
+      if (res.unit_label) setUnitLabel(res.unit_label);
+      if (typeof res.has_min_order_quantity === "boolean") setHasMinOrderQty(res.has_min_order_quantity);
+      if (res.min_order_quantity !== undefined && res.min_order_quantity !== null) {
+        setMinOrderQuantity(String(res.min_order_quantity));
+      }
+
       toast.success("فیلدها با هوش مصنوعی پر شد — می‌توانید ویرایش کنید.");
     } catch {
       setAutofilling(false);

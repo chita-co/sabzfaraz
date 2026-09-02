@@ -64,19 +64,49 @@ const categoryNames = (allowedCategories ?? []).map((c: { name: string }) => c.n
     const prompt = `
 ${settings.ai_default_prompt}
 
-عنوان محصول: ${title}
-دسته‌بندی‌های مجاز برای این همکار: ${categoryNames.join("، ") || "نامشخص"}
+عنوان واردشده توسط همکار: ${title}
+دسته‌بندی‌های مجاز: ${categoryNames.join("، ") || "نامشخص"}
+
+تو یک کارشناس تولید محتوای محصولات فروشگاهی هستی. بر اساس عنوان محصول، اطلاعات زیر را کامل و دقیق تولید کن. اگر عنوان ناقص یا نادرست است، «title» را کامل و صحیح برگردان. قیمت محصول را همکار به‌صورت دستی وارد می‌کند، پس هیچ فیلد قیمتی برنگردان. توضیحات باید ساختارمند، کامل و متناسب با کالای الکترونیک باشد.
 
 فقط یک JSON با این ساختار دقیق برگردان (بدون Markdown fence، بدون توضیح اضافه):
 {
+  "title": "نام کامل و اصلاح‌شده فارسی محصول (مثلاً: سیم لحیم متری 0.8 ASAHI – سیم قلع 63/37 با قطر 0.8 میلی‌متر)",
+  "name_en": "نام انگلیسی دقیق و استاندارد (kebab یا title case طبیعی)",
+  "brand": "برند محصول یا null اگر مشخص نیست",
+  "weight_grams": عدد تقریبی وزن هر واحد به گرم (بدون واحد، فقط عدد)",
+  "description": "توضیح کامل HTML ساده (h3, p, ul, li, strong) شامل مشخصات فنی، کاربردها، نکات مهم، محتویات بسته و یک پاراگراف معرفی فروشگاه در انتها مطابق نمونه",
   "short_description": "خلاصه یک یا دو جمله‌ی جذاب برای لیست محصولات",
-  "description": "توضیح کامل HTML ساده (h3, p, ul, li) شامل ویژگی‌ها، کاربردها و مشخصات فنی محصول",
-  "tags": ["برچسب۱", "برچسب۲", "برچسب۳"],
+  "tags": ["برچسب۱", "برچسب۲", "برچسب۳", "..."],
   "meta_title": "عنوان سئو (حداکثر ۶۰ کاراکتر)",
   "meta_description": "توضیح متا (حداکثر ۱۶۰ کاراکتر)",
   "focus_keyword": "کلمه کلیدی اصلی",
-  "suggested_category": "نزدیک‌ترین نام از دسته‌بندی‌های مجاز بالا، یا null اگر هیچ‌کدام مناسب نیست"
-}`.trim();
+  "suggested_category": "نزدیک‌ترین نام از دسته‌بندی‌های مجاز بالا، یا null",
+  "colors": [{"name":"نقره‌ای","hex":"#c0c0c0"}],
+  "sizes": ["0.8mm"],
+  "attributes": [
+    {"key":"نوع محصول","value":"سیم لحیم"},
+    {"key":"قطر","value":"0.8 میلی‌متر"}
+  ],
+  "is_sold_by_unit": true یا false,
+  "unit_label": "متر" یا "کیلوگرم" یا null,
+  "has_min_order_quantity": true یا false,
+  "min_order_quantity": عدد یا null
+}
+
+نمونه‌ی توضیح کامل (قالب HTML، ولی مختصرتر متناسب محصول):
+<h3>معرفی محصول</h3>
+<p>...</p>
+<h3>مشخصات فنی</h3>
+<ul><li>...</li></ul>
+<h3>کاربردها</h3>
+<p>...</p>
+<h3>نکات مهم</h3>
+<p>...</p>
+<h3>محتویات بسته</h3>
+<p>...</p>
+<p>فروشگاه اینترنتی سبزفراز | sabzfaraz.ir</p>
+`.trim();
 
     const raw = await callAiWithRotation(prompt, settings.ai_rotation_mode);
     const parsed = JSON.parse(raw);
@@ -222,6 +252,7 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
     } catch (e) { console.error(e); }
 
     revalidatePath("/partner/products");
+    revalidatePath("/admin/partners/products");
     return { success: true, productId: product.id };
   } catch (e: unknown) {
     console.error("createPartnerProductAction:", e);
@@ -273,6 +304,7 @@ export async function updatePartnerProductAction(productId: string, input: Partn
     await savePartnerProductCategories(admin, productId, input.categoryId, input.extraCategoryIds);
 
     revalidatePath("/partner/products");
+    revalidatePath("/admin/partners/products");
     return { success: true };
   } catch (e: unknown) {
     console.error("updatePartnerProductAction:", e);
@@ -293,4 +325,72 @@ export async function getMyAllowedCategoriesAction() {
   } catch {
     return [];
   }
+}
+
+export async function bulkAdjustPartnerProductPricesAction(input: {
+  adjustType: "percent" | "fixed";
+  direction: "increase" | "decrease";
+  amount: number;
+  roundingStep: number;
+  roundingMode: "up" | "down" | "nearest";
+}) {
+  const partner = await requireActivePartner();
+  const admin = createAdminClient();
+
+  const { data: products } = await admin
+    .from("products")
+    .select("id, price, discount_price, partner_cost_price")
+    .eq("partner_id", partner.id);
+
+  if (!products || products.length === 0) {
+    return { error: "محصولی برای تغییر قیمت یافت نشد." };
+  }
+
+  const factor =
+    input.direction === "increase"
+      ? 1 + input.amount / 100
+      : 1 - input.amount / 100;
+
+  let updatedCount = 0;
+  for (const p of products) {
+    let newPrice = p.price;
+    let newDiscount = p.discount_price;
+    let newCost = p.partner_cost_price ?? 0;
+
+    if (input.adjustType === "percent") {
+      newPrice = p.price * factor;
+      newDiscount = p.discount_price ? p.discount_price * factor : null;
+      newCost = (p.partner_cost_price ?? 0) * factor;
+    } else {
+      const diff = input.direction === "increase" ? input.amount : -input.amount;
+      newPrice = p.price + diff;
+      newDiscount = p.discount_price ? p.discount_price + diff : null;
+      newCost = (p.partner_cost_price ?? 0) + diff;
+    }
+
+    // گرد کردن
+    newPrice = Math.round(newPrice);
+    newDiscount = newDiscount ? Math.round(newDiscount) : null;
+    newCost = Math.round(newCost);
+    if (newPrice < 0) newPrice = 0;
+    if (newCost < 0) newCost = 0;
+
+    const updatePayload: Record<string, number | null> = {
+      price: newPrice,
+      partner_cost_price: newCost,
+    };
+    if (p.discount_price !== null) {
+      updatePayload.discount_price = newDiscount;
+    }
+
+    const { error } = await admin
+      .from("products")
+      .update(updatePayload)
+      .eq("id", p.id);
+    if (!error) updatedCount++;
+  }
+
+  revalidatePath("/partner/products");
+  revalidatePath("/partner/products/bulk-price-update");
+  return { success: true, updatedCount };
 }
