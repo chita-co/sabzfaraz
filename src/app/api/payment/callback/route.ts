@@ -65,10 +65,20 @@ export async function POST(request: NextRequest) {
       if (orderItemsForStock) {
         for (const item of orderItemsForStock) {
           try {
-            await supabase.rpc("decrement_product_stock", {
-              p_product_id: item.product_id,
-              p_qty: item.quantity,
-            });
+            // دریافت موجودی فعلی محصول
+            const { data: productRow } = await supabase
+              .from("products")
+              .select("stock")
+              .eq("id", item.product_id)
+              .maybeSingle();
+
+            if (productRow && typeof productRow.stock === "number") {
+              const newStock = Math.max(0, productRow.stock - item.quantity);
+              await supabase
+                .from("products")
+                .update({ stock: newStock })
+                .eq("id", item.product_id);
+            }
           } catch (e) {
             console.error("خطا در کسر موجودی محصول:", e);
           }
