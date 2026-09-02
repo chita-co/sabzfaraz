@@ -2,13 +2,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { approvePartnerProductAction, rejectPartnerProductAction } from "./actions";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPartnerProductsQueuePage() {
   const admin = createAdminClient();
   const { data: products } = await admin
-    .from("products")
-    .select("id, name, description, price, partner_cost_price, stock, images, category:categories(name), partner:partners(business_name, phone)")
-    .eq("partner_approval_status", "PENDING_REVIEW")
-    .order("created_at", { ascending: true });
+  .from("products")
+  .select("id, name, description, price, partner_cost_price, stock, images, category:categories(name), partner:partners(business_name, phone), partner_approval_status, is_active")
+  .not("partner_id", "is", null)
+  .order("created_at", { ascending: true });
 
   return (
     <div>

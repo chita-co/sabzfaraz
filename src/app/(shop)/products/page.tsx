@@ -16,7 +16,11 @@ export default async function AllProductsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase.from("products").select("*", { count: "exact" }).eq("is_active", true);
+  let query = supabase
+  .from("products")
+  .select("*", { count: "exact" })
+  .eq("is_active", true)
+  .or("partner_id.is.null,partner_approval_status.eq.APPROVED");
   if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
   else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
   else if (sort === "popular") query = query.order("rating_avg", { ascending: false });

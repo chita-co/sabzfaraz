@@ -61,6 +61,7 @@ export default async function HomePage() {
       .select("*")
       .eq("is_active", true)
       .eq("show_in_newest", true)
+      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
       .order("created_at", { ascending: false })
       .limit(12),
     supabase
@@ -80,6 +81,7 @@ export default async function HomePage() {
       .select("*")
       .eq("is_active", true)
       .eq("is_deal", true)
+      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
@@ -87,6 +89,7 @@ export default async function HomePage() {
       .select("*")
       .eq("is_active", true)
       .eq("is_popular", true)
+      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
       .order("created_at", { ascending: false })
       .limit(12),
     supabase
@@ -94,6 +97,7 @@ export default async function HomePage() {
       .select("*")
       .eq("is_active", true)
       .eq("is_stock", true)
+      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
       .order("created_at", { ascending: false })
       .limit(12),
     user
