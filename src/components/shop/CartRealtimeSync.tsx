@@ -21,6 +21,7 @@ export default function CartRealtimeSync() {
           "postgres_changes",
           { event: "DELETE", schema: "public", table: "cart_items", filter: `user_id=eq.${userId}` },
           (payload) => {
+            console.log("🔴 DELETE event received:", payload);
             const old = payload.old as { product_id: string; selected_color: string | null; selected_size: string | null };
             removeItem(old.product_id, old.selected_color || null, old.selected_size || null);
           }
@@ -29,11 +30,14 @@ export default function CartRealtimeSync() {
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "cart_items", filter: `user_id=eq.${userId}` },
           (payload) => {
+            console.log("🟡 UPDATE event received:", payload);
             const row = payload.new as { product_id: string; selected_color: string | null; selected_size: string | null; quantity: number };
             updateQuantity(row.product_id, row.selected_color || null, row.selected_size || null, row.quantity);
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+            console.log("📡 Channel status:", status);
+        });
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
