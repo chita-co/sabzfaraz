@@ -21,7 +21,7 @@ export default function CartRealtimeSync() {
           "postgres_changes",
           { event: "DELETE", schema: "public", table: "cart_items", filter: `user_id=eq.${userId}` },
           (payload) => {
-            console.log("🔴 DELETE event received:", payload);
+            console.log("🔴 DELETE payload.old:", JSON.stringify(payload.old));
             const old = payload.old as { product_id: string; selected_color: string | null; selected_size: string | null };
             removeItem(old.product_id, old.selected_color || null, old.selected_size || null);
           }
