@@ -86,6 +86,7 @@ const navConfig: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { href: "/admin/orders", label: "همه سفارش‌ها" },
+      { href: "/admin/carts", label: "سبدهای خرید کاربران" },
       { href: "/admin/orders/trash", label: "سطل زباله سفارش‌ها" },
       { href: "/admin/finance/invoices", label: "مدیریت فاکتورها" },
       { href: "/admin/bulk-orders", label: "سفارشات جمعی" },

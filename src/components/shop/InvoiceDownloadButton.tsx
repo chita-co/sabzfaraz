@@ -23,6 +23,7 @@ export default function InvoiceDownloadButton({
   items,
   subtotal,
   shippingCost,
+  discountAmount,
   shippingLabel,
   logoUrl,
   storeName = "سبزفراز",
@@ -42,6 +43,7 @@ export default function InvoiceDownloadButton({
   items: InvoiceLineItem[];
   subtotal: number;
   shippingCost: number;
+  discountAmount?: number;
   shippingLabel?: string;
   total: number;
   logoUrl: string | null;
@@ -77,6 +79,7 @@ export default function InvoiceDownloadButton({
         buyerPostalCode: postalCode,
         items: items.map((i) => ({ name: i.name, variant: i.variant, quantity: i.quantity, unitPrice: i.price })),
         subtotal,
+        discountAmount,
         shippingCost,
         shippingLabel,
       });

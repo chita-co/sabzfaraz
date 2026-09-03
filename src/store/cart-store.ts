@@ -32,6 +32,7 @@ interface CartState {
   restoreItems: (items: CartItem[]) => void;
   orderNote: string;
   setOrderNote: (note: string) => void;
+  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null }[]) => void;
 }
 
 function sameLine(a: CartItem, productId: string, color: string | null, size: string | null) {
@@ -72,6 +73,22 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [] }),
       restoreItems: (items) => set({ items: [...get().items, ...items] }),
       setOrderNote: (note) => set({ orderNote: note }),
+      syncPrices: (updates) => {
+        set({
+          items: get().items.map((i) => {
+            const u = updates.find((x) => x.productId === i.productId);
+            if (!u) return i;
+            const newStock = u.stock;
+            return {
+              ...i,
+              price: u.price,
+              discountPrice: u.discountPrice,
+              stock: newStock,
+              quantity: newStock !== null ? Math.min(i.quantity, Math.max(newStock, 0)) : i.quantity,
+            };
+          }),
+        });
+      },
     }),
     { name: "sabzfaraz-cart" }
   )

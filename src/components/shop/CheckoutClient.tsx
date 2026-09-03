@@ -10,6 +10,7 @@ import LoyaltyRedemptionBox from "./LoyaltyRedemptionBox";
 import DiscountCodeBox from "./DiscountCodeBox";
 import PaymentMethodSelector, { type PaymentMethod } from "./PaymentMethodSelector";
 import type { BankAccountInfo } from "./BankAccountDisplay";
+import PriceSyncEffect from "./PriceSyncEffect";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
@@ -167,6 +168,7 @@ export default function CheckoutClient({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <PriceSyncEffect />
       <h1 className="text-xl font-bold text-white mb-6">تکمیل خرید</h1>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">

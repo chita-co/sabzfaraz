@@ -44,7 +44,13 @@ export default async function InvoicePage({
       .filter(Boolean)
   )
 ) as string[];
-  const subtotal = order.total_amount - (order.shipping_cost ?? 0);
+  // جمع کل واقعی از روی خودِ اقلام سفارش محاسبه می‌شود، نه از total_amount
+  // (چون total_amount از قبل شامل کسر تخفیف امتیاز/کد تخفیف است)
+  const rawSubtotal = (order.items as InvoiceItem[]).reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const loyaltyDiscount = order.loyalty_discount_amount ?? 0;
+  const couponDiscount = order.discount_code_amount ?? 0;
+  const totalDiscount = loyaltyDiscount + couponDiscount;
+
 
   const html = buildInvoiceHtml({
     type: isChinaOrder ? "china" : "final",
@@ -67,7 +73,8 @@ export default async function InvoicePage({
       quantity: i.quantity,
       unitPrice: i.price,
     })),
-    subtotal,
+    subtotal: rawSubtotal,
+    discountAmount: totalDiscount,
     shippingCost: order.shipping_cost ?? 0,
     shippingLabel: order.shipping_method?.invoice_label || undefined,
   });

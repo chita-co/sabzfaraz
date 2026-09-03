@@ -8,6 +8,7 @@ import { Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import OrderNoteBox from "@/components/shop/OrderNoteBox";
+import PriceSyncEffect from "@/components/shop/PriceSyncEffect";
 
 export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
   const items = useCartStore((s) => s.items);
@@ -37,6 +38,7 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
+      <PriceSyncEffect />
       <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
 
       <h1 className="text-xl font-bold text-white mb-6">سبد خرید</h1>

@@ -16,5 +16,13 @@ export async function consumeDiscountCode(
   if (error) return { error: error.message, discountAmount: 0 };
   const result = data as { success?: boolean; error?: string; discountAmount?: number };
   if (result.error) return { error: result.error, discountAmount: 0 };
-  return { error: null, discountAmount: result.discountAmount ?? 0 };
+
+  const discountAmount = result.discountAmount ?? 0;
+
+  await supabase
+    .from("orders")
+    .update({ discount_code_amount: discountAmount })
+    .eq("id", orderId);
+
+  return { error: null, discountAmount };
 }

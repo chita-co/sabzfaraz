@@ -22,6 +22,12 @@ import React from "react";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import TopFilterBar from "@/components/shop/TopFilterBar";
 
+export const metadata = {
+  title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
+  description:
+    "فروشگاه سبزفراز؛ تأمین‌کننده تخصصی قطعات الکترونیک، ماژول، سنسور، برد آردوینو، ESP، لوازم لحیم‌کاری و ابزارآلات. ارسال از اصفهان به سراسر کشور با قیمت مناسب و موجودی واقعی.",
+};
+
 const categoryIcons: Record<string, React.ComponentType<{ size?: number }>> = {
   "cables-connectors": Cable,
   "tools-equipment": Wrench,
