@@ -133,6 +133,8 @@ const navConfig: NavItem[] = [
     icon: Handshake, // این آیکون رو هم به import بالای فایل اضافه کن
     children: [
       { href: "/admin/partners", label: "لیست همکاران" },
+      { href: "/admin/partners/orders", label: "سفارش‌های همکاران" },
+      { href: "/admin/partners/warehouse", label: "انبار همکاران" },
       { href: "/admin/partners/products", label: "محصولات در انتظار بررسی" },
       { href: "/admin/partners/withdrawals", label: "درخواست‌های برداشت" },
       { href: "/admin/partners/settings", label: "تنظیمات همکاران" },

@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendSms } from "@/lib/sms";
-import { creditPartnersForOrder } from "@/lib/partners/wallet";
 
 interface OrderWithAddress {
   order_number: string;
@@ -35,12 +34,6 @@ export async function confirmOfflinePayment(orderId: string) {
       } catch (e) {
         console.error("خطا در کسر موجودی محصول:", e);
       }
-    }
-
-    try {
-      await creditPartnersForOrder(orderId);
-    } catch (e) {
-      console.error("خطا در واریز به کیف پول همکار:", e);
     }
   }
 

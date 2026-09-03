@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
 import { consumeDiscountCode } from "@/lib/discountCode";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
-import { creditPartnersForOrder } from "@/lib/partners/wallet";
 
 interface CheckoutItem {
   productId: string;
@@ -149,7 +148,6 @@ export async function createOrderAndPay(
   if (remainder === 0) {
     await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
-    await creditPartnersForOrder(order.id);
     redirect(`/order/${order.id}?payment=success`);
   }
 
@@ -292,7 +290,6 @@ export async function createOfflineOrder(
   if (remainder === 0) {
     await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
-    await creditPartnersForOrder(order.id);
     redirect(`/order/${order.id}?payment=success`);
   }
 
