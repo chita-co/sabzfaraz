@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/store/cart-store";
 
 export default function CartRealtimeSync() {
-  const removeItem = useCartStore((s) => s.removeItem);
+  const removeItemById = useCartStore((s) => s.removeItemById);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
 
   useEffect(() => {
@@ -21,23 +21,19 @@ export default function CartRealtimeSync() {
           "postgres_changes",
           { event: "DELETE", schema: "public", table: "cart_items", filter: `user_id=eq.${userId}` },
           (payload) => {
-            console.log("🔴 DELETE payload.old:", JSON.stringify(payload.old));
-            const old = payload.old as { product_id: string; selected_color: string | null; selected_size: string | null };
-            removeItem(old.product_id, old.selected_color || null, old.selected_size || null);
+            const old = payload.old as { id: string };
+            if (old?.id) removeItemById(old.id);
           }
         )
         .on(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "cart_items", filter: `user_id=eq.${userId}` },
           (payload) => {
-            console.log("🟡 UPDATE event received:", payload);
             const row = payload.new as { product_id: string; selected_color: string | null; selected_size: string | null; quantity: number };
             updateQuantity(row.product_id, row.selected_color || null, row.selected_size || null, row.quantity);
           }
         )
-        .subscribe((status) => {
-            console.log("📡 Channel status:", status);
-        });
+        .subscribe();
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -53,7 +49,7 @@ export default function CartRealtimeSync() {
       if (channel) supabase.removeChannel(channel);
       authListener.subscription.unsubscribe();
     };
-  }, [removeItem, updateQuantity]);
+  }, [removeItemById, updateQuantity]);
 
   return null;
 }

@@ -21,6 +21,7 @@ export interface CartItem {
   chinaDeliveryText?: string | null;
   chinaTermsText?: string | null;
   chinaOrderNote?: string | null;
+  cartItemId?: string | null;
 }
 
 interface CartState {
@@ -33,6 +34,8 @@ interface CartState {
   orderNote: string;
   setOrderNote: (note: string) => void;
   syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null }[]) => void;
+  setCartItemIds: (mapping: { productId: string; color: string | null; size: string | null; id: string }[]) => void;
+  removeItemById: (id: string) => void;
 }
 
 function sameLine(a: CartItem, productId: string, color: string | null, size: string | null) {
@@ -88,6 +91,17 @@ export const useCartStore = create<CartState>()(
             };
           }),
         });
+      },
+      setCartItemIds: (mapping) => {
+        set({
+          items: get().items.map((i) => {
+            const m = mapping.find((x) => x.productId === i.productId && x.color === i.selectedColor && x.size === i.selectedSize);
+            return m ? { ...i, cartItemId: m.id } : i;
+          }),
+        });
+      },
+      removeItemById: (id) => {
+        set({ items: get().items.filter((i) => i.cartItemId !== id) });
       },
     }),
     { name: "sabzfaraz-cart" }

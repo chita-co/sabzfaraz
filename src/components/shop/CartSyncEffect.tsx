@@ -6,6 +6,7 @@ import { syncCartToServer } from "@/lib/cart/syncCartToServer";
 
 export default function CartSyncEffect() {
   const items = useCartStore((s) => s.items);
+  const setCartItemIds = useCartStore((s) => s.setCartItemIds);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -22,10 +23,12 @@ export default function CartSyncEffect() {
           selectedSize: i.selectedSize,
           quantity: i.quantity,
         }))
-      );
+      ).then((mapping) => {
+        if (mapping && mapping.length > 0) setCartItemIds(mapping);
+      });
     }, 1200);
     return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [items]);
+  }, [items, setCartItemIds]);
 
   return null;
 }
