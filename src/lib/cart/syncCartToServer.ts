@@ -49,5 +49,7 @@ export async function syncCartToServer(items: SyncCartItem[]) {
       updated_at: new Date().toISOString(),
     })),
     { onConflict: "user_id,product_id,selected_color,selected_size" }
-  );
+  ).then(({ error }) => {
+    if (error) console.error("خطا در sync سبد خرید:", error.message);
+  });
 }
