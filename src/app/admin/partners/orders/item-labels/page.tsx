@@ -23,12 +23,14 @@ export default async function PartnerOrderItemLabelsPage({
     .in("id", idList);
 
   const labelItems = (items as unknown as ItemRow[]).map((i) => {
-  const partnerName = i.partner?.[0]?.business_name;
-  const orderNumber = i.order?.[0]?.order_number;
+  const partnerName = i.partner?.[0]?.business_name ?? null;
+  const orderNumber = i.order?.[0]?.order_number ?? null;
   return {
-    name: `${i.product_name}${partnerName ? ` (${partnerName})` : ""}`,
+    name: i.product_name,
+    partnerName,
+    orderNumber,
     quantity: i.quantity,
-    variant: [i.selected_color, i.selected_size, orderNumber].filter(Boolean).join(" / ") || null,
+    variant: [i.selected_color, i.selected_size].filter(Boolean).join(" / ") || null,
   };
 });
 
