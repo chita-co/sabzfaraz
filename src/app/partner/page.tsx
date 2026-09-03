@@ -23,7 +23,7 @@ export default async function PartnerDashboardPage() {
       <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>سلام، {partner.business_name} 👋</h1>
       <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>امتیاز شما: ⭐ {partner.rating_avg.toFixed(1)}</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+      <div className="partner-stats-grid">
         <div className="partner-stat-card"><Package size={20} color="#16a34a" /><p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>محصولات فعال</p><p style={{ fontSize: 20, fontWeight: 800 }}>{activeCount ?? 0}</p></div>
         <div className="partner-stat-card"><Package size={20} color="#b45309" /><p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>در انتظار تأیید</p><p style={{ fontSize: 20, fontWeight: 800 }}>{pendingCount ?? 0}</p></div>
         <div className="partner-stat-card"><ShoppingCart size={20} color="#2563eb" /><p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>سفارش‌های جدید</p><p style={{ fontSize: 20, fontWeight: 800 }}>{newOrdersCount ?? 0}</p></div>
@@ -40,7 +40,7 @@ export default async function PartnerDashboardPage() {
         <PartnerSalesChart data={weeklySales} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="partner-grid-2">
         <div className="partner-card">
           <h2 style={{ fontWeight: 700, marginBottom: 10, fontSize: 14 }}>آخرین سفارش‌ها</h2>
           {(recentItems ?? []).map((it: {

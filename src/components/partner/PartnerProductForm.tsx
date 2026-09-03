@@ -392,7 +392,7 @@ product?: any;
         {/* قیمت و موجودی */}
         <div className="partner-card">
           <h2 style={{ fontWeight: 800, marginBottom: 12 }}>قیمت و موجودی</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div className="partner-grid-2">
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>قیمت فروش به مشتری (تومان)</label>
               <input className="partner-input" type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} style={{ width: "100%" }} />
@@ -448,7 +448,7 @@ product?: any;
           <h2 style={{ fontWeight: 800, marginBottom: 12 }}>تخفیف پلکانی بر اساس تعداد (اختیاری)</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
             {tiers.map((t) => (
-              <div key={t.id} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8 }}>
+              <div key={t.id} className="partner-grid-4">
                 <input className="partner-input" type="number" placeholder="از" value={t.minQty} onChange={(e) => updateTier(t.id, "minQty", e.target.value)} />
                 <input className="partner-input" type="number" placeholder="تا" value={t.maxQty} onChange={(e) => updateTier(t.id, "maxQty", e.target.value)} />
                 <input className="partner-input" type="number" placeholder="قیمت واحد" value={t.unitPrice} onChange={(e) => updateTier(t.id, "unitPrice", e.target.value)} />
@@ -470,7 +470,7 @@ product?: any;
           {frameConfig?.frameUrl && <ImageFrameEditor config={frameConfig} watermarkConfig={watermarkConfig} onComposited={handleImageComposited} />}
 
           {images.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px,1fr))", gap: 10, marginTop: 14 }}>
+            <div className="partner-image-grid">
               {images.map((img, i) => (
                 <div key={i} className="image-drag-item" draggable onDragStart={() => handleImageDragStart(i)} onDragOver={(e) => handleImageDragOver(e, i)} onDragEnd={handleImageDragEnd} style={{ position: "relative" }}>
                   <span className="image-drag-handle"><GripVertical size={12} /></span>
@@ -555,19 +555,19 @@ product?: any;
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}><input type="checkbox" checked={showInFeed} onChange={(e) => setShowInFeed(e.target.checked)} /> نمایش در فید گوگل/ترب</label>
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}><input type="checkbox" checked={reviewsEnabled} onChange={(e) => setReviewsEnabled(e.target.checked)} /> امکان ثبت نظر برای این محصول فعال باشد</label>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
+          <div className="partner-grid-2" style={{ marginTop: 14 }}>
             <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>اولویت نمایش (اختیاری)</label><input className="partner-input" type="number" value={displayPriority} onChange={(e) => setDisplayPriority(e.target.value)} style={{ width: "100%" }} /></div>
             <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>حداکثر تعداد مجاز خرید هر سفارش</label><input className="partner-input" type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(e.target.value)} style={{ width: "100%" }} /></div>
           </div>
           <div style={{ marginTop: 14 }}>
             <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>ابعاد بسته‌بندی (سانتی‌متر — برای هزینه پست دقیق‌تر)</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            <div className="partner-grid-3">
               <input className="partner-input" type="number" placeholder="طول" value={packageLength} onChange={(e) => setPackageLength(e.target.value)} />
               <input className="partner-input" type="number" placeholder="عرض" value={packageWidth} onChange={(e) => setPackageWidth(e.target.value)} />
               <input className="partner-input" type="number" placeholder="ارتفاع" value={packageHeight} onChange={(e) => setPackageHeight(e.target.value)} />
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
+          <div className="partner-grid-2" style={{ marginTop: 14 }}>
             <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>بارکد / GTIN (اختیاری)</label><input className="partner-input" dir="ltr" value={gtin} onChange={(e) => setGtin(e.target.value)} style={{ width: "100%" }} /></div>
             <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>مدل / نسخه (اختیاری)</label><input className="partner-input" value={modelVersion} onChange={(e) => setModelVersion(e.target.value)} style={{ width: "100%" }} /></div>
           </div>
@@ -583,7 +583,7 @@ product?: any;
           </select>
           {(fulfillmentType === "CHINA_ORDER" || fulfillmentType === "BOTH") && (
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <div className="partner-grid-3">
                 <input className="partner-input" type="number" placeholder="قیمت سفارش از چین" value={chinaPrice} onChange={(e) => setChinaPrice(e.target.value)} />
                 <input className="partner-input" type="number" placeholder="حداقل زمان تحویل" value={chinaDeliveryMin} onChange={(e) => setChinaDeliveryMin(e.target.value)} />
                 <input className="partner-input" type="number" placeholder="حداکثر زمان تحویل" value={chinaDeliveryMax} onChange={(e) => setChinaDeliveryMax(e.target.value)} />

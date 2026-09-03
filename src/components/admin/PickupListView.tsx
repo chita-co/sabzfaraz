@@ -54,6 +54,19 @@ export default function PickupListView({ groups, partners, dateLabel }: { groups
               ))}
             </tbody>
           </table>
+
+          {/* ✅ بخش جدید: شرح شفاف هر قلم */}
+<div style={{ marginTop: 8, fontSize: 12, background: "#f9fafb", padding: "8px 10px", borderRadius: 6 }}>
+  {g.rows.map((r) => (
+    <p key={r.id} style={{ margin: "3px 0" }}>
+      تعداد <strong>{r.quantity.toLocaleString("fa-IR")}</strong> از{" "}
+      <strong>{r.product_name}</strong> توسط{" "}
+      <strong>{g.partnerName}</strong> برای فاکتور شماره{" "}
+      <strong dir="ltr">{r.order?.order_number}</strong>
+    </p>
+  ))}
+</div>
+
           <p style={{ fontSize: 11.5, fontWeight: 700, marginTop: 6 }}>جمع کل اقلام: {g.rows.reduce((s, r) => s + r.quantity, 0).toLocaleString("fa-IR")} عدد</p>
         </div>
       ))}

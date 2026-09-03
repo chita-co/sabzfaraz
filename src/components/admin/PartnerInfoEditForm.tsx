@@ -37,7 +37,7 @@ export default function PartnerInfoEditForm({ partner }: { partner: Partner }) {
   return (
     <div className="admin-card">
       <h2 style={{ fontWeight: 800, marginBottom: 14 }}>اطلاعات ثبت‌نام (کامل و قابل‌ویرایش)</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="partner-grid-2">
         <label className="admin-form-group"><span>نام فروشگاه</span><input className="admin-input" value={businessName} onChange={(e) => setBusinessName(e.target.value)} /></label>
         <label className="admin-form-group"><span>نام مسئول تماس</span><input className="admin-input" value={contactName} onChange={(e) => setContactName(e.target.value)} /></label>
         <label className="admin-form-group"><span>شماره موبایل (نام کاربری ورود)</span><input className="admin-input" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>

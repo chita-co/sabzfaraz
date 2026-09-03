@@ -114,7 +114,7 @@ export default function PartnerOrdersManager({
                 <td><span className={`badge ${STATUS_COLORS[it.partner_fulfillment_status]}`}>{statusLabels[it.partner_fulfillment_status] ?? it.partner_fulfillment_status}</span></td>
                 <td className="text-xs text-gray-500">{new Date(it.created_at).toLocaleDateString("fa-IR")}</td>
                 <td style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  {it.partner_fulfillment_status === "READY_FOR_PICKUP" && (
+                  {["PENDING", "PREPARING", "READY_FOR_PICKUP"].includes(it.partner_fulfillment_status) && (
                     <button onClick={() => setShortageItem(it)} className="admin-btn admin-btn-danger" style={{ padding: "4px 8px", fontSize: 11 }}>عدم تامین</button>
                   )}
                   {it.partner_fulfillment_status === "DELIVERED_TO_CUSTOMER" && (

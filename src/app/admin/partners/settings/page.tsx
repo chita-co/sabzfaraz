@@ -39,7 +39,7 @@ export default async function AdminPartnerSettingsPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
           {settings?.frame_template_url && <img src={settings.frame_template_url} alt="قالب فعلی" style={{ width: 140, borderRadius: 8, border: "1px solid #e5e7eb" }} />}
           <input type="file" name="file" accept="image/png" />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div className="partner-grid-2">
             <label className="admin-form-group"><span>X مرکز (٪)</span><input className="admin-input" name="frame_center_x" type="number" step="0.1" defaultValue={settings?.frame_center_x} /></label>
             <label className="admin-form-group"><span>Y مرکز (٪)</span><input className="admin-input" name="frame_center_y" type="number" step="0.1" defaultValue={settings?.frame_center_y} /></label>
             <label className="admin-form-group"><span>عرض ناحیه مرکزی (٪)</span><input className="admin-input" name="frame_center_width" type="number" step="0.1" defaultValue={settings?.frame_center_width} /></label>
@@ -62,7 +62,7 @@ export default async function AdminPartnerSettingsPage() {
             <span className="admin-switch-track" />
             <span>واترمارک روی تصاویر همکاران فعال باشد</span>
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          <div className="partner-grid-3">
             <label className="admin-form-group"><span>شفافیت (۰ تا ۱)</span><input className="admin-input" name="watermark_opacity" type="number" step="0.05" min="0" max="1" defaultValue={settings?.watermark_opacity ?? 0.35} /></label>
             <label className="admin-form-group"><span>زاویه چرخش (درجه)</span><input className="admin-input" name="watermark_rotation" type="number" defaultValue={settings?.watermark_rotation ?? -30} /></label>
             <label className="admin-form-group"><span>اندازه نسبت به عکس (٪)</span><input className="admin-input" name="watermark_scale_percent" type="number" defaultValue={settings?.watermark_scale_percent ?? 45} /></label>

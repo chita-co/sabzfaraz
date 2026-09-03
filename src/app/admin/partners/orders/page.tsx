@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "در انتظار آماده‌سازی",
   PREPARING: "در حال آماده‌سازی",
-  READY_FOR_PICKUP: "آماده تحویل به پیک",
+  READY_FOR_PICKUP: "تحویل سفارش به پیک فروشگاه",
   PICKED_UP: "تحویل گرفته شد از همکار",
   DELIVERED_TO_CUSTOMER: "تحویل به مشتری شد",
   STOCK_SHORTAGE: "عدم تامین توسط همکار",
@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "لغو‌شده",
 };
 
-interface PartnerOrderItem {
+interface RawPartnerOrderItem {
   id: string;
   product_name: string;
   quantity: number;
@@ -26,7 +26,25 @@ interface PartnerOrderItem {
   selected_color: string | null;
   selected_size: string | null;
   partner: { id: string; business_name: string; phone: string | null; partner_code: string | null }[] | null;
-  order: { order_number: string; user_id: string; profile: { full_name: string } | null }[] | null;
+  order: {
+    order_number: string;
+    user_id: string;
+    profile: { full_name: string }[] | null;
+  }[] | null;
+}
+
+interface NormalizedPartnerOrderItem {
+  id: string;
+  product_name: string;
+  quantity: number;
+  price: number;
+  partner_cost_price: number | null;
+  partner_fulfillment_status: string;
+  created_at: string;
+  selected_color: string | null;
+  selected_size: string | null;
+  partner: { id: string; business_name: string; phone: string | null; partner_code: string | null } | null;
+  order: { order_number: string; user_id: string; profile: { full_name: string } | null } | null;
 }
 
 
@@ -68,19 +86,37 @@ export default async function AdminPartnerOrdersPage({
 
   const { data: items } = await query;
 
-  const filteredItems = q
-  ? (items as unknown as PartnerOrderItem[]).filter((it) => {
-      const orderNumber = it.order?.[0]?.order_number;
-      const partnerName = it.partner?.[0]?.business_name;
-      return (
-        it.product_name?.toLowerCase().includes(q.toLowerCase()) ||
-        orderNumber?.toLowerCase().includes(q.toLowerCase()) ||
-        partnerName?.toLowerCase().includes(q.toLowerCase())
-      );
-    })
-  : (items ?? []);
+  const rawItems = (items ?? []) as RawPartnerOrderItem[];
 
-  const managerItems = (filteredItems as PartnerOrderItem[]).map((it) => ({
+  const normalizedItems: NormalizedPartnerOrderItem[] = rawItems.map((raw) => {
+    const partner = raw.partner?.[0] ?? null;
+    const order = raw.order?.[0] ?? null;
+    const profile = order?.profile?.[0] ?? null;
+
+    return {
+      id: raw.id,
+      product_name: raw.product_name,
+      quantity: raw.quantity,
+      price: raw.price,
+      partner_cost_price: raw.partner_cost_price,
+      partner_fulfillment_status: raw.partner_fulfillment_status,
+      created_at: raw.created_at,
+      selected_color: raw.selected_color,
+      selected_size: raw.selected_size,
+      partner,
+      order: order ? { order_number: order.order_number, user_id: order.user_id, profile } : null,
+    };
+  });
+
+  const filteredItems = q
+    ? normalizedItems.filter((it) =>
+        it.product_name?.toLowerCase().includes(q.toLowerCase()) ||
+        it.order?.order_number?.toLowerCase().includes(q.toLowerCase()) ||
+        it.partner?.business_name?.toLowerCase().includes(q.toLowerCase())
+      )
+    : normalizedItems;
+
+  const managerItems = filteredItems.map((it) => ({
     id: it.id,
     product_name: it.product_name,
     quantity: it.quantity,
@@ -90,20 +126,11 @@ export default async function AdminPartnerOrdersPage({
     created_at: it.created_at,
     selected_color: it.selected_color,
     selected_size: it.selected_size,
-    partner: it.partner?.[0]
-      ? {
-          id: it.partner[0].id,
-          business_name: it.partner[0].business_name,
-          phone: it.partner[0].phone ?? "",
-          partner_code: it.partner[0].partner_code ?? "",
-        }
+    partner: it.partner
+      ? { id: it.partner.id, business_name: it.partner.business_name, phone: it.partner.phone ?? "", partner_code: it.partner.partner_code ?? "" }
       : null,
-    order: it.order?.[0]
-      ? {
-          order_number: it.order[0].order_number,
-          user_id: it.order[0].user_id,
-          profile: it.order[0].profile ?? null,
-        }
+    order: it.order
+      ? { order_number: it.order.order_number, user_id: it.order.user_id, profile: it.order.profile ?? null }
       : null,
   }));
 
@@ -120,7 +147,7 @@ export default async function AdminPartnerOrdersPage({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
         <div className="stat-card"><div><p className="stat-label">سفارش امروز</p><p className="stat-value">{todayCount ?? 0}</p></div></div>
         <div className="stat-card"><div><p className="stat-label">در انتظار آماده‌سازی</p><p className="stat-value" style={{ color: "#b45309" }}>{pendingCount ?? 0}</p></div></div>
-        <div className="stat-card"><div><p className="stat-label">آماده تحویل به پیک</p><p className="stat-value" style={{ color: "#2563eb" }}>{readyCount ?? 0}</p></div></div>
+        <div className="stat-card"><div><p className="stat-label">تحویل به پیک فروشگاه</p><p className="stat-value" style={{ color: "#2563eb" }}>{readyCount ?? 0}</p></div></div>
         <div className="stat-card"><div><p className="stat-label">تحویل‌شده به مشتری</p><p className="stat-value" style={{ color: "#16a34a" }}>{deliveredCount ?? 0}</p></div></div>
         <div className="stat-card"><div><p className="stat-label">عدم تامین</p><p className="stat-value" style={{ color: "#dc2626" }}>{shortageCount ?? 0}</p></div></div>
         <div className="stat-card"><div><p className="stat-label">مجموع بدهی به همکاران</p><p className="stat-value">{totalPayable.toLocaleString("fa-IR")}</p></div></div>

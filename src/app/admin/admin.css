@@ -568,7 +568,7 @@
 .support-closed-note { text-align: center; padding: 14px; font-size: 13px; color: #9ca3af; background: #fff; border-top: 1px solid #e5e7eb; }
 
 .bulk-toolbar {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
   padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: #14532d;
 }

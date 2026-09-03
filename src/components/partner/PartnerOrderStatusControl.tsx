@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { updateOrderItemFulfillmentAction } from "@/app/partner/orders/actions";
 
-const labels: Record<string, string> = { PENDING: "در انتظار", PREPARING: "در حال آماده‌سازی", READY_FOR_PICKUP: "آماده تحویل به پیک", PICKED_UP: "تحویل به پیک", CANCELLED: "لغو‌شده" };
+const labels: Record<string, string> = { PENDING: "در انتظار", PREPARING: "در حال آماده‌سازی", READY_FOR_PICKUP: "تحویل سفارش به پیک فروشگاه", PICKED_UP: "تحویل به پیک", CANCELLED: "لغو‌شده" };
 
 export default function PartnerOrderStatusControl({ itemId, currentStatus }: { itemId: string; currentStatus: string }) {
   const [status, setStatus] = useState(currentStatus);
@@ -21,7 +21,7 @@ export default function PartnerOrderStatusControl({ itemId, currentStatus }: { i
     <select value={status} disabled={saving} onChange={(e) => handleChange(e.target.value as "PREPARING" | "READY_FOR_PICKUP")} className="partner-input" style={{ fontSize: 12, padding: "4px 8px" }}>
       <option value="PENDING">در انتظار</option>
       <option value="PREPARING">در حال آماده‌سازی</option>
-      <option value="READY_FOR_PICKUP">آماده تحویل به پیک</option>
+       <option value="READY_FOR_PICKUP">تحویل سفارش به پیک فروشگاه</option>
     </select>
   );
 }
