@@ -14,6 +14,7 @@ export default async function BulkOrderShippingLabelPage({ params }: { params: P
 
   return (
     <AdminShippingLabelView
+      orderId={id}
       orderNumber={request.request_number}
       date={new Date(request.created_at).toLocaleDateString("fa-IR")}
       storeName={settings?.store_name ?? "سبزفراز"}
