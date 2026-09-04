@@ -66,6 +66,7 @@ export default function AdminShippingLabelView({
   }, [qrValue]);
 
   const postalDigits = (receiver.postalCode || "").padEnd(10, " ").split("").slice(0, 10);
+  const senderPostalDigits = (sender.postalCode || "").padEnd(10, " ").split("").slice(0, 10);
 
   async function handleSaveTracking() {
     setSaving(true);
@@ -154,8 +155,14 @@ export default function AdminShippingLabelView({
               {senderEmail && <p className="sl-line" dir="ltr"><span dangerouslySetInnerHTML={{ __html: ICONS.mail }} /> {senderEmail}</p>}
               <p className="sl-line"><span dangerouslySetInnerHTML={{ __html: ICONS.pin }} /> {senderAddress}</p>
               {sender.postalCode && (
-  <p className="sl-line" dir="ltr"><b>کدپستی:</b> {sender.postalCode}</p>
-)}            </div>
+                <div className="sl-postal-row sl-postal-row-sender">
+                  <b>کدپستی:</b>
+                  <div className="sl-postal-boxes sl-postal-boxes-sm" dir="ltr">
+                    {senderPostalDigits.map((d, i) => <span key={i} className="sl-postal-box sl-postal-box-sm">{d.trim()}</span>)}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="sl-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -166,7 +173,7 @@ export default function AdminShippingLabelView({
 
             <div className="sl-tracking-box">
               <canvas ref={qrRef} />
-              <p className="sl-qr-instruction">اول اسکن کن<br />بعد باز کن</p>
+             <p className="sl-qr-instruction">اول اسکن کن<br />بعد باز کن</p>
             </div>
           </div>
 
