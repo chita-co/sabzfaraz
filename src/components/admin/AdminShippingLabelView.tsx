@@ -167,7 +167,7 @@ export default function AdminShippingLabelView({
             <div className="sl-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-invoice.png" alt={storeName} style={{ height: 28, marginBottom: 2 }} />
-              <h2 className="sl-brand">{storeName}</h2>
+              <h2 className="sl-brand">فروشگاه سبزفراز</h2>
               <p className="sl-brand-site"><span dangerouslySetInnerHTML={{ __html: ICONS.globe }} /> sabzfaraz.ir</p>
             </div>
 
