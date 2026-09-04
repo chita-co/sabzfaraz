@@ -47,9 +47,7 @@ export default async function PickupListPage({
 
   let query = admin
     .from("order_items")
-    .select(
-      "id, product_name, quantity, selected_color, selected_size, order:orders(order_number), partner:partners(id, business_name, partner_code)"
-    )
+     .select("id, product_name, quantity, selected_color, selected_size, order:orders!order_items_order_id_fkey(order_number), partner:partners!order_items_partner_id_fkey(id, business_name, partner_code)")
     .eq("partner_fulfillment_status", "READY_FOR_PICKUP")
     .gte("created_at", fromDate.toISOString())
     .lte("created_at", toDate.toISOString());

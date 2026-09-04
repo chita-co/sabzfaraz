@@ -474,7 +474,7 @@ export default function ProductDetail({
             {product.short_description && (
               <p className="product-description-text" style={{ fontWeight: 600, marginBottom: 10 }}>{product.short_description}</p>
             )}
-            <p className="product-description-text">{product.description}</p>
+            <p className="product-description-text" style={{ whiteSpace: "pre-line" }}>{product.description}</p>
             {product.description_images && product.description_images.length > 0 && (
               <div className="description-images-grid">
                 {product.description_images.map((img, i) => (

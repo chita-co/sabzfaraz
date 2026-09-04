@@ -74,7 +74,7 @@ export default async function AdminPartnerOrdersPage({
 
   let query = admin
     .from("order_items")
-    .select("id, product_name, quantity, price, partner_cost_price, partner_fulfillment_status, created_at, selected_color, selected_size, partner:partners(id, business_name, phone, partner_code), order:orders(order_number, user_id, profile:profiles(full_name))")
+    .select("id, product_name, quantity, price, partner_cost_price, partner_fulfillment_status, created_at, selected_color, selected_size, partner:partners!order_items_partner_id_fkey(id, business_name, phone, partner_code), order:orders!order_items_order_id_fkey(order_number, user_id, profile:profiles(full_name))")
     .not("partner_id", "is", null)
     .order("created_at", { ascending: false })
     .limit(200);

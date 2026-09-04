@@ -164,3 +164,20 @@ export async function returnFromCustomerAction(itemId: string, reason: string) {
   revalidatePath("/admin/partners/orders");
   return { success: true };
 }
+
+export async function getCollectionListItemsAction(itemIds: string[]) {
+  await requireAdmin();
+  if (itemIds.length === 0) return [];
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("order_items")
+    .select("id, product_name, quantity, selected_color, selected_size, partner_fulfillment_status, partner:partners!order_items_partner_id_fkey(business_name, partner_code), order:orders!order_items_order_id_fkey(order_number)")
+    .in("id", itemIds);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((raw: any) => ({
+    ...raw,
+    partner: Array.isArray(raw.partner) ? raw.partner[0] ?? null : raw.partner,
+    order: Array.isArray(raw.order) ? raw.order[0] ?? null : raw.order,
+  }));
+}

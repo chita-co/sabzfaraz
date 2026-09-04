@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { Search, Tags } from "lucide-react";
 import { confirmPickupFromPartnerAction, confirmDeliveryToCustomerAction, returnFromCustomerAction } from "@/app/admin/partners/orders/actions";
 import StockShortageModal from "./StockShortageModal";
+import { addToCollectionList, getCollectionListIds } from "@/lib/partners/collectionListStorage";
+import { useEffect } from "react";
 
 interface OrderItemRow {
   id: string; product_name: string; quantity: number; price: number; partner_cost_price: number | null;
@@ -28,6 +30,20 @@ export default function PartnerOrdersManager({
   const [selected, setSelected] = useState<string[]>([]);
   const [shortageItem, setShortageItem] = useState<OrderItemRow | null>(null);
   const [busy, setBusy] = useState(false);
+  const [collectionCount, setCollectionCount] = useState(0);
+
+  useEffect(() => {
+    function updateCount() { setCollectionCount(getCollectionListIds().length); }
+    updateCount();
+    window.addEventListener("sf-collection-list-changed", updateCount);
+    return () => window.removeEventListener("sf-collection-list-changed", updateCount);
+  }, []);
+
+  function handleAddToCollectionList() {
+    if (selected.length === 0) return toast.error("حداقل یک مورد انتخاب کنید.");
+    addToCollectionList(selected);
+    toast.success(`${selected.length.toLocaleString("fa-IR")} مورد به لیست جمع‌آوری اضافه شد.`);
+  }
 
   function toggle(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
@@ -83,16 +99,24 @@ export default function PartnerOrdersManager({
         <button type="submit" className="admin-filters-apply-btn">اعمال فیلتر</button>
       </form>
 
-      {selected.length > 0 && (
-        <div className="bulk-toolbar">
-          <span>{selected.length.toLocaleString("fa-IR")} مورد انتخاب شده</span>
-          <button onClick={handleConfirmPickup} disabled={busy} className="admin-btn admin-btn-primary" style={{ fontSize: 12 }}>تأیید تحویل از همکار</button>
-          <button onClick={handleConfirmDelivery} disabled={busy} className="admin-btn admin-btn-primary" style={{ fontSize: 12, background: "#16a34a" }}>تأیید تحویل به مشتری</button>
-          <Link href={`/admin/partners/orders/item-labels?ids=${selected.join(",")}`} target="_blank" className="admin-btn admin-btn-secondary" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
-            <Tags size={13} /> چاپ اتیکت این اقلام
-          </Link>
+      <div className="bulk-toolbar" style={{ justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {selected.length > 0 && (
+            <>
+              <span>{selected.length.toLocaleString("fa-IR")} مورد انتخاب شده</span>
+              <button onClick={handleConfirmPickup} disabled={busy} className="admin-btn admin-btn-primary" style={{ fontSize: 12 }}>تأیید تحویل از همکار</button>
+              <button onClick={handleConfirmDelivery} disabled={busy} className="admin-btn admin-btn-primary" style={{ fontSize: 12, background: "#16a34a" }}>تأیید تحویل به مشتری</button>
+              <Link href={`/admin/partners/orders/item-labels?ids=${selected.join(",")}`} target="_blank" className="admin-btn admin-btn-secondary" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+                <Tags size={13} /> چاپ اتیکت این اقلام
+              </Link>
+              <button onClick={handleAddToCollectionList} className="admin-btn admin-btn-secondary" style={{ fontSize: 12 }}>➕ افزودن به لیست جمع‌آوری</button>
+            </>
+          )}
         </div>
-      )}
+        <Link href="/admin/partners/orders/collection-list" className="admin-btn admin-btn-secondary" style={{ fontSize: 12, whiteSpace: "nowrap" }}>
+          📋 لیست جمع‌آوری ({collectionCount.toLocaleString("fa-IR")})
+        </Link>
+      </div>
 
       <div className="admin-card">
         <table className="admin-table">
