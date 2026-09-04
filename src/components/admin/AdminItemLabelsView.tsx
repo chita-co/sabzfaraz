@@ -22,9 +22,9 @@ export default function AdminItemLabelsView({
   storeAddress: string;
   items: LabelItem[];
 }) {
-  const labels = items.flatMap((item) =>
-    Array.from({ length: Math.max(1, item.quantity) }, () => item)
-  );
+  // هر خط سفارش (هر ترکیب محصول+رنگ+سایز) فقط یک اتیکت می‌گیرد،
+  // با عدد تعداد رویش — نه یک اتیکت جدا برای هر واحد کالا
+  const labels = items;
 
   return (
     <div className="item-labels-page">

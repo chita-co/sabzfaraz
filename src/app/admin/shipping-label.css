@@ -12,37 +12,41 @@
 
 .sl-sender-box {
   position: relative; flex: 1; border: 1px solid #9ca3af; border-radius: 4mm; padding: 4mm 2.5mm 2mm;
-  font-size: 8.3px; line-height: 1.7;
+  font-size: 10.5px; line-height: 1.8; font-weight: 500;
 }
 .sl-badge {
   position: absolute; top: -3.5mm; display: flex; align-items: center; gap: 3px;
-  background: #111827; color: #fff; padding: 1.3mm 3mm; border-radius: 3mm; font-size: 8px; font-weight: 700;
-}
+  background: #111827; color: #fff; padding: 1.3mm 3mm; border-radius: 3mm; font-size: 9.5px; font-weight: 700;
+ }
 .sl-badge-left { right: 3mm; }
 .sl-badge-right { right: 3mm; }
-.sl-sender-name { font-weight: 800; font-size: 9.5px; margin: 0 0 1mm; }
+.sl-sender-name { font-weight: 800; font-size: 12px; margin: 0 0 1mm; }
 .sl-line { display: flex; align-items: center; gap: 4px; margin: 0.6mm 0; }
+.sl-postal-row-sender { margin-top: 1.5mm; }
+.sl-postal-boxes-sm { gap: 0.5mm; }
+.sl-postal-box-sm { width: 3.2mm; height: 4mm; font-size: 6.5px; }
+
 
 .sl-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.sl-brand { font-size: 15px; font-weight: 800; margin: 0; }
-.sl-brand-sub { font-size: 8px; color: #4b5563; margin: 1mm 0; }
-.sl-brand-site { font-size: 8px; color: #15803d; display: flex; align-items: center; gap: 3px; margin: 0; direction: ltr; }
+.sl-brand { font-size: 18px; font-weight: 800; margin: 0; }
+.sl-brand-sub { font-size: 9.5px; color: #4b5563; margin: 1mm 0; }
+.sl-brand-site { font-size: 9.5px; color: #15803d; display: flex; align-items: center; gap: 3px; margin: 0; direction: ltr; }
 
 .sl-tracking-box {
   flex: 1.1; border: 1.3px dashed #111827; border-radius: 4mm; padding: 2.5mm;
   display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1mm;
 }
-.sl-tracking-title { font-size: 8.5px; font-weight: 700; margin: 0; }
 .sl-tracking-box canvas { max-width: 100%; }
+.sl-qr-instruction { font-size: 9px; font-weight: 800; color: #111827; margin: 1mm 0 0; line-height: 1.5; }
 .sl-tracking-divider { width: 90%; border-top: 1px dashed #9ca3af; }
-.sl-tracking-date { font-size: 8px; color: #4b5563; margin: 0; }
+.sl-tracking-date { font-size: 9.5px; color: #4b5563; margin: 0; }
 
 .sl-trust-row {
   display: flex; justify-content: space-around; border-top: 1px dashed #9ca3af; border-bottom: 1px dashed #9ca3af; padding: 1.5mm 0;
 }
 .sl-trust-row > div { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5mm; color: #15803d; }
-.sl-trust-row b { font-size: 7px; font-weight: 700; color: #111827; }
-.sl-trust-row span:last-child { font-size: 6px; color: #6b7280; }
+.sl-trust-row b { font-size: 8.5px; font-weight: 700; color: #111827; }
+.sl-trust-row span:last-child { font-size: 7.5px; color: #6b7280; }
 
 .sl-bottom-row { display: flex; gap: 3mm; flex: 2.2; }
 .sl-package-note {
@@ -50,15 +54,23 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
   gap: 1.5mm; padding: 2mm; color: #374151;
 }
-.sl-package-note p { margin: 0; font-size: 7.5px; }
+.sl-package-note p { margin: 0; font-size: 9px; }
 .sl-note-divider { width: 70%; border-top: 1px dashed #d1d5db; margin: 1mm 0; }
-.sl-note-title { font-size: 7px; color: #9ca3af; }
+.sl-note-title { font-size: 8.5px; color: #9ca3af; }
+.sl-note-extra { font-size: 8.5px; color: #111827 !important; font-weight: 600; margin-top: 1mm !important; }
 
-.sl-receiver-box { position: relative; flex: 1; border: 1px solid #9ca3af; border-radius: 4mm; padding: 4mm 3mm 2mm; font-size: 9px; }
+.sl-receiver-box { position: relative; flex: 1; border: 1px solid #9ca3af; border-radius: 4mm; padding: 4mm 3mm 2mm; font-size: 11px; font-weight: 500; }
 .sl-field { margin: 1mm 0; }
 .sl-postal-row { display: flex; align-items: center; gap: 2mm; margin: 1.3mm 0; }
 .sl-postal-boxes { display: flex; gap: 0.7mm; }
-.sl-postal-box { width: 4.2mm; height: 5.2mm; border: 1px solid #111827; display: flex; align-items: center; justify-content: center; font-size: 7.5px; }
+.sl-postal-box { width: 4.8mm; height: 6mm; border: 1.3px solid #111827; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+
+.sl-controls { display: flex; flex-direction: column; gap: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; width: 100%; max-width: 500px; }
+.sl-control-group label { display: block; font-size: 12.5px; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.sl-control-row { display: flex; gap: 8px; }
+.sl-control-row input { flex: 1; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.sl-control-group textarea, .sl-control-group input, .sl-control-group select { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; box-sizing: border-box; }
+.sl-control-hint { font-size: 11px; color: #b45309; margin-top: 4px; }
 
 @media print {
   @page { size: 148mm 105mm landscape; margin: 0; }

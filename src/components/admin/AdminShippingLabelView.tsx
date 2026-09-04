@@ -3,8 +3,9 @@
 import { useRef, useEffect, useState } from "react";
 import { Printer, Download } from "lucide-react";
 import "../../app/admin/shipping-label.css";
+import { saveTrackingCode } from "@/app/admin/orders/[id]/label-actions";
 
-interface SenderInfo { name: string; phones: string[]; email: string | null; address: string; }
+interface SenderInfo { name: string; phones: string[]; email: string | null; address: string; postalCode?: string | null; }
 interface ReceiverInfo { name: string; phone: string; postalCode: string; province: string; city: string; addressLine: string; }
 
 const ICONS = {
@@ -21,24 +22,52 @@ const ICONS = {
 };
 
 export default function AdminShippingLabelView({
-  orderNumber, date, sender, receiver, storeName, fileName,
+  orderId, orderNumber, date, sender, receiver, storeName, fileName, initialTrackingCode,
 }: {
-  orderNumber: string; date: string; sender: SenderInfo; receiver: ReceiverInfo; storeName: string; fileName: string;
+  orderId: string; orderNumber: string; date: string; sender: SenderInfo; receiver: ReceiverInfo;
+  storeName: string; fileName: string; initialTrackingCode?: string | null;
 }) {
-  const barcodeRef = useRef<HTMLCanvasElement>(null);
+  const qrRef = useRef<HTMLCanvasElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [trackingCode, setTrackingCode] = useState(initialTrackingCode ?? "");
+  const [extraNote, setExtraNote] = useState("");
+
+  // سایز برچسب کاملاً آزاد و قابل تنظیم دستی (میلی‌متر) — پیش‌فرض همون سایز قبلی
+  const [widthMm, setWidthMm] = useState(148);
+  const [heightMm, setHeightMm] = useState(105);
+
+  // فیلدهای قابل‌ویرایش گیرنده و فرستنده — پیش‌فرض از دیتای سفارش، قابل اصلاح دستی قبل از چاپ
+  const [senderName, setSenderName] = useState(sender.name);
+  const [senderPhones, setSenderPhones] = useState(sender.phones.join(" - "));
+  const [senderEmail, setSenderEmail] = useState(sender.email ?? "");
+  const [senderAddress, setSenderAddress] = useState(sender.address);
+  const [receiverName, setReceiverName] = useState(receiver.name);
+  const [receiverPhone, setReceiverPhone] = useState(receiver.phone);
+  const [receiverAddress, setReceiverAddress] = useState(receiver.addressLine);
+  const [receiverProvinceCity, setReceiverProvinceCity] = useState(`${receiver.province}، ${receiver.city}`);
+
+  const qrValue = trackingCode.trim() || orderNumber;
 
   useEffect(() => {
     let mounted = true;
-    import("jsbarcode").then((mod) => {
-      if (!mounted || !barcodeRef.current) return;
-      mod.default(barcodeRef.current, orderNumber, { format: "CODE128", displayValue: false, height: 32, margin: 0 });
+    import("qrcode").then((QRCode) => {
+      if (!mounted || !qrRef.current) return;
+      QRCode.toCanvas(qrRef.current, qrValue, { width: 96, margin: 0, errorCorrectionLevel: "M" });
     });
     return () => { mounted = false; };
-  }, [orderNumber]);
+  }, [qrValue]);
 
   const postalDigits = (receiver.postalCode || "").padEnd(10, " ").split("").slice(0, 10);
+  const senderPostalDigits = (sender.postalCode || "").padEnd(10, " ").split("").slice(0, 10);
+
+  async function handleSaveTracking() {
+    setSaving(true);
+    await saveTrackingCode(orderId, trackingCode.trim());
+    setSaving(false);
+  }
 
   async function handleDownload() {
     if (!labelRef.current) return;
@@ -48,8 +77,9 @@ export default function AdminShippingLabelView({
       const { jsPDF } = await import("jspdf");
       const canvas = await html2canvas(labelRef.current, { scale: 3, backgroundColor: "#ffffff", useCORS: true });
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ unit: "mm", format: [148, 105], orientation: "landscape" });
-      pdf.addImage(imgData, "PNG", 0, 0, 148, 105);
+      const orientation = widthMm >= heightMm ? "landscape" : "portrait";
+      const pdf = new jsPDF({ unit: "mm", format: [widthMm, heightMm], orientation });
+      pdf.addImage(imgData, "PNG", 0, 0, widthMm, heightMm);
       pdf.save(fileName);
     } catch (e) {
       console.error(e);
@@ -60,32 +90,82 @@ export default function AdminShippingLabelView({
 
   return (
     <div className="shipping-label-page">
+      <style dangerouslySetInnerHTML={{ __html: `@media print { @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; } }` }} />
+
+      <div className="no-print sl-controls">
+        <div className="sl-control-group">
+          <label>سایز برچسب (میلی‌متر) — مثلاً برای بسته‌ی ۱۰×۱۲ سانتی‌متر: عرض ۱۰۰، ارتفاع ۱۲۰</label>
+          <div className="sl-control-row">
+            <input type="number" min={40} max={300} value={widthMm} onChange={(e) => setWidthMm(Number(e.target.value) || widthMm)} placeholder="عرض (mm)" />
+            <span style={{ alignSelf: "center", color: "#6b7280" }}>×</span>
+            <input type="number" min={40} max={300} value={heightMm} onChange={(e) => setHeightMm(Number(e.target.value) || heightMm)} placeholder="ارتفاع (mm)" />
+          </div>
+        </div>
+
+        <div className="sl-control-group">
+          <label>کد داخل QR (کد رهگیری واقعی، بعد از تحویل به پست/تیپاکس)</label>
+          <div className="sl-control-row">
+            <input type="text" dir="ltr" value={trackingCode} onChange={(e) => setTrackingCode(e.target.value)} placeholder="مثلاً 89012345678901" />
+            <button onClick={handleSaveTracking} disabled={saving} className="admin-btn admin-btn-secondary">{saving ? "در حال ذخیره..." : "ذخیره"}</button>
+          </div>
+          {!trackingCode.trim() && <p className="sl-control-hint">فعلاً کد واقعی وارد نشده — QR موقتاً از شماره سفارش داخلی ساخته می‌شود.</p>}
+        </div>
+
+        <div className="sl-control-group">
+          <label>توضیحات اضافه روی برچسب (اختیاری)</label>
+          <textarea value={extraNote} onChange={(e) => setExtraNote(e.target.value)} placeholder="مثلاً: شکستنی، با احتیاط حمل شود..." rows={2} />
+        </div>
+
+        <details className="sl-control-group">
+          <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 12.5, color: "#374151" }}>ویرایش دستی متن فرستنده / گیرنده</summary>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+            <input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="نام فرستنده" />
+            <input value={senderPhones} onChange={(e) => setSenderPhones(e.target.value)} dir="ltr" placeholder="تلفن‌های فرستنده" />
+            <input value={senderEmail} onChange={(e) => setSenderEmail(e.target.value)} dir="ltr" placeholder="ایمیل فرستنده" />
+            <input value={senderAddress} onChange={(e) => setSenderAddress(e.target.value)} placeholder="آدرس فرستنده" />
+            <hr style={{ border: "none", borderTop: "1px dashed #e5e7eb" }} />
+            <input value={receiverName} onChange={(e) => setReceiverName(e.target.value)} placeholder="نام گیرنده" />
+            <input value={receiverPhone} onChange={(e) => setReceiverPhone(e.target.value)} dir="ltr" placeholder="تلفن گیرنده" />
+            <input value={receiverProvinceCity} onChange={(e) => setReceiverProvinceCity(e.target.value)} placeholder="استان / شهر" />
+            <input value={receiverAddress} onChange={(e) => setReceiverAddress(e.target.value)} placeholder="آدرس کامل گیرنده" />
+          </div>
+        </details>
+      </div>
+
       <div className="no-print flex gap-2 mb-4">
         <button onClick={() => window.print()} className="admin-btn admin-btn-primary flex items-center gap-2"><Printer size={16} /> چاپ مستقیم</button>
         <button onClick={handleDownload} disabled={generating} className="admin-btn admin-btn-secondary flex items-center gap-2"><Download size={16} /> {generating ? "در حال ساخت..." : "دانلود PDF"}</button>
       </div>
 
       <div className="shipping-label-preview-wrap">
-        <div className="sl-card shipping-label-print" ref={labelRef}>
+        <div className="sl-card shipping-label-print" ref={labelRef} style={{ width: `${widthMm}mm`, height: `${heightMm}mm` }}>
           <div className="sl-top-row">
             <div className="sl-sender-box">
               <span className="sl-badge sl-badge-left"><span dangerouslySetInnerHTML={{ __html: ICONS.person }} /> فرستنده</span>
-              <p className="sl-sender-name">{storeName}</p>
-              <p className="sl-line" dir="ltr"><span dangerouslySetInnerHTML={{ __html: ICONS.phone }} /> {sender.phones.join(" - ")}</p>
-              {sender.email && <p className="sl-line" dir="ltr"><span dangerouslySetInnerHTML={{ __html: ICONS.mail }} /> {sender.email}</p>}
-              <p className="sl-line"><span dangerouslySetInnerHTML={{ __html: ICONS.pin }} /> {sender.address}</p>
+              <p className="sl-sender-name">{senderName}</p>
+              <p className="sl-line" dir="ltr"><span dangerouslySetInnerHTML={{ __html: ICONS.phone }} /> {senderPhones}</p>
+              {senderEmail && <p className="sl-line" dir="ltr"><span dangerouslySetInnerHTML={{ __html: ICONS.mail }} /> {senderEmail}</p>}
+              <p className="sl-line"><span dangerouslySetInnerHTML={{ __html: ICONS.pin }} /> {senderAddress}</p>
+              {sender.postalCode && (
+                <div className="sl-postal-row sl-postal-row-sender">
+                  <b>کدپستی:</b>
+                  <div className="sl-postal-boxes sl-postal-boxes-sm">
+                    {senderPostalDigits.map((d, i) => <span key={i} className="sl-postal-box sl-postal-box-sm">{d.trim()}</span>)}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="sl-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-  <img src="/logo-invoice.png" alt={storeName} style={{ height: 28, marginBottom: 2 }} />
+              <img src="/logo-invoice.png" alt={storeName} style={{ height: 28, marginBottom: 2 }} />
               <h2 className="sl-brand">{storeName}</h2>
               <p className="sl-brand-site"><span dangerouslySetInnerHTML={{ __html: ICONS.globe }} /> sabzfaraz.ir</p>
             </div>
 
             <div className="sl-tracking-box">
-              <p className="sl-tracking-title">شماره مرسوله</p>
-              <canvas ref={barcodeRef} />
+              <canvas ref={qrRef} />
+              <p className="sl-qr-instruction">ابتدا اسکن کنید<br />سپس بسته را باز کنید</p>
               <div className="sl-tracking-divider" />
               <p className="sl-tracking-date">تاریخ: {date}</p>
             </div>
@@ -104,19 +184,20 @@ export default function AdminShippingLabelView({
               <p>لطفاً با احتیاط حمل شود</p>
               <div className="sl-note-divider" />
               <p className="sl-note-title">توضیحات / محتویات</p>
+              {extraNote.trim() && <p className="sl-note-extra">{extraNote}</p>}
             </div>
             <div className="sl-receiver-box">
               <span className="sl-badge sl-badge-right"><span dangerouslySetInnerHTML={{ __html: ICONS.person }} /> گیرنده</span>
-              <p className="sl-field"><b>نام و نام‌خانوادگی:</b> {receiver.name}</p>
-              <p className="sl-field" dir="ltr"><b>تلفن همراه:</b> {receiver.phone}</p>
+              <p className="sl-field"><b>نام و نام‌خانوادگی:</b> {receiverName}</p>
+              <p className="sl-field" dir="ltr"><b>تلفن همراه:</b> {receiverPhone}</p>
               <div className="sl-postal-row">
                 <b>کدپستی:</b>
-                <div className="sl-postal-boxes" dir="ltr">
+                <div className="sl-postal-boxes">
                   {postalDigits.map((d, i) => <span key={i} className="sl-postal-box">{d.trim()}</span>)}
                 </div>
               </div>
-              <p className="sl-field"><b>استان/شهر:</b> {receiver.province}، {receiver.city}</p>
-              <p className="sl-field"><b>آدرس کامل:</b> {receiver.addressLine}</p>
+              <p className="sl-field"><b>استان/شهر:</b> {receiverProvinceCity}</p>
+              <p className="sl-field"><b>آدرس کامل:</b> {receiverAddress}</p>
             </div>
           </div>
         </div>
