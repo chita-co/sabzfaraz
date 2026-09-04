@@ -51,6 +51,11 @@ export default function AdminShippingLabelView({
 
   const qrValue = trackingCode.trim() || orderNumber;
 
+  const BASE_W = 148;
+  const BASE_H = 105;
+  const scaleX = widthMm / BASE_W;
+  const scaleY = heightMm / BASE_H;
+
   useEffect(() => {
     let mounted = true;
     import("qrcode").then((QRCode) => {
@@ -87,6 +92,8 @@ export default function AdminShippingLabelView({
     }
     setGenerating(false);
   }
+
+
 
   return (
     <div className="shipping-label-page">
@@ -139,6 +146,7 @@ export default function AdminShippingLabelView({
 
       <div className="shipping-label-preview-wrap">
         <div className="sl-card shipping-label-print" ref={labelRef} style={{ width: `${widthMm}mm`, height: `${heightMm}mm` }}>
+          <div className="sl-card-inner" style={{ transform: `scale(${scaleX}, ${scaleY})` }}>
           <div className="sl-top-row">
             <div className="sl-sender-box">
               <span className="sl-badge sl-badge-left"><span dangerouslySetInnerHTML={{ __html: ICONS.person }} /> فرستنده</span>
@@ -202,6 +210,7 @@ export default function AdminShippingLabelView({
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
