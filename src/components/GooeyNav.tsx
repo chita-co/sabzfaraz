@@ -196,8 +196,17 @@ export default function GooeyNav({
     }
   };
 
-  const updateEffectPosition = (element: HTMLElement) => {
+  const updateEffectPosition = (element: HTMLElement, index?: number) => {
     if (!containerRef.current || !filterRef.current || !textRef.current) return;
+
+    // آیتم «سبزفراز» جلوه‌ی گویی/شبح متن نمی‌خواهد؛ کاملاً صفر/خالی می‌شود
+    if (index !== undefined && items[index]?.shiny) {
+      Object.assign(filterRef.current.style, { width: "0px", height: "0px" });
+      Object.assign(textRef.current.style, { width: "0px", height: "0px" });
+      textRef.current.innerText = "";
+      return;
+    }
+
     const containerRect = containerRef.current.getBoundingClientRect();
     const pos = element.getBoundingClientRect();
     const styles = {
@@ -228,7 +237,11 @@ export default function GooeyNav({
     if (activeIndex === index) return;
 
     setActiveIndex(index);
-    updateEffectPosition(liEl);
+    updateEffectPosition(liEl, index);
+
+    if (items[index]?.shiny) {
+      return;
+    }
 
     if (filterRef.current) {
       const particles = filterRef.current.querySelectorAll(".particle");
@@ -248,17 +261,18 @@ export default function GooeyNav({
       | HTMLElement
       | undefined;
     if (activeLi) {
-      updateEffectPosition(activeLi);
+      updateEffectPosition(activeLi, activeIndex);
       textRef.current?.classList.add("active");
     }
     const resizeObserver = new ResizeObserver(() => {
       const currentActiveLi = navRef.current?.querySelectorAll("li")[
         activeIndex
       ] as HTMLElement | undefined;
-      if (currentActiveLi) updateEffectPosition(currentActiveLi);
+      if (currentActiveLi) updateEffectPosition(currentActiveLi, activeIndex);
     });
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndex]);
 
   function renderDropdownContent(item: GooeyNavItem) {
