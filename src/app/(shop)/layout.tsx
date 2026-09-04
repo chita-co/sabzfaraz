@@ -5,6 +5,7 @@ import "./shop.css";
 import FloatingSupportButton from "@/components/shop/FloatingSupportButton";
 import CartSyncEffect from "@/components/shop/CartSyncEffect";
 import CartRealtimeSync from "@/components/shop/CartRealtimeSync";
+import ProductPriceRealtimeSync from "@/components/shop/ProductPriceRealtimeSync";
 
 export default function ShopLayout({
   children,
@@ -15,6 +16,7 @@ export default function ShopLayout({
     <div className="min-h-screen flex flex-col">
       <CartSyncEffect />
       <CartRealtimeSync />
+      <ProductPriceRealtimeSync />
       <Header />
       <main className="flex-1 relative z-10">{children}</main>
       <Footer />
