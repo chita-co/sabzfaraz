@@ -22,7 +22,7 @@ const ICONS = {
 };
 
 export default function AdminShippingLabelView({
-  orderId, orderNumber, date, sender, receiver, storeName, fileName, initialTrackingCode,
+  orderId, orderNumber, sender, receiver, storeName, fileName, initialTrackingCode,
 }: {
   orderId: string; orderNumber: string; date: string; sender: SenderInfo; receiver: ReceiverInfo;
   storeName: string; fileName: string; initialTrackingCode?: string | null;
@@ -52,7 +52,7 @@ export default function AdminShippingLabelView({
   const qrValue = trackingCode.trim() || orderNumber;
 
   const BASE_W = 148;
-  const BASE_H = 105;
+  const BASE_H = 110;
   const scaleX = widthMm / BASE_W;
   const scaleY = heightMm / BASE_H;
 
@@ -174,8 +174,6 @@ export default function AdminShippingLabelView({
             <div className="sl-tracking-box">
               <canvas ref={qrRef} />
               <p className="sl-qr-instruction">ابتدا اسکن کنید<br />سپس بسته را باز کنید</p>
-              <div className="sl-tracking-divider" />
-              <p className="sl-tracking-date">تاریخ: {date}</p>
             </div>
           </div>
 
@@ -196,8 +194,10 @@ export default function AdminShippingLabelView({
             </div>
             <div className="sl-receiver-box">
               <span className="sl-badge sl-badge-right"><span dangerouslySetInnerHTML={{ __html: ICONS.person }} /> گیرنده</span>
-              <p className="sl-field"><b>نام و نام‌خانوادگی:</b> {receiverName}</p>
-              <p className="sl-field" dir="ltr"><b>تلفن همراه:</b> {receiverPhone}</p>
+              <p className="sl-field">
+                <b>نام و نام‌خانوادگی:</b> {receiverName}
+                <span dir="ltr" style={{ marginRight: 8 }}><b>تلفن:</b> {receiverPhone}</span>
+              </p>
               <div className="sl-postal-row">
                 <b>کدپستی:</b>
                 <div className="sl-postal-boxes">
