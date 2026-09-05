@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DollarSign, Coins, Bitcoin, AlertTriangle, Star, Send } from "lucide-react";
 import type { PriceCategory, PriceItem, PriceSnapshot } from "@/types/priceTicker";
 import TickerMarquee from "./TickerMarquee";
@@ -49,13 +49,20 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
   const [snapshot, setSnapshot] = useState<PriceSnapshot>(initialSnapshot);
   const [activeTab, setActiveTab] = useState<PriceCategory>("currency");
   const [selected, setSelected] = useState<PriceItem | null>(initialSnapshot.currency[0] ?? null);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites());
   const [, forceTick] = useState(0);
-  const prevPrices = useRef<Record<string, number>>({});
 
-  useEffect(() => {
-    setFavorites(loadFavorites());
-  }, []);
+  const [renderedSnapshot, setRenderedSnapshot] = useState(initialSnapshot);
+  const [prevPricesMap, setPrevPricesMap] = useState<Record<string, number>>({});
+
+  if (snapshot !== renderedSnapshot) {
+    const nextPrevPrices: Record<string, number> = {};
+    [...renderedSnapshot.currency, ...renderedSnapshot.gold, ...renderedSnapshot.crypto].forEach((i) => {
+      nextPrevPrices[i.symbol] = i.price;
+    });
+    setPrevPricesMap(nextPrevPrices);
+    setRenderedSnapshot(snapshot);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -80,14 +87,6 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => {
-    const map: Record<string, number> = {};
-    [...snapshot.currency, ...snapshot.gold, ...snapshot.crypto].forEach((i) => {
-      map[i.symbol] = i.price;
-    });
-    prevPrices.current = map;
-  }, [snapshot]);
-
   function toggleFavorite(symbol: string) {
     const next = new Set(favorites);
     if (next.has(symbol)) next.delete(symbol);
@@ -111,7 +110,7 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
   const marketMoodPercent = allItems.length > 0 ? Math.round((greenCount / allItems.length) * 100) : null;
 
   function quickShareRow(item: PriceItem) {
-    const url = typeof window !== "undefined" ? window.location.href : "https://sabzfaraz.ir/قیمت-لحظه-ای-طلا-دلار";
+    const url = typeof window !== "undefined" ? window.location.href : "https://sabzfaraz.ir/price-ticker";
     const text = `قیمت ${item.name} هم‌اکنون ${item.price.toLocaleString("fa-IR")} ${item.unit ?? "تومان"} است (${formatPercent(item.changePercent)}) — سبزفراز`;
     shareOrFallback({ title: "قیمت لحظه‌ای سبزفراز", text, url }, () => {
       window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, "_blank");
@@ -179,7 +178,7 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
           ) : (
             <div className="pt-table">
               {items.map((item) => {
-                const prev = prevPrices.current[item.symbol];
+                const prev = prevPricesMap[item.symbol];
                 const flash = prev !== undefined && prev !== item.price ? (item.price > prev ? "up" : "down") : "";
                 const positive = item.changePercent >= 0;
                 const isFav = favorites.has(item.symbol);

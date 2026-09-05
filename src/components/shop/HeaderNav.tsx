@@ -48,7 +48,7 @@ export default function HeaderNav({
     { type: "link", label: "آنباکس", href: "/unboxing" },
     { type: "link", label: "سفارش جمعی", href: "/bulk-order" },
     { type: "link", label: "بلاگ", href: "/blog" },
-    { type: "link", label: "قیمت لحظه‌ای", href: "/قیمت-لحظه-ای-طلا-دلار" },
+    { type: "link", label: "قیمت لحظه‌ای", href: "/price-ticker" },
     { type: "link", label: "درباره ما", href: "/about" },
     { type: "link", label: "تماس با ما", href: "/contact" },
   ];
@@ -102,6 +102,7 @@ export default function HeaderNav({
         </Link>
         <Link href="/bulk-order" onClick={() => setMobileOpen(false)}>سفارش جمعی</Link>
         <Link href="/blog" onClick={() => setMobileOpen(false)}>بلاگ</Link>
+        <Link href="/price-ticker" onClick={() => setMobileOpen(false)}>قیمت لحظه‌ای</Link>
         <Link href="/about" onClick={() => setMobileOpen(false)}>درباره ما</Link>
         <Link href="/contact" onClick={() => setMobileOpen(false)}>تماس با ما</Link>
 

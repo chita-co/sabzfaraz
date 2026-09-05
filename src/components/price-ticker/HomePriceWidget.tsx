@@ -11,7 +11,7 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import type { PriceSnapshot } from "@/types/priceTicker";
 
-const HOME_PAGE_URL = "/قیمت-لحظه-ای-طلا-دلار";
+const HOME_PAGE_URL = "/price-ticker";
 
 export default function HomePriceWidget() {
   const [snapshot, setSnapshot] = useState<PriceSnapshot | null>(null);

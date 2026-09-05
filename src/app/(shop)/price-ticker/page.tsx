@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: "/قیمت-لحظه-ای-طلا-دلار" },
+    alternates: { canonical: "/price-ticker" },
     openGraph: {
       title,
       description,
@@ -55,7 +55,7 @@ export default async function PriceTickerPage() {
   });
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir").replace(/\/$/, "");
-  const pageUrl = `${siteUrl}/قیمت-لحظه-ای-طلا-دلار`;
+  const pageUrl = `${siteUrl}/price-ticker`;
 
   const datasetSchema = {
     "@context": "https://schema.org",

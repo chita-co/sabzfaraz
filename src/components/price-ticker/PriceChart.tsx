@@ -76,7 +76,7 @@ const now = Date.now();
   const yesterdayPoint = findNearest(weekPoints, now - 24 * 60 * 60 * 1000);
   const weekAgoPoint = weekPoints[0] ?? null;
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "https://sabzfaraz.ir/قیمت-لحظه-ای-طلا-دلار";
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "https://sabzfaraz.ir/price-ticker";
   const shareText = `قیمت ${item.name} هم‌اکنون ${item.price.toLocaleString("fa-IR")} ${item.unit ?? "تومان"} است (${item.changePercent >= 0 ? "+" : ""}${item.changePercent.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪) — سبزفراز`;
 
   return (
