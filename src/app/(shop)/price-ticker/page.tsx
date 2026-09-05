@@ -6,7 +6,8 @@
 import type { Metadata } from "next";
 import { getPriceSnapshot } from "@/lib/priceTicker/cache";
 import PriceTickerDashboard from "@/components/price-ticker/PriceTickerDashboard";
-import PriceTickerFaq, { PRICE_TICKER_FAQS } from "@/components/price-ticker/PriceTickerFaq";
+import PriceTickerFaq from "@/components/price-ticker/PriceTickerFaq";
+import { PRICE_TICKER_FAQS } from "@/components/price-ticker/priceTickerFaqs";
 
 
 export const dynamic = 'force-dynamic';
