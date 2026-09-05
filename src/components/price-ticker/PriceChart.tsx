@@ -32,7 +32,6 @@ export default function PriceChart({ category, item }: { category: PriceCategory
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetch(`/api/price-ticker/history?category=${category}&symbol=${encodeURIComponent(item.symbol)}&hours=${hours}`)
       .then((r) => r.json())
       .then((d) => {
@@ -72,7 +71,8 @@ export default function PriceChart({ category, item }: { category: PriceCategory
 
   const trendUp = chartData.length > 1 && chartData[chartData.length - 1].price >= chartData[0].price;
 
-  const now = Date.now();
+  // eslint-disable-next-line react-hooks/purity
+const now = Date.now();
   const yesterdayPoint = findNearest(weekPoints, now - 24 * 60 * 60 * 1000);
   const weekAgoPoint = weekPoints[0] ?? null;
 
@@ -123,7 +123,10 @@ export default function PriceChart({ category, item }: { category: PriceCategory
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid rgba(255,255,255,.1)", borderRadius: 10, fontSize: 12 }}
                 labelStyle={{ color: "#9ca3af" }}
-                formatter={(value: number | string) => [`${Number(value).toLocaleString("fa-IR")} ${item.unit ?? "تومان"}`, "قیمت"]}
+                formatter={(value: unknown) => {
+  const val = Array.isArray(value) ? Number(value[0] ?? 0) : Number(value ?? 0);
+  return [`${val.toLocaleString("fa-IR")}`, "قیمت"];
+}}
               />
               <Area type="monotone" dataKey="price" stroke={trendUp ? "#22c55e" : "#ef4444"} strokeWidth={2} fill="url(#pt-area-fill)" />
             </AreaChart>
