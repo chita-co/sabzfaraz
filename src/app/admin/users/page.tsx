@@ -1,4 +1,5 @@
 // src/app/admin/users/page.tsx
+import SendSupportMessageButton from "@/components/admin/SendSupportMessageButton";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -56,12 +57,15 @@ export default async function AdminUsersPage() {
                   {new Date(p.created_at).toLocaleDateString("fa-IR")}
                 </td>
                 <td>
+                  <div className="flex gap-2">
                   <Link
                     href={`/admin/users/${p.id}`}
                     className="admin-btn admin-btn-secondary"
                   >
                     جزئیات
                   </Link>
+                  <SendSupportMessageButton userId={p.id} userName={p.full_name ?? "کاربر"} />
+                  </div>
                 </td>
               </tr>
             ))}

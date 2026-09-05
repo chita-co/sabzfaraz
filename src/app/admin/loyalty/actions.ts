@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function updateLoyaltySettings(formData: FormData) {
@@ -59,18 +60,22 @@ export async function deleteTier(id: string) {
 }
 
 export async function adjustUserPoints(userId: string, points: number, description: string) {
-  const supabase = await createClient();
-  const { data: profile } = await supabase.from("profiles").select("loyalty_points_balance").eq("id", userId).single();
+  const admin = createAdminClient();
+  const { data: profile } = await admin.from("profiles").select("loyalty_points_balance").eq("id", userId).single();
   if (!profile) return { error: "کاربر یافت نشد." };
 
   const newBalance = Math.max(0, profile.loyalty_points_balance + points);
-  await supabase.from("profiles").update({ loyalty_points_balance: newBalance }).eq("id", userId);
-  await supabase.from("loyalty_transactions").insert({
+  const { error: updateError } = await admin.from("profiles").update({ loyalty_points_balance: newBalance }).eq("id", userId);
+  if (updateError) return { error: updateError.message };
+
+  const { error: insertError } = await admin.from("loyalty_transactions").insert({
     user_id: userId, type: "ADJUSTMENT", points,
     points_remaining: points > 0 ? points : 0, balance_after: newBalance,
     description: description || "اصلاح دستی توسط ادمین",
     expires_at: points > 0 ? new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString() : null,
   });
+  if (insertError) return { error: insertError.message };
+
 
   revalidatePath("/admin/loyalty/transactions");
   return { success: true };
