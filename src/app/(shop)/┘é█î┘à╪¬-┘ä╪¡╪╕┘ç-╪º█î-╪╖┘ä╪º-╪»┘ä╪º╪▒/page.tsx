@@ -8,6 +8,10 @@ import { getPriceSnapshot } from "@/lib/priceTicker/cache";
 import PriceTickerDashboard from "@/components/price-ticker/PriceTickerDashboard";
 import PriceTickerFaq, { PRICE_TICKER_FAQS } from "@/components/price-ticker/PriceTickerFaq";
 
+
+export const dynamic = 'force-dynamic';
+
+
 // هر ۳۰ ثانیه HTML صفحه در پس‌زمینه تازه می‌شود (ISR) — سریع برای کاربر و
 // سئو، و سبک برای پلن رایگان Vercel (نه یک تابع سرورلس در هر بازدید).
 export const revalidate = 30;
