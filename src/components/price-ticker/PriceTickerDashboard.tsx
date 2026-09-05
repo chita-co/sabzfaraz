@@ -124,7 +124,7 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
       <div className="pt-hero">
         <h1>قیمت لحظه‌ای طلا، دلار و ارز دیجیتال</h1>
         <p className="pt-hero-sub">
-          نرخ آنلاین دلار، یورو، سکه، طلای ۱۸ عیار و برترین ارزهای دیجیتال (با منبع CoinGecko) — به‌روزرسانی خودکار
+          نرخ آنلاین دلار، یورو، سکه، طلای ۱۸ عیار و برترین ارزهای دیجیتال — به‌روزرسانی خودکار
           هر ۳۰ ثانیه، بدون نیاز به رفرش صفحه.
         </p>
 
