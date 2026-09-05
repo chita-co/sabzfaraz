@@ -28,6 +28,7 @@ export async function GET() {
     { loc: `${baseUrl}/products`, changefreq: "daily", priority: "0.9" },
     { loc: `${baseUrl}/deals`, changefreq: "daily", priority: "0.8" },
     { loc: `${baseUrl}/blog`, changefreq: "daily", priority: "0.8" },
+    { loc: `${baseUrl}/${encodeURIComponent("قیمت-لحظه-ای-طلا-دلار")}`, changefreq: "always", priority: "0.9" },
     { loc: `${baseUrl}/about`, changefreq: "monthly", priority: "0.5" },
     { loc: `${baseUrl}/contact`, changefreq: "monthly", priority: "0.5" },
     { loc: `${baseUrl}/faq`, changefreq: "monthly", priority: "0.4" },

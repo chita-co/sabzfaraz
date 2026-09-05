@@ -48,6 +48,7 @@ export default function HeaderNav({
     { type: "link", label: "آنباکس", href: "/unboxing" },
     { type: "link", label: "سفارش جمعی", href: "/bulk-order" },
     { type: "link", label: "بلاگ", href: "/blog" },
+    { type: "link", label: "قیمت لحظه‌ای", href: "/قیمت-لحظه-ای-طلا-دلار" },
     { type: "link", label: "درباره ما", href: "/about" },
     { type: "link", label: "تماس با ما", href: "/contact" },
   ];

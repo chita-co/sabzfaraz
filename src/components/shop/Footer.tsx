@@ -107,6 +107,7 @@ export default async function Footer() {
             <Link href="/deals">جشنواره تخفیف</Link>
             <Link href="/unboxing">آنباکس مشتریان</Link>
             <Link href="/blog">مقالات</Link>
+            <Link href="/قیمت-لحظه-ای-طلا-دلار">قیمت لحظه‌ای طلا و ارز</Link>
             <Link href="/cart">سبد خرید</Link>
             <Link href="/wishlist">علاقه‌مندی‌ها</Link>
           </div>
