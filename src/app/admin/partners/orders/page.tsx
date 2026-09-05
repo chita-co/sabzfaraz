@@ -15,38 +15,6 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "لغو‌شده",
 };
 
-interface RawPartnerOrderItem {
-  id: string;
-  product_name: string;
-  quantity: number;
-  price: number;
-  partner_cost_price: number | null;
-  partner_fulfillment_status: string;
-  created_at: string;
-  selected_color: string | null;
-  selected_size: string | null;
-  partner: { id: string; business_name: string; phone: string | null; partner_code: string | null }[] | null;
-  order: {
-    order_number: string;
-    user_id: string;
-    profile: { full_name: string }[] | null;
-  }[] | null;
-}
-
-interface NormalizedPartnerOrderItem {
-  id: string;
-  product_name: string;
-  quantity: number;
-  price: number;
-  partner_cost_price: number | null;
-  partner_fulfillment_status: string;
-  created_at: string;
-  selected_color: string | null;
-  selected_size: string | null;
-  partner: { id: string; business_name: string; phone: string | null; partner_code: string | null } | null;
-  order: { order_number: string; user_id: string; profile: { full_name: string } | null } | null;
-}
-
 
 export default async function AdminPartnerOrdersPage({
   searchParams,
@@ -74,7 +42,7 @@ export default async function AdminPartnerOrdersPage({
 
   let query = admin
     .from("order_items")
-    .select("id, product_name, quantity, price, partner_cost_price, partner_fulfillment_status, created_at, selected_color, selected_size, partner:partners!order_items_partner_id_fkey(id, business_name, phone, partner_code), order:orders!order_items_order_id_fkey(order_number, user_id, profile:profiles(full_name))")
+    .select("id, product_name, quantity, price, partner_cost_price, partner_fulfillment_status, created_at, selected_color, selected_size, order_id, partner_id")
     .not("partner_id", "is", null)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -84,37 +52,36 @@ export default async function AdminPartnerOrdersPage({
   if (from) query = query.gte("created_at", from);
   if (to) query = query.lte("created_at", to);
 
-  const { data: items } = await query;
+  const { data: rawItems } = await query;
 
-  const rawItems = (items ?? []) as RawPartnerOrderItem[];
+  const orderIds = [...new Set((rawItems ?? []).map((i) => i.order_id).filter(Boolean))];
+  const partnerIdsInList = [...new Set((rawItems ?? []).map((i) => i.partner_id).filter(Boolean))];
 
-  const normalizedItems: NormalizedPartnerOrderItem[] = rawItems.map((raw) => {
-    const partner = raw.partner?.[0] ?? null;
-    const order = raw.order?.[0] ?? null;
-    const profile = order?.profile?.[0] ?? null;
+  const [{ data: ordersData }, { data: partnersData }] = await Promise.all([
+    orderIds.length > 0
+      ? admin.from("orders").select("id, order_number").in("id", orderIds)
+      : Promise.resolve({ data: [] as { id: string; order_number: string }[] }),
+    partnerIdsInList.length > 0
+      ? admin.from("partners").select("id, business_name, phone, partner_code").in("id", partnerIdsInList)
+      : Promise.resolve({ data: [] as { id: string; business_name: string; phone: string; partner_code: string | null }[] }),
+  ]);
 
-    return {
-      id: raw.id,
-      product_name: raw.product_name,
-      quantity: raw.quantity,
-      price: raw.price,
-      partner_cost_price: raw.partner_cost_price,
-      partner_fulfillment_status: raw.partner_fulfillment_status,
-      created_at: raw.created_at,
-      selected_color: raw.selected_color,
-      selected_size: raw.selected_size,
-      partner,
-      order: order ? { order_number: order.order_number, user_id: order.user_id, profile } : null,
-    };
-  });
+  const ordersMap = new Map((ordersData ?? []).map((o) => [o.id, o]));
+  const partnersMap = new Map((partnersData ?? []).map((p) => [p.id, p]));
+
+  const items = (rawItems ?? []).map((it) => ({
+    ...it,
+    order: it.order_id ? ordersMap.get(it.order_id) ?? null : null,
+    partner: it.partner_id ? partnersMap.get(it.partner_id) ?? null : null,
+  }));
 
   const filteredItems = q
-    ? normalizedItems.filter((it) =>
+    ? items.filter((it) =>
         it.product_name?.toLowerCase().includes(q.toLowerCase()) ||
         it.order?.order_number?.toLowerCase().includes(q.toLowerCase()) ||
         it.partner?.business_name?.toLowerCase().includes(q.toLowerCase())
       )
-    : normalizedItems;
+    : items;
 
   const managerItems = filteredItems.map((it) => ({
     id: it.id,
@@ -130,7 +97,7 @@ export default async function AdminPartnerOrdersPage({
       ? { id: it.partner.id, business_name: it.partner.business_name, phone: it.partner.phone ?? "", partner_code: it.partner.partner_code ?? "" }
       : null,
     order: it.order
-      ? { order_number: it.order.order_number, user_id: it.order.user_id, profile: it.order.profile ?? null }
+      ? { order_number: it.order.order_number, user_id: "", profile: null }
       : null,
   }));
 

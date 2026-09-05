@@ -169,15 +169,35 @@ export async function getCollectionListItemsAction(itemIds: string[]) {
   await requireAdmin();
   if (itemIds.length === 0) return [];
   const admin = createAdminClient();
-  const { data } = await admin
+
+  // 1) دریافت آیتم‌های سفارش
+  const { data: rawItems } = await admin
     .from("order_items")
-    .select("id, product_name, quantity, selected_color, selected_size, partner_fulfillment_status, partner:partners!order_items_partner_id_fkey(business_name, partner_code), order:orders!order_items_order_id_fkey(order_number)")
+    .select("id, product_name, quantity, selected_color, selected_size, partner_fulfillment_status, order_id, partner_id")
     .in("id", itemIds);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((raw: any) => ({
-    ...raw,
-    partner: Array.isArray(raw.partner) ? raw.partner[0] ?? null : raw.partner,
-    order: Array.isArray(raw.order) ? raw.order[0] ?? null : raw.order,
+  // 2) استخراج شناسه‌های یکتای سفارش‌ها و همکاران
+  const orderIds = [...new Set((rawItems ?? []).map((i) => i.order_id).filter(Boolean))];
+  const partnerIds = [...new Set((rawItems ?? []).map((i) => i.partner_id).filter(Boolean))];
+
+  // 3) دریافت اطلاعات تکمیلی سفارش‌ها و همکاران به‌صورت موازی
+  const [{ data: ordersData }, { data: partnersData }] = await Promise.all([
+    orderIds.length > 0
+      ? admin.from("orders").select("id, order_number").in("id", orderIds)
+      : Promise.resolve({ data: [] as { id: string; order_number: string }[] }),
+    partnerIds.length > 0
+      ? admin.from("partners").select("id, business_name, partner_code").in("id", partnerIds)
+      : Promise.resolve({ data: [] as { id: string; business_name: string; partner_code: string | null }[] }),
+  ]);
+
+  // 4) ساخت Map برای دسترسی سریع
+  const ordersMap = new Map((ordersData ?? []).map((o: { id: string; order_number: string }) => [o.id, o]));
+  const partnersMap = new Map((partnersData ?? []).map((p: { id: string; business_name: string; partner_code: string | null }) => [p.id, p]));
+
+  // 5) ترکیب و بازگرداندن نتیجه
+  return (rawItems ?? []).map((it) => ({
+    ...it,
+    order: it.order_id ? ordersMap.get(it.order_id) ?? null : null,
+    partner: it.partner_id ? partnersMap.get(it.partner_id) ?? null : null,
   }));
 }

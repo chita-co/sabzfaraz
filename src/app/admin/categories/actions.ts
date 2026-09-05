@@ -20,6 +20,7 @@ export async function createCategory(formData: FormData) {
   const description = formData.get("description") as string;
   const parentId = formData.get("parentId") as string;
   const image = formData.get("image") as string;
+  const partnerAllowed = formData.get("partnerAllowed") === "on";
 
   const slug = slugify(rawSlug || name);
   if (!slug) return { error: "اسلاگ معتبر نیست. لطفاً یک اسلاگ انگلیسی وارد کنید." };
@@ -31,6 +32,7 @@ export async function createCategory(formData: FormData) {
     description: description || null,
     parent_id: parentId || null,
     image: image || null,
+    partner_allowed: partnerAllowed,
   });
 
   if (error) {
@@ -52,6 +54,7 @@ export async function updateCategory(id: string, formData: FormData) {
   const parentId = formData.get("parentId") as string;
   const isActive = formData.get("isActive") === "on";
   const image = formData.get("image") as string;
+  const partnerAllowed = formData.get("partnerAllowed") === "on";
 
   const slug = slugify(rawSlug || name);
   const supabase = await createClient();
@@ -75,6 +78,7 @@ export async function updateCategory(id: string, formData: FormData) {
       parent_id: parentId || null,
       is_active: isActive,
       image: image || null,
+      partner_allowed: partnerAllowed,
     })
     .eq("id", id);
 

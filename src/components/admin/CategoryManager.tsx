@@ -255,6 +255,18 @@ export default function CategoryManager({ categories }: { categories: Category[]
                 </div>
               )}
 
+              <div className="admin-form-group flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="partnerAllowed"
+                  id="partnerAllowed"
+                  defaultChecked={editing ? Boolean((editing as unknown as { partner_allowed?: boolean }).partner_allowed) : true}
+                />
+                <label htmlFor="partnerAllowed" style={{ marginBottom: 0 }}>
+                  همکاران فروشگاه هم بتوانند محصول در این دسته‌بندی ثبت کنند
+                </label>
+              </div>
+
               {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
               <button type="submit" className="admin-btn admin-btn-primary w-full" disabled={loading || uploading}>

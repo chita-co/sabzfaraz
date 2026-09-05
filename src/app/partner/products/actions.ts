@@ -146,6 +146,100 @@ ${settings.ai_default_prompt}
   }
 }
 
+export async function autofillBulkProductsWithAiAction(variantTitles: string[]) {
+  try {
+    const partner = await requireActivePartner();
+    const validTitles = variantTitles.map((t) => t.trim()).filter((t) => t.length >= 2);
+    if (validTitles.length === 0) return { error: "حداقل یک عنوان مدل معتبر وارد کنید." };
+
+    const settings = await getPartnerSettings();
+    const admin = createAdminClient();
+
+    if (partner.ai_daily_request_limit) {
+      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+      const { count } = await admin.from("products").select("id", { count: "exact", head: true })
+        .eq("partner_id", partner.id).eq("ai_autofilled", true).gte("created_at", startOfDay.toISOString());
+      if ((count ?? 0) >= partner.ai_daily_request_limit) {
+        return { error: "سقف روزانه‌ی استفاده از پرکردن خودکار برای شما به پایان رسیده است." };
+      }
+    }
+
+    const { data: allowedCategories } = await admin.from("categories").select("name").eq("partner_allowed", true).eq("is_active", true);
+    const categoryNames = (allowedCategories ?? []).map((c: { name: string }) => c.name).filter(Boolean);
+
+    const prompt = `
+${settings.ai_default_prompt}
+
+عنوان‌های خام مدل‌های یک محصول واحد که همکار وارد کرده (این‌ها همه نسخه‌های مختلف یک محصول هستند، مثلاً سایزها یا مقادیر متفاوت یک قطعه):
+${validTitles.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+دسته‌بندی‌های مجاز: ${categoryNames.join("، ") || "نامشخص"}
+
+تو یک کارشناس حرفه‌ای تولید محتوای فروشگاهی فارسی برای سبزفراز هستی. این عنوان‌ها همگی نسخه‌های مختلف (تنوع/مدل) یک محصول پایه هستند. وظیفه تو:
+۱) برای هر مدل، نام فارسی کامل و اصلاح‌شده و یک نام انگلیسی دقیق بنویس (دقیقاً به همان ترتیب لیست بالا).
+۲) فقط یک توضیحات مشترک برای کل خانواده محصول بنویس (چون همه از یک محصول پایه هستند)، دقیقاً با قوانین متن ساده زیر.
+
+قوانین بسیار سخت‌گیرانه برای فیلد description:
+۱) این متن قرار است داخل یک باکس متنی ساده نمایش داده شود. مطلقاً از هیچ تگ HTML استفاده نکن.
+۲) به‌جای عنوان بخش، از یک ایموجی مناسب در ابتدای هر بخش استفاده کن.
+۳) هر آیتم لیست را در یک خط جدید با علامت «•» بنویس.
+۴) بین هر بخش اصلی، دقیقاً یک خط کاملاً خالی بگذار.
+۵) دقیقاً همین ساختار را رعایت کن:
+
+[نام کلی خانواده محصول] – [مهم‌ترین کاربرد یا ویژگی مشترک]
+
+[پاراگراف مقدمه، ۴ تا ۵ خط درباره‌ی کل خانواده محصول و تفاوت مدل‌ها]
+
+⚙️ مشخصات فنی
+- [ویژگی مشترک اول]
+
+📌 کاربردهای اصلی
+- [کاربرد اول]
+
+💡 نکات مهم و نحوه استفاده صحیح
+- [نکته اول]
+
+📦 محتویات بسته
+- [آیتم اول]
+
+❓ سوالات متداول
+سوال: [سؤال اول؟]
+پاسخ: [پاسخ.]
+
+سوال: [سؤال دوم؟]
+پاسخ: [پاسخ.]
+
+سوال: [سؤال سوم؟]
+پاسخ: [پاسخ.]
+
+[یک پاراگراف طبیعی معرفی فروشگاه سبزفراز شامل sabzfaraz.ir]
+
+فقط یک JSON با این ساختار دقیق برگردان (بدون Markdown fence، بدون توضیح اضافه):
+{
+  "variants": [
+    {"name": "نام فارسی کامل مدل ۱", "name_en": "نام انگلیسی مدل ۱"},
+    {"name": "نام فارسی کامل مدل ۲", "name_en": "نام انگلیسی مدل ۲"}
+  ],
+  "description": "توضیح مشترک طبق قوانین بالا",
+  "short_description": "خلاصه یک یا دو جمله‌ی جذاب مشترک",
+  "tags": ["برچسب۱", "برچسب۲"],
+  "meta_title": "عنوان سئو مشترک (حداکثر ۶۰ کاراکتر)",
+  "meta_description": "توضیح متا مشترک (حداکثر ۱۶۰ کاراکتر)",
+  "focus_keyword": "کلمه کلیدی اصلی مشترک",
+  "suggested_category": "نزدیک‌ترین نام از دسته‌بندی‌های مجاز بالا، یا null"
+}
+
+دقت کن آرایه‌ی "variants" دقیقاً به همان تعداد و به همان ترتیب عنوان‌های خام ورودی باشد.`.trim();
+
+    const raw = await callAiWithRotation(prompt, settings.ai_rotation_mode);
+    const parsed = JSON.parse(raw);
+    return { success: true, ...parsed };
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "مشکلی پیش آمده، لطفاً دوباره تلاش کنید.";
+    return { error: message };
+  }
+}
+
 interface PartnerProductInput {
   title: string; nameEn: string | null; description: string; shortDescription: string | null; tags: string[];
   categoryId: string | null; extraCategoryIds: string[]; suggestedCategoryName: string | null;
@@ -286,6 +380,110 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
   } catch (e: unknown) {
     console.error("createPartnerProductAction:", e);
     const message = e instanceof Error ? e.message : "خطای غیرمنتظره‌ای رخ داد. لطفاً دوباره تلاش کنید.";
+    return { error: message };
+  }
+}
+
+interface PartnerBulkVariantRow { name: string; nameEn: string | null; stock: number; stockUnlimited: boolean; }
+
+export async function createPartnerBulkProductsAction(common: PartnerProductInput, variants: PartnerBulkVariantRow[]) {
+  try {
+    const partner = await requireActivePartner();
+    const settings = await getPartnerSettings();
+    const admin = createAdminClient();
+
+    const validVariants = variants.filter((v) => v.name.trim().length >= 2);
+    if (validVariants.length === 0) return { error: "حداقل یک مدل با نام معتبر وارد کنید." };
+    if (!common.categoryId && !common.suggestedCategoryName) return { error: "دسته‌بندی را انتخاب یا پیشنهاد دهید." };
+    if (common.images.length === 0) return { error: "حداقل یک تصویر محصول لازم است." };
+
+    const profit = common.sellPrice - common.partnerCostPrice;
+    const profitPercent = common.sellPrice > 0 ? (profit / common.sellPrice) * 100 : 0;
+    if (profitPercent < settings.min_profit_percent) {
+      return { error: "سود سایت برای این محصول کمتر از حد مجاز است. لطفاً قیمت فروش را افزایش دهید یا مبلغ دریافتی خود را کاهش دهید." };
+    }
+
+    if (partner.max_active_products) {
+      const { count } = await admin.from("products").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_approval_status", "APPROVED");
+      if ((count ?? 0) + validVariants.length > partner.max_active_products) {
+        return { error: `ثبت این ${validVariants.length} مدل شما را از سقف مجاز ${partner.max_active_products} محصول فعال عبور می‌دهد.` };
+      }
+    }
+
+    let categoryId = common.categoryId;
+    if (!categoryId) {
+      const { data: fallback } = await admin.from("categories").select("id").eq("partner_allowed", true).eq("is_active", true).order("created_at").limit(1).maybeSingle();
+      categoryId = fallback?.id ?? null;
+      if (!categoryId) return { error: "خطای داخلی: دسته‌بندی پیش‌فرض یافت نشد." };
+    } else {
+      const { data: categoryCheck } = await admin.from("categories").select("id").eq("id", categoryId).eq("partner_allowed", true).eq("is_active", true).maybeSingle();
+      if (!categoryCheck) return { error: "این دسته‌بندی برای همکاران مجاز نیست." };
+    }
+
+    const createdIds: string[] = [];
+    const failures: string[] = [];
+
+    for (const variant of validVariants) {
+      try {
+        const slug = await generateUniqueSlug(admin, variant.name);
+        const { data: product, error } = await admin.from("products").insert({
+          name: variant.name.trim(), name_en: variant.nameEn, slug,
+          description: common.description, short_description: common.shortDescription,
+          category_id: categoryId, price: common.sellPrice, discount_price: common.discountSellPrice,
+          images: common.images, image_alt_texts: common.imageAltTexts, tags: common.tags,
+          stock: variant.stockUnlimited ? 999999 : variant.stock, is_active: false,
+          brand: common.brand, weight_grams: common.weightGrams,
+          is_sold_by_unit: common.isSoldByUnit, unit_label: common.unitLabel,
+          has_min_order_quantity: common.hasMinOrderQty, min_order_quantity: common.minOrderQuantity,
+          meta_title: common.metaTitle, meta_description: common.metaDescription, focus_keyword: common.focusKeyword,
+          colors: common.colors, sizes: common.sizes,
+          show_in_newest: common.showInNewest, is_popular: common.isPopular, is_stock: common.isStock,
+          show_in_feed: common.showInFeed, reviews_enabled: common.reviewsEnabled,
+          display_priority: common.displayPriority, max_purchase_qty: common.maxPurchaseQty,
+          package_length_cm: common.packageLengthCm, package_width_cm: common.packageWidthCm, package_height_cm: common.packageHeightCm,
+          gtin: common.gtin, model_version: common.modelVersion,
+          fulfillment_type: common.fulfillmentType, china_price: common.chinaPrice,
+          china_delivery_min: common.chinaDeliveryMin, china_delivery_max: common.chinaDeliveryMax, china_delivery_unit: common.chinaDeliveryUnit,
+          china_terms_text: common.chinaTermsText, china_delivery_text: common.chinaDeliveryText, china_order_note: common.chinaOrderNote,
+          partner_id: partner.id, partner_cost_price: common.partnerCostPrice,
+          partner_stock_unlimited: variant.stockUnlimited, partner_approval_status: "PENDING_REVIEW",
+          ai_autofilled: common.aiAutofilled,
+        }).select("id").single();
+
+        if (error || !product) { failures.push(`${variant.name}: ${error?.message ?? "خطای نامشخص"}`); continue; }
+
+        await savePartnerProductCategories(admin, product.id, categoryId, common.extraCategoryIds);
+        if (common.quantityTiers.length > 0) {
+          await admin.from("product_quantity_tiers").insert(common.quantityTiers.map((t) => ({ product_id: product.id, min_qty: t.minQty, max_qty: t.maxQty, unit_price: t.unitPrice })));
+        }
+        if (common.attributes.length > 0) {
+          await admin.from("product_attributes").insert(common.attributes.map((a, i) => ({ product_id: product.id, attr_key: a.key, attr_value: a.value, sort_order: i })));
+        }
+        if (common.imageSources.length > 0) {
+          await admin.from("partner_product_image_sources").insert(common.imageSources.map((s) => ({ product_id: product.id, final_image_url: s.finalUrl, raw_crop_url: s.rawCropUrl })));
+        }
+        createdIds.push(product.id);
+      } catch (e: unknown) {
+        failures.push(`${variant.name}: ${e instanceof Error ? e.message : "خطای نامشخص"}`);
+      }
+    }
+
+    if (common.suggestedCategoryName && createdIds.length > 0) {
+      await admin.from("partner_category_suggestions").insert({ partner_id: partner.id, product_id: createdIds[0], suggested_name: common.suggestedCategoryName });
+    }
+
+    if (createdIds.length > 0) {
+      try {
+        await notifyAllAdmins("محصولات گروهی جدید همکار در انتظار بررسی 📦", `«${partner.business_name}» ${createdIds.length} مدل از یک محصول را ثبت کرد.`);
+      } catch (e) { console.error(e); }
+    }
+
+    revalidatePath("/partner/products");
+    revalidatePath("/admin/partners/products");
+    return { success: createdIds.length > 0, successCount: createdIds.length, failures };
+  } catch (e: unknown) {
+    console.error("createPartnerBulkProductsAction:", e);
+    const message = e instanceof Error ? e.message : "خطای غیرمنتظره‌ای رخ داد.";
     return { error: message };
   }
 }

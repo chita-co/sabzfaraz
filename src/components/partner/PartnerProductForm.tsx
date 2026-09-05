@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Wand2, X, Plus, GripVertical } from "lucide-react";
+import { Wand2, X, Plus, GripVertical, Layers } from "lucide-react";
 import ImageFrameEditor from "./ImageFrameEditor";
 import PartnerCategorySelect from "./PartnerCategorySelect";
 import ProductAttributesEditor, { type AttributeRow } from "@/components/admin/ProductAttributesEditor";
@@ -10,6 +10,7 @@ import CategoryMultiSelect from "@/components/admin/CategoryMultiSelect";
 import type { PartnerCategoryOption } from "@/types/partner";
 import {
   autofillProductWithAiAction, createPartnerProductAction, updatePartnerProductAction,
+  autofillBulkProductsWithAiAction, createPartnerBulkProductsAction,
 } from "@/app/partner/products/actions";
 
 const NAMED_COLORS = [
@@ -37,6 +38,14 @@ product?: any;
   watermarkConfig?: { enabled: boolean; watermarkUrl: string | null; opacity: number; rotation: number; scalePercent: number };
 }) {
   const router = useRouter();
+
+  // حالت افزودن گروهی چند مدل مشابه (فقط هنگام ثبت محصول جدید)
+  const [bulkMode, setBulkMode] = useState(false);
+  const [variantRows, setVariantRows] = useState<{ id: string; name: string; nameEn: string; stock: string; stockUnlimited: boolean }[]>([
+    { id: crypto.randomUUID(), name: "", nameEn: "", stock: "", stockUnlimited: false },
+  ]);
+  const [bulkAutofilling, setBulkAutofilling] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   // اطلاعات اولیه
   const [title, setTitle] = useState(product?.name ?? "");
@@ -269,6 +278,60 @@ product?: any;
   }
   function removeTier(id: string) { setTiers((prev) => prev.filter((t) => t.id !== id)); }
 
+  function addVariantRow() {
+    setVariantRows((prev) => [...prev, { id: crypto.randomUUID(), name: "", nameEn: "", stock: "", stockUnlimited: false }]);
+  }
+  function updateVariantRow(id: string, field: "name" | "nameEn" | "stock", value: string) {
+    setVariantRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  }
+  function toggleVariantUnlimited(id: string) {
+    setVariantRows((prev) => prev.map((r) => (r.id === id ? { ...r, stockUnlimited: !r.stockUnlimited } : r)));
+  }
+  function removeVariantRow(id: string) {
+    setVariantRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
+  }
+
+  async function handleBulkAutofill() {
+    const validRows = variantRows.filter((r) => r.name.trim().length >= 2);
+    if (validRows.length === 0) return toast.error("حداقل یک ردیف با نام مختصر و مفید وارد کنید.");
+    setBulkAutofilling(true);
+    try {
+      const res = await autofillBulkProductsWithAiAction(validRows.map((r) => r.name));
+      setBulkAutofilling(false);
+      if (res.error) return toast.error(res.error);
+
+      if (Array.isArray(res.variants)) {
+        setVariantRows((prev) => {
+          const next = [...prev];
+          let vi = 0;
+          for (let i = 0; i < next.length; i++) {
+            if (next[i].name.trim().length >= 2 && res.variants[vi]) {
+              next[i] = { ...next[i], name: res.variants[vi].name ?? next[i].name, nameEn: res.variants[vi].name_en ?? next[i].nameEn };
+              vi++;
+            }
+          }
+          return next;
+        });
+      }
+
+      setDescription(res.description ?? "");
+      setShortDescription(res.short_description ?? "");
+      setTagsInput((res.tags ?? []).join("، "));
+      setMetaTitle(res.meta_title ?? "");
+      setMetaDescription(res.meta_description ?? "");
+      setFocusKeyword(res.focus_keyword ?? "");
+      if (res.suggested_category) {
+        const match = categories.find((c) => c.name.trim() === res.suggested_category.trim());
+        if (match) setCategoryId(match.id);
+        else { setSuggestingNewCategory(true); setNewCategoryName(res.suggested_category); }
+      }
+      toast.success("نام مدل‌ها اصلاح و توضیحات مشترک نوشته شد — می‌توانید ویرایش کنید.");
+    } catch {
+      setBulkAutofilling(false);
+      toast.error("مشکلی پیش آمده، لطفاً دوباره تلاش کنید.");
+    }
+  }
+
   const profit = (Number(sellPrice) || 0) - (Number(partnerCostPrice) || 0);
   const profitPercent = Number(sellPrice) > 0 ? (profit / Number(sellPrice)) * 100 : 0;
 
@@ -322,27 +385,121 @@ product?: any;
     }
   }
 
+  async function handleBulkSubmit() {
+    const validRows = variantRows.filter((r) => r.name.trim().length >= 2);
+    if (validRows.length === 0) return toast.error("حداقل یک ردیف با نام معتبر وارد کنید.");
+    if (!categoryId && !suggestingNewCategory) return toast.error("دسته‌بندی را انتخاب کنید یا دسته‌ی جدید پیشنهاد دهید.");
+    if (images.length === 0) return toast.error("حداقل یک تصویر محصول لازم است (بین همه‌ی مدل‌ها مشترک است).");
+    if (!sellPrice || !partnerCostPrice) return toast.error("قیمت فروش و قیمت دریافتی شما الزامی است.");
+
+    const common = {
+      title: "", nameEn: null, description, shortDescription: shortDescription || null,
+      tags: tagsInput.split(/[،,]/).map((t: string) => t.trim()).filter(Boolean),
+      categoryId: categoryId || null, extraCategoryIds,
+      suggestedCategoryName: suggestingNewCategory ? newCategoryName.trim() : null,
+      sellPrice: Number(sellPrice), discountSellPrice: discountSellPrice ? Number(discountSellPrice) : null,
+      partnerCostPrice: Number(partnerCostPrice),
+      stock: 0, stockUnlimited: false, brand: brand || null,
+      weightGrams: weightGrams ? Number(weightGrams) : null,
+      isSoldByUnit, unitLabel: isSoldByUnit ? unitLabel : null,
+      hasMinOrderQty, minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
+      quantityTiers: tiers.filter((t: { minQty: string; maxQty: string; unitPrice: string }) => t.minQty && t.maxQty && t.unitPrice).map((t: { minQty: string; maxQty: string; unitPrice: string }) => ({ minQty: Number(t.minQty), maxQty: Number(t.maxQty), unitPrice: Number(t.unitPrice) })),
+      metaTitle: metaTitle || null, metaDescription: metaDescription || null, focusKeyword: focusKeyword || null,
+      colors, sizes,
+      attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
+      showInNewest, isPopular, isStock, showInFeed, reviewsEnabled,
+      displayPriority: Number(displayPriority) || 0, maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
+      packageLengthCm: packageLength ? Number(packageLength) : null, packageWidthCm: packageWidth ? Number(packageWidth) : null, packageHeightCm: packageHeight ? Number(packageHeight) : null,
+      gtin: gtin || null, modelVersion: modelVersion || null,
+      fulfillmentType, chinaPrice: chinaPrice ? Number(chinaPrice) : null,
+      chinaDeliveryMin: chinaDeliveryMin ? Number(chinaDeliveryMin) : null, chinaDeliveryMax: chinaDeliveryMax ? Number(chinaDeliveryMax) : null,
+      chinaDeliveryUnit, chinaTermsText: chinaTermsText || null, chinaDeliveryText: chinaDeliveryText || null, chinaOrderNote: chinaOrderNote || null,
+      images: images.map((i) => i.finalUrl), imageAltTexts: images.map((i) => i.alt),
+      imageSources: images.filter((i) => i.rawCropUrl).map((i) => ({ finalUrl: i.finalUrl, rawCropUrl: i.rawCropUrl })),
+      aiAutofilled: false,
+    };
+
+    setBulkSaving(true);
+    try {
+      const res = await createPartnerBulkProductsAction(common, validRows.map((r) => ({
+        name: r.name.trim(), nameEn: r.nameEn.trim() || null,
+        stock: Number(r.stock) || 0, stockUnlimited: r.stockUnlimited,
+      })));
+      setBulkSaving(false);
+      if (res.error) return toast.error(res.error);
+      if (res.failures && res.failures.length > 0) {
+        toast.error(`${res.successCount ?? 0} مدل ثبت شد؛ ${res.failures.length} مورد خطا داشت.`);
+      } else {
+        toast.success(`${res.successCount ?? 0} مدل با موفقیت ثبت شد و برای بررسی مدیر ارسال شد.`);
+      }
+      if ((res.successCount ?? 0) > 0) router.push("/partner/products");
+    } catch (e: unknown) {
+      setBulkSaving(false);
+      toast.error(e instanceof Error ? e.message : "خطای غیرمنتظره‌ای رخ داد.");
+    }
+  }
+
   return (
     <div style={{ maxWidth: 900 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* اطلاعات اولیه */}
         <div className="partner-card">
-          <h2 style={{ fontWeight: 800, marginBottom: 12 }}>اطلاعات اولیه</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h2 style={{ fontWeight: 800 }}>اطلاعات اولیه</h2>
+            {mode === "create" && (
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer" }}>
+                <input type="checkbox" checked={bulkMode} onChange={(e) => setBulkMode(e.target.checked)} />
+                <Layers size={14} /> افزودن گروهی چند مدل مشابه
+              </label>
+            )}
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>عنوان محصول</label>
-              <input className="partner-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder='مثلاً: "چسب حرارتی ۱۰ میل" یا "مقاومت ۱۰ اهم ۲ وات"' style={{ width: "100%" }} />
-              <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>فقط کافیه عنوان مختصر و مفید بنویسید تا هوش مصنوعی متوجه بشه — بقیه‌ی موارد رو خودش پیشنهاد می‌ده و شما می‌تونید ویرایش کنید.</p>
-            </div>
-            <button type="button" onClick={handleAutofill} disabled={autofilling || title.trim().length < 3} className="partner-btn partner-btn-secondary" style={{ display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
-              <Wand2 size={14} /> {autofilling ? "لطفاً منتظر بمانید…" : "پر کردن خودکار با هوش مصنوعی"}
-            </button>
+            {bulkMode ? (
+              <div>
+                <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>مدل‌ها (نام + موجودی هر مدل — توضیحات، دسته‌بندی، قیمت و تصاویر مشترک است)</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
+                  {variantRows.map((row) => (
+                    <div key={row.id} style={{ display: "grid", gridTemplateColumns: "1.4fr 1.4fr 0.8fr auto auto", gap: 6, alignItems: "center" }}>
+                      <input className="partner-input" placeholder="نام فارسی (مثلاً: مقاومت 10 اهم)" value={row.name} onChange={(e) => updateVariantRow(row.id, "name", e.target.value)} />
+                      <input className="partner-input" dir="ltr" placeholder="نام انگلیسی (اختیاری)" value={row.nameEn} onChange={(e) => updateVariantRow(row.id, "nameEn", e.target.value)} />
+                      {row.stockUnlimited ? (
+                        <span style={{ fontSize: 11, color: "#9ca3af", textAlign: "center" }}>نامحدود</span>
+                      ) : (
+                        <input className="partner-input" type="number" placeholder="موجودی" value={row.stock} onChange={(e) => updateVariantRow(row.id, "stock", e.target.value)} />
+                      )}
+                      <label style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap" }}>
+                        <input type="checkbox" checked={row.stockUnlimited} onChange={() => toggleVariantUnlimited(row.id)} /> نامحدود
+                      </label>
+                      <button type="button" onClick={() => removeVariantRow(row.id)} className="partner-btn" style={{ background: "#fee2e2", color: "#dc2626", padding: "6px 8px" }}><X size={13} /></button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={addVariantRow} className="partner-btn partner-btn-secondary" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Plus size={13} /> افزودن ردیف مدل جدید
+                </button>
+                <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 10 }}>{variantRows.filter((r) => r.name.trim()).length.toLocaleString("fa-IR")} مدل آماده ثبت</p>
+                <button type="button" onClick={handleBulkAutofill} disabled={bulkAutofilling} className="partner-btn partner-btn-secondary" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Wand2 size={14} /> {bulkAutofilling ? "لطفاً منتظر بمانید…" : "اصلاح نام مدل‌ها و نوشتن توضیح مشترک با هوش مصنوعی"}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>عنوان محصول</label>
+                  <input className="partner-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder='مثلاً: "چسب حرارتی ۱۰ میل" یا "مقاومت ۱۰ اهم ۲ وات"' style={{ width: "100%" }} />
+                  <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>فقط کافیه عنوان مختصر و مفید بنویسید تا هوش مصنوعی متوجه بشه — بقیه‌ی موارد رو خودش پیشنهاد می‌ده و شما می‌تونید ویرایش کنید.</p>
+                </div>
+                <button type="button" onClick={handleAutofill} disabled={autofilling || title.trim().length < 3} className="partner-btn partner-btn-secondary" style={{ display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
+                  <Wand2 size={14} /> {autofilling ? "لطفاً منتظر بمانید…" : "پر کردن خودکار با هوش مصنوعی"}
+                </button>
 
-            <div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>نام محصول (انگلیسی — اختیاری)</label>
-              <input className="partner-input" dir="ltr" value={nameEn} onChange={(e) => setNameEn(e.target.value)} placeholder="مثلاً: Hot Glue Stick 10mm" style={{ width: "100%" }} />
-            </div>
+                <div>
+                  <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>نام محصول (انگلیسی — اختیاری)</label>
+                  <input className="partner-input" dir="ltr" value={nameEn} onChange={(e) => setNameEn(e.target.value)} placeholder="مثلاً: Hot Glue Stick 10mm" style={{ width: "100%" }} />
+                </div>
+              </>
+            )}
 
             <div>
               <label style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>توضیحات کامل محصول</label>
@@ -418,13 +575,18 @@ product?: any;
             </p>
           )}
 
-          <div style={{ marginTop: 14 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, marginBottom: 8 }}>
-              <input type="checkbox" checked={stockUnlimited} onChange={(e) => setStockUnlimited(e.target.checked)} /> موجودی نامحدود
-            </label>
-            {!stockUnlimited && <input className="partner-input" type="number" placeholder="تعداد موجودی" value={stock} onChange={(e) => setStock(e.target.value)} style={{ width: 200 }} />}
-            <p style={{ fontSize: 10.5, color: "#b45309", marginTop: 6 }}>لطفاً فقط موجودی واقعی و مطمئن را وارد کنید. در صورت لغو سفارش به دلیل نبود کالا، جریمه اعمال می‌شود.</p>
-          </div>
+          {!bulkMode && (
+            <div style={{ marginTop: 14 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, marginBottom: 8 }}>
+                <input type="checkbox" checked={stockUnlimited} onChange={(e) => setStockUnlimited(e.target.checked)} /> موجودی نامحدود
+              </label>
+              {!stockUnlimited && <input className="partner-input" type="number" placeholder="تعداد موجودی" value={stock} onChange={(e) => setStock(e.target.value)} style={{ width: 200 }} />}
+              <p style={{ fontSize: 10.5, color: "#b45309", marginTop: 6 }}>لطفاً فقط موجودی واقعی و مطمئن را وارد کنید. در صورت لغو سفارش به دلیل نبود کالا، جریمه اعمال می‌شود.</p>
+            </div>
+          )}
+          {bulkMode && (
+            <p style={{ fontSize: 10.5, color: "#b45309", marginTop: 14 }}>موجودی هر مدل در همان ردیف مدل (بالای فرم) وارد می‌شود.</p>
+          )}
 
           <div style={{ marginTop: 12 }}>
             <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>برند (اختیاری)</label>
@@ -598,8 +760,10 @@ product?: any;
           )}
         </div>
 
-        <button onClick={handleSubmit} disabled={saving} className="partner-btn partner-btn-primary" style={{ alignSelf: "flex-start", padding: "12px 32px", fontSize: 14 }}>
-          {saving ? "در حال ذخیره..." : mode === "edit" ? "ذخیره تغییرات" : "ثبت محصول"}
+        <button onClick={bulkMode ? handleBulkSubmit : handleSubmit} disabled={saving || bulkSaving} className="partner-btn partner-btn-primary" style={{ alignSelf: "flex-start", padding: "12px 32px", fontSize: 14 }}>
+          {bulkMode
+            ? (bulkSaving ? "در حال ذخیره..." : `ثبت ${variantRows.filter((r) => r.name.trim()).length.toLocaleString("fa-IR")} مدل`)
+            : (saving ? "در حال ذخیره..." : mode === "edit" ? "ذخیره تغییرات" : "ثبت محصول")}
         </button>
       </div>
     </div>
