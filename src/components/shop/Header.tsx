@@ -35,10 +35,10 @@ export default async function Header() {
   }));
 
   return (
-    <>
-      <TopBar prices={headerPrices} />
+    <div style={{ position: "relative", zIndex: 100, isolation: "isolate" }}>
+      <TopBar isLoggedIn={!!user} prices={headerPrices} />
       <HeaderNav
-        isLoggedIn={!!user}
+      isLoggedIn={!!user}
       userName={profile?.full_name ?? null}
       isAdmin={profile?.role === "ADMIN"}
       categories={categories ?? []}
@@ -48,6 +48,6 @@ export default async function Header() {
       auctionEnabled={settings?.auction_header_enabled ?? true}
       auctionLabel={settings?.auction_header_label ?? "جمعه بازار"}
       />
-    </>
+    </div>
   );
 }

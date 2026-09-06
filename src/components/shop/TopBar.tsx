@@ -5,23 +5,25 @@ import { UserPlus, Handshake, PackageSearch, Scale } from "lucide-react";
 import LivePriceBadge from "./LivePriceBadge";
 import type { HeaderPriceSummary } from "@/lib/priceTicker/headerSummary";
 
-export default function TopBar({ prices }: { prices?: HeaderPriceSummary }) {
+export default function TopBar({ isLoggedIn, prices }: { isLoggedIn: boolean; prices?: HeaderPriceSummary }) {
   return (
     <div className="site-topbar">
       <div className="site-topbar-inner">
         <div className="topbar-actions">
-          <Link href="/login" className="topbar-btn topbar-btn-primary">
-            <UserPlus size={14} /> ورود / ثبت‌نام
-          </Link>
-          <Link href="/partner/login" className="topbar-btn topbar-btn-secondary">
+          {!isLoggedIn && (
+            <Link href="/login" className="topbar-btn">
+              <UserPlus size={14} /> ورود / ثبت‌نام
+            </Link>
+          )}
+          <Link href="/partner/login" className="topbar-btn">
             <Handshake size={14} /> ورود همکاران
           </Link>
-          <Link href="/profile/orders" className="topbar-btn topbar-btn-ghost">
+          <Link href="/profile/orders" className="topbar-btn">
             <PackageSearch size={14} /> پیگیری سفارشتان
           </Link>
           <button
             type="button"
-            className="topbar-btn topbar-btn-ghost"
+            className="topbar-btn"
             onClick={() => toast("این قابلیت به‌زودی اضافه می‌شود.")}
           >
             <Scale size={14} /> لیست مقایسه
@@ -48,14 +50,14 @@ export default function TopBar({ prices }: { prices?: HeaderPriceSummary }) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
-          padding: 7px 20px;
+          gap: 16px;
+          padding: 8px 20px;
           flex-wrap: wrap;
         }
         .topbar-actions {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 14px;
           flex-wrap: wrap;
         }
         .topbar-btn {
@@ -63,43 +65,26 @@ export default function TopBar({ prices }: { prices?: HeaderPriceSummary }) {
           align-items: center;
           gap: 5px;
           font-size: 11.5px;
-          font-weight: 600;
-          padding: 6px 13px;
+          font-weight: 700;
+          padding: 7px 16px;
           border-radius: 999px;
           border: none;
           cursor: pointer;
           white-space: nowrap;
-          transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
-        }
-        .topbar-btn:hover { transform: translateY(-1px); }
-
-        .topbar-btn-primary {
           background: linear-gradient(135deg, #ffd700, #eab308);
           color: #14532d;
           box-shadow: 0 2px 8px rgba(234, 179, 8, 0.35);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
-        .topbar-btn-secondary {
-          background: transparent;
-          color: #fde047;
-          border: 1px solid rgba(253, 224, 71, 0.6);
-        }
-        .topbar-btn-secondary:hover {
-          background: rgba(255, 215, 0, 0.15);
-        }
-        .topbar-btn-ghost {
-          background: rgba(255, 255, 255, 0.08);
-          color: #fff;
-          border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-        .topbar-btn-ghost:hover {
-          background: rgba(255, 215, 0, 0.18);
-          color: #fde047;
+        .topbar-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(234, 179, 8, 0.5);
         }
 
         :global(.topbar-deals) {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           text-decoration: none;
         }
         :global(.price-badge) {
