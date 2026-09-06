@@ -22,7 +22,7 @@ import { fetchCurrencyAndGold } from "./providers/brsapi";
 import { fetchCrypto } from "./providers/coingecko";
 import type { PriceCategory, PriceItem, PriceSnapshot } from "@/types/priceTicker";
 
-const STALE_MS = 30_000; // هدف: هر ۳۰ ثانیه یک‌بار تازه
+const STALE_MS = 300_000; // هدف: هر ۵ دقیقه یک‌بار تازه
 const HISTORY_RETENTION_DAYS = 8;
 const HISTORY_ITEMS_PER_CATEGORY = 12;
 

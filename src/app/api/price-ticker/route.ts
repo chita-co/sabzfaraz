@@ -12,6 +12,8 @@
 import { NextResponse } from "next/server";
 import { getPriceSnapshot } from "@/lib/priceTicker/cache";
 
+export const revalidate = 0;
+
 export const runtime = "nodejs";
 // این مقدار فقط برای فایل‌های استاتیک/ISR کاربرد دارد؛ چون خودمان کش را در
 // Supabase مدیریت می‌کنیم، اینجا همیشه dynamic اجرا می‌شود.
