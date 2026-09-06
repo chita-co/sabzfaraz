@@ -17,10 +17,10 @@ export async function GET() {
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir").replace(/\/$/, "");
 
   const [{ data: products }, { data: categories }, { data: blogPosts }, { data: blogCategories }] = await Promise.all([
-    supabase.from("products").select("slug, updated_at").eq("is_active", true),
-    supabase.from("categories").select("slug").eq("is_active", true),
-    supabase.from("blog_posts").select("slug, published_at").eq("status", "published"),
-    supabase.from("blog_categories").select("slug").eq("status", "active"),
+    supabase.from("products").select("slug, updated_at").eq("is_active", true).limit(10000),
+    supabase.from("categories").select("slug").eq("is_active", true).limit(10000),
+    supabase.from("blog_posts").select("slug, published_at").eq("status", "published").limit(10000),
+    supabase.from("blog_categories").select("slug").eq("status", "active").limit(10000),
   ]);
 
   const staticUrls = [
