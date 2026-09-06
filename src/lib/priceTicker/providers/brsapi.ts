@@ -1,6 +1,8 @@
 // src/lib/priceTicker/providers/brsapi.ts
 import type { PriceItem } from "@/types/priceTicker";
 
+
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const SOURCE_URLS = ["https://call1.tgju.org/ajax.json"];
 const FETCH_TIMEOUT_MS = 8000;
 
@@ -137,6 +139,11 @@ export async function fetchCurrencyAndGold(): Promise<CurrencyGoldResult> {
       // ابتدا کلیدهای طلا را پیدا کنیم تا gold18kToman را استخراج کنیم
       for (const [key, raw] of Object.entries(current)) {
         const entry = raw as Record<string, unknown>;
+
+        // بررسی تازگی داده
+  const ts = entry.ts ? new Date(String(entry.ts)).getTime() : null;
+  if (!ts || isNaN(ts) || Date.now() - ts > MAX_AGE_MS) continue;
+  
         const name = resolveName(key);
         const nameEn = String(entry["t_en"] ?? "");
         if (classify(key, name, nameEn) === "gold") {
@@ -154,7 +161,7 @@ export async function fetchCurrencyAndGold(): Promise<CurrencyGoldResult> {
         const priceToman = normalizeToToman(toNumber(entry.p));
         if (!priceToman || priceToman <= 0) continue;
 
-        const name = String(entry["t-g"] ?? entry["t"] ?? key);
+        const name = resolveName(key);
         const nameEn = String(entry["t_en"] ?? "");
         const category = classify(key, name, nameEn);
         if (!category) continue;
