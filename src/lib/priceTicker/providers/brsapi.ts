@@ -37,9 +37,9 @@ function toNumber(v: unknown): number {
 }
 
 function normalizeToToman(price: number, unit?: string): number {
-  // قیمت‌های tgju به تومان هستند، مگر اینکه unit ریال باشد
-  if (unit && unit.includes("ریال")) return Math.round(price / 10);
-  return Math.round(price);
+  // همه‌ی قیمت‌های tgju به ریال هستند؛ برای تبدیل به تومان همیشه تقسیم بر ۱۰ می‌کنیم
+  void unit; // پارامتر unit برای سازگاری با فراخوانی‌ها حفظ می‌شود
+  return Math.round(price / 10);
 }
 
 const NAME_MAP: Record<string, string> = {
