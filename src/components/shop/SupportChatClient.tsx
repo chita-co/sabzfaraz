@@ -129,12 +129,11 @@ export default function SupportChatClient({
             {uploading ? "..." : <ImageIcon size={18} />}
             <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
           </label>
-          <input
-            type="text"
+          <textarea
             placeholder="پیام خود را بنویسید..."
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+            rows={1}
           />
           <button onClick={() => handleSend()} disabled={sending}>
             <Send size={18} />

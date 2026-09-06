@@ -210,13 +210,19 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
                       {item.nameEn && <span className="pt-row-sub">{item.nameEn}</span>}
                     </div>
 
-                    <div className="pt-row-price">
-                      <span className="pt-row-price-num">{item.price.toLocaleString("fa-IR")}</span>
-                      <span className="pt-row-unit">
-                        {item.unit ?? "تومان"}
-                        {item.usdPrice !== undefined && ` · $${item.usdPrice.toLocaleString("en-US", { maximumFractionDigits: item.usdPrice < 1 ? 4 : 2 })}`}
-                      </span>
-                    </div>
+                    <div className={`pt-row-price ${item.usdPrice !== undefined ? "crypto" : ""}`}>
+  <span className="pt-row-price-num">{item.price.toLocaleString("fa-IR")}</span>
+  {item.usdPrice !== undefined ? (
+    <>
+      <span className="pt-row-unit-inline">تومان</span>
+      <span className="pt-row-usd">
+        ${item.usdPrice.toLocaleString("en-US", { maximumFractionDigits: item.usdPrice < 1 ? 4 : 2 })}
+      </span>
+    </>
+  ) : (
+    <span className="pt-row-unit">{item.unit ?? "تومان"}</span>
+  )}
+</div>
 
                     <div className={`pt-row-change ${positive ? "pos" : "neg"}`}>
                       {positive ? "▲" : "▼"} {formatPercent(Math.abs(item.changePercent)).replace("+", "")}
@@ -317,6 +323,25 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
         .pt-row-share { background:rgba(255,255,255,.06); border:none; color:#9ca3af; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
         .pt-row-share:hover { background:rgba(255,255,255,.12); color:#fff; }
         .pt-row-bubble { position:absolute; bottom:3px; left:50px; font-size:10px; color:#fbbf24; }
+
+        .pt-row-price.crypto {
+          flex-direction: column;
+          align-items: flex-end;
+        }
+        .pt-row-price.crypto .pt-row-price-num {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+        }
+        .pt-row-unit-inline {
+          font-size: 10px;
+          color: #6b7280;
+        }
+        .pt-row-usd {
+          font-size: 10px;
+          color: #6b7280;
+          direction: ltr;
+        }
 
         .pt-side { display:flex; flex-direction:column; gap:14px; }
       `}</style>

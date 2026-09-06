@@ -119,3 +119,26 @@ export async function startAdminTicket(userId: string, subject: string, message:
   revalidatePath(`/admin/support/${ticketId}`);
   return { success: true, ticketId };
 }
+
+export async function editAdminMessage(messageId: string, newText: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("support_messages")
+    .update({ message: newText })
+    .eq("id", messageId)
+    .eq("sender_role", "ADMIN");
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function deleteAdminMessage(messageId: string, ticketId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("support_messages")
+    .delete()
+    .eq("id", messageId)
+    .eq("sender_role", "ADMIN");
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/support/${ticketId}`);
+  return { success: true };
+}

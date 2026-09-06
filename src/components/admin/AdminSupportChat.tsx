@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Image as ImageIcon, Lock, Trash2 } from "lucide-react";
-import { sendAdminMessage, closeTicket, deleteTicket, getAdminTicketMessages } from "@/app/admin/support/actions";
+import { Send, Image as ImageIcon, Lock, Trash2, Pencil, Check, X } from "lucide-react";
+import { sendAdminMessage, closeTicket, deleteTicket, getAdminTicketMessages, editAdminMessage, deleteAdminMessage } from "@/app/admin/support/actions";
 import { markTicketSeenByAdminAction } from "@/app/admin/support/actions";
 
 interface Message {
@@ -19,6 +19,8 @@ export default function AdminSupportChat({
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [closed, setClosed] = useState(isClosed);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,6 +78,24 @@ export default function AdminSupportChat({
     router.push("/admin/support");
   }
 
+  function startEdit(m: Message) {
+    setEditingId(m.id);
+    setEditText(m.message ?? "");
+  }
+
+  async function saveEdit(id: string) {
+    if (!editText.trim()) return;
+    await editAdminMessage(id, editText.trim());
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, message: editText.trim() } : m)));
+    setEditingId(null);
+  }
+
+  async function handleDeleteMessage(id: string) {
+    if (!confirm("این پیام حذف شود؟")) return;
+    await deleteAdminMessage(id, ticketId);
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  }
+
   return (
     <div>
       <div className="flex gap-2 mb-4">
@@ -95,14 +115,30 @@ export default function AdminSupportChat({
             <div key={m.id} className={`support-msg${m.sender_role === "ADMIN" ? " admin" : " user"}`}>
               <div className="support-msg-bubble">
                 <span className="support-msg-sender">{m.sender_name}</span>
-                {m.message && <p>{m.message}</p>}
-                {m.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.image_url} alt="" onClick={() => window.open(m.image_url!, "_blank")} />
+                {editingId === m.id ? (
+                  <div className="support-edit-row">
+                    <input value={editText} onChange={(e) => setEditText(e.target.value)} />
+                    <button onClick={() => saveEdit(m.id)}><Check size={14} /></button>
+                    <button onClick={() => setEditingId(null)}><X size={14} /></button>
+                  </div>
+                ) : (
+                  <>
+                    {m.message && <p>{m.message}</p>}
+                    {m.image_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.image_url} alt="" onClick={() => window.open(m.image_url!, "_blank")} />
+                    )}
+                  </>
                 )}
                 <span className="support-msg-time">
                   {new Date(m.created_at).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
                 </span>
+                {m.sender_role === "ADMIN" && editingId !== m.id && !closed && (
+                  <div className="support-msg-actions">
+                    <button className="support-msg-edit-btn" onClick={() => startEdit(m)} aria-label="ویرایش"><Pencil size={12} /></button>
+                    <button className="support-msg-edit-btn" onClick={() => handleDeleteMessage(m.id)} aria-label="حذف"><Trash2 size={12} /></button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -117,12 +153,11 @@ export default function AdminSupportChat({
               {uploading ? "..." : <ImageIcon size={18} />}
               <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
             </label>
-            <input
-              type="text"
+            <textarea
               placeholder="پاسخ خود را بنویسید..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+              rows={1}
             />
             <button onClick={() => handleSend()} disabled={sending}><Send size={18} /></button>
           </div>
