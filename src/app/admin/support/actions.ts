@@ -121,8 +121,8 @@ export async function startAdminTicket(userId: string, subject: string, message:
 }
 
 export async function editAdminMessage(messageId: string, newText: string) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("support_messages")
     .update({ message: newText })
     .eq("id", messageId)
