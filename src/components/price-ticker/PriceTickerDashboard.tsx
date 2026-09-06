@@ -277,7 +277,17 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
         .pt-tab.active { background: linear-gradient(135deg, #16a34a, #ca8a04); color:#fff; border-color: transparent; box-shadow: 0 6px 18px -6px rgba(202,138,4,.55); }
 
         .pt-grid { max-width:1100px; margin:0 auto; padding: 0 16px; display:grid; grid-template-columns: 1.4fr 1fr; gap:16px; align-items:start; }
+        .pt-grid { max-width:1100px; margin:0 auto; padding: 0 16px; display:grid; grid-template-columns: 1.4fr 1fr; gap:16px; align-items:start; }
         @media (max-width: 860px) { .pt-grid { grid-template-columns: 1fr; } }
+
+        .pt-table-wrap {
+          max-height: 500px;
+          overflow-y: auto;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 16px;
+          padding: 8px;
+          background: rgba(0,0,0,0.05);
+        }
 
         .pt-skeleton-list { display:flex; flex-direction:column; gap:8px; }
         .pt-skeleton-row { height:64px; border-radius:14px; background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 37%, rgba(255,255,255,.04) 63%); background-size: 400% 100%; animation: pt-shimmer 1.4s ease infinite; }

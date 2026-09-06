@@ -40,6 +40,36 @@ function normalizeToToman(price: number, unit?: string): number {
   return Math.round(price);
 }
 
+function resolveName(key: string): string {
+  const map: Record<string, string> = {
+    "price_dollar_rl": "دلار",
+    "price_eur": "یورو",
+    "price_gbp": "پوند",
+    "price_aed": "درهم",
+    "price_try": "لیر",
+    "price_cny": "یوان",
+    "price_chf": "فرانک",
+    "price_inr": "روپیه",
+    "price_iqd": "دینار",
+    "price_sar": "ریال عربستان",
+    "price_sek": "کرون",
+    "price_rub": "روبل",
+    "price_krw": "وون",
+    "price_cad": "دلار کانادا",
+    "price_aud": "دلار استرالیا",
+    "sekee": "سکه امامی",
+    "nim_sekee": "نیم سکه",
+    "rob_sekee": "ربع سکه",
+    "gerami": "سکه گرمی",
+    "gold_18k": "طلای ۱۸ عیار",
+    "gold_24k": "طلای ۲۴ عیار",
+    "mesghal": "مثقال طلا",
+    "silver": "نقره",
+    "silver_999": "نقره ۹۹۹",
+  };
+  return map[key] ?? key.replace(/_/g, " ");
+}
+
 function classify(key: string, name: string, nameEn: string): "currency" | "gold" | null {
   const keyLower = key.toLowerCase();
   const nameEnLower = nameEn.toLowerCase();
@@ -107,7 +137,7 @@ export async function fetchCurrencyAndGold(): Promise<CurrencyGoldResult> {
       // ابتدا کلیدهای طلا را پیدا کنیم تا gold18kToman را استخراج کنیم
       for (const [key, raw] of Object.entries(current)) {
         const entry = raw as Record<string, unknown>;
-        const name = String(entry["t-g"] ?? entry["t"] ?? key);
+        const name = resolveName(key);
         const nameEn = String(entry["t_en"] ?? "");
         if (classify(key, name, nameEn) === "gold") {
           const price = normalizeToToman(toNumber(entry.p));
