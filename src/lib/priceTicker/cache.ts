@@ -81,8 +81,12 @@ async function markFailed(categories: PriceCategory[], message: string) {
 }
 
 function findUsdRate(currencyItems: PriceItem[]): number | null {
-  const item = currencyItems.find((i) => i.symbol.toUpperCase() === "USD" || i.name.includes("دلار آمریکا"));
-  return item?.price ?? null;
+  // نماد دلار در منبع tgju به‌صورت price_dollar_rl یا price_dollar است
+  const dollarItem =
+    currencyItems.find((i) => i.symbol.toLowerCase().includes("dollar")) ??
+    currencyItems.find((i) => i.name === "دلار") ??
+    currencyItems.find((i) => i.symbol.toLowerCase() === "usd");
+  return dollarItem?.price ?? null;
 }
 
 function rowsToSnapshot(rows: CacheRow[]): PriceSnapshot {
