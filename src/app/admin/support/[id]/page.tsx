@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AdminSupportChat from "@/components/admin/AdminSupportChat";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminSupportTicketPage({
   params,
 }: { params: Promise<{ id: string }> }) {

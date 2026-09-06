@@ -58,6 +58,7 @@ export default async function AdminSupportPage() {
                   <Link
                     href={`/admin/support/${t.id}`}
                     className="admin-btn admin-btn-secondary flex items-center gap-1"
+                    prefetch={false}
                   >
                     <MessageCircle size={14} /> مشاهده
                   </Link>
