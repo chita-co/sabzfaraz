@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Search, ShoppingCart, Heart, User, Menu, X,
   LayoutDashboard, LogOut, Package, Gift, Clapperboard, Wallet,
+  Handshake, PackageSearch, Scale,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { useCartTotals } from "@/store/cart-store";
@@ -112,6 +113,19 @@ export default function HeaderNav({
 
         <Link href="/cart" onClick={() => setMobileOpen(false)}>سبد خرید</Link>
         <Link href="/wishlist" onClick={() => setMobileOpen(false)}>علاقه‌مندی‌ها</Link>
+        <Link href="/profile/orders" onClick={() => setMobileOpen(false)}>
+          <PackageSearch size={16} style={{ display: "inline", marginLeft: 6 }} /> پیگیری سفارشتان
+        </Link>
+        <Link href="/partner/login" onClick={() => setMobileOpen(false)}>
+          <Handshake size={16} style={{ display: "inline", marginLeft: 6 }} /> ورود همکاران
+        </Link>
+        <button
+          type="button"
+          onClick={() => setMobileOpen(false)}
+          style={{ background: "none", border: "none", textAlign: "right", width: "100%", cursor: "pointer" }}
+        >
+          <Scale size={16} style={{ display: "inline", marginLeft: 6 }} /> لیست مقایسه (به‌زودی)
+        </button>
         {isLoggedIn ? (
           <>
             <Link href="/profile" onClick={() => setMobileOpen(false)}>پروفایل من</Link>

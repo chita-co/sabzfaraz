@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import HeaderNav from "./HeaderNav";
+import TopBar from "./TopBar";
+import { getPriceSnapshot } from "@/lib/priceTicker/cache";
+import { extractHeaderPrices } from "@/lib/priceTicker/headerSummary";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -11,12 +14,15 @@ export default async function Header() {
     profile = data;
   }
 
-  const [{ data: categories }, { data: allCategories }, { data: settings }, { data: fullProfile }] = await Promise.all([
+  const [{ data: categories }, { data: allCategories }, { data: settings }, { data: fullProfile }, priceSnapshot] = await Promise.all([
     supabase.from("categories").select("id, name, slug").is("parent_id", null).eq("is_active", true).order("name"),
     supabase.from("categories").select("id, name, slug, parent_id").eq("is_active", true).order("name"),
     supabase.from("site_settings").select("logo_url, auction_header_enabled, auction_header_label").eq("id", 1).single(),
     user ? supabase.from("profiles").select("wallet_balance").eq("id", user.id).single() : Promise.resolve({ data: null }),
+    getPriceSnapshot().catch(() => null),
   ]);
+
+  const headerPrices = priceSnapshot ? extractHeaderPrices(priceSnapshot) : undefined;
 
   // ساخت درخت دو سطحی دسته‌بندی‌ها فقط برای مگامنوی هدر — هیچ کوئری/رفتار دیگری تغییر نکرده
   const categoryTree = (categories ?? []).map((top) => ({
@@ -29,8 +35,10 @@ export default async function Header() {
   }));
 
   return (
-    <HeaderNav
-      isLoggedIn={!!user}
+    <>
+      <TopBar prices={headerPrices} />
+      <HeaderNav
+        isLoggedIn={!!user}
       userName={profile?.full_name ?? null}
       isAdmin={profile?.role === "ADMIN"}
       categories={categories ?? []}
@@ -39,6 +47,7 @@ export default async function Header() {
       walletBalance={fullProfile?.wallet_balance ?? 0}
       auctionEnabled={settings?.auction_header_enabled ?? true}
       auctionLabel={settings?.auction_header_label ?? "جمعه بازار"}
-    />
+      />
+    </>
   );
 }

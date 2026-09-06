@@ -59,11 +59,8 @@
   pointer-events: none; display: grid; place-items: center; z-index: 1;
 }
 .gooey-nav-container .effect.text {
-  color: white; transition: color 0.3s ease;
-  /* اندازه‌ی متنِ افکت دقیقاً با متن واقعی دکمه یکی شد تا کپی/شبح دیده نشه */
-  font-size: 12.5px; font-weight: 500; letter-spacing: 0.1px; white-space: nowrap;
+  display: none !important;
 }
-.gooey-nav-container .effect.text.active { color: black; }
 .gooey-nav-container .effect.filter { filter: blur(7px) contrast(100) blur(0); mix-blend-mode: lighten; }
 .gooey-nav-container .effect.filter::before { content: ""; position: absolute; inset: -75px; z-index: -2; background: transparent; }
 .gooey-nav-container .effect.filter::after {
