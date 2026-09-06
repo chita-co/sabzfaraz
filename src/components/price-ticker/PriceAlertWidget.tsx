@@ -34,17 +34,15 @@ function saveAlerts(alerts: AlertRule[]) {
 }
 
 export default function PriceAlertWidget({ items }: { items: PriceItem[] }) {
-  const [alerts, setAlerts] = useState<AlertRule[]>([]);
+  const [alerts, setAlerts] = useState<AlertRule[]>(() => loadAlerts());
   const [symbol, setSymbol] = useState(items[0]?.symbol ?? "");
   const [target, setTarget] = useState("");
-  const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [permission, setPermission] = useState<NotificationPermission>(() =>
+  typeof window !== "undefined" && "Notification" in window
+    ? Notification.permission
+    : "default"
+);
 
-  useEffect(() => {
-    setAlerts(loadAlerts());
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setPermission(Notification.permission);
-    }
-  }, []);
 
   // بررسی رسیدن قیمت به هدف، هر بار که items (از polling والد) به‌روز می‌شود
   useEffect(() => {
@@ -67,9 +65,10 @@ export default function PriceAlertWidget({ items }: { items: PriceItem[] }) {
       return true;
     });
     if (changed) {
-      setAlerts(remaining);
-      saveAlerts(remaining);
-    }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setAlerts(remaining);
+  saveAlerts(remaining);
+}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
@@ -154,6 +153,12 @@ export default function PriceAlertWidget({ items }: { items: PriceItem[] }) {
         .pt-field-row { display:flex; gap:6px; }
         .pt-field-row select { flex: 0 0 40%; }
         .pt-field-row input { flex:1; }
+        .pt-field-row input, .pt-field-row select {
+  background: rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); color:#fff;
+  border-radius:10px; padding:9px 10px; font-size:12.5px; outline:none;
+}
+.pt-field-row input:focus, .pt-field-row select:focus { border-color:#fbbf24; }
+.pt-field-row select option { color:#111827; background:#ffffff; }
         .pt-alert-add { background:#fbbf24; color:#111827; border:none; border-radius:10px; padding:0 14px; font-weight:700; font-size:12.5px; cursor:pointer; }
         .pt-alert-list { list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
         .pt-alert-list li { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.04); border-radius:8px; padding:6px 10px; font-size:11.5px; }

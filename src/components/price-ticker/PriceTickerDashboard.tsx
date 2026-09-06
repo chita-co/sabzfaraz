@@ -124,9 +124,8 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
       <div className="pt-hero">
         <h1>قیمت لحظه‌ای طلا، دلار و ارز دیجیتال</h1>
         <p className="pt-hero-sub">
-          نرخ آنلاین دلار، یورو، سکه، طلای ۱۸ عیار و برترین ارزهای دیجیتال — به‌روزرسانی خودکار
-          هر ۳۰ ثانیه، بدون نیاز به رفرش صفحه.
-        </p>
+  نرخ آنلاین دلار، یورو، سکه، طلای ۱۸ عیار و برترین ارزهای دیجیتال — همیشه در دسترس، بدون نیاز به رفرش صفحه.
+</p>
 
         <div className="pt-status-row">
           <span className={`pt-status-dot ${snapshot.stale ? "stale" : "live"}`} />
@@ -252,8 +251,18 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
 
       <style>{`
         .pt-dashboard { background: linear-gradient(135deg, #0f2818 0%, #14532d 45%, #1a4d2e 75%, #3f3010 100%); color:#e5e7eb; padding-bottom: 40px; }
-        .pt-hero { max-width: 1100px; margin: 0 auto; text-align: center; padding: 26px 16px 0; }
-        .pt-hero h1 { font-size: clamp(22px,4vw,32px); font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .pt-hero { max-width: 1100px; margin: 0 auto; text-align: center; padding: 26px 16px 0; position: relative; }
+.pt-hero::before {
+  content: "";
+  position: absolute;
+  inset: -60px 20% auto 20%;
+  height: 220px;
+  background: radial-gradient(ellipse at center, rgba(251,191,36,.18) 0%, rgba(34,197,94,.1) 45%, transparent 75%);
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: 0;
+}
+.pt-hero h1, .pt-hero-sub, .pt-status-row { position: relative; z-index: 1; }
         .pt-hero-sub { color: #d1d5db; font-size: 14px; max-width: 680px; margin: 0 auto; line-height: 1.9; }
         .pt-status-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; font-size:12.5px; color:#d1d5db; flex-wrap:wrap; }
         .pt-status-dot { width:8px; height:8px; border-radius:999px; background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.25); }
@@ -265,7 +274,7 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
         .pt-tabs { max-width:1100px; margin: 20px auto 14px; padding: 0 16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
         .pt-tab { display:flex; align-items:center; gap:6px; padding:9px 18px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.05); color:#d1d5db; font-size:13.5px; font-weight:600; cursor:pointer; transition:.15s; }
         .pt-tab:hover { background:rgba(255,255,255,.1); }
-        .pt-tab.active { background: linear-gradient(135deg, #16a34a, #ca8a04); color:#fff; border-color: transparent; }
+        .pt-tab.active { background: linear-gradient(135deg, #16a34a, #ca8a04); color:#fff; border-color: transparent; box-shadow: 0 6px 18px -6px rgba(202,138,4,.55); }
 
         .pt-grid { max-width:1100px; margin:0 auto; padding: 0 16px; display:grid; grid-template-columns: 1.4fr 1fr; gap:16px; align-items:start; }
         @media (max-width: 860px) { .pt-grid { grid-template-columns: 1fr; } }
@@ -276,7 +285,8 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
 
         .pt-table { display:flex; flex-direction:column; gap:8px; }
         .pt-row { display:grid; grid-template-columns: auto 1.3fr 1.3fr .8fr auto; align-items:center; gap:10px; padding:14px 14px; border-radius:14px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); text-align:right; cursor:pointer; transition: background .5s, border-color .2s; position:relative; }
-        .pt-row:hover { border-color: rgba(251,191,36,.4); }
+        .pt-row:hover { border-color: rgba(251,191,36,.4); transform: translateY(-1px); box-shadow: 0 8px 20px -12px rgba(0,0,0,.4); }
+.pt-row { transition: background .5s, border-color .2s, transform .15s, box-shadow .15s; }
         .pt-row.selected { border-color:#fbbf24; background:rgba(251,191,36,.08); }
         .pt-row.up { background:rgba(34,197,94,.2); }
         .pt-row.down { background:rgba(239,68,68,.2); }

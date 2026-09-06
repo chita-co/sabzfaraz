@@ -45,6 +45,8 @@ export interface PriceSnapshot {
   stale: boolean;
   /** وضعیت به‌ازای هر دسته، برای نمایش دقیق‌تر پیام‌های خطا/تازگی */
   staleByCategory?: Partial<Record<PriceCategory, boolean>>;
+  /** پیام خطای فنی هر دسته (فقط برای دیباگ توسعه‌دهنده) */
+  errors?: Partial<Record<PriceCategory, string>>;
 }
 
 export interface PriceHistoryPoint {

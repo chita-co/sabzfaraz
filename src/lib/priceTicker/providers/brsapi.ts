@@ -16,8 +16,13 @@ const CURRENCY_KEYWORDS = [
   "دلار", "یورو", "پوند", "درهم", "لیر", "یوان", "فرانک", "روپیه", "دینار",
   "ریال عربستان", "کرون", "روبل", "وون", "دلار کانادا", "دلار استرالیا",
 ];
+const CURRENCY_KEYWORDS_EN = [
+  "dollar", "euro", "pound", "dirham", "lira", "yuan", "franc", "rupee",
+  "dinar", "krona", "krone", "ruble", "won", "riyal",
+];
 
 const GOLD_KEYWORDS = ["طلا", "سکه", "انس", "مثقال"];
+const GOLD_KEYWORDS_EN = ["gold", "coin", "ounce", "mesghal", "mithqal", "sekee", "geram", "bahar", "emami"];
 
 // وزن تقریبی (گرم) و عیار سکه‌های رایج، فقط برای محاسبه‌ی تقریبیِ «درصد حباب»
 const COIN_SPECS: { match: RegExp; grams: number; purity: number }[] = [
@@ -75,11 +80,22 @@ function normalizeToToman(price: number, unit?: string): number {
 }
 
 function classify(entry: RawEntry): "currency" | "gold" | null {
-  const symbol = (entry.symbol || "").toUpperCase();
-  const name = entry.name || "";
-  if (GOLD_KEYWORDS.some((k) => name.includes(k))) return "gold";
-  if (CURRENCY_KEYWORDS.some((k) => name.includes(k))) return "currency";
-  if (/^[A-Z]{3}$/.test(symbol)) return "currency";
+  const symbol = (entry.symbol || "").toUpperCase().trim();
+  const symbolLower = symbol.toLowerCase();
+  const name = (entry.name || "").trim();
+  const nameEn = (entry.name_en || "").toLowerCase().trim();
+
+  const isGold =
+    GOLD_KEYWORDS.some((k) => name.includes(k)) ||
+    GOLD_KEYWORDS_EN.some((k) => nameEn.includes(k) || symbolLower.includes(k));
+  if (isGold) return "gold";
+
+  const isCurrency =
+    CURRENCY_KEYWORDS.some((k) => name.includes(k)) ||
+    CURRENCY_KEYWORDS_EN.some((k) => nameEn.includes(k)) ||
+    /^[A-Z]{3}$/.test(symbol);
+  if (isCurrency) return "currency";
+
   return null;
 }
 
@@ -114,12 +130,14 @@ export async function fetchCurrencyAndGold(): Promise<CurrencyGoldResult> {
       if (entries.length === 0) throw new Error("پاسخ BrsApi خالی یا با ساختار ناشناخته بود");
 
       let gold18kToman: number | null = null;
-      for (const e of entries) {
-        const name = e.name || "";
-        if (name.includes("طلا") && name.includes("۱۸")) {
-          gold18kToman = normalizeToToman(toNumber(e.price), e.unit);
-        }
-      }
+for (const e of entries) {
+  const name = e.name || "";
+  const nameEn = (e.name_en || "").toLowerCase();
+  const is18k = (name.includes("طلا") || nameEn.includes("gold")) && (name.includes("۱۸") || name.includes("18"));
+  if (is18k) {
+    gold18kToman = normalizeToToman(toNumber(e.price), e.unit);
+  }
+}
 
       const currency: PriceItem[] = [];
       const gold: PriceItem[] = [];
@@ -147,8 +165,9 @@ export async function fetchCurrencyAndGold(): Promise<CurrencyGoldResult> {
       }
 
       if (currency.length === 0 && gold.length === 0) {
-        throw new Error("هیچ آیتم ارز/طلایی در پاسخ BrsApi پیدا نشد");
-      }
+  const sample = JSON.stringify(entries.slice(0, 3)).slice(0, 500);
+  throw new Error(`هیچ آیتم ارز/طلایی در پاسخ BrsApi پیدا نشد (ساختار پاسخ عوض شده؟) — نمونه‌ی داده: ${sample}`);
+}
 
       return { currency, gold };
     } catch (err) {

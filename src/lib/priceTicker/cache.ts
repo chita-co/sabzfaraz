@@ -31,6 +31,7 @@ interface CacheRow {
   items: PriceItem[];
   fetched_at: string;
   is_stale: boolean;
+  last_error: string | null;
 }
 
 function admin() {
@@ -38,7 +39,7 @@ function admin() {
 }
 
 async function readCache(): Promise<CacheRow[]> {
-  const { data } = await admin().from("price_ticker_cache").select("category, items, fetched_at, is_stale");
+  const { data } = await admin().from("price_ticker_cache").select("category, items, fetched_at, is_stale, last_error");
   return (data as CacheRow[]) ?? [];
 }
 
@@ -88,7 +89,11 @@ function rowsToSnapshot(rows: CacheRow[]): PriceSnapshot {
   const byCategory = new Map(rows.map((r) => [r.category, r]));
   const updatedAt = rows.length > 0 ? rows.reduce((max, r) => (r.fetched_at > max ? r.fetched_at : max), rows[0].fetched_at) : new Date(0).toISOString();
   const staleByCategory: Partial<Record<PriceCategory, boolean>> = {};
-  for (const r of rows) staleByCategory[r.category] = r.is_stale;
+  const errors: Partial<Record<PriceCategory, string>> = {};
+  for (const r of rows) {
+    staleByCategory[r.category] = r.is_stale;
+    if (r.last_error) errors[r.category] = r.last_error;
+  }
 
   return {
     currency: byCategory.get("currency")?.items ?? [],
@@ -97,6 +102,7 @@ function rowsToSnapshot(rows: CacheRow[]): PriceSnapshot {
     updatedAt,
     stale: rows.some((r) => r.is_stale),
     staleByCategory,
+    errors: Object.keys(errors).length > 0 ? errors : undefined,
   };
 }
 
@@ -128,15 +134,15 @@ export async function getPriceSnapshot(): Promise<PriceSnapshot> {
         { category: "currency", items: result.currency },
         { category: "gold", items: result.gold },
       ]);
-      byCategory.set("currency", { category: "currency", items: result.currency, fetched_at: new Date().toISOString(), is_stale: false });
-      byCategory.set("gold", { category: "gold", items: result.gold, fetched_at: new Date().toISOString(), is_stale: false });
+      byCategory.set("currency", { category: "currency", items: result.currency, fetched_at: new Date().toISOString(), is_stale: false, last_error: null });
+      byCategory.set("gold", { category: "gold", items: result.gold, fetched_at: new Date().toISOString(), is_stale: false, last_error: null });
     } catch (err) {
       const message = err instanceof Error ? err.message : "خطای نامشخص در دریافت ارز/طلا";
       await markFailed(["currency", "gold"], message);
       const row = byCategory.get("currency");
-      if (row) byCategory.set("currency", { ...row, is_stale: true });
+      if (row) byCategory.set("currency", { ...row, is_stale: true, last_error: message });
       const goldRow = byCategory.get("gold");
-      if (goldRow) byCategory.set("gold", { ...goldRow, is_stale: true });
+      if (goldRow) byCategory.set("gold", { ...goldRow, is_stale: true, last_error: message });
     }
   };
 
@@ -151,12 +157,12 @@ export async function getPriceSnapshot(): Promise<PriceSnapshot> {
       const usdRate = findUsdRate(byCategory.get("currency")?.items ?? []) ?? 100_000;
       const cryptoItems = await fetchCrypto(usdRate);
       await writeCategories([{ category: "crypto", items: cryptoItems }]);
-      byCategory.set("crypto", { category: "crypto", items: cryptoItems, fetched_at: new Date().toISOString(), is_stale: false });
+      byCategory.set("crypto", { category: "crypto", items: cryptoItems, fetched_at: new Date().toISOString(), is_stale: false, last_error: null });
     } catch (err) {
       const message = err instanceof Error ? err.message : "خطای نامشخص در دریافت ارز دیجیتال";
       await markFailed(["crypto"], message);
       const row = byCategory.get("crypto");
-      if (row) byCategory.set("crypto", { ...row, is_stale: true });
+      if (row) byCategory.set("crypto", { ...row, is_stale: true, last_error: message });
     }
   };
 

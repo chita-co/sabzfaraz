@@ -52,16 +52,25 @@ function SpotlightCard({ category, item }: SpotlightSlot) {
 
       <style>{`
         .spot-card {
-          background: rgba(255,255,255,.06);
-          border: 1px solid rgba(255,255,255,.1);
-          border-radius: 18px;
-          padding: 16px 18px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          position: relative;
-          overflow: hidden;
-        }
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  box-shadow: 0 8px 24px -12px rgba(0,0,0,.5);
+}
+.spot-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(251,191,36,.35);
+  box-shadow: 0 14px 32px -14px rgba(251,191,36,.25);
+}
         .spot-card::before {
           content: "";
           position: absolute;
