@@ -1,91 +1,101 @@
 // src/lib/priceTicker/providers/coingecko.ts
-//
-// منبع ارز دیجیتال: CoinGecko Public API — رایگان، بدون نیاز به کلید،
-// مستندات رسمی و پایدار (برخلاف منبع ارز/طلا، اینجا از ساختار دقیق و
-// شناخته‌شده‌ی endpoint استفاده می‌کنیم چون کاملاً مستند و قابل‌اعتماد است).
-//
-// چون CoinGecko قیمت را مستقیم به تومان نمی‌دهد، قیمت دلاری هر کوین را با
-// نرخ لحظه‌ای دلار/تومان (که از BrsApi می‌آید) ضرب می‌کنیم تا هم قیمت دلاری
-// دقیق CoinGecko حفظ شود و هم معادل تومانی متناسب با نرخ ارز خودِ سایت نمایش
-// داده شود.
-
 import type { PriceItem } from "@/types/priceTicker";
 
-const COINGECKO_URL =
-  "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=" +
-  ["bitcoin", "ethereum", "tether", "binancecoin", "ripple", "solana", "dogecoin", "cardano", "tron", "the-open-network"].join(",") +
-  "&order=market_cap_desc&price_change_percentage=24h&sparkline=false";
-
+const SOURCE_URL = "https://call1.tgju.org/ajax.json";
 const FETCH_TIMEOUT_MS = 8000;
-const MAX_AGE_MS = 6 * 60 * 60 * 1000; // ۶ ساعت — قابل تغییر
+const MAX_AGE_MS = 6 * 60 * 60 * 1000; // ۶ ساعت
 
-const PERSIAN_NAMES: Record<string, string> = {
-  bitcoin: "بیت‌کوین",
-  ethereum: "اتریوم",
-  tether: "تتر",
-  binancecoin: "بایننس کوین",
-  ripple: "ریپل",
-  solana: "سولانا",
-  dogecoin: "دوج‌کوین",
-  cardano: "کاردانو",
-  tron: "ترون",
-  "the-open-network": "تون‌کوین",
+const CRYPTO_KEYS: Record<string, string> = {
+  "btc": "بیت‌کوین",
+  "bitcoin": "بیت‌کوین",
+  "eth": "اتریوم",
+  "ethereum": "اتریوم",
+  "usdt": "تتر",
+  "tether": "تتر",
+  "bnb": "بایننس کوین",
+  "binancecoin": "بایننس کوین",
+  "xrp": "ریپل",
+  "ripple": "ریپل",
+  "sol": "سولانا",
+  "solana": "سولانا",
+  "doge": "دوج‌کوین",
+  "dogecoin": "دوج‌کوین",
+  "ada": "کاردانو",
+  "cardano": "کاردانو",
+  "trx": "ترون",
+  "tron": "ترون",
+  "gram": "تون‌کوین",
+  "ton": "تون‌کوین",
 };
 
-interface CoinGeckoEntry {
-  id: string;
-  symbol: string;
-  name: string;
-  current_price: number;
-  price_change_percentage_24h: number | null;
-  total_volume: number;
-  market_cap: number;
-  market_cap_rank: number;
-  image?: string;
-  last_updated?: string;
+function toNumber(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/,/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function normalizeToToman(price: number, key?: string): number {
+  if (key && (key.endsWith("_rl") || key.endsWith("-irr"))) return Math.round(price / 10);
+  return Math.round(price);
 }
 
 export async function fetchCrypto(usdToTomanRate: number): Promise<PriceItem[]> {
+  void usdToTomanRate;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
-    const res = await fetch(COINGECKO_URL, {
+    const res = await fetch(SOURCE_URL, {
       signal: controller.signal,
       headers: { accept: "application/json" },
       cache: "no-store",
     });
     clearTimeout(timeout);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json: CoinGeckoEntry[] = await res.json();
-    if (!Array.isArray(json) || json.length === 0) throw new Error("پاسخ CoinGecko خالی بود");
+    const json = await res.json();
+    const current = json?.current;
+    if (!current || typeof current !== "object") throw new Error("ساختار tgju نامعتبر است");
 
     const items: PriceItem[] = [];
-    for (const c of json) {
-      // بررسی تازگی داده
-      const lastUpdated = c.last_updated ? new Date(c.last_updated).getTime() : null;
-      if (!lastUpdated || isNaN(lastUpdated) || Date.now() - lastUpdated > MAX_AGE_MS) {
-        continue; // آیتم قدیمی‌تر از حد مجاز را حذف می‌کنیم
-      }
+
+    for (const [key, raw] of Object.entries(current)) {
+      const entry = raw as Record<string, unknown>;
+      const keyLower = key.toLowerCase();
+
+      // فقط کلیدهایی که شامل یکی از نمادهای کریپتو هستند
+      const match = Object.keys(CRYPTO_KEYS).find((k) => keyLower.includes(k));
+      if (!match) continue;
+
+      // بررسی تازگی
+      const ts = entry.ts ? new Date(String(entry.ts)).getTime() : null;
+      if (!ts || isNaN(ts) || Date.now() - ts > MAX_AGE_MS) continue;
+
+      const price = normalizeToToman(toNumber(entry.p), key);
+      if (!price || price <= 0) continue;
+
+      const name = CRYPTO_KEYS[match];
+      const nameEn = String(entry["t_en"] ?? match.toUpperCase());
+      const changePercent = toNumber(entry.dp);
 
       items.push({
-        symbol: c.symbol.toUpperCase(),
-        name: PERSIAN_NAMES[c.id] || c.name,
-        nameEn: c.name,
-        usdPrice: c.current_price,
-        price: usdToTomanRate > 0 ? Math.round(c.current_price * usdToTomanRate) : 0,
+        symbol: key.toUpperCase(),
+        name,
+        nameEn,
+        price,
         changeValue: 0,
-        changePercent: c.price_change_percentage_24h ?? 0,
+        changePercent,
         unit: "تومان",
-        volume24h: c.total_volume,
-        marketCap: c.market_cap,
-        rank: c.market_cap_rank,
-        icon: c.image,
+        icon: undefined,
       });
     }
+
+    if (items.length === 0) throw new Error("هیچ آیتم کریپتو در tgju یافت نشد");
     return items;
   } catch (err) {
     clearTimeout(timeout);
-    throw err instanceof Error ? err : new Error("دریافت قیمت ارز دیجیتال از CoinGecko ناموفق بود");
+    throw err instanceof Error ? err : new Error("دریافت قیمت ارز دیجیتال ناموفق بود");
   }
 }
