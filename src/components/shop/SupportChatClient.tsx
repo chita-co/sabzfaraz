@@ -77,6 +77,12 @@ export default function SupportChatClient({
     setEditText(m.message ?? "");
   }
 
+  function autoResize(el: HTMLTextAreaElement | null) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }
+
   async function saveEdit(id: string) {
     await editUserMessage(id, editText);
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, message: editText } : m)));
@@ -88,36 +94,45 @@ export default function SupportChatClient({
       <div className="support-chat-messages">
         {messages.map((m) => (
           <div key={m.id} className={`support-msg${m.sender_role === "ADMIN" ? " admin" : " user"}`}>
-            <div className="support-msg-bubble">
-              <span className="support-msg-sender">
-                {m.sender_role === "ADMIN" ? `پشتیبانی — ${m.sender_name}` : m.sender_name}
-              </span>
-              {editingId === m.id ? (
-                <div className="support-edit-row">
-                  <textarea value={editText} onChange={(e) => setEditText(e.target.value)} />
-                  <button onClick={() => saveEdit(m.id)}><Check size={14} /></button>
-                  <button onClick={() => setEditingId(null)}><X size={14} /></button>
+            <div className="support-msg-col">
+              <div className="support-msg-bubble">
+                <span className="support-msg-sender">
+                  {m.sender_role === "ADMIN" ? `پشتیبانی — ${m.sender_name}` : m.sender_name}
+                </span>
+                {editingId === m.id ? (
+                  <textarea
+                    ref={autoResize}
+                    className="support-edit-textarea"
+                    value={editText}
+                    onChange={(e) => { setEditText(e.target.value); autoResize(e.target); }}
+                  />
+                ) : (
+                  <>
+                    {m.message && <p>{m.message}</p>}
+                    {m.image_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.image_url} alt="" onClick={() => window.open(m.image_url!, "_blank")} />
+                    )}
+                  </>
+                )}
+                <span className="support-msg-time">
+                  {new Date(m.created_at).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+                {m.sender_role === "USER" && editingId !== m.id && !isClosed && (
+                  <button className="support-msg-edit-btn" onClick={() => startEdit(m)}>
+                    <Pencil size={12} />
+                  </button>
+                )}
+              </div>
+              {editingId === m.id && (
+                <div className="support-edit-actions">
+                  <button onClick={() => saveEdit(m.id)} aria-label="تأیید"><Check size={16} /></button>
+                  <button onClick={() => setEditingId(null)} aria-label="لغو"><X size={16} /></button>
                 </div>
-              ) : (
-                <>
-                  {m.message && <p>{m.message}</p>}
-                  {m.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.image_url} alt="" onClick={() => window.open(m.image_url!, "_blank")} />
-                  )}
-                </>
-              )}
-              <span className="support-msg-time">
-                {new Date(m.created_at).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
-              </span>
-              {m.sender_role === "USER" && editingId !== m.id && !isClosed && (
-                <button className="support-msg-edit-btn" onClick={() => startEdit(m)}>
-                  <Pencil size={12} />
-                </button>
               )}
             </div>
-          </div>
-        ))}
+           </div>
+         ))}
         <div ref={bottomRef} />
       </div>
 
