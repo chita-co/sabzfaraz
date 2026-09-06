@@ -117,7 +117,7 @@ export default function AdminSupportChat({
                 <span className="support-msg-sender">{m.sender_name}</span>
                 {editingId === m.id ? (
                   <div className="support-edit-row">
-                    <textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={2} />
+                    <textarea value={editText} onChange={(e) => setEditText(e.target.value)} />
                     <button onClick={() => saveEdit(m.id)}><Check size={14} /></button>
                     <button onClick={() => setEditingId(null)}><X size={14} /></button>
                   </div>
