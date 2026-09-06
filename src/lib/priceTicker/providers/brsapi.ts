@@ -67,7 +67,39 @@ const NAME_MAP: Record<string, string> = {
   "mesghal": "مثقال طلا",
   "silver": "نقره",
   "silver_999": "نقره ۹۹۹",
+  "silver_925": "نقره ۹۲۵",
 };
+
+const CURRENCY_ORDER = [
+  "price_dollar_rl",  // دلار
+  "price_eur",        // یورو
+  "price_gbp",        // پوند
+  "price_aed",        // درهم
+  "price_try",        // لیر
+  "price_cny",        // یوان
+  "price_chf",        // فرانک
+  "price_inr",        // روپیه
+  "price_iqd",        // دینار
+  "price_sar",        // ریال عربستان
+  "price_sek",        // کرون
+  "price_rub",        // روبل
+  "price_krw",        // وون
+  "price_cad",        // دلار کانادا
+  "price_aud",        // دلار استرالیا
+];
+
+const GOLD_ORDER = [
+  "sekee",            // سکه امامی
+  "nim_sekee",        // نیم سکه
+  "rob_sekee",        // ربع سکه
+  "gerami",           // سکه گرمی
+  "gold_18k",         // طلای ۱۸ عیار
+  "gold_24k",         // طلای ۲۴ عیار
+  "mesghal",          // مثقال طلا
+  "silver",           // نقره
+  "silver_925",       // نقره ۹۲۵
+  "silver_999",       // نقره ۹۹۹
+];
 
 function resolveName(key: string): string {
   return NAME_MAP[key] ?? key.replace(/_/g, " ");
@@ -192,6 +224,14 @@ export async function fetchCurrencyAndGold(): Promise<CurrencyGoldResult> {
       if (currency.length === 0 && gold.length === 0) {
         throw new Error("هیچ آیتم ارز/طلایی در پاسخ tgju پیدا نشد");
       }
+
+      const orderIndex = (arr: string[], key: string) => {
+  const idx = arr.indexOf(key);
+  return idx === -1 ? arr.length : idx;
+};
+
+currency.sort((a, b) => orderIndex(CURRENCY_ORDER, a.symbol) - orderIndex(CURRENCY_ORDER, b.symbol));
+gold.sort((a, b) => orderIndex(GOLD_ORDER, a.symbol) - orderIndex(GOLD_ORDER, b.symbol));
 
       return { currency, gold };
     } catch (err) {

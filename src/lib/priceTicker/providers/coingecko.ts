@@ -17,6 +17,7 @@ const COINGECKO_URL =
   "&order=market_cap_desc&price_change_percentage=24h&sparkline=false";
 
 const FETCH_TIMEOUT_MS = 8000;
+const MAX_AGE_MS = 6 * 60 * 60 * 1000; // ۶ ساعت — قابل تغییر
 
 const PERSIAN_NAMES: Record<string, string> = {
   bitcoin: "بیت‌کوین",
@@ -41,6 +42,7 @@ interface CoinGeckoEntry {
   market_cap: number;
   market_cap_rank: number;
   image?: string;
+  last_updated?: string;
 }
 
 export async function fetchCrypto(usdToTomanRate: number): Promise<PriceItem[]> {
@@ -58,20 +60,30 @@ export async function fetchCrypto(usdToTomanRate: number): Promise<PriceItem[]> 
     const json: CoinGeckoEntry[] = await res.json();
     if (!Array.isArray(json) || json.length === 0) throw new Error("پاسخ CoinGecko خالی بود");
 
-    return json.map((c) => ({
-      symbol: c.symbol.toUpperCase(),
-      name: PERSIAN_NAMES[c.id] || c.name,
-      nameEn: c.name,
-      usdPrice: c.current_price,
-      price: usdToTomanRate > 0 ? Math.round(c.current_price * usdToTomanRate) : 0,
-      changeValue: 0, // برای کریپتو، درصد تغییر معیار اصلی است نه مقدار تومانی
-      changePercent: c.price_change_percentage_24h ?? 0,
-      unit: "تومان",
-      volume24h: c.total_volume,
-      marketCap: c.market_cap,
-      rank: c.market_cap_rank,
-      icon: c.image,
-    }));
+    const items: PriceItem[] = [];
+    for (const c of json) {
+      // بررسی تازگی داده
+      const lastUpdated = c.last_updated ? new Date(c.last_updated).getTime() : null;
+      if (!lastUpdated || isNaN(lastUpdated) || Date.now() - lastUpdated > MAX_AGE_MS) {
+        continue; // آیتم قدیمی‌تر از حد مجاز را حذف می‌کنیم
+      }
+
+      items.push({
+        symbol: c.symbol.toUpperCase(),
+        name: PERSIAN_NAMES[c.id] || c.name,
+        nameEn: c.name,
+        usdPrice: c.current_price,
+        price: usdToTomanRate > 0 ? Math.round(c.current_price * usdToTomanRate) : 0,
+        changeValue: 0,
+        changePercent: c.price_change_percentage_24h ?? 0,
+        unit: "تومان",
+        volume24h: c.total_volume,
+        marketCap: c.market_cap,
+        rank: c.market_cap_rank,
+        icon: c.image,
+      });
+    }
+    return items;
   } catch (err) {
     clearTimeout(timeout);
     throw err instanceof Error ? err : new Error("دریافت قیمت ارز دیجیتال از CoinGecko ناموفق بود");
