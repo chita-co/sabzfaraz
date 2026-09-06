@@ -1215,7 +1215,12 @@
   width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: #6b7280; cursor: pointer;
 }
 .support-edit-row { display: flex; gap: 6px; align-items: center; }
-.support-edit-row input { flex: 1; border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 8px; font-size: 13px; }
+.support-edit-row { align-items: flex-start; }
+.support-edit-row textarea {
+  flex: 1; border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 8px; font-size: 13px;
+  font-family: inherit; resize: none; max-height: 100px; overflow-y: auto; line-height: 1.6;
+}
+.support-edit-row button { margin-top: 4px; }
 .support-edit-row button { background: none; border: none; cursor: pointer; color: #16a34a; }
 
 .support-chat-input { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-top: 1px solid #e5e7eb; }
