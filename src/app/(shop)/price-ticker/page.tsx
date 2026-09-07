@@ -107,20 +107,14 @@ export default async function PriceTickerPage() {
       <PriceTickerDashboard initialSnapshot={snapshot} />
       <PriceTickerFaq />
 
-      <section className="pt-seo-content">
-        <div className="pt-seo-inner">
-
-          <p className="pt-last-update">آخرین به‌روزرسانی محتوای این صفحه: {updatedAtFa}</p>
-        </div>
-      </section>
+      <div className="pt-last-update-wrap">
+        <p className="pt-last-update">آخرین به‌روزرسانی محتوای این صفحه: {updatedAtFa}</p>
+      </div>
 
       <style>{`
-        .pt-page { background: #14532d; }
-        .pt-seo-content { background: #ffffff; padding: 48px 16px; }
-        .pt-seo-inner { max-width: 860px; margin: 0 auto; line-height: 2.1; color: #1f2937; }
-        .pt-seo-inner h2 { font-size: 20px; font-weight: 800; margin: 28px 0 10px; color: #111827; }
-        .pt-seo-inner p { font-size: 15px; margin-bottom: 14px; }
-        .pt-last-update { font-size: 13px; color: #6b7280; margin-top: 24px; }
+         .pt-page { background: transparent; }
+        .pt-last-update-wrap { max-width: 860px; margin: 0 auto; padding: 0 16px 24px; }
+        .pt-last-update { font-size: 12px; color: #d1d5db; margin-top: 0; }
       `}</style>
     </div>
   );
