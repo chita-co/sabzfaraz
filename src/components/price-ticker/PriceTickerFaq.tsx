@@ -25,9 +25,9 @@ export default function PriceTickerFaq() {
       </div>
 
       <style>{`
-        .pt-faq { background:#f8fafc; padding: 8px 16px 56px; }
+        .pt-faq { background:transparent; padding: 8px 16px 56px; }
         .pt-faq-inner { max-width:860px; margin:0 auto; }
-        .pt-faq h2 { font-size:20px; font-weight:800; color:#111827; margin-bottom:16px; }
+        .pt-faq h2 { font-size:20px; font-weight:800; color:#ffffff; margin-bottom:16px; }
         .pt-faq-list { display:flex; flex-direction:column; gap:10px; }
         .pt-faq-item { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding: 4px 16px; }
         .pt-faq-q { width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; background:none; border:none; padding:14px 0; text-align:right; font-size:14.5px; font-weight:700; color:#1f2937; cursor:pointer; }
