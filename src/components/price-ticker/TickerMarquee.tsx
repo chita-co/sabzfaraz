@@ -38,7 +38,7 @@ export default function TickerMarquee({ items }: { items: PriceItem[] }) {
           display: inline-flex;
           align-items: center;
           padding: 9px 0;
-          animation: tm-scroll 200s linear infinite;
+          animation: tm-scroll 250s linear infinite;
         }
         .tm-wrap:hover .tm-track { animation-play-state: paused; }
         .tm-item { display:inline-flex; align-items:center; gap:8px; padding: 0 14px; direction: rtl; }
