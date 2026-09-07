@@ -92,7 +92,14 @@ export default function HeaderNav({
         <button className="site-mobile-close" onClick={() => setMobileOpen(false)}><X size={22} /></button>
         <form className="site-search" onSubmit={handleSearch}>
           <Search size={16} />
-          <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input
+  type="text"
+  id="site-search-input"
+  name="search"
+  placeholder="جستجوی محصول..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+/>
         </form>
 
         <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
@@ -224,7 +231,14 @@ export default function HeaderNav({
 
         <form className="site-search" onSubmit={handleSearch}>
           <Search size={16} />
-          <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input
+  type="text"
+  id="mobile-search-input"
+  name="search"
+  placeholder="جستجوی محصول..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+/>
         </form>
 
         <div className="site-actions">

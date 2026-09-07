@@ -252,7 +252,7 @@ export default function ProductDetail({
                 {lowestTier ? (
                   <>
                     <div className="price-lowest">
-                      <h1>{lowestTier.unit_price.toLocaleString("fa-IR")} <span>تومان</span></h1>
+                      <div className="price-lowest-value">{lowestTier.unit_price.toLocaleString("fa-IR")} <span>تومان</span></div>
                     </div>
                     <p className="price-lowest-note">برای سفارش بالای {lowestTier.min_qty.toLocaleString("fa-IR")} عدد</p>
                     <p className="price-reference">{basePrice.toLocaleString("fa-IR")} تومان — برای تعداد ۱ عدد</p>
@@ -277,7 +277,7 @@ export default function ProductDetail({
                 ) : (
                   <div className="price-lowest">
                     {hasDiscount && <span className="price-reference" style={{ marginLeft: 8 }}>{product.price.toLocaleString("fa-IR")}</span>}
-                    <h1>{finalPrice.toLocaleString("fa-IR")} <span>تومان</span></h1>
+                    <div className="price-lowest-value">{finalPrice.toLocaleString("fa-IR")} <span>تومان</span></div>
                   </div>
                 )}
               </div>
@@ -368,7 +368,7 @@ export default function ProductDetail({
                 </button>
                 <div className="product-price">
                   {hasDiscount && <span className="product-price-old">{product.price.toLocaleString("fa-IR")}</span>}
-                  <h1>{finalPrice.toLocaleString("fa-IR")}</h1>
+                  <div className="product-price-value">{finalPrice.toLocaleString("fa-IR")}</div>
                   <span className="product-price-unit">تومان {product.is_sold_by_unit ? `/ هر ${unitLabel}` : ""}</span>
                 </div>
               </div>

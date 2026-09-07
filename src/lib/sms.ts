@@ -57,3 +57,9 @@ export async function sendBulkOrderDepositSms(mobile: string, depositAmount: num
   if (!templateId) throw new Error("SMSIR_BULK_ORDER_TEMPLATE_ID تنظیم نشده است.");
   return sendTemplateSms(mobile, templateId, [{ name: "AMOUNT", value: depositAmount.toLocaleString("fa-IR") }]);
 }
+
+export async function sendPasswordResetOtpSms(mobile: string, code: string) {
+  const templateId = Number(process.env.SMSIR_PASSWORD_RESET_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_PASSWORD_RESET_TEMPLATE_ID تنظیم نشده است.");
+  return sendTemplateSms(mobile, templateId, [{ name: "CODE", value: code }]);
+}

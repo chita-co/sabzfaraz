@@ -1,9 +1,10 @@
+// src/app/(auth)/actions.ts
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
-import { sendSms } from "@/lib/sms";
+import { sendSms, sendTemplateSms } from "@/lib/sms";
 
 function isValidIranianMobile(phone: string) {
   return /^09\d{9}$/.test(phone);
@@ -115,7 +116,7 @@ export async function requestPasswordResetOtp(phone: string) {
   }
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // ۲ دقیقه
 
   const { error: insertError } = await adminClient
     .from("password_reset_otps")
@@ -124,7 +125,13 @@ export async function requestPasswordResetOtp(phone: string) {
   if (insertError) return { error: "خطا در ساخت کد بازیابی." };
 
   try {
-    await sendSms(phone, `سبزفراز\nکد تایید بازیابی رمز عبور: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
+    const templateId = Number(process.env.SMSIR_PASSWORD_RESET_TEMPLATE_ID);
+    if (!templateId) {
+      // اگر قالب پیامکی تنظیم نشده بود، به روش قبلی (sendSms) ارسال می‌کنیم
+      await sendSms(phone, `سبزفراز\nکد تایید بازیابی رمز عبور: ${code}\nاین کد تا ۲ دقیقه معتبر است.`);
+    } else {
+      await sendTemplateSms(phone, templateId, [{ name: "CODE", value: code }]);
+    }
   } catch {
     return { error: "خطا در ارسال پیامک. لطفاً دوباره تلاش کنید." };
   }
@@ -163,29 +170,6 @@ export async function resetPasswordWithOtp(phone: string, code: string, newPassw
   }
 
   await adminClient.from("password_reset_otps").delete().eq("id", otpRow.id);
-
-  return { success: true };
-}
-
-// نسخه‌ی ساده‌شده‌ی بازیابی رمز — بدون نیاز به کد پیامکی یک‌بارمصرف
-export async function resetPasswordByPhoneOnly(phone: string, newPassword: string) {
-  if (!isValidIranianMobile(phone)) {
-    return { error: "شماره موبایل معتبر نیست." };
-  }
-  if (newPassword.length < 6) {
-    return { error: "رمز عبور باید حداقل ۶ کاراکتر باشد." };
-  }
-
-  const adminClient = createAdminClient();
-  const { data: profile } = await adminClient.from("profiles").select("id").eq("phone", phone).maybeSingle();
-  if (!profile) {
-    return { error: "کاربری با این شماره موبایل یافت نشد." };
-  }
-
-  const { error } = await adminClient.auth.admin.updateUserById(profile.id, { password: newPassword });
-  if (error) {
-    return { error: "خطا در تغییر رمز عبور: " + error.message };
-  }
 
   return { success: true };
 }
