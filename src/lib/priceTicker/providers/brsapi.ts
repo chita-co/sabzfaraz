@@ -59,7 +59,8 @@ const NAME_MAP: Record<string, string> = {
   "price_cad": "دلار کانادا",
   "price_aud": "دلار استرالیا",
 
-   // 🟢 ارزهای جدید
+
+ // 🟢 ۲۰ ارز برتر دیگر (کلیدهای واقعی tgju)
   "price_jpy": "ین ژاپن",
   "price_myr": "رینگیت مالزی",
   "price_thb": "بات تایلند",
@@ -71,37 +72,31 @@ const NAME_MAP: Record<string, string> = {
   "price_pln": "زلوتی لهستان",
   "price_zar": "راند آفریقای جنوبی",
   "price_brl": "رئال برزیل",
-  "price_afn": "افغانی",
   "price_pkr": "روپیه پاکستان",
-  "price_azn": "منات آذربایجان",
-  "price_amd": "درام ارمنستان",
   "price_kzt": "تنگه قزاقستان",
   "price_uah": "هریونیا اوکراین",
-  "price_byn": "روبل بلاروس",
   "price_gel": "لاری گرجستان",
   "price_omr": "ریال عمان",
   "price_qar": "ریال قطر",
   "price_kwd": "دینار کویت",
   "price_bhd": "دینار بحرین",
   "price_jod": "دینار اردن",
-  "price_lyd": "دینار لیبی",
-  "price_egp": "پوند مصر",
-  "price_lbp": "لیره لبنان",
-  "price_syp": "لیره سوریه",
-  "price_tnd": "دینار تونس",
-  "price_mad": "درهم مراکش",
-  "price_yer": "ریال یمن",
 
   "sekee": "سکه امامی",
-  "nim_sekee": "نیم سکه",
-  "rob_sekee": "ربع سکه",
-  "gerami": "سکه گرمی",
-  "gold_18k": "طلای ۱۸ عیار",
+  "sekeb": "سکه بهار آزادی",
+  "nim": "نیم سکه",
+  "rob": "ربع سکه",
+  "retail_gerami": "سکه گرمی",
+  "tgju_gold_irg18": "طلای ۱۸ عیار",
   "gold_24k": "طلای ۲۴ عیار",
   "mesghal": "مثقال طلا",
   "silver": "نقره",
   "silver_999": "نقره ۹۹۹",
   "silver_925": "نقره ۹۲۵",
+  "retail_sekee": "سکه امامی (خرده‌فروشی)",
+  "retail_nim": "نیم سکه (خرده‌فروشی)",
+  "retail_rob": "ربع سکه (خرده‌فروشی)",
+  "retail_sekeb": "سکه بهار آزادی (خرده‌فروشی)",
 };
 
 const CURRENCY_ORDER = [
@@ -121,7 +116,7 @@ const CURRENCY_ORDER = [
   "price_cad",        // دلار کانادا
   "price_aud",        // دلار استرالیا
 
-  // ارزهای جدید
+  // ۲۰ ارز برتر دیگر
   "price_jpy",
   "price_myr",
   "price_thb",
@@ -133,39 +128,34 @@ const CURRENCY_ORDER = [
   "price_pln",
   "price_zar",
   "price_brl",
-  "price_afn",
   "price_pkr",
-  "price_azn",
-  "price_amd",
   "price_kzt",
   "price_uah",
-  "price_byn",
   "price_gel",
   "price_omr",
   "price_qar",
   "price_kwd",
   "price_bhd",
   "price_jod",
-  "price_lyd",
-  "price_egp",
-  "price_lbp",
-  "price_syp",
-  "price_tnd",
-  "price_mad",
-  "price_yer",
+
 ];
 
 const GOLD_ORDER = [
   "sekee",            // سکه امامی
-  "nim_sekee",        // نیم سکه
-  "rob_sekee",        // ربع سکه
-  "gerami",           // سکه گرمی
-  "gold_18k",         // طلای ۱۸ عیار
+  "sekeb",            // سکه بهار آزادی
+  "nim",              // نیم سکه
+  "rob",              // ربع سکه
+  "retail_gerami",    // سکه گرمی
+  "tgju_gold_irg18",  // طلای ۱۸ عیار
   "gold_24k",         // طلای ۲۴ عیار
   "mesghal",          // مثقال طلا
   "silver",           // نقره
   "silver_925",       // نقره ۹۲۵
   "silver_999",       // نقره ۹۹۹
+  "retail_sekee",     // سکه امامی (خرده‌فروشی)
+  "retail_nim",       // نیم سکه (خرده‌فروشی)
+  "retail_rob",       // ربع سکه (خرده‌فروشی)
+  "retail_sekeb",     // سکه بهار آزادی (خرده‌فروشی)
 ];
 
 function resolveName(key: string): string {
