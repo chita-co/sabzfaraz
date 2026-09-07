@@ -15,7 +15,7 @@ const FAVORITES_KEY = "sabzfaraz_price_favorites";
 
 const TABS: { key: PriceCategory; label: string; icon: typeof DollarSign }[] = [
   { key: "currency", label: "ارز", icon: DollarSign },
-  { key: "gold", label: "طلا و سکه", icon: Coins },
+  { key: "gold", label: "طلا و سکه و نقره", icon: Coins },
   { key: "crypto", label: "ارز دیجیتال", icon: Bitcoin },
 ];
 

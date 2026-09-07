@@ -8,7 +8,7 @@ import { getPriceSnapshot } from "@/lib/priceTicker/cache";
 import PriceTickerDashboard from "@/components/price-ticker/PriceTickerDashboard";
 import PriceTickerFaq from "@/components/price-ticker/PriceTickerFaq";
 import { PRICE_TICKER_FAQS } from "@/components/price-ticker/priceTickerFaqs";
-
+import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
 export const dynamic = 'force-dynamic';
 
@@ -89,7 +89,8 @@ export default async function PriceTickerPage() {
   };
 
   return (
-    <div className="pt-page">
+    <div className="pt-page" style={{ position: "relative", zIndex: 1 }}>
+      <GalaxyBackground />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetSchema) }}
