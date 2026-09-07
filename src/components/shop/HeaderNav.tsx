@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import toast from "react-hot-toast";
 import {
-  Search, ShoppingCart, Heart, User, Menu, X,
+  Search, ShoppingCart, Heart, User, UserPlus, Menu, X,
   LayoutDashboard, LogOut, Package, Gift, Clapperboard, Wallet,
   Handshake, PackageSearch, Scale,
 } from "lucide-react";
@@ -13,12 +14,14 @@ import { signOut } from "@/app/(auth)/actions";
 import { useCartTotals } from "@/store/cart-store";
 import GooeyNav, { type GooeyNavItem } from "@/components/GooeyNav";
 import NotificationBell from "@/components/shop/NotificationBell";
+import LivePriceBadge from "@/components/shop/LivePriceBadge";
+import type { HeaderPriceSummary } from "@/lib/priceTicker/headerSummary";
 
 interface CategoryLite { id: string; name: string; slug: string; }
 interface CategoryTreeItem extends CategoryLite { children: CategoryLite[]; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",
+  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار", prices,
 }: {
   isLoggedIn: boolean;
   userName: string | null;
@@ -29,6 +32,7 @@ export default function HeaderNav({
   walletBalance?: number;
   auctionEnabled?: boolean;
   auctionLabel?: string;
+  prices?: HeaderPriceSummary;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -149,6 +153,65 @@ export default function HeaderNav({
 
   return (
     <header className="site-header">
+      {/* ردیف اول: همان محتوای TopBar سابق */}
+      <div className="site-header-topbar">
+        <div className="topbar-actions">
+          {isLoggedIn ? (
+            <div
+              className="site-nav-dropdown"
+              onMouseEnter={() => setAccountOpen(true)}
+              onMouseLeave={() => setAccountOpen(false)}
+            >
+              <button type="button" className="topbar-btn">
+                <User size={14} /> {userName || "حساب من"}
+              </button>
+              {accountOpen && (
+                <div className="site-dropdown-menu site-dropdown-left">
+                  <div className="site-dropdown-user">{userName || "کاربر"}</div>
+                  <Link href="/profile">پروفایل من</Link>
+                  <Link href="/profile/orders"><Package size={14} /> سفارشات من</Link>
+                  <Link href="/profile/loyalty"><Gift size={14} /> باشگاه مشتریان</Link>
+                  <Link href="/unboxing"><Clapperboard size={14} /> آنباکس محصولات</Link>
+                  <Link href="/profile/wallet"><Wallet size={14} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)</Link>
+                  {isAdmin && (
+                    <Link href="/admin" className="site-dropdown-admin"><LayoutDashboard size={14} /> پنل مدیریت</Link>
+                  )}
+                  <form action={signOut}>
+                    <button type="submit" className="site-dropdown-logout"><LogOut size={14} /> خروج</button>
+                  </form>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" className="topbar-btn">
+              <UserPlus size={14} /> ورود / ثبت‌نام
+            </Link>
+          )}
+          <Link href="/partner/login" className="topbar-btn">
+            <Handshake size={14} /> ورود همکاران
+          </Link>
+          <Link href="/profile/orders" className="topbar-btn">
+            <PackageSearch size={14} /> پیگیری سفارشتان
+          </Link>
+          <button
+            type="button"
+            className="topbar-btn"
+            onClick={() => toast("این قابلیت به‌زودی اضافه می‌شود.")}
+          >
+            <Scale size={14} /> لیست مقایسه
+          </button>
+        </div>
+
+        {prices && (prices.usd || prices.gold18k || prices.bitcoin) && (
+          <Link href="/price-ticker" className="topbar-deals">
+            {prices.usd && <LivePriceBadge label="دلار" price={prices.usd.price} changePercent={prices.usd.changePercent} colorVar="1" />}
+            {prices.gold18k && <LivePriceBadge label="طلای ۱۸ عیار" price={prices.gold18k.price} changePercent={prices.gold18k.changePercent} colorVar="2" />}
+            {prices.bitcoin && <LivePriceBadge label="بیت‌کوین" price={prices.bitcoin.price} changePercent={prices.bitcoin.changePercent} unit="تومان" colorVar="3" />}
+          </Link>
+        )}
+      </div>
+
+      {/* ردیف دوم: لوگو + سرچ + سه آیکون */}
       <div className="site-header-inner">
         <Link href="/" className="site-brand-logo" aria-label="سبزفراز - صفحه اصلی">
           {logoUrl && (
@@ -159,12 +222,6 @@ export default function HeaderNav({
           )}
         </Link>
 
-        <nav className="site-nav">
-          <div className="gooey-nav-wrapper">
-            <GooeyNav items={navItems} initialActiveIndex={initialNavIndex} />
-          </div>
-        </nav>
-
         <form className="site-search" onSubmit={handleSearch}>
           <Search size={16} />
           <input type="text" placeholder="جستجوی محصول..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -173,40 +230,21 @@ export default function HeaderNav({
         <div className="site-actions">
           <Link href="/wishlist" className="site-icon-btn"><Heart size={20} /></Link>
           <NotificationBell />
-
           <Link href="/cart" className="site-icon-btn cart-icon-wrap">
             <ShoppingCart size={20} />
             {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </Link>
-
-          <div className="site-nav-dropdown" onMouseEnter={() => setAccountOpen(true)} onMouseLeave={() => setAccountOpen(false)}>
-            {isLoggedIn ? (
-              <>
-                <button type="button" className="site-icon-btn"><User size={20} /></button>
-                {accountOpen && (
-                  <div className="site-dropdown-menu site-dropdown-left">
-                    <div className="site-dropdown-user">{userName || "کاربر"}</div>
-                    <Link href="/profile">پروفایل من</Link>
-                    <Link href="/profile/orders"><Package size={14} /> سفارشات من</Link>
-                    <Link href="/profile/loyalty"><Gift size={14} /> باشگاه مشتریان</Link>
-                    <Link href="/unboxing"><Clapperboard size={14} /> آنباکس محصولات</Link>
-                    <Link href="/profile/wallet"><Wallet size={14} /> کیف پول ({walletBalance.toLocaleString("fa-IR")} تومان)</Link>
-                    {isAdmin && (
-                      <Link href="/admin" className="site-dropdown-admin"><LayoutDashboard size={14} /> پنل مدیریت</Link>
-                    )}
-                    <form action={signOut}>
-                      <button type="submit" className="site-dropdown-logout"><LogOut size={14} /> خروج</button>
-                    </form>
-                  </div>
-                )}
-              </>
-            ) : (
-              <Link href="/login" className="site-login-btn">ورود / ثبت‌نام</Link>
-            )}
-          </div>
-
           <button className="site-mobile-toggle" onClick={() => setMobileOpen(true)}><Menu size={22} /></button>
         </div>
+      </div>
+
+      {/* ردیف سوم: منوی اصلی (۹ دکمه) */}
+      <div className="site-header-nav-row">
+        <nav className="site-nav">
+          <div className="gooey-nav-wrapper">
+            <GooeyNav items={navItems} initialActiveIndex={initialNavIndex} />
+          </div>
+        </nav>
       </div>
 
       {mounted && mobileMenu && createPortal(mobileMenu, document.body)}
@@ -215,51 +253,111 @@ export default function HeaderNav({
         .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
         .site-actions, .site-actions > * { flex-shrink: 0; }
 
-        /* دسکتاپ کامل تا میانه (بالای ۱۰۲۴): بدون هیچ تغییری نسبت به قبل - فقط اسکرول
-           افقی داخل همان ردیف واحد هدر */
-        @media (max-width: 1400px) and (min-width: 1025px) {
-          .site-header-inner { flex-wrap: nowrap !important; gap: 8px !important; }
-          .site-nav {
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
-            flex-shrink: 1 !important;
-            min-width: 0 !important;
-          }
-          .site-nav::-webkit-scrollbar { display: none !important; }
-          .gooey-nav-wrapper { flex-shrink: 0 !important; }
-          .site-search { flex-shrink: 0 !important; min-width: 150px !important; }
-          .site-actions { flex-shrink: 0 !important; gap: 6px !important; }
+        .site-header-topbar {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 8px 20px;
+          flex-wrap: wrap;
+          border-bottom: 1px solid rgba(255, 215, 0, 0.2);
         }
-        
+        .topbar-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .topbar-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 11.5px;
+          font-weight: 700;
+          padding: 7px 16px;
+          border-radius: 999px;
+          border: none;
+          cursor: pointer;
+          white-space: nowrap;
+          background: linear-gradient(135deg, #ffd700, #eab308);
+          color: #14532d;
+          box-shadow: 0 2px 8px rgba(234, 179, 8, 0.35);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          font-family: inherit;
+        }
+        .topbar-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(234, 179, 8, 0.5);
+        }
+        :global(.topbar-deals) {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          text-decoration: none;
+          margin-inline-start: 28px;
+        }
+        :global(.price-badge) {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 12px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #fff;
+          white-space: nowrap;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        :global(.price-badge:hover) {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        :global(.price-badge-c1) { background: rgba(22, 163, 74, 0.35); border: 1px solid #16a34a; }
+        :global(.price-badge-c2) { background: rgba(234, 179, 8, 0.3); border: 1px solid #eab308; }
+        :global(.price-badge-c3) { background: rgba(74, 222, 128, 0.25); border: 1px solid #4ade80; }
+        :global(.price-badge-label) { opacity: 0.9; }
+        :global(.price-badge-value b) { font-weight: 500; font-size: 10px; opacity: 0.85; }
+        :global(.price-badge-change) {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          font-size: 10px;
+          font-weight: 700;
+          border-radius: 6px;
+          padding: 1px 5px;
+        }
+        :global(.price-badge-change.up) { background: rgba(74, 222, 128, 0.25); color: #4ade80; }
+        :global(.price-badge-change.down) { background: rgba(248, 113, 113, 0.25); color: #f87171; }
 
-        /* بازه‌ی میانی جدید (۶۴۱ تا ۱۰۲۴): به‌جای پنهان شدن پشت همبرگر، منو و سرچ در
-           ردیف‌های جداگانه‌ی زیر آیکون‌ها نمایش داده می‌شوند و اسکرول‌پذیرند. */
-        @media (max-width: 1150px) and (min-width: 641px) {
-          .site-header-inner {
-            flex-wrap: wrap !important;
-            height: auto !important;
-            padding: 12px 16px !important;
-            row-gap: 10px !important;
-          }
-          .site-nav {
-            order: 3 !important;
-            width: 100% !important;
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            scrollbar-width: none !important;
-          }
-          .site-nav::-webkit-scrollbar { display: none !important; }
-          .gooey-nav-wrapper { flex-shrink: 0 !important; }
-          .site-search {
-            order: 4 !important;
-            width: 100% !important;
-            max-width: none !important;
-          }
+        .site-header-nav-row {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 20px 14px;
+          display: flex;
+          align-items: center;
         }
 
-        /* موبایل خیلی کوچک */
+        @media (min-width: 641px) {
+          .site-header-nav-row {
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          .site-header-nav-row::-webkit-scrollbar { display: none; }
+          .gooey-nav-wrapper { flex-shrink: 0; }
+        }
+
+        @media (max-width: 1024px) and (min-width: 641px) {
+          .site-header-inner { gap: 14px !important; }
+        }
+
+        @media (max-width: 640px) {
+          .site-header-topbar { display: none !important; }
+        }
+
         @media (max-width: 400px) {
           .site-header-inner { padding: 0 12px !important; gap: 10px !important; }
           .site-actions { gap: 4px !important; }

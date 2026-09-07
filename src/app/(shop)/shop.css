@@ -217,7 +217,8 @@
 
 @media (max-width: 640px) {
   .site-nav,
-  .site-search {
+  .site-search,
+  .site-header-nav-row {
     display: none;
   }
   .site-mobile-toggle {

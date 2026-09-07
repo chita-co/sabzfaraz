@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import HeaderNav from "./HeaderNav";
-import TopBar from "./TopBar";
 import { getPriceSnapshot } from "@/lib/priceTicker/cache";
 import { extractHeaderPrices } from "@/lib/priceTicker/headerSummary";
 
@@ -23,8 +22,8 @@ export default async function Header() {
   ]);
 
   const headerPrices = priceSnapshot ? extractHeaderPrices(priceSnapshot) : undefined;
+  const walletBalance = fullProfile?.wallet_balance ?? 0;
 
-  // ساخت درخت دو سطحی دسته‌بندی‌ها فقط برای مگامنوی هدر — هیچ کوئری/رفتار دیگری تغییر نکرده
   const categoryTree = (categories ?? []).map((top) => ({
     id: top.id,
     name: top.name,
@@ -36,7 +35,6 @@ export default async function Header() {
 
   return (
     <div style={{ position: "relative", zIndex: 100, isolation: "isolate" }}>
-      <TopBar isLoggedIn={!!user} prices={headerPrices} />
       <HeaderNav
       isLoggedIn={!!user}
       userName={profile?.full_name ?? null}
@@ -44,9 +42,10 @@ export default async function Header() {
       categories={categories ?? []}
       categoryTree={categoryTree}
       logoUrl={settings?.logo_url ?? null}
-      walletBalance={fullProfile?.wallet_balance ?? 0}
+      walletBalance={walletBalance}
       auctionEnabled={settings?.auction_header_enabled ?? true}
       auctionLabel={settings?.auction_header_label ?? "جمعه بازار"}
+      prices={headerPrices}
       />
     </div>
   );
