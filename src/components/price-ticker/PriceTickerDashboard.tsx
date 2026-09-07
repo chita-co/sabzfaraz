@@ -131,7 +131,9 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
           <span className={`pt-status-dot ${snapshot.stale ? "stale" : "live"}`} />
           <span>{snapshot.stale ? "در حال تلاش برای دریافت آخرین قیمت..." : "زنده"}</span>
           <span className="pt-dot-sep">·</span>
-          <span>به‌روزرسانی: {timeAgoFa(snapshot.updatedAt)}</span>
+          <span suppressHydrationWarning>
+  به‌روزرسانی: {timeAgoFa(snapshot.updatedAt)}
+</span>
           {snapshot.stale && <AlertTriangle size={14} className="pt-warn-icon" />}
           {marketMoodPercent !== null && (
             <>

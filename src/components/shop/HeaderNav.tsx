@@ -250,11 +250,15 @@ export default function HeaderNav({
       {mounted && mobileMenu && createPortal(mobileMenu, document.body)}
 
       <style jsx>{`
+        .site-header {
+          margin-top: 1cm;
+        }
+
         .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
         .site-actions, .site-actions > * { flex-shrink: 0; }
 
         .site-header-topbar {
-          max-width: 1400px;
+          max-width: 1280px;
           margin: 0 auto;
           display: flex;
           align-items: center;
@@ -269,23 +273,34 @@ export default function HeaderNav({
           align-items: center;
           gap: 10px;
           flex-wrap: wrap;
+          margin-right: 18px;
         }
         .topbar-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 11.5px;
-          font-weight: 700;
-          padding: 7px 16px;
-          border-radius: 999px;
-          border: none;
-          cursor: pointer;
-          white-space: nowrap;
-          background: linear-gradient(135deg, #ffd700, #eab308);
-          color: #14532d;
-          box-shadow: 0 2px 8px rgba(234, 179, 8, 0.35);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-          font-family: inherit;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 5px !important;
+          font-size: 11.5px !important;
+          font-weight: 700 !important;
+          line-height: 1.4 !important;
+          padding: 7px 14px !important;
+          min-width: 132px !important;
+          max-width: 132px !important;
+          height: 30px !important;
+          box-sizing: border-box !important;
+          border-radius: 999px !important;
+          border: none !important;
+          cursor: pointer !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          background: linear-gradient(135deg, #ffd700, #eab308) !important;
+          color: #14532d !important;
+          box-shadow: 0 2px 8px rgba(234, 179, 8, 0.35) !important;
+          transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+          font-family: inherit !important;
+          text-decoration: none !important;
+          margin: 0 !important;
         }
         .topbar-btn:hover {
           transform: translateY(-1px);

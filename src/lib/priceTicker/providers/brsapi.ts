@@ -58,6 +58,40 @@ const NAME_MAP: Record<string, string> = {
   "price_krw": "وون",
   "price_cad": "دلار کانادا",
   "price_aud": "دلار استرالیا",
+
+   // 🟢 ارزهای جدید
+  "price_jpy": "ین ژاپن",
+  "price_myr": "رینگیت مالزی",
+  "price_thb": "بات تایلند",
+  "price_sgd": "دلار سنگاپور",
+  "price_hkd": "دلار هنگ کنگ",
+  "price_nzd": "دلار نیوزیلند",
+  "price_dkk": "کرون دانمارک",
+  "price_nok": "کرون نروژ",
+  "price_pln": "زلوتی لهستان",
+  "price_zar": "راند آفریقای جنوبی",
+  "price_brl": "رئال برزیل",
+  "price_afn": "افغانی",
+  "price_pkr": "روپیه پاکستان",
+  "price_azn": "منات آذربایجان",
+  "price_amd": "درام ارمنستان",
+  "price_kzt": "تنگه قزاقستان",
+  "price_uah": "هریونیا اوکراین",
+  "price_byn": "روبل بلاروس",
+  "price_gel": "لاری گرجستان",
+  "price_omr": "ریال عمان",
+  "price_qar": "ریال قطر",
+  "price_kwd": "دینار کویت",
+  "price_bhd": "دینار بحرین",
+  "price_jod": "دینار اردن",
+  "price_lyd": "دینار لیبی",
+  "price_egp": "پوند مصر",
+  "price_lbp": "لیره لبنان",
+  "price_syp": "لیره سوریه",
+  "price_tnd": "دینار تونس",
+  "price_mad": "درهم مراکش",
+  "price_yer": "ریال یمن",
+
   "sekee": "سکه امامی",
   "nim_sekee": "نیم سکه",
   "rob_sekee": "ربع سکه",
@@ -86,6 +120,39 @@ const CURRENCY_ORDER = [
   "price_krw",        // وون
   "price_cad",        // دلار کانادا
   "price_aud",        // دلار استرالیا
+
+  // ارزهای جدید
+  "price_jpy",
+  "price_myr",
+  "price_thb",
+  "price_sgd",
+  "price_hkd",
+  "price_nzd",
+  "price_dkk",
+  "price_nok",
+  "price_pln",
+  "price_zar",
+  "price_brl",
+  "price_afn",
+  "price_pkr",
+  "price_azn",
+  "price_amd",
+  "price_kzt",
+  "price_uah",
+  "price_byn",
+  "price_gel",
+  "price_omr",
+  "price_qar",
+  "price_kwd",
+  "price_bhd",
+  "price_jod",
+  "price_lyd",
+  "price_egp",
+  "price_lbp",
+  "price_syp",
+  "price_tnd",
+  "price_mad",
+  "price_yer",
 ];
 
 const GOLD_ORDER = [
@@ -109,7 +176,12 @@ function classify(key: string, name: string, nameEn: string): "currency" | "gold
   const keyLower = key.toLowerCase();
   const nameEnLower = nameEn.toLowerCase();
 
-  // تشخیص طلا و سکه و نقره بر اساس کلید یا نام
+  // اگر کلید در لیست ارزهاست، ارز است
+  if (CURRENCY_ORDER.includes(key)) return "currency";
+  // اگر کلید در لیست طلا/نقره است، طلا است
+  if (GOLD_ORDER.includes(key)) return "gold";
+
+  // بررسی‌های تکمیلی
   if (
     keyLower.includes("gold") ||
     keyLower.includes("sekee") ||
@@ -126,7 +198,6 @@ function classify(key: string, name: string, nameEn: string): "currency" | "gold
     return "gold";
   }
 
-  // تشخیص ارز بر اساس کلید یا نام
   if (
     keyLower.startsWith("price_") ||
     /^[a-z]{3}(_|$)/.test(keyLower) ||

@@ -2183,3 +2183,39 @@
   line-height: 1.9;
   margin-bottom: 8px;
 }
+
+
+/* ===== یکدست‌سازی دکمه‌های نوار بالایی (Topbar) ===== */
+.site-header-topbar .topbar-btn,
+.site-header-topbar a.topbar-btn,
+.site-header-topbar button.topbar-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  padding: 7px 14px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 30px !important;
+  box-sizing: border-box !important;
+  border-radius: 999px !important;
+  border: none !important;
+  background: linear-gradient(135deg, #ffd700, #eab308) !important;
+  color: #14532d !important;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.35) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-family: inherit !important;
+  text-decoration: none !important;
+  margin: 0 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.site-header-topbar .topbar-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.5) !important;
+}
