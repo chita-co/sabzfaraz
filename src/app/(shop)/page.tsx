@@ -26,7 +26,7 @@ import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
 export const metadata = {
   title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
   description:
-    "فروشگاه اینترنتی سبزفراز با سال‌ها تجربه؛ مرجع تخصصی قطعات الکترونیک، ماژول، سنسور، برد آردوینو، ESP و ابزار لحیم‌کاری. ارسال از اصفهان به سراسر کشور با قیمت مناسب و موجودی واقعی.",
+    "فروشگاه اینترنتی سبزفراز مرجع تخصصی خرید قطعات الکترونیک، ماژول، سنسور، برد آردوینو و ESP، لوازم لحیم‌کاری و ابزار دقیق با موجودی واقعی، قیمت مناسب و ارسال سریع از اصفهان به سراسر کشور.",
 };
 
 const categoryIcons: Record<string, React.ComponentType<{ size?: number }>> = {
@@ -117,6 +117,9 @@ export default async function HomePage() {
   return (
     <>
       <GalaxyBackground />
+      <h1 className="sr-only">
+  فروشگاه اینترنتی قطعات الکترونیک سبزفراز
+</h1>
       <TopFilterBar />
       <HeroCarousel banners={(banners as Banner[]) ?? []} />
       <HomePriceWidget />
