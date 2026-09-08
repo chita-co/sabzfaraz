@@ -46,7 +46,7 @@ export async function loginPartnerAction(phone: string, password: string) {
 
   if (error) return { error: "شماره موبایل یا رمز عبور اشتباه است." };
 
-  redirect("/partner");
+  return { success: true };
 }
 
 export async function partnerSignOut() {

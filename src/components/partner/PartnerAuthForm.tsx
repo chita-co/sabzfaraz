@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   loginPartnerAction, registerPartnerAction,
@@ -10,9 +11,22 @@ import { uploadPartnerNationalCardAction } from "@/app/partner/login/actions";
 
 interface CategoryOption { id: string; name: string; }
 
+function toEnglishDigits(value: string): string {
+  const persian = "۰۱۲۳۴۵۶۷۸۹";
+  const arabic = "٠١٢٣٤٥٦٧٨٩";
+  return value.replace(/[۰-۹٠-٩]/g, (ch) => {
+    const p = persian.indexOf(ch);
+    if (p > -1) return String(p);
+    const a = arabic.indexOf(ch);
+    if (a > -1) return String(a);
+    return ch;
+  });
+}
+
 export default function PartnerAuthForm({
   categories, termsText, registrationOpen,
 }: { categories: CategoryOption[]; termsText: string; registrationOpen: boolean }) {
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [loading, setLoading] = useState(false);
 
@@ -54,7 +68,9 @@ export default function PartnerAuthForm({
       if (res?.error) {
         alert(res.error);
         toast.error(res.error);
+        return;
       }
+      router.push("/partner");
     } catch (e) {
       console.error("login error:", e);
       setLoading(false);
@@ -193,14 +209,14 @@ export default function PartnerAuthForm({
           <input className="partner-input" placeholder="نام فروشگاه / نام و نام‌خانوادگی *" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
           <input className="partner-input" placeholder="نام مسئول تماس (اختیاری)" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           <div style={{ display: "flex", gap: 8 }}>
-            <input className="partner-input" placeholder="شماره موبایل *" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <input className="partner-input" placeholder="شماره موبایل *" dir="ltr" value={phone} onChange={(e) => setPhone(toEnglishDigits(e.target.value))} />
             <input className="partner-input" placeholder="ایمیل (اختیاری)" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <input className="partner-input" placeholder="کد ملی / شناسه کسب‌وکار *" dir="ltr" value={nationalId} onChange={(e) => setNationalId(e.target.value)} />
+          <input className="partner-input" placeholder="کد ملی / شناسه کسب‌وکار *" dir="ltr" value={nationalId} onChange={(e) => setNationalId(toEnglishDigits(e.target.value))} />
           <textarea className="partner-input" placeholder="آدرس کامل *" rows={2} value={address} onChange={(e) => setAddress(e.target.value)} />
           <div style={{ display: "flex", gap: 8 }}>
-            <input className="partner-input" placeholder="شماره شبا *" dir="ltr" value={sheba} onChange={(e) => setSheba(e.target.value)} />
-            <input className="partner-input" placeholder="شماره کارت (اختیاری)" dir="ltr" value={card} onChange={(e) => setCard(e.target.value)} />
+            <input className="partner-input" placeholder="شماره شبا *" dir="ltr" value={sheba} onChange={(e) => setSheba(toEnglishDigits(e.target.value))} />
+            <input className="partner-input" placeholder="شماره کارت (اختیاری)" dir="ltr" value={card} onChange={(e) => setCard(toEnglishDigits(e.target.value))} />
           </div>
           <input className="partner-input" type="password" placeholder="رمز عبور *" value={password} onChange={(e) => setPassword(e.target.value)} />
           <textarea className="partner-input" placeholder="توضیح درباره فروشگاه (اختیاری)" rows={2} value={bio} onChange={(e) => setBio(e.target.value)} />

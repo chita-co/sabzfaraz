@@ -494,7 +494,7 @@ export async function updatePartnerProductAction(productId: string, input: Partn
     const settings = await getPartnerSettings();
     const admin = createAdminClient();
 
-    const { data: existing } = await admin.from("products").select("id").eq("id", productId).eq("partner_id", partner.id).single();
+    const { data: existing } = await admin.from("products").select("*").eq("id", productId).eq("partner_id", partner.id).single();
     if (!existing) return { error: "محصول یافت نشد یا متعلق به شما نیست." };
 
     if (!input.categoryId) return { error: "دسته‌بندی اصلی الزامی است." };
@@ -504,6 +504,18 @@ export async function updatePartnerProductAction(productId: string, input: Partn
     if (profitPercent < settings.min_profit_percent) {
       return { error: "سود سایت برای این محصول کمتر از حد مجاز است." };
     }
+
+    // اگر فقط قیمت تغییر کرده باشد (نه توضیحات/عکس/دسته‌بندی و...)، نیازی به تایید ادمین نیست
+    const otherFieldsChanged =
+      existing.name !== input.title.trim() ||
+      existing.name_en !== input.nameEn ||
+      existing.description !== input.description ||
+      existing.short_description !== input.shortDescription ||
+      existing.category_id !== input.categoryId ||
+      existing.brand !== input.brand ||
+      JSON.stringify(existing.images ?? []) !== JSON.stringify(input.images ?? []) ||
+      JSON.stringify(existing.image_alt_texts ?? []) !== JSON.stringify(input.imageAltTexts ?? []) ||
+      JSON.stringify(existing.tags ?? []) !== JSON.stringify(input.tags ?? []);
 
     const { error } = await admin.from("products").update({
       name: input.title.trim(), name_en: input.nameEn, description: input.description, short_description: input.shortDescription,
@@ -523,7 +535,7 @@ export async function updatePartnerProductAction(productId: string, input: Partn
       china_delivery_min: input.chinaDeliveryMin, china_delivery_max: input.chinaDeliveryMax, china_delivery_unit: input.chinaDeliveryUnit,
       china_terms_text: input.chinaTermsText, china_delivery_text: input.chinaDeliveryText, china_order_note: input.chinaOrderNote,
       partner_cost_price: input.partnerCostPrice, partner_stock_unlimited: input.stockUnlimited,
-      partner_approval_status: "PENDING_REVIEW", is_active: false,
+      ...(otherFieldsChanged ? { partner_approval_status: "PENDING_REVIEW", is_active: false } : {}),
     }).eq("id", productId);
 
     if (error) return { error: error.message };
