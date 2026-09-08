@@ -24,7 +24,7 @@ export default async function AdminSupportTicketPage({
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-1">{ticket.subject}</h1>
       <p className="text-sm text-gray-500 mb-5">کاربر: {ticket.profile?.full_name ?? "—"}</p>
-      <AdminSupportChat ticketId={id} initialMessages={messages ?? []} isClosed={ticket.status === "CLOSED"} />
+      <AdminSupportChat key={id} ticketId={id} initialMessages={messages ?? []} isClosed={ticket.status === "CLOSED"} />
     </div>
   );
 }

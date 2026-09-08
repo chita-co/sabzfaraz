@@ -142,10 +142,12 @@ export default function AdminSupportChat({
                     {new Date(m.created_at).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
-                {m.sender_role === "ADMIN" && editingId !== m.id && !closed && (
+                {editingId !== m.id && !closed && (
                   <div className="support-msg-actions">
                     <button className="support-msg-edit-btn" onClick={() => startEdit(m)} aria-label="ویرایش"><Pencil size={12} /></button>
-                    <button className="support-msg-edit-btn" onClick={() => handleDeleteMessage(m.id)} aria-label="حذف"><Trash2 size={12} /></button>
+                    {m.sender_role === "ADMIN" && (
+                      <button className="support-msg-edit-btn" onClick={() => handleDeleteMessage(m.id)} aria-label="حذف"><Trash2 size={12} /></button>
+                    )}
                   </div>
                 )}
                 {editingId === m.id && (

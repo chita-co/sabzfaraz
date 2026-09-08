@@ -145,9 +145,10 @@ export default function SupportChatClient({
             <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
           </label>
           <textarea
+            ref={autoResize}
             placeholder="پیام خود را بنویسید..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => { setText(e.target.value); autoResize(e.target); }}
             rows={1}
           />
           <button onClick={() => handleSend()} disabled={sending}>

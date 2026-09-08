@@ -28,6 +28,9 @@ export async function sendAdminMessage(ticketId: string, message: string, imageU
 
 export async function closeTicket(ticketId: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "دسترسی غیرمجاز" };
+
   const { error } = await supabase.from("support_tickets").update({ status: "CLOSED" }).eq("id", ticketId);
   if (error) return { error: error.message };
   revalidatePath(`/admin/support/${ticketId}`);
@@ -37,6 +40,9 @@ export async function closeTicket(ticketId: string) {
 
 export async function deleteTicket(ticketId: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "دسترسی غیرمجاز" };
+
   const { error } = await supabase.from("support_tickets").delete().eq("id", ticketId);
   if (error) return { error: error.message };
   revalidatePath("/admin/support");
@@ -121,18 +127,24 @@ export async function startAdminTicket(userId: string, subject: string, message:
 }
 
 export async function editAdminMessage(messageId: string, newText: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "دسترسی غیرمجاز" };
+
   const admin = createAdminClient();
   const { error } = await admin
     .from("support_messages")
     .update({ message: newText })
-    .eq("id", messageId)
-    .eq("sender_role", "ADMIN");
+    .eq("id", messageId);
   if (error) return { error: error.message };
   return { success: true };
 }
 
 export async function deleteAdminMessage(messageId: string, ticketId: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "دسترسی غیرمجاز" };
+
   const { error } = await supabase
     .from("support_messages")
     .delete()
