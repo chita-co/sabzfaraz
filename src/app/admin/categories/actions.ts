@@ -4,6 +4,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
+import { submitUrlToIndexNow } from "@/lib/indexNow";
 
 function slugify(input: string) {
   return input
@@ -44,6 +45,8 @@ export async function createCategory(formData: FormData) {
 
   revalidatePath("/admin/categories");
   revalidatePath("/");
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+await submitUrlToIndexNow(`${baseUrl}/category/${slug}`);
   return { success: true };
 }
 
@@ -86,6 +89,8 @@ export async function updateCategory(id: string, formData: FormData) {
 
   revalidatePath("/admin/categories");
   revalidatePath("/");
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+await submitUrlToIndexNow(`${baseUrl}/category/${slug}`);
   return { success: true };
 }
 

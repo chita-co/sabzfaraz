@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
+import { submitUrlToIndexNow } from "@/lib/indexNow";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -15,7 +16,7 @@ async function requireAdmin() {
 export async function approvePartnerProductAction(productId: string) {
   await requireAdmin();
   const admin = createAdminClient();
-  const { data: product } = await admin.from("products").select("partner_id, name").eq("id", productId).single();
+  const { data: product } = await admin.from("products").select("partner_id, name, slug").eq("id", productId).single();
   if (!product) return { error: "محصول یافت نشد" };
 
   await admin.from("products").update({ partner_approval_status: "APPROVED", is_active: true, partner_rejection_reason: null }).eq("id", productId);
@@ -24,6 +25,8 @@ export async function approvePartnerProductAction(productId: string) {
     await createNotification(product.partner_id, "محصول شما تأیید شد ✅", `محصول «${product.name}» بررسی و در سایت منتشر شد.`);
   }
   revalidatePath("/admin/partners/products");
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+await submitUrlToIndexNow(`${baseUrl}/products/${product.slug}`);
   return { success: true };
 }
 
@@ -52,6 +55,15 @@ export async function adminUpdatePartnerProductAction(productId: string, payload
     price: payload.price, partner_cost_price: payload.partnerCostPrice, stock: payload.stock,
   }).eq("id", productId);
   if (error) return { error: error.message };
+  const { data: updatedProduct } = await admin
+  .from("products")
+  .select("slug, partner_approval_status, is_active")
+  .eq("id", productId)
+  .single();
   revalidatePath("/admin/partners/products");
+  if (updatedProduct && updatedProduct.partner_approval_status === "APPROVED" && updatedProduct.is_active) {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+  await submitUrlToIndexNow(`${baseUrl}/products/${updatedProduct.slug}`);
+}
   return { success: true };
 }

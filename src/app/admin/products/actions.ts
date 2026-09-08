@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { deleteImageByUrl } from "@/lib/arvan";
 import { buildProductCode } from "@/lib/sku";
 import { generateUniqueSlug } from "@/lib/slug";
+import { submitUrlToIndexNow } from "@/lib/indexNow";
 
 interface QuantityTierInput {
   minQty: number;
@@ -234,6 +235,8 @@ export async function createProduct(input: ProductInput) {
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+await submitUrlToIndexNow(`${baseUrl}/products/${created.slug}`);
   redirect("/admin/products");
 }
 
@@ -318,6 +321,8 @@ export async function updateProduct(id: string, input: ProductInput) {
   revalidatePath("/admin/products");
   revalidatePath("/");
   revalidatePath(`/products/${slug}`);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+await submitUrlToIndexNow(`${baseUrl}/products/${slug}`);
   redirect("/admin/products");
 }
 
@@ -406,6 +411,7 @@ export async function createProductsBulk(
 
   let successCount = 0;
   const failures: string[] = [];
+  const createdSlugs: string[] = [];
 
   for (const variant of variants) {
     if (!variant.name.trim()) continue;
@@ -487,6 +493,7 @@ export async function createProductsBulk(
       await saveProductCategories(supabase, created.id, base.categoryId, base.extraCategoryIds ?? []);
       await saveProductAttributes(supabase, created.id, base.attributes ?? []);
       successCount++;
+      createdSlugs.push(slug);
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "خطای نامشخص";
@@ -496,6 +503,10 @@ export async function createProductsBulk(
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+for (const slug of createdSlugs) {
+  await submitUrlToIndexNow(`${baseUrl}/products/${slug}`);
+}
 
   return { successCount, failures };
 }

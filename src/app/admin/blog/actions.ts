@@ -8,6 +8,7 @@ import { runBlogBot, generateBlogPostFromTopic } from "@/lib/blog/generatePost";
 import { generateUniqueBlogSlug } from "@/lib/blog/slug";
 import { classifyArticleCategory } from "@/lib/blog/ai/gemini";
 import { buildCategoryTreeLabels, type CategoryLite } from "@/lib/blog/categoryTree";
+import { submitUrlToIndexNow } from "@/lib/indexNow";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -135,6 +136,9 @@ export async function updatePostAction(postId: string, payload: PostFormPayload)
   const { error } = await admin.from("blog_posts").update(updatePayload).eq("id", postId);
   if (error) return { error: error.message };
 
+  const { data: currentPost } = await admin.from("blog_posts").select("slug").eq("id", postId).single();
+  const slug = currentPost?.slug;
+
   await admin.from("blog_post_categories").delete().eq("post_id", postId);
   for (const categoryId of payload.categoryIds) {
     await admin.from("blog_post_categories").upsert({ post_id: postId, category_id: categoryId }, { onConflict: "post_id,category_id" });
@@ -142,6 +146,10 @@ export async function updatePostAction(postId: string, payload: PostFormPayload)
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
+  if (payload.status === "published") {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+  await submitUrlToIndexNow(`${baseUrl}/blog/${slug}`);
+}
   return { success: true };
 }
 
@@ -174,6 +182,10 @@ export async function createPostAction(payload: PostFormPayload) {
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
+  if (insertPayload.status === "published") {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+  await submitUrlToIndexNow(`${baseUrl}/blog/${slug}`);
+}
   return { success: true, postId: inserted.id };
 }
 
