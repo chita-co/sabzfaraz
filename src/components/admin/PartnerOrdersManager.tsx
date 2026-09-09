@@ -13,7 +13,7 @@ interface OrderItemRow {
   id: string; product_name: string; quantity: number; price: number; partner_cost_price: number | null;
   partner_fulfillment_status: string; created_at: string; selected_color: string | null; selected_size: string | null;
   partner: { id: string; business_name: string; phone: string; partner_code: string } | null;
-  order: { order_number: string; user_id: string; profile: { full_name: string | null } | null } | null;
+  order: { order_number: string; user_id: string; profile: { full_name: string | null } | null; shipping_method_name?: string | null } | null;
 }
 interface PartnerOption { id: string; business_name: string; partner_code: string | null; }
 
@@ -123,7 +123,7 @@ export default function PartnerOrdersManager({
           <thead>
             <tr>
               <th><input type="checkbox" checked={selected.length === items.length && items.length > 0} onChange={toggleAll} /></th>
-              <th>شماره سفارش</th><th>همکار</th><th>محصول</th><th>تعداد</th><th>مبلغ همکار</th><th>وضعیت</th><th>تاریخ</th><th>عملیات</th>
+              <th>شماره سفارش</th><th>نحوه ارسال</th><th>همکار</th><th>محصول</th><th>تعداد</th><th>مبلغ همکار</th><th>وضعیت</th><th>تاریخ</th><th>عملیات</th>
             </tr>
           </thead>
           <tbody>
@@ -131,6 +131,7 @@ export default function PartnerOrdersManager({
               <tr key={it.id}>
                 <td><input type="checkbox" checked={selected.includes(it.id)} onChange={() => toggle(it.id)} /></td>
                 <td dir="ltr">{it.order?.order_number}</td>
+                <td>{it.order?.shipping_method_name ?? "—"}</td>
                 <td>{it.partner?.business_name} {it.partner?.partner_code ? <span style={{ color: "#9ca3af", fontSize: 11 }}>(کد {it.partner.partner_code})</span> : ""}</td>
                 <td>{it.product_name}{[it.selected_color, it.selected_size].filter(Boolean).length > 0 && <span style={{ color: "#9ca3af", fontSize: 11 }}> — {[it.selected_color, it.selected_size].filter(Boolean).join(" / ")}</span>}</td>
                 <td>{it.quantity.toLocaleString("fa-IR")}</td>

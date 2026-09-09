@@ -2,6 +2,12 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import PartnerOrdersManager from "@/components/admin/PartnerOrdersManager";
 
+interface OrderWithShippingMethod {
+  id: string;
+  order_number: string;
+  shipping_method?: { name: string }[] | { name: string } | null;
+}
+
 export const dynamic = "force-dynamic";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -59,8 +65,8 @@ export default async function AdminPartnerOrdersPage({
 
   const [{ data: ordersData }, { data: partnersData }] = await Promise.all([
     orderIds.length > 0
-      ? admin.from("orders").select("id, order_number").in("id", orderIds)
-      : Promise.resolve({ data: [] as { id: string; order_number: string }[] }),
+      ? admin.from("orders").select("id, order_number, shipping_method:shipping_methods(name)").in("id", orderIds) as unknown as Promise<{ data: OrderWithShippingMethod[] }>
+      : Promise.resolve({ data: [] as OrderWithShippingMethod[] }),
     partnerIdsInList.length > 0
       ? admin.from("partners").select("id, business_name, phone, partner_code").in("id", partnerIdsInList)
       : Promise.resolve({ data: [] as { id: string; business_name: string; phone: string; partner_code: string | null }[] }),
@@ -97,8 +103,15 @@ export default async function AdminPartnerOrdersPage({
       ? { id: it.partner.id, business_name: it.partner.business_name, phone: it.partner.phone ?? "", partner_code: it.partner.partner_code ?? "" }
       : null,
     order: it.order
-      ? { order_number: it.order.order_number, user_id: "", profile: null }
-      : null,
+  ? {
+      order_number: it.order.order_number,
+      user_id: "",
+      profile: null,
+      shipping_method_name: Array.isArray(it.order.shipping_method)
+        ? it.order.shipping_method[0]?.name ?? null
+        : it.order.shipping_method?.name ?? null,
+    }
+  : null,
   }));
 
   return (

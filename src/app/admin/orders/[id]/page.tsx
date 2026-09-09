@@ -31,8 +31,8 @@ export default async function AdminOrderDetailPage({
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*), bank_account:bank_accounts(bank_name, card_number, sheba_number, logo_slug)"
-    )
+  "*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*), bank_account:bank_accounts(bank_name, card_number, sheba_number, logo_slug), shipping_method:shipping_methods(name, invoice_label)"
+)
     .eq("id", id)
     .single();
 
@@ -177,6 +177,12 @@ export default async function AdminOrderDetailPage({
             <p className="text-sm text-gray-700 mt-1">
               کد پستی: {order.address?.postal_code}
             </p>
+            <p className="text-sm text-gray-700 mt-2 pt-2 border-t border-gray-100">
+  نحوه ارسال:{" "}
+  <span className="font-semibold text-gray-900">
+    {order.shipping_method?.name ?? "—"}
+  </span>
+</p>
           </div>
 
           {/* اطلاعات پرداخت */}
