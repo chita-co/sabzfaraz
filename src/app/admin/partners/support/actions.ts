@@ -28,3 +28,26 @@ export async function closePartnerTicketAction(ticketId: string) {
   revalidatePath(`/admin/partners/support/${ticketId}`);
   return { success: true };
 }
+
+export async function editAdminPartnerMessage(messageId: string, newText: string) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("partner_ticket_messages")
+    .update({ message: newText })
+    .eq("id", messageId);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function deleteAdminPartnerMessage(messageId: string, ticketId: string) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("partner_ticket_messages")
+    .delete()
+    .eq("id", messageId)
+    .eq("sender_role", "ADMIN");
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/partners/support/${ticketId}`);
+  return { success: true };
+}
+

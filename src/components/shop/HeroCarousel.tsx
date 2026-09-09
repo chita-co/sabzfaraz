@@ -31,7 +31,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={b.image_url}
-              alt="بنر تبلیغاتی"
+              alt={`بنر تبلیغاتی فروشگاه سبزفراز - اسلاید ${i + 1}`}
               loading={i === 0 ? "eager" : "lazy"}
               style={{
                 position: "absolute", inset: 0, width: "100%", height: "100%",

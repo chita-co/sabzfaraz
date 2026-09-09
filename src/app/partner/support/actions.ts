@@ -36,3 +36,19 @@ export async function getPartnerTicketMessages(ticketId: string) {
   const { data } = await admin.from("partner_ticket_messages").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true });
   return data ?? [];
 }
+
+export async function editPartnerMessage(messageId: string, newText: string) {
+  const partner = await requireActivePartner();
+  const admin = createAdminClient();
+
+  const { data: msg } = await admin.from("partner_ticket_messages").select("ticket_id, sender_role").eq("id", messageId).single();
+  if (!msg || msg.sender_role !== "PARTNER") return { error: "دسترسی غیرمجاز" };
+
+  const { data: ticket } = await admin.from("partner_tickets").select("partner_id").eq("id", msg.ticket_id).single();
+  if (!ticket || ticket.partner_id !== partner.id) return { error: "دسترسی غیرمجاز" };
+
+  const { error } = await admin.from("partner_ticket_messages").update({ message: newText }).eq("id", messageId);
+  if (error) return { error: error.message };
+  revalidatePath(`/partner/support/${msg.ticket_id}`);
+  return { success: true };
+}
