@@ -45,6 +45,42 @@ export async function rejectPartnerProductAction(productId: string, reason: stri
   return { success: true };
 }
 
+export async function bulkApprovePartnerProductsAction(productIds: string[]) {
+  await requireAdmin();
+  if (!productIds.length) return { error: "هیچ محصولی انتخاب نشده" };
+  const admin = createAdminClient();
+  const { data: productsData } = await admin.from("products").select("id, partner_id, name, slug").in("id", productIds);
+
+  await admin.from("products").update({ partner_approval_status: "APPROVED", is_active: true, partner_rejection_reason: null }).in("id", productIds);
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
+  for (const product of productsData ?? []) {
+    if (product.partner_id) {
+      await createNotification(product.partner_id, "محصول شما تأیید شد ✅", `محصول «${product.name}» بررسی و در سایت منتشر شد.`);
+    }
+    await submitUrlToIndexNow(`${baseUrl}/products/${product.slug}`);
+  }
+  revalidatePath("/admin/partners/products");
+  return { success: true, count: productIds.length };
+}
+
+export async function bulkRejectPartnerProductsAction(productIds: string[], reason: string) {
+  await requireAdmin();
+  if (!productIds.length) return { error: "هیچ محصولی انتخاب نشده" };
+  const admin = createAdminClient();
+  const { data: productsData } = await admin.from("products").select("id, partner_id, name").in("id", productIds);
+
+  await admin.from("products").update({ partner_approval_status: "REJECTED", is_active: false, partner_rejection_reason: reason }).in("id", productIds);
+
+  for (const product of productsData ?? []) {
+    if (product.partner_id) {
+      await createNotification(product.partner_id, "محصول شما رد شد ❌", `محصول «${product.name}» تأیید نشد. دلیل: ${reason}`);
+    }
+  }
+  revalidatePath("/admin/partners/products");
+  return { success: true, count: productIds.length };
+}
+
 export async function adminUpdatePartnerProductAction(productId: string, payload: {
   name: string; description: string; categoryId: string; price: number; partnerCostPrice: number; stock: number;
 }) {
