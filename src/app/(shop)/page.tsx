@@ -22,6 +22,7 @@ import React from "react";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import TopFilterBar from "@/components/shop/TopFilterBar";
 import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
+import CalendarWidget from "@/components/calendar/CalendarWidget";
 
 export const metadata = {
   title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
@@ -120,7 +121,11 @@ export default async function HomePage() {
       <h1 className="sr-only">فروشگاه اینترنتی سبزفراز | خرید قطعات الکترونیک، ماژول، سنسور و برد آردوینو</h1>
       <TopFilterBar />
       <HeroCarousel banners={(banners as Banner[]) ?? []} />
-      <HomePriceWidget />
+<div className="mx-auto max-w-7xl px-4 mt-3">
+  <HomePriceWidget>
+    <CalendarWidget />
+  </HomePriceWidget>
+</div>
 
       {categories && categories.length > 0 && (
         <div className="mx-auto max-w-7xl px-4 py-6">

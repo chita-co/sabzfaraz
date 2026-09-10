@@ -13,7 +13,7 @@ import type { PriceSnapshot } from "@/types/priceTicker";
 
 const HOME_PAGE_URL = "/price-ticker";
 
-export default function HomePriceWidget() {
+export default function HomePriceWidget({ children }: { children?: React.ReactNode }) {
   const [snapshot, setSnapshot] = useState<PriceSnapshot | null>(null);
 
   useEffect(() => {
@@ -44,27 +44,31 @@ export default function HomePriceWidget() {
   if (featured.length === 0) return null;
 
   return (
-    <Link href={HOME_PAGE_URL} className="hpw-wrap">
-      <span className="hpw-label">قیمت لحظه‌ای</span>
-      <div className="hpw-items">
-        {featured.map((item) => {
-          if (!item) return null;
-          const positive = item.changePercent >= 0;
-          return (
-            <span key={item.symbol} className="hpw-item">
-              <span className="hpw-name">{item.name}</span>
-              <span className="hpw-price">{item.price.toLocaleString("fa-IR")}</span>
-              <span className={`hpw-change ${positive ? "pos" : "neg"}`}>
-                {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                {Math.abs(item.changePercent).toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪
+    <div className="hpw-wrap">
+      <Link href={HOME_PAGE_URL} className="hpw-link">
+        <span className="hpw-label">قیمت لحظه‌ای</span>
+        <div className="hpw-items">
+          {featured.map((item) => {
+            if (!item) return null;
+            const positive = item.changePercent >= 0;
+            return (
+              <span key={item.symbol} className="hpw-item">
+                <span className="hpw-name">{item.name}</span>
+                <span className="hpw-price">{item.price.toLocaleString("fa-IR")}</span>
+                <span className={`hpw-change ${positive ? "pos" : "neg"}`}>
+                  {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                  {Math.abs(item.changePercent).toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪
+                </span>
               </span>
-            </span>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </Link>
+      {children}
 
       <style>{`
-        .hpw-wrap { display:flex; align-items:center; gap:14px; flex-wrap:wrap; background: linear-gradient(135deg, #14532d 0%, #166534 55%, #854d0e 100%); border-radius:14px; padding:10px 16px; text-decoration:none; }
+        .hpw-wrap { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background: linear-gradient(135deg, #14532d 0%, #166534 55%, #854d0e 100%); border-radius:14px; padding:10px 16px; }
+.hpw-link { display:flex; align-items:center; gap:14px; flex-wrap:wrap; text-decoration:none; }
         .hpw-label { font-size:12px; font-weight:700; color:#fbbf24; flex-shrink:0; }
         .hpw-items { display:flex; gap:16px; flex-wrap:wrap; }
         .hpw-item { display:flex; align-items:center; gap:6px; font-size:12px; color:#e5e7eb; }
@@ -74,6 +78,6 @@ export default function HomePriceWidget() {
         .hpw-change.pos { color:#22c55e; }
         .hpw-change.neg { color:#ef4444; }
       `}</style>
-    </Link>
+    </div>
   );
 }

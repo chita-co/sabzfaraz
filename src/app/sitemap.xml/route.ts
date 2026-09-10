@@ -29,6 +29,7 @@ export async function GET() {
     { loc: `${baseUrl}/deals`, changefreq: "daily", priority: "0.8" },
     { loc: `${baseUrl}/blog`, changefreq: "daily", priority: "0.8" },
     { loc: `${baseUrl}/price-ticker`, changefreq: "always", priority: "0.9" },
+    { loc: `${baseUrl}/calendar`, changefreq: "daily", priority: "0.7" },
     { loc: `${baseUrl}/about`, changefreq: "monthly", priority: "0.5" },
     { loc: `${baseUrl}/contact`, changefreq: "monthly", priority: "0.5" },
     { loc: `${baseUrl}/faq`, changefreq: "monthly", priority: "0.4" },

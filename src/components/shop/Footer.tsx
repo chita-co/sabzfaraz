@@ -110,6 +110,7 @@ export default async function Footer() {
             <Link href="/price-ticker">قیمت لحظه‌ای طلا و ارز</Link>
             <Link href="/cart">سبد خرید</Link>
             <Link href="/wishlist">علاقه‌مندی‌ها</Link>
+            <Link href="/calendar">تقویم و رویدادها</Link>
           </div>
 
           <div className="footer-col">
