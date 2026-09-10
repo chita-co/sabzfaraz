@@ -20,6 +20,13 @@ function startOfDay(d: Date) {
   return x;
 }
 
+function bucketSortKey(label: string): string {
+  // برچسب‌ها به دو شکل‌اند: "۱۴۰۴/۰۶/۱۹" (روزانه) یا "۱۴۰۴/۰۶/۱۹ ۱۴:۰۰" (ساعتی)
+  // ترتیب الفبایی این برچسب‌ها با ترتیب زمانی یکی است چون سال/ماه/روز/ساعت
+  // هر کدام دو رقمی و از چپ به راست مرتب شده‌اند.
+  return label;
+}
+
 interface SessionRow {
   id: string;
   visitor_id: string;
@@ -180,7 +187,10 @@ export async function GET(request: NextRequest) {
     bucket.sessions++;
     bucket.visitors.add(s.visitor_id);
   }
-  const chart = Array.from(bucketMap.entries()).map(([label, v]) => ({ label, sessions: v.sessions, uniqueVisitors: v.visitors.size }));
+  
+  const chart = Array.from(bucketMap.entries())
+    .map(([label, v]) => ({ label, sessions: v.sessions, uniqueVisitors: v.visitors.size }))
+    .sort((a, b) => bucketSortKey(a.label).localeCompare(bucketSortKey(b.label)));
 
   const landingMap = new Map<string, { visits: number; sameExit: number }>();
   for (const s of rows) {
