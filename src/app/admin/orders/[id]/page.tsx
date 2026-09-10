@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Printer, Tags } from "lucide-react";
 import OrderStatusControl from "@/components/admin/OrderStatusControl";
 import StartTrackingButton from "@/components/admin/StartTrackingButton";
+import PostalTrackingCodeForm from "@/components/admin/PostalTrackingCodeForm";
 import MarkOrderViewed from "@/components/admin/MarkOrderViewed";
 import ConfirmOfflinePaymentButton from "@/components/admin/ConfirmOfflinePaymentButton";
 import RejectOfflinePaymentButton from "@/components/admin/RejectOfflinePaymentButton";
@@ -238,6 +239,10 @@ export default async function AdminOrderDetailPage({
                 trackingStartedAt={order.tracking_started_at}
               />
             )}
+            <PostalTrackingCodeForm
+              orderId={order.id}
+              initialCode={order.postal_tracking_code}
+            />
           </div>
         </div>
       </div>

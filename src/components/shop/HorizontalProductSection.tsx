@@ -15,6 +15,14 @@ export default function HorizontalProductSection({
 }) {
   if (products.length === 0) return null;
 
+  // محصولات را به گروه‌های ۱۰تایی تقسیم می‌کنیم تا هر گروه یک ردیف اسکرول‌شونده‌ی
+  // افقی جدا باشد. اگر محصولات کم باشند فقط همان یک ردیف نمایش داده می‌شود و اگر
+  // بعداً تعدادشان بیشتر شود، خودش به‌صورت خودکار ردیف دوم/سوم را هم نشان می‌دهد.
+  const rows: Product[][] = [];
+  for (let i = 0; i < products.length; i += 10) {
+    rows.push(products.slice(i, i + 10));
+  }
+
   return (
     <div className="mb-10">
       <div className="flex items-center justify-between mb-4">

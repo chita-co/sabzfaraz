@@ -628,6 +628,11 @@
   padding-bottom: 10px;
   scroll-snap-type: x proximity;
 }
+/* فقط وقتی چند ردیف پشت‌هم باشند بین‌شان فاصله می‌افتد؛ روی حالت تک‌ردیفی قبلی (مثل
+   محصولات مرتبط یا آنباکس محصول) هیچ اثری ندارد چون آن‌ها فقط یک deals-scroll دارند. */
+.deals-scroll + .deals-scroll {
+  margin-top: 14px;
+}
 .deals-scroll-item {
   flex: 0 0 160px;
   scroll-snap-align: start;

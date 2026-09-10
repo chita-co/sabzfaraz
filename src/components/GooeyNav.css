@@ -63,12 +63,6 @@
 }
 .gooey-nav-container .effect.filter { filter: blur(7px) contrast(100) blur(0); mix-blend-mode: lighten; }
 .gooey-nav-container .effect.filter::before { content: ""; position: absolute; inset: -75px; z-index: -2; background: transparent; }
-.gooey-nav-container .effect.filter::after {
-  content: ""; position: absolute; inset: 0; background: white; transform: scale(0);
-  opacity: 0; z-index: -1; border-radius: 100vw;
-}
-.gooey-nav-container .effect.active::after { animation: pill 0.3s ease both; }
-@keyframes pill { to { transform: scale(1); opacity: 1; } }
 
 .particle, .point { display: block; opacity: 0; width: 20px; height: 20px; border-radius: 100%; transform-origin: center; }
 .particle {

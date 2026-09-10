@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { earnPointsForOrder, refundRedeemedPoints, reverseEarnedPoints } from "@/lib/loyalty/ledger";
 import { createNotification } from "@/lib/notifications";
+import { sendPostalTrackingSms } from "@/lib/sms";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
@@ -71,6 +72,40 @@ export async function startOrderTracking(orderId: string) {
     .update({ tracking_started_at: new Date().toISOString() })
     .eq("id", orderId);
   if (error) return { error: error.message };
+  revalidatePath(`/admin/orders/${orderId}`);
+  return { success: true };
+}
+
+export async function savePostalTrackingCodeAction(orderId: string, trackingCode: string) {
+  const code = trackingCode.trim();
+  if (!code) return { error: "کد رهگیری نمی‌تواند خالی باشد." };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ postal_tracking_code: code })
+    .eq("id", orderId);
+  if (error) return { error: "خطا در ذخیره کد رهگیری: " + error.message };
+
+  const { data } = await supabase
+    .from("orders")
+    .select("order_number, address:addresses(phone)")
+    .eq("id", orderId)
+    .single();
+
+  const order = data as { order_number: string; address: { phone: string | null } | null } | null;
+  const phone = order?.address?.phone;
+
+  if (phone) {
+    try {
+      await sendPostalTrackingSms(phone, code);
+    } catch (e) {
+      console.error("خطا در ارسال پیامک کد رهگیری مرسوله:", e);
+    }
+  }
+
+  revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   return { success: true };
 }

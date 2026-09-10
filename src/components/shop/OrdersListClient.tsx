@@ -115,6 +115,11 @@ export default function OrdersListClient({
             <p className="text-xs text-gray-500">
               {new Date(o.created_at).toLocaleDateString("fa-IR")}
             </p>
+            {o.postal_tracking_code && (
+              <p className="text-xs text-gray-600 mt-1" dir="ltr">
+                کد رهگیری مرسوله: {o.postal_tracking_code}
+              </p>
+            )}
             {stageMessage && (
               <p className="text-xs text-green-700 mt-1">
                 مرحله {stageNumber} از ۵ — {stageMessage}

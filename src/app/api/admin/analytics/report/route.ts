@@ -105,7 +105,9 @@ export async function GET(request: NextRequest) {
     .from("analytics_sessions")
     .select("id, visitor_id, user_id, started_at, ended_at, landing_page, exit_page, traffic_source, referrer_domain, device_type, browser, os, page_count, is_converted, is_admin_visit, country_code, country_name, search_keywords, search_engine, profile:profiles(full_name, phone)")
     .eq("is_bot", false)
-    .lte("started_at", to.toISOString());
+    .lte("started_at", to.toISOString())
+    .order("started_at", { ascending: false })
+    .limit(10000);
 
   if (from) query = query.gte("started_at", from.toISOString());
   if (!includeAdmin) query = query.eq("is_admin_visit", false);

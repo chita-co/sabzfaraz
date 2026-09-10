@@ -11,6 +11,11 @@ export default function DealsSection({
 }) {
   if (products.length === 0) return null;
 
+  const rows: Product[][] = [];
+  for (let i = 0; i < products.length; i += 10) {
+    rows.push(products.slice(i, i + 10));
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="flex items-center justify-between mb-4">
