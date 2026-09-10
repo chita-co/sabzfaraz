@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import PartnerProductDeleteButton from "@/components/partner/PartnerProductDeleteButton";
 
 const statusLabel: Record<string, string> = {
@@ -17,6 +18,7 @@ interface ProductRow {
   partner_rejection_reason: string | null;
   is_active: boolean;
   created_at: string;
+  images: string[];
 }
 
 function normalize(str: string): string {
@@ -49,6 +51,7 @@ function matchesQuery(name: string, query: string): boolean {
 
 export default function PartnerProductsTable({ products }: { products: ProductRow[] }) {
   const [search, setSearch] = useState("");
+  const [showImages, setShowImages] = useState(false);
 
   const filtered = useMemo(
     () => products.filter((p) => matchesQuery(p.name, search)),
@@ -66,6 +69,14 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
           onChange={(e) => setSearch(e.target.value)}
           style={{ maxWidth: 320 }}
         />
+        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, cursor: "pointer", userSelect: "none" }}>
+  <input
+    type="checkbox"
+    checked={showImages}
+    onChange={(e) => setShowImages(e.target.checked)}
+  />
+  نمایش تصویر محصولات
+</label>
         {search && (
           <span style={{ fontSize: 12, color: "#6b7280" }}>
             {filtered.length.toLocaleString("fa-IR")} نتیجه از {products.length.toLocaleString("fa-IR")} محصول
@@ -75,12 +86,29 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
       <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "right", color: "#6b7280", borderBottom: "2px solid #f3f4f6" }}>
+            {showImages && <th style={{ padding: 8 }}>تصویر</th>}
             <th style={{ padding: 8 }}>نام</th><th style={{ padding: 8 }}>قیمت فروش</th><th style={{ padding: 8 }}>موجودی</th><th style={{ padding: 8 }}>وضعیت</th><th></th>
           </tr>
         </thead>
         <tbody>
           {filtered.map((p) => (
             <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+              {showImages && (
+    <td style={{ padding: 8 }}>
+      {p.images?.[0] ? (
+        <Image
+          src={p.images[0]}
+          alt={p.name}
+          width={40}
+          height={40}
+          className="w-10 h-10 object-cover rounded-lg"
+          unoptimized
+        />
+      ) : (
+        <div style={{ width: 40, height: 40, background: "#f3f4f6", borderRadius: 8 }} />
+      )}
+    </td>
+  )}
               <td style={{ padding: 8 }}>{p.name}</td>
               <td style={{ padding: 8 }}>{p.price.toLocaleString("fa-IR")} تومان</td>
               <td style={{ padding: 8 }}>{p.partner_stock_unlimited ? "نامحدود" : p.stock.toLocaleString("fa-IR")}</td>

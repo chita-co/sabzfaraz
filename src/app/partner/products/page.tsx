@@ -8,7 +8,7 @@ export default async function PartnerProductsPage() {
   const admin = createAdminClient();
   const { data: products } = await admin
     .from("products")
-    .select("id, name, price, stock, partner_stock_unlimited, partner_approval_status, partner_rejection_reason, is_active, created_at")
+    .select("id, name, price, stock, partner_stock_unlimited, partner_approval_status, partner_rejection_reason, is_active, created_at, images")
     .eq("partner_id", partner.id)
     .order("created_at", { ascending: false });
 
