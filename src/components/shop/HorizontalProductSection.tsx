@@ -29,13 +29,15 @@ export default function HorizontalProductSection({
         <h2 className="section-title">{title}</h2>
         <Link href={seeAllHref} className="deal-see-all">مشاهده همه</Link>
       </div>
-      <div className="deals-scroll">
-        {products.map((p) => (
-          <div className="deals-scroll-item" key={p.id}>
-            <ProductCard product={p} isWishlisted={wishlistIds.has(p.id)} />
-          </div>
-        ))}
-      </div>
+      {rows.map((row, rowIndex) => (
+        <div className="deals-scroll" key={rowIndex}>
+          {row.map((p) => (
+            <div className="deals-scroll-item" key={p.id}>
+              <ProductCard product={p} isWishlisted={wishlistIds.has(p.id)} />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

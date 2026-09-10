@@ -22,13 +22,15 @@ export default function DealsSection({
         <h2 className="section-title deal-title">🔥 جشنواره تخفیف</h2>
         <Link href="/deals" className="deal-see-all">مشاهده همه</Link>
       </div>
-      <div className="deals-scroll">
-        {products.map((p) => (
-          <div className="deals-scroll-item" key={p.id}>
-            <ProductCard product={p} isWishlisted={wishlistIds.has(p.id)} />
-          </div>
-        ))}
-      </div>
+      {rows.map((row, rowIndex) => (
+        <div className="deals-scroll" key={rowIndex}>
+          {row.map((p) => (
+            <div className="deals-scroll-item" key={p.id}>
+              <ProductCard product={p} isWishlisted={wishlistIds.has(p.id)} />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
