@@ -2,6 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import OrderDeleteButton from "@/components/admin/OrderDeleteButton";
 import StaleOrdersCleanupButton from "@/components/admin/StaleOrdersCleanupButton";
+import AdminParcelTrackingPanel, {
+  type TrackedOrderRow,
+} from "@/components/admin/AdminParcelTrackingPanel";
 
 
 const statusColors: Record<string, string> = {
@@ -72,6 +75,25 @@ export default async function AdminOrdersPage({
 
   const { data: orders } = await query;
 
+  const { data: rawTrackedOrders } = await supabase
+    .from("orders")
+    .select("order_number, postal_tracking_code, status, shipping_method:shipping_methods(name)")
+    .not("postal_tracking_code", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const trackedOrders: TrackedOrderRow[] = (rawTrackedOrders ?? []).map((o) => {
+    const shippingMethod = o.shipping_method as { name: string } | { name: string }[] | null;
+    return {
+      order_number: o.order_number,
+      postal_tracking_code: o.postal_tracking_code as string,
+      status: o.status,
+      shipping_method_name: Array.isArray(shippingMethod)
+        ? shippingMethod[0]?.name ?? null
+        : shippingMethod?.name ?? null,
+    };
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
@@ -93,6 +115,8 @@ export default async function AdminOrdersPage({
           </Link>
         ))}
       </div>
+
+      <AdminParcelTrackingPanel orders={trackedOrders} />
 
       <div className="admin-card">
         <table className="admin-table">
