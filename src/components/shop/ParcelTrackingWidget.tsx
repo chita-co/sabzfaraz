@@ -41,12 +41,12 @@ const ParcelTrackingWidget = forwardRef<ParcelTrackingWidgetHandle>(
       >
         <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
           <Truck size={18} className="text-green-600" />
-          پیگیری مرسوله (کد پستی)
+          پیگیری مرسوله (کدرهگیری پستی)
         </h2>
         <p className="text-xs text-gray-500 mb-3">
           بعد از اینکه سفارشتان ارسال شد، کد مرسوله در همین صفحه، کنار سفارش
           مربوطه به شما نمایش داده می‌شود. آن را اینجا وارد کنید تا مسیر دقیق
-          مرسوله را ببینید — بدون نیاز به مراجعه به سایت پست.
+          مرسوله را ببینید.
         </p>
 
         <div className="flex gap-2">

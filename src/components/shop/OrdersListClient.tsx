@@ -148,7 +148,10 @@ export default function OrdersListClient({
   return (
    <div>
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
-        <h2 className="font-bold text-white mb-1">پیگیری سفارش</h2>
+        <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+  <Package size={18} className="text-green-600" />
+  پیگیری سفارش
+</h2>
         <p className="text-xs text-gray-500 mb-3">
           کد سفارش خود را وارد کنید تا از مراحل پردازش، آماده‌سازی و ارسال
           سفارشتان مطلع شوید.
