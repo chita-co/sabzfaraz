@@ -7,6 +7,7 @@ import { classifyTraffic } from "@/lib/analytics/trafficSource";
 import { hashIp, getClientIp } from "@/lib/analytics/hashIp";
 import { getCountryNameFa, refineGuestCountry } from "@/lib/analytics/geoLookup";
 import { extractSearchInfo } from "@/lib/analytics/searchKeywords";
+import { cleanupOldSessionsIfNeeded } from "@/lib/analytics/cleanupOldSessions";
 
 export const runtime = "nodejs";
 
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
 
       if (error || !created) return NextResponse.json({ status: "error" }, { status: 500 });
       sessionId = created.id;
+      await cleanupOldSessionsIfNeeded();
     }
 
     const { data: pageview } = await admin

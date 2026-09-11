@@ -20,13 +20,6 @@ function startOfDay(d: Date) {
   return x;
 }
 
-function bucketSortKey(label: string): string {
-  // برچسب‌ها به دو شکل‌اند: "۱۴۰۴/۰۶/۱۹" (روزانه) یا "۱۴۰۴/۰۶/۱۹ ۱۴:۰۰" (ساعتی)
-  // ترتیب الفبایی این برچسب‌ها با ترتیب زمانی یکی است چون سال/ماه/روز/ساعت
-  // هر کدام دو رقمی و از چپ به راست مرتب شده‌اند.
-  return label;
-}
-
 interface SessionRow {
   id: string;
   visitor_id: string;
@@ -65,6 +58,7 @@ export async function GET(request: NextRequest) {
   const includeAdmin = searchParams.get("includeAdmin") === "true";
   const sessionsPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const SESSIONS_PAGE_SIZE = 50;
+  const SESSIONS_QUERY_LIMIT = 10000;
 
   const now = new Date();
   // اگر تاریخ شروع مشخص نشده باشد یعنی «از ابتدای ثبت آمار تا الان» — بدون محدودیت پایینی
@@ -112,9 +106,7 @@ export async function GET(request: NextRequest) {
     .from("analytics_sessions")
     .select("id, visitor_id, user_id, started_at, ended_at, landing_page, exit_page, traffic_source, referrer_domain, device_type, browser, os, page_count, is_converted, is_admin_visit, country_code, country_name, search_keywords, search_engine, profile:profiles(full_name, phone)")
     .eq("is_bot", false)
-    .lte("started_at", to.toISOString())
-    .order("started_at", { ascending: false })
-    .limit(10000);
+    .lte("started_at", to.toISOString());
 
   if (from) query = query.gte("started_at", from.toISOString());
   if (!includeAdmin) query = query.eq("is_admin_visit", false);
@@ -122,6 +114,8 @@ export async function GET(request: NextRequest) {
   if (deviceFilter) query = query.eq("device_type", deviceFilter);
   if (convertedFilter === "yes") query = query.eq("is_converted", true);
   else if (convertedFilter === "no") query = query.eq("is_converted", false);
+
+  query = query.order("started_at", { ascending: false }).limit(SESSIONS_QUERY_LIMIT);
 
   const { data } = await query;
   const rows = (data ?? []) as unknown as SessionRow[];
@@ -187,10 +181,7 @@ export async function GET(request: NextRequest) {
     bucket.sessions++;
     bucket.visitors.add(s.visitor_id);
   }
-  
-  const chart = Array.from(bucketMap.entries())
-    .map(([label, v]) => ({ label, sessions: v.sessions, uniqueVisitors: v.visitors.size }))
-    .sort((a, b) => bucketSortKey(a.label).localeCompare(bucketSortKey(b.label)));
+  const chart = Array.from(bucketMap.entries()).map(([label, v]) => ({ label, sessions: v.sessions, uniqueVisitors: v.visitors.size }));
 
   const landingMap = new Map<string, { visits: number; sameExit: number }>();
   for (const s of rows) {

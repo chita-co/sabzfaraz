@@ -25,15 +25,14 @@ const STATIC_PAGE_LABELS: Record<string, string> = {
   "/terms": "قوانین و مقررات",
   "/privacy": "حریم خصوصی",
   "/support": "پشتیبانی",
-  "/auctions": "حراج‌ها",
-  "/reverse-auctions": "حراج معکوس",
+  "/auctions": "لیست حراجی‌ها",
+  "/reverse-auctions": "لیست حراجی‌های معکوس",
   "/blog": "وبلاگ",
-  "/calendar": "تقویم و رویدادها",
-  "/price-ticker": "قیمت لحظه‌ای",
+  "/calendar": "تقویم",
+  "/price-ticker": "نرخ لحظه‌ای قیمت",
+  "/profile/auctions": "حراجی‌های من",
   "/profile/wallet": "کیف پول من",
-  "/profile/auctions": "حراج‌های من",
-  "/enamad-verify": "تأیید اینماد",
-  "/partner-store": "فروشگاه همکاران",
+  "/enamad-verify": "تأیید نماد اعتماد",
 };
 
 export function extractPathname(rawUrl: string): string {
@@ -70,19 +69,14 @@ export function translatePageLabel(
   if (pathname.startsWith("/order/")) return "جزئیات سفارش";
   if (pathname.startsWith("/bulk-order/")) return "جزئیات سفارش جمعی";
   if (pathname.startsWith("/support/")) return "گفتگوی پشتیبانی";
-  if (pathname.startsWith("/blog/category/")) return "دسته‌بندی وبلاگ";
+  if (pathname.startsWith("/admin")) return "پنل مدیریت";
+  if (pathname.startsWith("/order/")) return "جزئیات سفارش";
+  if (pathname.startsWith("/bulk-order/")) return "جزئیات سفارش جمعی";
+  if (pathname.startsWith("/support/")) return "گفتگوی پشتیبانی";
+  if (pathname.startsWith("/auctions/")) return "جزئیات حراجی";
+  if (pathname.startsWith("/reverse-auctions/")) return "جزئیات حراجی معکوس";
   if (pathname.startsWith("/blog/")) return "مقاله وبلاگ";
-  if (pathname.startsWith("/auctions/")) return "جزئیات حراج";
-  if (pathname.startsWith("/reverse-auctions/")) return "جزئیات حراج معکوس";
   if (pathname.startsWith("/partner-store/")) return "فروشگاه همکار";
-  if (pathname.startsWith("/calendar/event/")) return "جزئیات رویداد تقویم";
-  if (pathname.match(/^\/calendar\/\d+\/\d+\/\d+$/)) return "روز تقویم";
-  if (pathname.startsWith("/profile/orders/")) return "جزئیات سفارش من";
-  if (pathname.startsWith("/profile/bulk-orders")) return "سفارش جمعی من";
-  if (pathname.startsWith("/profile/wallet")) return "کیف پول من";
-  if (pathname.startsWith("/profile/loyalty")) return "باشگاه مشتریان";
-  if (pathname.startsWith("/profile/auctions")) return "حراج‌های من";
-  if (pathname.startsWith("/partner/")) return "پنل همکاران";
-
+  
   return pathname; // مسیر ناشناخته — همان مسیر خام نمایش داده می‌شود
 }
