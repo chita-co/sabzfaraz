@@ -171,7 +171,9 @@ export async function GET(request: NextRequest) {
   const byHour = rangeDays <= 2;
   const bucketMap = new Map<string, { sessions: number; visitors: Set<string> }>();
 
-  for (const s of rows) {
+  // نمودار باید همیشه از قدیم (چپ) به جدید (راست) رسم بشه، مستقل از ترتیبی که برای بریدن ۱۰۰۰۰تایی لازم بود
+  const chartRows = [...rows].sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime());
+  for (const s of chartRows) {
     const d = new Date(s.started_at);
     const key = byHour
       ? `${d.toLocaleDateString("fa-IR")} ${d.getHours().toString().padStart(2, "0")}:00`
@@ -182,7 +184,7 @@ export async function GET(request: NextRequest) {
     bucket.visitors.add(s.visitor_id);
   }
   const chart = Array.from(bucketMap.entries()).map(([label, v]) => ({ label, sessions: v.sessions, uniqueVisitors: v.visitors.size }));
-
+  
   const landingMap = new Map<string, { visits: number; sameExit: number }>();
   for (const s of rows) {
     const key = translatePageLabel(s.landing_page, productNames, categoryNames);
