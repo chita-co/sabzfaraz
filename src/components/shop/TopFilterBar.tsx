@@ -26,9 +26,8 @@ export default function TopFilterBar({
       <div className="top-filter-bar-inner site-stats-bar-inner">
         <div className="site-stats-bar">
           <span className="site-stats-live-dot" />
-          {stats.map((s, i) => (
+          {stats.map((s) => (
             <div className="site-stats-item" key={s.label}>
-              {i > 0 && <span className="site-stats-divider">/</span>}
               <span className="site-stats-icon">
                 <s.icon size={16} />
               </span>

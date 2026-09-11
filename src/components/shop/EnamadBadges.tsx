@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 
-const COMPANY_IFRAME_URL = "https://sabzfaraz.vercel.app/badge-company";
+const COMPANY_IFRAME_URL = "/badge-company";
 const PERSONAL_IFRAME_URL = "https://sabzfaraz.ir/badge-personal";
 
 type BadgeType = "company" | "personal";
