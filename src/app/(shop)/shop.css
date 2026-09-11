@@ -1105,9 +1105,7 @@
 .top-filter-bar {
   background: transparent;
   border-bottom: none;
-  position: sticky;
-  top: 78px;
-  z-index: 45;
+  position: static;
 }
 .top-filter-bar-inner {
   max-width: 1280px;
@@ -1126,6 +1124,86 @@
   font-size: 13px;
   color: #fff;
   font-weight: 600;
+}
+
+.site-stats-bar-inner {
+  justify-content: center;
+}
+
+.site-stats-bar {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #14532d 0%, #166534 55%, #854d0e 100%);
+  box-shadow: 0 6px 20px rgba(20, 83, 45, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.site-stats-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: stampPulse 1.8s ease-in-out infinite;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
+.site-stats-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.site-stats-divider {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.site-stats-icon {
+  display: flex;
+  align-items: center;
+  color: #fde047;
+}
+
+.site-stats-text {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.site-stats-number {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.site-stats-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 900px) {
+  .site-stats-bar { justify-content: flex-end; }
+}
+
+@media (max-width: 640px) {
+  .site-stats-bar {
+    padding: 8px 12px;
+    gap: 0;
+  }
+  .site-stats-item { padding: 0 6px; }
+  .site-stats-number { font-size: 11.5px; }
+  .site-stats-label { font-size: 9.5px; }
+  .site-stats-divider { margin-left: 3px; }
 }
 
 /* سفید کردن متن‌های روی بک‌گراند */

@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
 
       if (error || !created) return NextResponse.json({ status: "error" }, { status: 500 });
       sessionId = created.id;
+      await admin.rpc("increment_total_site_visits");
       await cleanupOldSessionsIfNeeded();
     }
 

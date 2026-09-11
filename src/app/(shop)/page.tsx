@@ -57,6 +57,10 @@ export default async function HomePage() {
     { data: popularProducts },
     { data: stockProducts },
     { data: wishlistRows },
+    { count: totalProductsCount },
+    { data: stockRows },
+    { count: totalUsersCount },
+    { count: totalPartnersCount },
   ] = await Promise.all([
     supabase
       .from("categories")
@@ -80,7 +84,7 @@ export default async function HomePage() {
     supabase
       .from("site_settings")
       .select(
-        "deals_enabled, deals_banner_image, deals_banner_link, new_products_banner_image, new_products_banner_link, stock_enabled"
+        "deals_enabled, deals_banner_image, deals_banner_link, new_products_banner_image, new_products_banner_link, stock_enabled, total_site_visits"
       )
       .eq("id", 1)
       .single(),
@@ -111,15 +115,34 @@ export default async function HomePage() {
     user
       ? supabase.from("wishlists").select("product_id").eq("user_id", user.id)
       : Promise.resolve({ data: [] as { product_id: string }[] }),
+    supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true)
+      .or("partner_id.is.null,partner_approval_status.eq.APPROVED"),
+    supabase
+      .from("products")
+      .select("stock")
+      .eq("is_active", true)
+      .or("partner_id.is.null,partner_approval_status.eq.APPROVED"),
+    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "USER"),
+    supabase.from("partners").select("*", { count: "exact", head: true }),
   ]);
 
   const wishlistIds = new Set((wishlistRows ?? []).map((w) => w.product_id));
+  const totalStockCount = (stockRows ?? []).reduce((sum, p) => sum + (p.stock ?? 0), 0);
 
   return (
     <>
       <GalaxyBackground />
       <h1 className="sr-only">فروشگاه اینترنتی سبزفراز | خرید قطعات الکترونیک، ماژول، سنسور و برد آردوینو</h1>
-      <TopFilterBar />
+      <TopFilterBar
+        totalProducts={totalProductsCount ?? 0}
+        totalStock={totalStockCount}
+        totalUsers={totalUsersCount ?? 0}
+        totalPartners={totalPartnersCount ?? 0}
+        totalVisits={settings?.total_site_visits ?? 0}
+      />
       <HeroCarousel banners={(banners as Banner[]) ?? []} />
 <div className="mx-auto max-w-7xl px-4 mt-3">
   <HomePriceWidget>

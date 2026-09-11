@@ -15,6 +15,7 @@ import { useCartTotals } from "@/store/cart-store";
 import GooeyNav, { type GooeyNavItem } from "@/components/GooeyNav";
 import NotificationBell from "@/components/shop/NotificationBell";
 import LivePriceBadge from "@/components/shop/LivePriceBadge";
+import ShinyText from "@/components/ShinyText";
 import type { HeaderPriceSummary } from "@/lib/priceTicker/headerSummary";
 
 interface CategoryLite { id: string; name: string; slug: string; }
@@ -39,7 +40,7 @@ export default function HeaderNav({
   const { totalItems } = useCartTotals();
 
   const navItems: GooeyNavItem[] = [
-    { type: "link", label: "سبزفراز", href: "/", shiny: true },
+    { type: "link", label: "خانه", href: "/", shiny: true },
     {
       type: "dropdown",
       label: "دسته‌بندی‌ها",
@@ -231,9 +232,19 @@ export default function HeaderNav({
           )}
         </Link>
 
-        <form className="site-search" onSubmit={handleSearch}>
-          <Search size={16} />
-          <input
+        <ShinyText
+          text="فروشگاه اینترنتی سبزفراز"
+          color="#4ade80"
+          shineColor="#fde047"
+          speed={4}
+          spread={40}
+          className="site-header-title"
+        />
+
+        <div className="site-actions">
+          <form className="site-search" onSubmit={handleSearch}>
+            <Search size={16} />
+            <input
   type="text"
   id="mobile-search-input"
   name="search"
@@ -241,9 +252,7 @@ export default function HeaderNav({
   value={search}
   onChange={(e) => setSearch(e.target.value)}
 />
-        </form>
-
-        <div className="site-actions">
+          </form>
           <Link href="/wishlist" className="site-icon-btn"><Heart size={20} /></Link>
           <NotificationBell />
           <Link href="/cart" className="site-icon-btn cart-icon-wrap">
@@ -272,6 +281,18 @@ export default function HeaderNav({
 
         .site-brand-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
         .site-actions, .site-actions > * { flex-shrink: 0; }
+
+        :global(.site-header-title) {
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  :global(.site-header-title) {
+    font-size: 10.5px;
+  }
+}
 
         .site-header-topbar {
           max-width: 1280px;
