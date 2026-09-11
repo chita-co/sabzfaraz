@@ -10,7 +10,7 @@ import ConverterTools from "./ConverterTools";
 import PriceAlertWidget from "./PriceAlertWidget";
 import { shareOrFallback } from "./ShareBar";
 
-const POLL_MS = 600_000;
+const POLL_MS = 3_600_000;
 const FAVORITES_KEY = "sabzfaraz_price_favorites";
 
 const TABS: { key: PriceCategory; label: string; icon: typeof DollarSign }[] = [

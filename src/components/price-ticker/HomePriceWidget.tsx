@@ -28,7 +28,7 @@ export default function HomePriceWidget({ children }: { children?: React.ReactNo
       }
     }
     load();
-    const interval = setInterval(load, 300_000);
+    const interval = setInterval(load, 3_600_000);
     return () => {
       cancelled = true;
       clearInterval(interval);
