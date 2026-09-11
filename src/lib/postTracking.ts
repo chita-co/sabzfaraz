@@ -102,25 +102,39 @@ async function fetchFromTrack123(code: string): Promise<PostalTrackingResult> {
   null;
     if (!item) return { status: "not_found" };
 
-    const rawEvents = item.trackInfo?.tracking?.providerInfo?.events ?? item.events ?? [];
+    const rawEvents = item.localLogisticsInfo?.trackingDetails ?? [];
 
     const events: PostalTrackingEvent[] = rawEvents.map(
-      (ev: { timeIso?: string; time?: string; location?: string; description?: string; eventDetail?: string }) => {
-        const dt = new Date(ev.timeIso ?? ev.time ?? Date.now());
+      (ev: { eventTime?: string; address?: string; eventDetail?: string }) => {
+        const dt = ev.eventTime ? new Date(ev.eventTime.replace(" ", "T")) : null;
         return {
-          date: dt.toLocaleDateString("fa-IR"),
-          time: dt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
-          location: ev.location ?? "—",
-          description: ev.description ?? ev.eventDetail ?? "—",
+          date: dt ? dt.toLocaleDateString("fa-IR") : "—",
+          time: dt ? dt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }) : "—",
+          location: ev.address ?? "—",
+          description: ev.eventDetail ?? "—",
         };
       }
     );
 
+    const statusMap: Record<string, string> = {
+      NO_RECORD: "هنوز رویدادی از پست دریافت نشده (لطفاً چند ساعت دیگر دوباره بررسی کنید)",
+      INFO_RECEIVED: "اطلاعات مرسوله دریافت شد",
+      IN_TRANSIT: "در حال ارسال",
+      OUT_FOR_DELIVERY: "در حال توزیع",
+      DELIVERED: "تحویل داده شد",
+      EXPIRED: "به‌روزرسانی متوقف شده (اطلاعاتی دریافت نشد)",
+      ALERT: "مشکل در تحویل",
+      UNDELIVERED: "عدم تحویل",
+    };
+
+    const transitStatus: string | undefined = item.transitStatus;
+
     return {
       status: "found",
-      currentStatus: item.latestStatus?.status ?? item.trackStatus ?? "در حال پردازش",
+      currentStatus:
+        (transitStatus && statusMap[transitStatus]) ?? transitStatus ?? "در حال پردازش",
       events,
-      deliveredTo: item.consigneeName ?? null,
+      deliveredTo: item.lastMileInfo?.consigneeName ?? null,
     };
   } catch {
     return { status: "error", message: "خطا در ارتباط با سرویس رهگیری" };
