@@ -23,6 +23,7 @@ import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import TopFilterBar from "@/components/shop/TopFilterBar";
 import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
 import CalendarWidget from "@/components/calendar/CalendarWidget";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = {
   title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
@@ -47,6 +48,8 @@ export default async function HomePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const admin = createAdminClient();
 
   const [
     { data: categories },
@@ -125,8 +128,8 @@ export default async function HomePage() {
       .select("stock")
       .eq("is_active", true)
       .or("partner_id.is.null,partner_approval_status.eq.APPROVED"),
-    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "USER"),
-    supabase.from("partners").select("*", { count: "exact", head: true }),
+    admin.from("profiles").select("*", { count: "exact", head: true }).eq("role", "USER"),
+    admin.from("partners").select("*", { count: "exact", head: true }),
   ]);
 
   const wishlistIds = new Set((wishlistRows ?? []).map((w) => w.product_id));
