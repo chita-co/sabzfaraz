@@ -23,7 +23,9 @@ import { fetchCrypto } from "./providers/coingecko";
 import type { PriceCategory, PriceItem, PriceSnapshot } from "@/types/priceTicker";
 
 const STALE_MS = 300_000; // هدف: هر ۵ دقیقه یک‌بار تازه
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HISTORY_RETENTION_DAYS = 8;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HISTORY_ITEMS_PER_CATEGORY = 12;
 
 interface CacheRow {
@@ -63,15 +65,17 @@ async function writeCategories(entries: { category: PriceCategory; items: PriceI
     )
   );
 
-  const historyRows = entries.flatMap(({ category, items }) =>
-    items.slice(0, HISTORY_ITEMS_PER_CATEGORY).map((item) => ({ category, symbol: item.symbol, price: item.price, recorded_at: now }))
-  );
-  if (historyRows.length > 0) {
-    await admin().from("price_ticker_history").insert(historyRows);
-  }
+  // --- غیرفعال موقت: ذخیره‌ی تاریخچه‌ی قیمت (اصلی‌ترین مصرف‌کننده‌ی فضای دیتابیس) ---
+  // const historyRows = entries.flatMap(({ category, items }) =>
+  //   items.slice(0, HISTORY_ITEMS_PER_CATEGORY).map((item) => ({ category, symbol: item.symbol, price: item.price, recorded_at: now }))
+  // );
+  // if (historyRows.length > 0) {
+  //   await admin().from("price_ticker_history").insert(historyRows);
+  // }
 
-  const trimCutoff = new Date(Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  await admin().from("price_ticker_history").delete().lt("recorded_at", trimCutoff);
+  // const trimCutoff = new Date(Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  // await admin().from("price_ticker_history").delete().lt("recorded_at", trimCutoff);
+  // --- پایان بخش غیرفعال‌شده ---
 }
 
 async function markFailed(categories: PriceCategory[], message: string) {

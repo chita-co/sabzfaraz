@@ -98,3 +98,30 @@ export async function uploadWatermarkAction(formData: FormData) {
 
   revalidatePath("/admin/partners/settings");
 }
+
+export async function updateHomepagePartnerFeatureAction(input: {
+  enabled: boolean;
+  partnerId: string | null;
+  storeImageUrl: string | null;
+  storeName: string | null;
+  description: string | null;
+  showProducts: boolean;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("homepage_partner_feature")
+    .update({
+      enabled: input.enabled,
+      partner_id: input.partnerId,
+      store_image_url: input.storeImageUrl,
+      store_name: input.storeName,
+      description: input.description,
+      show_products: input.showProducts,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/partners/settings");
+  revalidatePath("/");
+  return { success: true };
+}

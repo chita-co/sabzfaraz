@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import HeroCarousel from "@/components/shop/HeroCarousel";
 import DealsSection from "@/components/shop/DealsSection";
 import HorizontalProductSection from "@/components/shop/HorizontalProductSection";
-import { Category, Product, Banner } from "@/types";
+import { Category, Product, Banner, PromoAd  } from "@/types";
 import {
   Truck,
   ShieldCheck,
@@ -24,6 +24,11 @@ import TopFilterBar from "@/components/shop/TopFilterBar";
 import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
 import CalendarWidget from "@/components/calendar/CalendarWidget";
 import { createAdminClient } from "@/lib/supabase/admin";
+import BannerCarousel from "@/components/shop/BannerCarousel";
+import PartnerAdsGrid from "@/components/shop/PartnerAdsGrid"; // آیتم ۵ - پایین‌تر می‌سازیمش
+import PromoAdsGrid from "@/components/shop/PromoAdsGrid";
+import PartnerProductRows from "@/components/shop/PartnerProductRows";
+import PartnerBioAccordion from "@/components/shop/PartnerBioAccordion";
 
 export const metadata = {
   title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
@@ -64,6 +69,13 @@ export default async function HomePage() {
     { data: stockRows },
     { count: totalUsersCount },
     { count: totalPartnersCount },
+    { data: dealsBanners },
+    { data: newestBanners },
+    { data: popularBanners },
+    { data: stockBanners },
+    { data: partnersAdsBanners },
+    { data: partnerFeature },
+    { data: promoAds },
   ] = await Promise.all([
     supabase
       .from("categories")
@@ -83,6 +95,7 @@ export default async function HomePage() {
       .from("banners")
       .select("*")
       .eq("is_active", true)
+      .eq("position", "hero")
       .order("sort_order"),
     supabase
       .from("site_settings")
@@ -130,7 +143,28 @@ export default async function HomePage() {
       .or("partner_id.is.null,partner_approval_status.eq.APPROVED"),
     admin.from("profiles").select("*", { count: "exact", head: true }).eq("role", "USER"),
     admin.from("partners").select("*", { count: "exact", head: true }),
+    supabase.from("banners").select("*").eq("is_active", true).eq("position", "deals").order("sort_order"),
+supabase.from("banners").select("*").eq("is_active", true).eq("position", "newest").order("sort_order"),
+supabase.from("banners").select("*").eq("is_active", true).eq("position", "popular").order("sort_order"),
+supabase.from("banners").select("*").eq("is_active", true).eq("position", "stock").order("sort_order"),
+supabase.from("banners").select("*").eq("is_active", true).eq("position", "partners").order("sort_order").limit(6),
+supabase.from("homepage_partner_feature").select("*").eq("id", 1).single(),
+supabase.from("promo_ads").select("*").order("sort_order"),
   ]);
+
+
+  let featuredPartnerProducts: Product[] = [];
+if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.show_products) {
+  const { data: fp } = await supabase
+    .from("products")
+    .select("*")
+    .eq("partner_id", partnerFeature.partner_id)
+    .eq("is_active", true)
+    .eq("partner_approval_status", "APPROVED")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  featuredPartnerProducts = (fp as Product[]) ?? [];
+}
 
   const wishlistIds = new Set((wishlistRows ?? []).map((w) => w.product_id));
   const totalStockCount = (stockRows ?? []).reduce((sum, p) => sum + (p.stock ?? 0), 0);
@@ -180,33 +214,11 @@ export default async function HomePage() {
         </div>
       )}
 
-      {settings?.deals_banner_image && (
-        <div className="promo-banner-section">
-          {settings.deals_banner_link ? (
-            <Link
-              href={settings.deals_banner_link}
-              className="promo-banner-link"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={settings.deals_banner_image}
-                alt="جشنواره تخفیف"
-                className="promo-banner-img"
-                loading="eager"
-              />
-            </Link>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={settings.deals_banner_image}
-              alt="جشنواره تخفیف"
-              className="promo-banner-img"
-              loading="eager"
-            />
-          )}
-        </div>
-      )}
+      <PromoAdsGrid ads={(promoAds as PromoAd[]) ?? []} />
 
+      <div className="mx-auto max-w-7xl px-4 mt-46">
+        <BannerCarousel banners={(dealsBanners as Banner[]) ?? []} height={180} altPrefix="جشنواره تخفیف" />
+      </div>
       {settings?.deals_enabled && (
         <DealsSection
           products={(dealProducts as Product[]) ?? []}
@@ -214,32 +226,9 @@ export default async function HomePage() {
         />
       )}
 
-      {settings?.new_products_banner_image && (
-        <div className="promo-banner-section">
-          {settings.new_products_banner_link ? (
-            <Link
-              href={settings.new_products_banner_link}
-              className="promo-banner-link"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={settings.new_products_banner_image}
-                alt="محصولات جدید"
-                className="promo-banner-img"
-                loading="eager"
-              />
-            </Link>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={settings.new_products_banner_image}
-              alt="محصولات جدید"
-              className="promo-banner-img"
-              loading="eager"
-            />
-          )}
-        </div>
-      )}
+      <div className="mx-auto max-w-7xl px-4">
+        <BannerCarousel banners={(newestBanners as Banner[]) ?? []} height={180} altPrefix="محصولات جدید" />
+      </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6">
         <HorizontalProductSection
@@ -249,6 +238,10 @@ export default async function HomePage() {
           wishlistIds={wishlistIds}
         />
 
+        <div className="mx-auto max-w-7xl px-4">
+          <BannerCarousel banners={(popularBanners as Banner[]) ?? []} height={180} altPrefix="محصولات پرطرفدار" />
+        </div>
+
         <HorizontalProductSection
           title="محصولات پرطرفدار"
           seeAllHref="/popular"
@@ -257,14 +250,51 @@ export default async function HomePage() {
         />
 
         {settings?.stock_enabled && (
-          <HorizontalProductSection
-            title="محصولات استوک"
-            seeAllHref="/stock"
-            products={(stockProducts as Product[]) ?? []}
-            wishlistIds={wishlistIds}
-          />
+          <>
+            <div className="mx-auto max-w-7xl px-4">
+              <BannerCarousel banners={(stockBanners as Banner[]) ?? []} height={180} altPrefix="محصولات استوک" />
+            </div>
+            <HorizontalProductSection
+              title="محصولات استوک"
+              seeAllHref="/stock"
+              products={(stockProducts as Product[]) ?? []}
+              wishlistIds={wishlistIds}
+            />
+          </>
         )}
       </div>
+
+      <PartnerAdsGrid banners={(partnersAdsBanners as Banner[]) ?? []} />
+
+      {partnerFeature?.enabled && (
+  <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="featured-partner-box">
+      {partnerFeature.store_image_url && (
+        <div className="featured-partner-logo-frame">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={partnerFeature.store_image_url}
+            alt={partnerFeature.store_name ?? ""}
+            className="featured-partner-logo-img"
+          />
+        </div>
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {partnerFeature.store_name && (
+          <span className="featured-partner-name-badge">{partnerFeature.store_name}</span>
+        )}
+        {partnerFeature.description && (
+  <div style={{ marginTop: 10 }}>
+    <PartnerBioAccordion bio={partnerFeature.description} variant="neon" />
+  </div>
+)}
+      </div>
+    </div>
+    {partnerFeature.show_products && (
+      <PartnerProductRows products={featuredPartnerProducts} wishlistIds={wishlistIds} />
+    )}
+  </div>
+)}
 
       <div className="features-strip">
         <div className="feature-card">

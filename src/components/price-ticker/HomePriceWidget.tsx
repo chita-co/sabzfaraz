@@ -20,7 +20,7 @@ export default function HomePriceWidget({ children }: { children?: React.ReactNo
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch("/api/price-ticker", { cache: "no-store" });
+        const res = await fetch("/api/price-ticker");
         const data = await res.json();
         if (!cancelled) setSnapshot(data);
       } catch {
@@ -28,7 +28,7 @@ export default function HomePriceWidget({ children }: { children?: React.ReactNo
       }
     }
     load();
-    const interval = setInterval(load, 3_600_000);
+    const interval = setInterval(load, 7_200_000);
     return () => {
       cancelled = true;
       clearInterval(interval);

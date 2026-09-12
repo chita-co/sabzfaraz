@@ -5,12 +5,13 @@ import { DollarSign, Coins, Bitcoin, AlertTriangle, Star, Send } from "lucide-re
 import type { PriceCategory, PriceItem, PriceSnapshot } from "@/types/priceTicker";
 import TickerMarquee from "./TickerMarquee";
 import HeroSpotlight from "./HeroSpotlight";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PriceChart from "./PriceChart";
 import ConverterTools from "./ConverterTools";
 import PriceAlertWidget from "./PriceAlertWidget";
 import { shareOrFallback } from "./ShareBar";
 
-const POLL_MS = 3_600_000;
+const POLL_MS = 7_200_000;
 const FAVORITES_KEY = "sabzfaraz_price_favorites";
 
 const TABS: { key: PriceCategory; label: string; icon: typeof DollarSign }[] = [
@@ -250,7 +251,7 @@ export default function PriceTickerDashboard({ initialSnapshot }: { initialSnaps
         </div>
 
         <div className="pt-side">
-          {selected && <PriceChart category={activeTab} item={selected} />}
+          {/* غیرفعال موقت برای کاهش مصرف — <PriceChart category={activeTab} item={selected} /> */}
           <PriceAlertWidget items={items} />
         </div>
       </div>

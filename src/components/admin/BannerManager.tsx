@@ -11,7 +11,15 @@ import {
 } from "@/app/admin/banners/actions";
 import { Banner } from "@/types";
 
-export default function BannerManager({ banners }: { banners: Banner[] }) {
+export default function BannerManager({
+  banners,
+  position,
+  title = "مدیریت بنرهای اسلایدی",
+}: {
+  banners: Banner[];
+  position: string;
+  title?: string;
+}) {
   const [uploading, setUploading] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
@@ -27,7 +35,7 @@ export default function BannerManager({ banners }: { banners: Banner[] }) {
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (res.ok) {
-        await createBanner(data.url, linkUrl, Number(sortOrder) || 0);
+         await createBanner(position, data.url, linkUrl, Number(sortOrder) || 0);
         setLinkUrl("");
       } else {
         alert(data.error || "خطا در آپلود");
@@ -48,7 +56,7 @@ export default function BannerManager({ banners }: { banners: Banner[] }) {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-5">مدیریت بنرهای اسلایدی</h1>
+       <h1 className="text-xl font-bold text-gray-900 mb-5">{title}</h1>
 
       <div className="admin-card mb-5">
         <h2 className="font-bold text-gray-800 mb-3">افزودن بنر جدید</h2>

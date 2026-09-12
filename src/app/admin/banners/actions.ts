@@ -5,12 +5,14 @@ import { revalidatePath } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
 
 export async function createBanner(
+  position: string,
   imageUrl: string,
   linkUrl: string,
   sortOrder: number
 ) {
   const supabase = await createClient();
   const { error } = await supabase.from("banners").insert({
+    position,
     image_url: imageUrl,
     link_url: linkUrl || null,
     sort_order: sortOrder,

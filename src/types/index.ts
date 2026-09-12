@@ -114,5 +114,27 @@ export interface Banner {
   link_url: string | null;
   sort_order: number;
   is_active: boolean;
+  position: string;
   created_at: string;
+}
+
+export interface PromoAd {
+  id: string;
+  image_url: string;
+  title: string | null;
+  description: string | null;
+  link_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface HomepagePartnerFeature {
+  id: number;
+  enabled: boolean;
+  partner_id: string | null;
+  store_image_url: string | null;
+  store_name: string | null;
+  description: string | null;
+  show_products: boolean;
 }

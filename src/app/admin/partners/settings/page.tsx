@@ -2,11 +2,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { updatePartnerSettingsAction, uploadFrameTemplateAction, addAiKeyAction, deleteAiKeyAction } from "./actions";
 import RegenerateImagesButton from "@/components/admin/RegenerateImagesButton";
 import { uploadWatermarkAction } from "./actions";
+import BannerManager from "@/components/admin/BannerManager";
+import FeaturedPartnerForm from "@/components/admin/FeaturedPartnerForm";
 
 export default async function AdminPartnerSettingsPage() {
   const admin = createAdminClient();
   const { data: settings } = await admin.from("partner_settings").select("*").eq("id", 1).single();
   const { data: aiKeys } = await admin.from("partner_ai_keys").select("*").order("priority");
+  const { data: partnersList } = await admin.from("partners").select("id, business_name, phone").eq("status", "ACTIVE").order("business_name");
+  const { data: featured } = await admin.from("homepage_partner_feature").select("*").eq("id", 1).single();
+  const { data: partnerBanners } = await admin.from("banners").select("*").eq("position", "partners").order("sort_order");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -88,6 +93,22 @@ export default async function AdminPartnerSettingsPage() {
           <button className="admin-btn admin-btn-primary">افزودن</button>
         </form>
       </div>
+      <div className="admin-card" style={{ maxWidth: 640 }}>
+  <BannerManager
+    banners={partnerBanners ?? []}
+    position="partners"
+    title="بنرهای تبلیغاتی همکاران (حداکثر ۶ بنر فعال نمایش داده می‌شود — ۲ ردیف × ۳ ستون)"
+  />
+  <FeaturedPartnerForm
+  initialEnabled={featured?.enabled ?? false}
+  initialPartnerId={featured?.partner_id ?? null}
+  initialStoreImageUrl={featured?.store_image_url ?? null}
+  initialStoreName={featured?.store_name ?? null}
+  initialDescription={featured?.description ?? null}
+  initialShowProducts={featured?.show_products ?? true}
+  partners={partnersList ?? []}
+/>
+</div>
     </div>
   );
 }

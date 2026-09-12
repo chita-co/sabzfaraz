@@ -75,6 +75,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/categories", label: "دسته‌بندی‌ها" },
       { href: "/admin/deals", label: "جشنواره تخفیف" },
       { href: "/admin/banners", label: "بنرهای اسلایدی" },
+      { href: "/admin/promo-ads", label: "باکس‌های تبلیغاتی صفحه اصلی" },
       { href: "/admin/reviews", label: "نظرات و امتیازها" },
       { href: "/admin/stock", label: "محصولات استوک" },
       { href: "/admin/out-of-stock", label: "محصولات تمام‌شده" },
