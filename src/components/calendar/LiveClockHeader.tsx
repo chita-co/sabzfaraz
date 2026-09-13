@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CloudSun, Moon, Globe2, X } from "lucide-react";
 import { formatJalali, formatHijri } from "@/lib/calendar/jalali";
 import { getMoonPhase } from "@/lib/calendar/moonPhase";
+import AnalogClock from "./AnalogClock";
 
 const TEHRAN = { label: "تهران", country: "ایران", tz: "Asia/Tehran" };
 
@@ -111,7 +112,8 @@ export default function LiveClockHeader() {
     <div className="clh-wrap">
       <div className="clh-inner">
         <div className="clh-main">
-          <div className="clh-time">{now.toLocaleTimeString("fa-IR")}</div>
+          <AnalogClock time={now} />
+          <div className="clh-time-digital">{now.toLocaleTimeString("fa-IR")}</div>
           <div className="clh-dates">
             <span>{formatJalali(now)}</span>
             <span className="clh-sep">•</span>
@@ -188,8 +190,8 @@ export default function LiveClockHeader() {
         .clh-skeleton { height: 110px; }
         .clh-wrap { border-bottom: 1px solid rgba(255,255,255,.08); position: relative; }
         .clh-inner { max-width: 1300px; margin: 0 auto; padding: 20px 16px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
-        .clh-main { text-align: center; }
-        .clh-time { font-size: 34px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; }
+        .clh-main { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .clh-time-digital { font-size: 15px; font-weight: 800; color: #fbbf24; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
         .clh-dates { margin-top: 6px; font-size: 12px; color: #d1d5db; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
         .clh-sep { opacity: .5; }
         .clh-extras { display: flex; flex-direction: column; gap: 6px; }

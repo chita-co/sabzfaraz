@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getLoyaltySettings } from "./settings";
 import { calculatePointsToEarn } from "./points-utils";
 import { createNotification } from "@/lib/notifications";
+import { sendLoyaltyPointsEarnedSms } from "@/lib/sms";
 
 async function recalculateTier(admin: ReturnType<typeof createAdminClient>, userId: string) {
   const { data: profile } = await admin.from("profiles").select("loyalty_points_lifetime").eq("id", userId).single();
@@ -37,7 +38,7 @@ export async function earnPointsForOrder(orderId: string) {
 
   const { data: order } = await admin
     .from("orders")
-    .select("id, user_id, total_amount, shipping_cost, loyalty_earned_processed")
+    .select("id, user_id, total_amount, shipping_cost, loyalty_earned_processed, profile:profiles(full_name, phone), address:addresses(phone)")
     .eq("id", orderId)
     .single();
 
@@ -74,11 +75,24 @@ export async function earnPointsForOrder(orderId: string) {
   await admin.from("orders").update({ loyalty_points_earned: points, loyalty_earned_processed: true }).eq("id", orderId);
   await recalculateTier(admin, order.user_id);
 
-  await createNotification(
+   await createNotification(
     order.user_id,
     "امتیاز جدید دریافت کردی! 🎉",
     `${points.toLocaleString("fa-IR")} امتیاز بابت خرید اخیرت به حسابت اضافه شد. الان می‌تونی ${(points * settings.pointValueToman).toLocaleString("fa-IR")} تومان از این امتیاز رو در خرید بعدی استفاده کنی.`
   );
+
+  const orderProfile = order.profile as unknown as { full_name?: string; phone?: string } | null;
+  const address = order.address as unknown as { phone?: string } | null;
+  const phone = orderProfile?.phone ?? address?.phone;
+  const customerName = orderProfile?.full_name?.trim() || "کاربر";
+
+  if (phone) {
+    try {
+      await sendLoyaltyPointsEarnedSms(phone, customerName, points);
+    } catch (e) {
+      console.error("خطا در ارسال پیامک امتیاز وفاداری:", e);
+    }
+  }
 }
 
 // مصرف امتیاز به‌صورت FIFO هنگام ثبت سفارش

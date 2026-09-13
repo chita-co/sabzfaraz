@@ -55,6 +55,7 @@ export default async function MyOrderDetailPage({
     : null;
   const stage = getTrackingStageNumber(order.tracking_started_at);
   const subtotal = order.total_amount - order.shipping_cost;
+  const totalDiscount = (order.loyalty_discount_amount ?? 0) + (order.discount_code_amount ?? 0);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -116,6 +117,7 @@ export default async function MyOrderDetailPage({
               quantity: i.quantity,
             }))}
             subtotal={subtotal}
+            discountAmount={totalDiscount}
             shippingCost={order.shipping_cost}
             total={order.total_amount}
             logoUrl={settings?.logo_url ?? null}

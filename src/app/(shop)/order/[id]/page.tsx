@@ -73,6 +73,8 @@ export default async function OrderResultPage({
 
   const subtotal = order.items.reduce((sum: number, i: OrderItem) => sum + i.price * i.quantity, 0);
   const loyaltyDiscount = order.loyalty_discount_amount ?? 0;
+  const couponDiscount = order.discount_code_amount ?? 0;
+  const totalDiscount = loyaltyDiscount + couponDiscount;
 
   return (
     <>
@@ -154,7 +156,7 @@ export default async function OrderResultPage({
                   quantity: i.quantity,
                 }))}
                 subtotal={subtotal}
-                discountAmount={loyaltyDiscount}
+                discountAmount={totalDiscount}
                 shippingCost={order.shipping_cost}
                 total={order.total_amount}
                 logoUrl={settings?.logo_url ?? null}

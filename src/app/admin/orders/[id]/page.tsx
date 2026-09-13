@@ -10,6 +10,7 @@ import PostalTrackingCodeForm from "@/components/admin/PostalTrackingCodeForm";
 import MarkOrderViewed from "@/components/admin/MarkOrderViewed";
 import ConfirmOfflinePaymentButton from "@/components/admin/ConfirmOfflinePaymentButton";
 import RejectOfflinePaymentButton from "@/components/admin/RejectOfflinePaymentButton";
+import GiftDiscountForm from "@/components/admin/GiftDiscountForm";
 
 type OrderItem = {
   id: string;
@@ -166,6 +167,8 @@ export default async function AdminOrderDetailPage({
               تلفن: {order.profile?.phone ?? order.address?.phone ?? "—"}
             </p>
           </div>
+
+           <GiftDiscountForm orderId={order.id} />
 
           <div className="admin-card">
             <h2 className="font-bold text-gray-800 mb-3">آدرس ارسال</h2>

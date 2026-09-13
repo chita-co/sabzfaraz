@@ -12,7 +12,8 @@ import CalendarToolbar from "./CalendarToolbar";
 import SeasonalBackground from "./SeasonalBackground";
 import MonthView from "./MonthView";
 import YearView from "./YearView";
-import AgendaView from "./AgendaView";
+import WeekView from "./WeekView";
+import DayView from "./DayView";
 import Sidebar from "./Sidebar";
 import UpcomingEventsPanel from "./UpcomingEventsPanel";
 import EventModal from "./EventModal";
@@ -239,8 +240,11 @@ export default function CalendarDashboard({
               <MonthView currentDate={currentDate} events={filteredEvents} onDayClick={openCreateModal} onEventClick={openEditModal} onEventMove={(ev, newDate) => handleSaveEvent({ startAt: shiftDate(ev.startAt, ev.startAt, newDate), endAt: shiftDate(ev.startAt, ev.endAt, newDate) }, ev)} />
             )}
             {viewMode === "year" && <YearView currentDate={currentDate} events={filteredEvents} onMonthClick={(d) => { setCurrentDate(d); setViewMode("month"); }} />}
-            {(viewMode === "week" || viewMode === "day") && (
-              <AgendaView currentDate={currentDate} viewMode={viewMode} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
+            {viewMode === "week" && (
+              <WeekView currentDate={currentDate} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
+            )}
+            {viewMode === "day" && (
+              <DayView currentDate={currentDate} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
             )}
           </div>
         </div>

@@ -23,7 +23,14 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
   if (banners.length === 0) return null;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: 380, overflow: "hidden", background: "#0f0f0f" }}>
+    <div
+      style={{
+        position: "relative", width: "100%", height: 380, overflow: "hidden",
+        background: "rgba(255, 255, 255, 0.05)",
+        backdropFilter: "blur(4px)",
+        WebkitBackdropFilter: "blur(14px)",
+      }}
+    >
       {banners.map((b, i) => {
         const inner = (
           <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>

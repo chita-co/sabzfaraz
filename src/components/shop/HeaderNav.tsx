@@ -92,17 +92,6 @@ export default function HeaderNav({
     <div className="site-mobile-overlay" onClick={() => setMobileOpen(false)}>
       <div className="site-mobile-panel" onClick={(e) => e.stopPropagation()}>
         <button className="site-mobile-close" onClick={() => setMobileOpen(false)}><X size={22} /></button>
-        <form className="site-search" onSubmit={handleSearch}>
-          <Search size={16} />
-          <input
-  type="text"
-  id="site-search-input"
-  name="search"
-  placeholder="جستجوی محصول..."
-  value={search}
-  onChange={(e) => setSearch(e.target.value)}
-/>
-        </form>
 
         <Link href="/" onClick={() => setMobileOpen(false)}>خانه</Link>
         {auctionEnabled && (
@@ -263,6 +252,20 @@ export default function HeaderNav({
         </div>
       </div>
 
+      <div className="site-mobile-search-row">
+        <form className="site-mobile-search-row-form" onSubmit={handleSearch}>
+          <Search size={16} />
+          <input
+            type="text"
+            id="header-mobile-inline-search-input"
+            name="search"
+            placeholder="جستجوی محصول..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </form>
+      </div>
+
       {/* ردیف سوم: منوی اصلی (۹ دکمه) */}
       <div className="site-header-nav-row">
         <nav className="site-nav">
@@ -283,17 +286,52 @@ export default function HeaderNav({
         .site-actions, .site-actions > * { flex-shrink: 0; }
 
         :global(.site-header-title) {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   flex-shrink: 0;
+  font-family: "Vazirmatn", "Tahoma", sans-serif;
+}
+@media (max-width: 900px) and (min-width: 641px) {
+  :global(.site-header-title) {
+    font-size: 20px;
+  }
 }
 @media (max-width: 640px) {
   :global(.site-header-title) {
-    font-size: 10.5px;
+    font-size: 14px;
   }
 }
 
+
+@media (max-width: 640px) {
+  .site-mobile-search-row {
+    display: flex;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 8px 16px 2px;
+  }
+  .site-mobile-search-row-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    padding: 9px 16px;
+  }
+  .site-mobile-search-row-form :global(svg) { color: #6b7280; flex-shrink: 0; }
+  .site-mobile-search-row-form input {
+    border: none; outline: none; background: transparent;
+    font-size: 13px; color: #111827; width: 100%; font-family: inherit;
+  }
+  .site-mobile-search-row-form input::placeholder { color: #9ca3af; }
+}
+@media (min-width: 641px) {
+  .site-mobile-search-row { display: none; }
+}
         .site-header-topbar {
           max-width: 1280px;
           margin: 0 auto;

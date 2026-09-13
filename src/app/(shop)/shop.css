@@ -1102,6 +1102,12 @@
   width: 100%;              /* عرض کامل */
 }
 
+@media (max-width: 640px) {
+  .promo-banner-section {
+    height: 130px !important;
+  }
+}
+
 .top-filter-bar {
   background: transparent;
   border-bottom: none;
@@ -1943,7 +1949,7 @@
     border: 1px solid #d1d5db;
     border-radius: 999px;
     padding: 8px 16px;
-    min-width: 220px;
+    min-width: 460px;
   }
   .site-search svg { color: #6b7280; flex-shrink: 0; }
   .site-search input {
@@ -2352,7 +2358,7 @@
   transition: transform 0.25s ease;
 }
 .partner-ads-cell:hover { transform: translateY(-4px) scale(1.02); }
-.partner-ads-img { width: 100%; height: 140px; object-fit: cover; display: block; }
+.partner-ads-img { width: 100%; height: 140px; object-fit: contain; display: block; background: rgba(6, 20, 12, 0.35); }
 @keyframes partnerAdsFadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2433,11 +2439,15 @@
 .promo-ad-link { display: block; text-decoration: none; height: 100%; }
 .promo-ad-card {
   position: relative; border-radius: 18px; overflow: hidden; height: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   box-shadow: 0 4px 18px rgba(0,0,0,0.08);
   transition: transform 0.35s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s ease;
 }
 .promo-ad-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 14px 30px rgba(22,163,74,0.18); }
-.promo-ad-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+.promo-ad-img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.5s ease; background: rgba(6, 20, 12, 0.35); }
 .promo-ad-card:hover .promo-ad-img { transform: scale(1.08); }
 .promo-ad-badge {
   position: absolute; top: 10px; right: 10px; z-index: 3; background: rgba(22,163,74,0.9); color: #fff;

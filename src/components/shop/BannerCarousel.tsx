@@ -33,7 +33,7 @@ export default function BannerCarousel({
   return (
     <div
       className="promo-banner-section"
-      style={{ position: "relative", width: "100%", height, overflow: "hidden", borderRadius: 14 }}
+      style={{ position: "relative", width: "100%", height, overflow: "hidden", borderRadius: 14, background: "rgba(6, 20, 12, 0.35)" }}
     >
       {banners.map((b, i) => {
         const inner = (
@@ -43,7 +43,7 @@ export default function BannerCarousel({
               src={b.image_url}
               alt={`${altPrefix} - اسلاید ${i + 1}`}
               loading={i === 0 ? "eager" : "lazy"}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
             />
           </div>
         );

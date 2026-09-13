@@ -69,3 +69,33 @@ export async function sendPostalTrackingSms(mobile: string, trackingCode: string
   if (!templateId) throw new Error("SMSIR_POSTAL_TRACKING_TEMPLATE_ID تنظیم نشده است.");
   return sendTemplateSms(mobile, templateId, [{ name: "CODE", value: trackingCode }]);
 }
+
+export async function sendGiftDiscountSms(
+  mobile: string,
+  name: string,
+  discountCode: string,
+  percent: number,
+  validDays: number
+) {
+  const templateId = Number(process.env.SMSIR_GIFT_DISCOUNT_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_GIFT_DISCOUNT_TEMPLATE_ID تنظیم نشده است.");
+  return sendTemplateSms(mobile, templateId, [
+    { name: "NAME", value: name },
+    { name: "PERCENT", value: String(percent) },
+    { name: "DISCOUNT", value: discountCode },
+    { name: "DAYS", value: String(validDays) },
+  ]);
+}
+
+export async function sendLoyaltyPointsEarnedSms(
+  mobile: string,
+  name: string,
+  points: number
+) {
+  const templateId = Number(process.env.SMSIR_LOYALTY_POINTS_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_LOYALTY_POINTS_TEMPLATE_ID تنظیم نشده است.");
+  return sendTemplateSms(mobile, templateId, [
+    { name: "NAME", value: name },
+    { name: "POINTS", value: points.toLocaleString("fa-IR") },
+  ]);
+}
