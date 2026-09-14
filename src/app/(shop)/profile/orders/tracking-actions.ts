@@ -16,24 +16,31 @@ export async function checkParcelTracking(code: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   if (!user) return { status: "unauthorized" as const };
 
+  // مرحله ۱: فقط مالکیت سفارش را چک می‌کنیم — بدون join
   const { data: owningOrder } = await supabase
-    .from("orders")
-    .select("id, shipping_method:shipping_methods(name)")
-    .eq("user_id", user.id)
-    .eq("postal_tracking_code", trimmed)
-    .maybeSingle();
+  .from("orders")
+  .select("id, shipping_method_id")
+  .eq("user_id", user.id)
+  .eq("postal_tracking_code", trimmed)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
 
   if (!owningOrder) return { status: "unauthorized" as const };
 
-  const shippingMethod = owningOrder.shipping_method as
-    | { name: string }
-    | { name: string }[]
-    | null;
-  const courierHint = Array.isArray(shippingMethod)
-    ? shippingMethod[0]?.name ?? null
-    : shippingMethod?.name ?? null;
+  // مرحله ۲: نام روش ارسال را جدا می‌گیریم (best-effort)
+  let courierHint: string | null = null;
+  if (owningOrder.shipping_method_id) {
+    const { data: sm } = await supabase
+      .from("shipping_methods")
+      .select("name")
+      .eq("id", owningOrder.shipping_method_id)
+      .maybeSingle();
+    courierHint = sm?.name ?? null;
+  }
 
   return getPostalTrackingStatus(trimmed, courierHint);
 }
