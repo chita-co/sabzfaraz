@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CloudSun, Moon, Globe2, X } from "lucide-react";
-import { formatJalali, formatHijri } from "@/lib/calendar/jalali";
+import { CloudSun, Moon, Globe2, X, Sparkles  } from "lucide-react";
+import { formatJalali, formatHijri, toJalali, toApproximateHijri, getZodiacSign } from "@/lib/calendar/jalali";
 import { getMoonPhase } from "@/lib/calendar/moonPhase";
 import AnalogClock from "./AnalogClock";
 
@@ -112,14 +112,24 @@ export default function LiveClockHeader() {
     <div className="clh-wrap">
       <div className="clh-inner">
         <div className="clh-main">
-          <AnalogClock time={now} />
-          <div className="clh-time-digital">{now.toLocaleTimeString("fa-IR")}</div>
-          <div className="clh-dates">
-            <span>{formatJalali(now)}</span>
-            <span className="clh-sep">•</span>
-            <span>{now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
-            <span className="clh-sep">•</span>
-            <span>{formatHijri(now)} ق</span>
+          <div className="clh-clock-col">
+            <AnalogClock time={now} />
+            <div className="clh-time-digital">{now.toLocaleTimeString("en-US", { hour12: false })}</div>
+          </div>
+          <div className="clh-date-box">
+            <span className="clh-box-title">تاریخ خورشیدی</span>
+            <span className="clh-box-num clh-num-jalali">{(() => { const { jy, jm, jd } = toJalali(now); return `${jy}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`; })()}</span>
+            <span className="clh-box-text">{formatJalali(now)}</span>
+          </div>
+          <div className="clh-date-box">
+            <span className="clh-box-title">تاریخ میلادی</span>
+            <span className="clh-box-num clh-num-gregorian">{now.getFullYear()}-{String(now.getMonth() + 1).padStart(2, "0")}-{String(now.getDate()).padStart(2, "0")}</span>
+            <span className="clh-box-text">{now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+          </div>
+          <div className="clh-date-box">
+            <span className="clh-box-title">تاریخ قمری</span>
+            <span className="clh-box-num clh-num-hijri">{(() => { const { hy, hm, hd } = toApproximateHijri(now); return `${hy}/${String(hm).padStart(2, "0")}/${String(hd).padStart(2, "0")}`; })()}</span>
+            <span className="clh-box-text">{formatHijri(now)} ق</span>
           </div>
         </div>
 
@@ -133,6 +143,10 @@ export default function LiveClockHeader() {
           <div className="clh-chip">
             <Moon size={14} />
             {moon.emoji} {moon.phaseName} ({moon.illumination}٪)
+          </div>
+          <div className="clh-chip">
+            <Sparkles size={14} />
+            ⭐برج فلکی  {getZodiacSign(now)}
           </div>
         </div>
 
@@ -190,10 +204,16 @@ export default function LiveClockHeader() {
         .clh-skeleton { height: 110px; }
         .clh-wrap { border-bottom: 1px solid rgba(255,255,255,.08); position: relative; }
         .clh-inner { max-width: 1300px; margin: 0 auto; padding: 20px 16px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
-        .clh-main { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .clh-main { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .clh-clock-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .clh-date-box { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 14px; border-inline-start: 1px solid rgba(255,255,255,.12); }
+        .clh-box-title { font-size: 10.5px; font-weight: 700; color: #fbbf24; }
+        .clh-box-num { font-size: 16px; font-weight: 900; color: #fff; direction: ltr; }
+        .clh-box-text { font-size: 10px; color: #9ca3af; direction: ltr; white-space: nowrap; }
+        .clh-num-jalali { font-size: 18px; }
+        .clh-num-gregorian { font-size: 15px; }
+        .clh-num-hijri { font-size: 13px; }
         .clh-time-digital { font-size: 15px; font-weight: 800; color: #fbbf24; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
-        .clh-dates { margin-top: 6px; font-size: 12px; color: #d1d5db; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-        .clh-sep { opacity: .5; }
         .clh-extras { display: flex; flex-direction: column; gap: 6px; }
         .clh-chip { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 5px 12px; font-size: 11.5px; color: #e5e7eb; white-space: nowrap; }
         .clh-world { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

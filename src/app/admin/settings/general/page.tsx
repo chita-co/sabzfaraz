@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import GeneralSettingsForm from "@/components/admin/GeneralSettingsForm";
+import PublicDiscountCodeForm from "@/components/admin/PublicDiscountCodeForm";
 
 export default async function AdminGeneralSettingsPage() {
   const supabase = await createClient();
@@ -10,6 +11,7 @@ export default async function AdminGeneralSettingsPage() {
     .single();
 
   return (
+    <div className="space-y-5">
     <GeneralSettingsForm
       initial={
         data
@@ -31,5 +33,7 @@ export default async function AdminGeneralSettingsPage() {
             }
       }
     />
+      <PublicDiscountCodeForm />
+    </div>
   );
 }

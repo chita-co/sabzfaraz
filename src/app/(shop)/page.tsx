@@ -21,7 +21,7 @@ import {
 import React from "react";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import TopFilterBar from "@/components/shop/TopFilterBar";
-import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
+// import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
 import CalendarWidget from "@/components/calendar/CalendarWidget";
 import { createAdminClient } from "@/lib/supabase/admin";
 import BannerCarousel from "@/components/shop/BannerCarousel";
@@ -182,9 +182,10 @@ if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.sho
       />
       <HeroCarousel banners={(banners as Banner[]) ?? []} />
 <div className="mx-auto max-w-7xl px-4 mt-3">
-  <HomePriceWidget>
+  {/* ⛔️ قیمت لحظه‌ای کنار تقویم موقتاً غیرفعال */}
+  {/* <HomePriceWidget> */}
     <CalendarWidget />
-  </HomePriceWidget>
+  {/* </HomePriceWidget> */}
 </div>
 
       {categories && categories.length > 0 && (

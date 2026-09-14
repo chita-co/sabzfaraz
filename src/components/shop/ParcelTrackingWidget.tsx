@@ -22,7 +22,9 @@ const ParcelTrackingWidget = forwardRef<ParcelTrackingWidgetHandle>(
       if (!trimmed) return;
       setLoading(true);
       setResult(null);
+
       const res = await checkParcelTracking(trimmed);
+
       setResult(res);
       setLoading(false);
     }

@@ -22,7 +22,7 @@ export default function SupportUnreadBadgeUser() {
 
   if (!count) return null;
   return (
-    <span style={{ position: "absolute", top: -4, left: -4, background: "#dc2626", color: "#fff", fontSize: 10, fontWeight: 800, borderRadius: 999, minWidth: 17, height: 17, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+    <span className="support-badge-user" style={{ position: "absolute", top: -4, left: -4, background: "#dc2626", color: "#fff", fontSize: 10, fontWeight: 800, borderRadius: 999, minWidth: 17, height: 17, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
       {count > 9 ? "9+" : count.toLocaleString("fa-IR")}
     </span>
   );

@@ -29,6 +29,7 @@ export type PostalTrackingResult =
     }
   | { status: "not_found" }
   | { status: "provider_not_configured"; fallbackUrl: string }
+  | { status: "open_external"; url: string; providerName: string }
   | { status: "error"; message: string };
 
 const TRACK123_API_KEY = process.env.TRACK123_API_KEY;
@@ -59,15 +60,16 @@ export async function getPostalTrackingStatus(
     };
   }
 
-  if (TRACK123_API_KEY) return fetchFromTrack123(code);
-
-  // اگر هنوز سرویسی وصل نکردی، حداقل یک مسیر امن (fallback) برمی‌گردونیم
+  // پست ایران API رسمی نداره و Track123 برای مرسولات واقعی رویداد ثبت نمی‌کنه؛
+  // پس مستقیم کاربر رو به سایت رسمی پیگیری پست (با کد از پیش‌واردشده) می‌فرستیم.
   return {
-    status: "provider_not_configured",
-    fallbackUrl: `https://tracking.post.ir/?id=${encodeURIComponent(code)}`,
+    status: "open_external",
+    url: `https://tracking.post.ir/?id=${encodeURIComponent(code)}`,
+    providerName: "پست ایران",
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function fetchFromTrack123(code: string): Promise<PostalTrackingResult> {
   try {
     // مرحله ۱: وارد کردن کد به سیستم Track123 (فقط بار اول لازمه، بارهای بعدی هم مشکلی نداره)

@@ -4,6 +4,7 @@ import type { CalendarEvent } from "@/types/calendar";
 import { toJalali, toIsoDate, JALALI_MONTH_NAMES } from "@/lib/calendar/jalali";
 import { expandEventsInRange } from "@/lib/calendar/recurrence";
 import { MONTH_ACCENT_COLORS } from "@/lib/calendar/monthColors";
+import { getHolidaysInRange } from "@/lib/calendar/holidays";
 
 const WEEKDAY_NAMES_SAT_FIRST = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
 
@@ -37,59 +38,62 @@ export default function WeekView({
     return occurrences.filter((o) => toIsoDate(o.occurrenceStart) <= iso && toIsoDate(o.occurrenceEnd) >= iso).map((o) => o.event);
   }
 
-  return (
-    <div className="wv-wrap">
-      <div className="wv-grid">
-        {days.map((d, i) => {
-          const iso = toIsoDate(d);
-          const { jm, jd } = toJalali(d);
-          const accent = MONTH_ACCENT_COLORS[jm - 1];
-          const isToday = iso === todayIso;
-          const isFriday = d.getDay() === 5;
-          const dayEvents = eventsForDay(d);
+  const rangeLabel = `${toJalali(days[0]).jd.toLocaleString("fa-IR")} تا ${toJalali(days[6]).jd.toLocaleString("fa-IR")} ${JALALI_MONTH_NAMES[toJalali(days[6]).jm - 1]}`;
 
-          return (
-            <div key={iso} className={`wv-day ${isToday ? "today" : ""} ${isFriday ? "friday" : ""}`} style={{ ["--wv-accent" as string]: accent }} onClick={() => onSlotClick(d)}>
-              <div className="wv-day-head">
+  return (
+    <div className="wv-stage">
+      <div className="wv-card">
+        <div className="wv-head">{rangeLabel}</div>
+        <div className="wv-grid">
+          {days.map((d, i) => {
+            const iso = toIsoDate(d);
+            const { jm, jd } = toJalali(d);
+            const accent = MONTH_ACCENT_COLORS[jm - 1];
+            const isToday = iso === todayIso;
+            const isFriday = d.getDay() === 5;
+            const dayEvents = eventsForDay(d);
+
+            return (
+              <div key={iso} className={`wv-day ${isToday ? "today" : ""} ${isFriday ? "friday" : ""}`} style={{ ["--wv-accent" as string]: accent }} onClick={() => onSlotClick(d)}>
                 <span className="wv-weekday">{WEEKDAY_NAMES_SAT_FIRST[i]}</span>
-                {isToday ? <span className="wv-daynum-badge">{jd.toLocaleString("fa-IR")}</span> : <span className="wv-daynum">{jd.toLocaleString("fa-IR")}</span>}
+                <span className="wv-daynum">{jd.toLocaleString("fa-IR")}</span>
                 <span className="wv-month-tag">{JALALI_MONTH_NAMES[jm - 1]}</span>
-              </div>
-              <div className="wv-events">
-                {dayEvents.length === 0 && <span className="wv-empty">رویدادی نیست</span>}
-                {dayEvents.map((ev) => (
-                  <div key={ev.id} className="wv-event" style={{ background: `${ev.color}22`, color: ev.color, borderColor: `${ev.color}55` }} onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} title={ev.title}>
-                    {!ev.allDay && <span className="wv-event-time">{new Date(ev.startAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</span>}
-                    <span className="wv-event-title">{ev.title}</span>
-                  </div>
+                {Array.from(new Map(getHolidaysInRange(d, d).map((o) => [o.title, o])).values()).map((o, oi) => (
+                  <span key={oi} className={`wv-occasion ${o.isHoliday ? "holiday" : ""}`}>{o.title}</span>
                 ))}
+                <div className="wv-events">
+                  {dayEvents.map((ev) => (
+                    <div key={ev.id} className="wv-event" style={{ background: `${ev.color}22`, color: ev.color, border: `1px solid ${ev.color}55` }} onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} title={ev.title}>
+                      {ev.title}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <style jsx>{`
-        .wv-wrap { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; overflow: hidden; padding: 14px; }
-        .wv-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        @media (max-width: 900px) { .wv-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px) { .wv-grid { grid-template-columns: 1fr; } }
-        .wv-day { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-top: 3px solid var(--wv-accent); border-radius: 14px; padding: 10px; cursor: pointer; min-height: 160px; transition: background .15s, transform .15s; }
-        .wv-day:hover { background: rgba(255,255,255,.06); transform: translateY(-2px); }
-        .wv-day.friday { border-top-color: #f87171; }
-        .wv-day.today { background: linear-gradient(160deg, var(--wv-accent) -110%, rgba(255,255,255,.06) 45%); box-shadow: 0 0 0 1.5px var(--wv-accent), 0 8px 18px -8px var(--wv-accent); }
-        .wv-day-head { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,.1); }
-        .wv-weekday { font-size: 11.5px; color: #9ca3af; font-weight: 700; }
-        .wv-day.friday .wv-weekday { color: #f87171; }
-        .wv-daynum { font-size: 20px; font-weight: 900; color: #e5e7eb; }
-        .wv-daynum-badge { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: var(--wv-accent); color: #0f2818; font-size: 16px; font-weight: 900; box-shadow: 0 0 14px -2px var(--wv-accent); animation: cal-pulse 2.4s ease-in-out infinite; }
-        .wv-month-tag { font-size: 9.5px; color: var(--wv-accent); font-weight: 700; }
-        .wv-events { display: flex; flex-direction: column; gap: 5px; }
-        .wv-empty { font-size: 10px; color: #6b7280; text-align: center; display: block; padding: 8px 0; }
-        .wv-event { font-size: 10.5px; padding: 4px 7px; border-radius: 8px; border: 1px solid; display: flex; flex-direction: column; gap: 1px; cursor: pointer; overflow: hidden; }
-        .wv-event-time { font-size: 9px; opacity: .8; direction: ltr; text-align: right; }
-        .wv-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        @keyframes cal-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(251,191,36,.45); } 50% { box-shadow: 0 0 0 6px rgba(251,191,36,0); } }
+        .wv-stage { min-height: 520px; display: flex; align-items: center; justify-content: center; padding: 28px 16px; }
+        .wv-card { width: 100%; max-width: 820px; background: rgba(255,255,255,.3); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border: 1px solid rgba(255,255,255,.35); border-radius: 22px; box-shadow: 0 20px 45px -16px rgba(0,0,0,.55); padding: 18px; color: #2c1f0d; }
+        .wv-head { text-align: center; font-size: 12.5px; font-weight: 800; color: #7a5a2e; margin-bottom: 14px; }
+        .wv-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        @media (max-width: 720px) { .wv-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 420px) { .wv-grid { grid-template-columns: repeat(2, 1fr); } }
+        .wv-day { background: rgba(255,255,255,.2); border-radius: 12px; border-top: 3px solid var(--wv-accent); padding: 8px 5px 10px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; min-height: 195px; transition: background .15s; }
+        .wv-day:hover { background: rgba(255,255,255,.35); }
+        .wv-day.friday { border-top-color: #c23b3b; }
+        .wv-day.today { background: var(--wv-accent); }
+        .wv-day.today .wv-weekday, .wv-day.today .wv-daynum, .wv-day.today .wv-month-tag { color: #fff; }
+        .wv-day.today .wv-occasion { background: rgba(255,255,255,.25); color: #fff; }
+        .wv-weekday { font-size: 9.5px; color: #7a5a2e; font-weight: 700; }
+        .wv-daynum { font-size: 17px; font-weight: 900; color: #3f2d12; margin: 3px 0; }
+        .wv-month-tag { font-size: 8px; color: var(--wv-accent); font-weight: 700; margin-bottom: 4px; }
+        .wv-occasion { font-size: 9.5px; font-weight: 700; color: #2c1f0d; background: rgba(255,255,255,.78); border-radius: 6px; padding: 3px 6px; margin-bottom: 4px; line-height: 1.4; display: block; }
+        .wv-occasion.holiday { color: #fff; background: #c23b3b; font-weight: 800; }
+        .wv-events { display: flex; flex-direction: column; gap: 3px; width: 100%; max-height: 100px; overflow-y: auto; }
+        .wv-event { font-size: 8.5px; padding: 3px 4px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
       `}</style>
     </div>
   );

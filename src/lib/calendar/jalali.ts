@@ -180,3 +180,45 @@ export function toIsoDate(date: Date): string {
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
+
+const ZODIAC_SIGNS: { name: string; from: [number, number]; to: [number, number] }[] = [
+  { name: "حمل", from: [3, 21], to: [4, 19] },
+  { name: "ثور", from: [4, 20], to: [5, 20] },
+  { name: "جوزا", from: [5, 21], to: [6, 20] },
+  { name: "سرطان", from: [6, 21], to: [7, 22] },
+  { name: "اسد", from: [7, 23], to: [8, 22] },
+  { name: "سنبله", from: [8, 23], to: [9, 22] },
+  { name: "میزان", from: [9, 23], to: [10, 22] },
+  { name: "عقرب", from: [10, 23], to: [11, 21] },
+  { name: "قوس", from: [11, 22], to: [12, 21] },
+  { name: "جدی", from: [12, 22], to: [1, 19] },
+  { name: "دلو", from: [1, 20], to: [2, 18] },
+  { name: "حوت", from: [2, 19], to: [3, 20] },
+];
+
+export function getZodiacSign(date: Date): string {
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  for (const z of ZODIAC_SIGNS) {
+    const [fm, fd] = z.from;
+    const [tm, td] = z.to;
+    if (fm <= tm) {
+      if ((m === fm && d >= fd) || (m === tm && d <= td) || (m > fm && m < tm)) return z.name;
+    } else {
+      // بازه‌ای که از دی به بهمن/آبان کشیده می‌شه (جدی)
+      if ((m === fm && d >= fd) || (m === tm && d <= td)) return z.name;
+    }
+  }
+  return "";
+}
+
+
+export function fromApproximateHijri(hy: number, hm: number, hd: number): Date {
+  const jdn = hd + Math.ceil(29.5 * (hm - 1)) + (hy - 1) * 354 + Math.floor((3 + 11 * hy) / 30) + 1948440 - 2;
+  const [gy, gm, gd] = jdnToGregorian(jdn);
+  return new Date(gy, gm - 1, gd);
+}
+
+export function isJalaliLeapYear(jy: number): boolean {
+  return jalaliMonthLength(jy, 12) === 30;
+}

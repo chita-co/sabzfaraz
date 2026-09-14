@@ -2,29 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Pencil, Trash2, NotebookPen, BarChart3, ListChecks, Plus } from "lucide-react";
-import type { CalendarEvent } from "@/types/calendar";
-import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/types/calendar";
+import { Pencil, Trash2, NotebookPen, } from "lucide-react";
 import { formatJalali, toIsoDate } from "@/lib/calendar/jalali";
 import { getGuestNotes, saveGuestNote, deleteGuestNote } from "@/lib/calendar/storage";
+import DateConverterTool from "@/components/calendar/DateConverterTool";
 
 interface NoteItem { date: string; content: string }
 
 export default function Sidebar({
-  events, currentDate, onEventClick, onDeleteEvent, onAddEvent, isLoggedIn,
+  currentDate, isLoggedIn,
 }: {
-  events: CalendarEvent[];
   currentDate: Date;
-  onEventClick: (event: CalendarEvent) => void;
-  onDeleteEvent: (event: CalendarEvent) => void;
-  onAddEvent: () => void;
   isLoggedIn: boolean;
 }) {
-  // ---------------- رویدادهای من ----------------
-  const myEvents = useMemo(
-    () => [...events].filter((e) => !e.isHoliday).sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()),
-    [events]
-  );
 
   // ---------------- یادداشت‌های من ----------------
   const [notes, setNotes] = useState<NoteItem[]>([]);
@@ -107,43 +97,10 @@ export default function Sidebar({
     }
   }
 
-  // ---------------- آمار ----------------
-  const stats = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const e of events) {
-      if (e.isHoliday) continue;
-      counts[e.category] = (counts[e.category] ?? 0) + 1;
-    }
-    const max = Math.max(1, ...Object.values(counts));
-    return { counts, max, total: Object.values(counts).reduce((a, b) => a + b, 0) };
-  }, [events]);
+
 
   return (
     <aside className="sb-wrap">
-      <div className="sb-card">
-        <div className="sb-card-head-row">
-          <div className="sb-card-head"><ListChecks size={14} /> رویدادهای من</div>
-          <button className="sb-add-mini" onClick={onAddEvent}><Plus size={11} /> جدید</button>
-        </div>
-        {myEvents.length === 0 ? (
-          <p className="sb-empty">در این بازه رویدادی ثبت نکرده‌اید.</p>
-        ) : (
-          <ul className="sb-event-list">
-            {myEvents.map((e) => (
-              <li key={e.id} style={{ borderInlineStartColor: e.color }}>
-                <div className="sb-ev-info" onClick={() => onEventClick(e)}>
-                  <span className="sb-ev-title">{e.title}</span>
-                  <span className="sb-ev-date">{formatJalali(new Date(e.startAt), false)}</span>
-                </div>
-                <div className="sb-ev-actions">
-                  <button onClick={() => onEventClick(e)} aria-label="ویرایش"><Pencil size={13} /></button>
-                  <button onClick={() => onDeleteEvent(e)} aria-label="حذف" className="danger"><Trash2 size={13} /></button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
 
       <div className="sb-card">
         <div className="sb-card-head"><NotebookPen size={14} /> یادداشت‌های من</div>
@@ -176,24 +133,7 @@ export default function Sidebar({
         )}
       </div>
 
-      <div className="sb-card">
-        <div className="sb-card-head"><BarChart3 size={14} /> آمار رویدادهای بازه‌ی جاری</div>
-        {stats.total === 0 ? (
-          <p className="sb-empty">هنوز رویدادی ثبت نشده.</p>
-        ) : (
-          <div className="sb-stats">
-            {Object.entries(stats.counts).map(([cat, count]) => (
-              <div key={cat} className="sb-stat-row">
-                <span className="sb-stat-label">{CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] ?? cat}</span>
-                <div className="sb-stat-bar-bg">
-                  <div className="sb-stat-bar" style={{ width: `${(count / stats.max) * 100}%`, background: CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] ?? "#16a34a" }} />
-                </div>
-                <span className="sb-stat-count">{count.toLocaleString("fa-IR")}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+<DateConverterTool />
 
       <style jsx>{`
         .sb-wrap { display: flex; flex-direction: column; gap: 12px; }

@@ -15,8 +15,8 @@ import YearView from "./YearView";
 import WeekView from "./WeekView";
 import DayView from "./DayView";
 import Sidebar from "./Sidebar";
-import UpcomingEventsPanel from "./UpcomingEventsPanel";
 import EventModal from "./EventModal";
+import MyEventsCard from "./MyEventsCard";
 
 function holidaysToEvents(rangeStart: Date, rangeEnd: Date): CalendarEvent[] {
   return getHolidaysInRange(rangeStart, rangeEnd).map((h, i) => ({
@@ -231,35 +231,38 @@ export default function CalendarDashboard({
         onCategoryFilterChange={setCategoryFilter}
       />
 
-      <div className="cal-body">
-        <div className="cal-main">
-          <SeasonalBackground date={currentDate} />
-          <div className="cal-main-content">
-            {loading && <div className="cal-loading-bar" />}
-            {viewMode === "month" && (
-              <MonthView currentDate={currentDate} events={filteredEvents} onDayClick={openCreateModal} onEventClick={openEditModal} onEventMove={(ev, newDate) => handleSaveEvent({ startAt: shiftDate(ev.startAt, ev.startAt, newDate), endAt: shiftDate(ev.startAt, ev.endAt, newDate) }, ev)} />
-            )}
-            {viewMode === "year" && <YearView currentDate={currentDate} events={filteredEvents} onMonthClick={(d) => { setCurrentDate(d); setViewMode("month"); }} />}
-            {viewMode === "week" && (
-              <WeekView currentDate={currentDate} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
-            )}
-            {viewMode === "day" && (
-              <DayView currentDate={currentDate} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
-            )}
+       <div className="cal-body">
+        <div className="cal-left-col">
+          <div className="cal-main">
+            <SeasonalBackground date={currentDate} />
+            <div className="cal-main-content">
+              {loading && <div className="cal-loading-bar" />}
+              {viewMode === "month" && (
+                <MonthView currentDate={currentDate} events={filteredEvents} onDayClick={openCreateModal} onEventClick={openEditModal} />
+              )}
+              {viewMode === "year" && <YearView currentDate={currentDate} events={filteredEvents} onMonthClick={(d) => { setCurrentDate(d); setViewMode("month"); }} />}
+              {viewMode === "week" && (
+                <WeekView currentDate={currentDate} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
+              )}
+              {viewMode === "day" && (
+                <DayView currentDate={currentDate} events={filteredEvents} onSlotClick={openCreateModal} onEventClick={openEditModal} />
+              )}
+            </div>
           </div>
+
+          <MyEventsCard
+            events={filteredEvents}
+            onEventClick={openEditModal}
+            onDeleteEvent={(ev) => { if (confirm(`رویداد «${ev.title}» حذف شود؟`)) handleDeleteEvent(ev); }}
+            onAddEvent={() => openCreateModal()}
+          />
         </div>
 
         <Sidebar
-          events={filteredEvents}
           currentDate={currentDate}
-          onEventClick={openEditModal}
-          onDeleteEvent={(ev) => { if (confirm(`رویداد «${ev.title}» حذف شود؟`)) handleDeleteEvent(ev); }}
-          onAddEvent={() => openCreateModal()}
           isLoggedIn={isLoggedIn}
         />
       </div>
-
-      <UpcomingEventsPanel events={filteredEvents} onEventClick={openEditModal} onAddEvent={() => openCreateModal()} />
 
       {mounted && modal && createPortal(
         <EventModal
@@ -277,18 +280,12 @@ export default function CalendarDashboard({
         .cal-dashboard { background: linear-gradient(135deg, #0f2818 0%, #14532d 45%, #1a4d2e 75%, #3f3010 100%); min-height: 100vh; padding-bottom: 40px; }
         .cal-body { max-width: 1300px; margin: 0 auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; }
         @media (max-width: 960px) { .cal-body { grid-template-columns: 1fr; } }
-        .cal-main { min-width: 0; position: relative; border-radius: 18px; overflow: hidden; }
+        .cal-main { min-width: 0; position: relative; border-radius: 18px; overflow: hidden; min-height: 620px; }
         .cal-main-content { position: relative; z-index: 1; }
+        .cal-left-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
         .cal-loading-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #fbbf24, transparent); animation: cal-loading 1.2s linear infinite; z-index: 2; }
         @keyframes cal-loading { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
       `}</style>
     </div>
   );
-}
-
-function shiftDate(originalStart: string, target: string, newDay: Date): string {
-  const orig = new Date(target);
-  const diffDays = Math.round((newDay.setHours(0, 0, 0, 0) - new Date(originalStart).setHours(0, 0, 0, 0)) / 86400000);
-  orig.setDate(orig.getDate() + diffDays);
-  return orig.toISOString();
 }

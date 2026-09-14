@@ -141,3 +141,15 @@ body {
 .site-header {
   z-index: 50; /* از قبل هست، فقط مطمئن شو */
 }
+
+
+
+/* ===== لرزش کوچیک آیکون شناور پشتیبانی سمت کاربر، فقط وقتی پیام خوانده‌نشده دارد ===== */
+@keyframes floating-support-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+.floating-support-wrap:has(.support-badge-user) .floating-support-btn {
+  animation: floating-support-pulse 1.6s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}

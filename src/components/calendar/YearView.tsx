@@ -57,15 +57,15 @@ export default function YearView({
       })}
 
       <style jsx>{`
-        .yv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-        @media (max-width: 900px) { .yv-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px) { .yv-grid { grid-template-columns: 1fr; } }
+        .yv-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); grid-auto-flow: column; gap: 14px; }
+        @media (max-width: 900px) { .yv-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(6, 1fr); } }
+        @media (max-width: 480px) { .yv-grid { grid-template-columns: 1fr; grid-template-rows: repeat(12, 1fr); grid-auto-flow: row; } }
         .yv-month { background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.09); border-top: 2.5px solid var(--yv-accent); border-radius: 16px; padding: 12px; text-align: center; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
         .yv-month:hover { background: rgba(255,255,255,.05); transform: translateY(-3px); box-shadow: 0 8px 20px -8px var(--yv-accent); }
         .yv-month-title { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 10px; }
         .yv-month-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--yv-accent); box-shadow: 0 0 8px 1px var(--yv-accent); }
         .yv-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .yv-day { font-size: 9px; color: #9ca3af; display: flex; align-items: center; justify-content: center; height: 17px; border-radius: 5px; }
+        .yv-day { font-size: 11.5px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; height: 20px; border-radius: 5px; }
         .yv-day.friday { color: #f87171; }
         .yv-day.today { background: var(--yv-accent); color: #0f2818; font-weight: 900; box-shadow: 0 0 10px -1px var(--yv-accent); }
         .yv-day.holiday { color: #f87171; font-weight: 700; }

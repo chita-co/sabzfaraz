@@ -9,7 +9,7 @@
 // اگر تصویری نگذارید، فقط گرادیان رنگی متناسب با فصل نمایش داده می‌شود —
 // یعنی چیزی خراب نمی‌شود، فقط عکس نداریم.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toJalali } from "@/lib/calendar/jalali";
 
 type Season = "spring" | "summer" | "autumn" | "winter";
@@ -51,14 +51,16 @@ function buildParticles(symbols: string[], count: number): Particle[] {
 }
 
 export default function SeasonalBackground({ date }: { date: Date }) {
-  const [imageOk, setImageOk] = useState(true);
   const season = useMemo(() => getSeason(toJalali(date).jm), [date]);
   const meta = SEASON_META[season];
   const particles = useMemo(() => buildParticles(meta.emoji, season === "winter" ? 34 : 22), [season, meta.emoji]);
 
-  useEffect(() => {
+  const [imageOk, setImageOk] = useState(true);
+  const [prevSeason, setPrevSeason] = useState(season);
+  if (prevSeason !== season) {
+    setPrevSeason(season);
     setImageOk(true);
-  }, [season]);
+  }
 
   return (
     <div className="seasonal-bg" aria-hidden="true">
@@ -88,8 +90,8 @@ export default function SeasonalBackground({ date }: { date: Date }) {
 
       <style jsx>{`
         .seasonal-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
-        .seasonal-gradient { position: absolute; inset: 0; opacity: .85; }
-        .seasonal-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; mix-blend-mode: soft-light; }
+        .seasonal-gradient { position: absolute; inset: 0; opacity: .22; }
+        .seasonal-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .62; mix-blend-mode: normal; }
         .seasonal-particles { position: absolute; inset: 0; }
         .seasonal-particle {
           position: absolute;
