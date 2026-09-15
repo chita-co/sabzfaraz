@@ -27,8 +27,13 @@ export async function rejectPartnerAction(partnerId: string, reason: string) {
 export async function suspendPartnerAction(partnerId: string) {
   const admin = createAdminClient();
   await admin.from("partners").update({ status: "SUSPENDED" }).eq("id", partnerId);
+  // محصولات این همکار غیرفعال می‌شن، پس کش صفحه‌ش هم باید پاک بشه.
+  const { data: partnerProducts } = await admin.from("products").select("slug").eq("partner_id", partnerId);
   await admin.from("products").update({ is_active: false }).eq("partner_id", partnerId);
   revalidatePath("/admin/partners");
+  for (const p of partnerProducts ?? []) {
+    if (p.slug) revalidatePath(`/products/${p.slug}`);
+  }
   return { success: true };
 }
 

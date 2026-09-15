@@ -25,6 +25,7 @@ export async function approvePartnerProductAction(productId: string) {
     await createNotification(product.partner_id, "محصول شما تأیید شد ✅", `محصول «${product.name}» بررسی و در سایت منتشر شد.`);
   }
   revalidatePath("/admin/partners/products");
+  revalidatePath(`/products/${product.slug}`);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 await submitUrlToIndexNow(`${baseUrl}/products/${product.slug}`);
   return { success: true };
@@ -33,7 +34,7 @@ await submitUrlToIndexNow(`${baseUrl}/products/${product.slug}`);
 export async function rejectPartnerProductAction(productId: string, reason: string) {
   await requireAdmin();
   const admin = createAdminClient();
-  const { data: product } = await admin.from("products").select("partner_id, name").eq("id", productId).single();
+  const { data: product } = await admin.from("products").select("partner_id, name, slug").eq("id", productId).single();
   if (!product) return { error: "محصول یافت نشد" };
 
   await admin.from("products").update({ partner_approval_status: "REJECTED", is_active: false, partner_rejection_reason: reason }).eq("id", productId);
@@ -42,6 +43,8 @@ export async function rejectPartnerProductAction(productId: string, reason: stri
     await createNotification(product.partner_id, "محصول شما رد شد ❌", `محصول «${product.name}» تأیید نشد. دلیل: ${reason}`);
   }
   revalidatePath("/admin/partners/products");
+  // رد شدن = محصول غیرفعال می‌شه (is_active: false)، صفحه‌ش هم باید فوراً از کش پاک بشه.
+  if (product.slug) revalidatePath(`/products/${product.slug}`);
   return { success: true };
 }
 
@@ -59,6 +62,7 @@ export async function bulkApprovePartnerProductsAction(productIds: string[]) {
       await createNotification(product.partner_id, "محصول شما تأیید شد ✅", `محصول «${product.name}» بررسی و در سایت منتشر شد.`);
     }
     await submitUrlToIndexNow(`${baseUrl}/products/${product.slug}`);
+    revalidatePath(`/products/${product.slug}`);
   }
   revalidatePath("/admin/partners/products");
   return { success: true, count: productIds.length };
@@ -68,7 +72,7 @@ export async function bulkRejectPartnerProductsAction(productIds: string[], reas
   await requireAdmin();
   if (!productIds.length) return { error: "هیچ محصولی انتخاب نشده" };
   const admin = createAdminClient();
-  const { data: productsData } = await admin.from("products").select("id, partner_id, name").in("id", productIds);
+  const { data: productsData } = await admin.from("products").select("id, partner_id, name, slug").in("id", productIds);
 
   await admin.from("products").update({ partner_approval_status: "REJECTED", is_active: false, partner_rejection_reason: reason }).in("id", productIds);
 
@@ -76,6 +80,8 @@ export async function bulkRejectPartnerProductsAction(productIds: string[], reas
     if (product.partner_id) {
       await createNotification(product.partner_id, "محصول شما رد شد ❌", `محصول «${product.name}» تأیید نشد. دلیل: ${reason}`);
     }
+    // رد شدن دسته‌ای = غیرفعال شدن همهشون، کش صفحه هر کدام هم پاک بشه.
+    if (product.slug) revalidatePath(`/products/${product.slug}`);
   }
   revalidatePath("/admin/partners/products");
   return { success: true, count: productIds.length };
@@ -97,6 +103,7 @@ export async function adminUpdatePartnerProductAction(productId: string, payload
   .eq("id", productId)
   .single();
   revalidatePath("/admin/partners/products");
+  if (updatedProduct?.slug) revalidatePath(`/products/${updatedProduct.slug}`);
   if (updatedProduct && updatedProduct.partner_approval_status === "APPROVED" && updatedProduct.is_active) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
   await submitUrlToIndexNow(`${baseUrl}/products/${updatedProduct.slug}`);

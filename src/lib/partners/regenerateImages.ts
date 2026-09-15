@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadImage } from "@/lib/arvan";
 import sharp from "sharp";
+import { revalidatePath } from "next/cache";
 
 export async function regenerateAllPartnerProductImages(limit = 20) {
   const admin = createAdminClient();
@@ -82,10 +83,11 @@ export async function regenerateAllPartnerProductImages(limit = 20) {
         regeneration_attempts: 0,
       }).eq("id", src.id);
 
-      const { data: product } = await admin.from("products").select("id, images").eq("id", src.product_id).single();
+      const { data: product } = await admin.from("products").select("id, slug, images").eq("id", src.product_id).single();
       if (product) {
         const updatedImages = (product.images as string[]).map((img) => (img === src.final_image_url ? newUrl : img));
         await admin.from("products").update({ images: updatedImages }).eq("id", product.id);
+        if (product.slug) revalidatePath(`/products/${product.slug}`);
       }
       successCount++;
     } catch (e) {

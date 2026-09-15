@@ -16,11 +16,24 @@ export default function NewOrdersBadge() {
 
   useEffect(() => {
     const initialFetch = setTimeout(() => fetchCount(), 0);
-    const interval = setInterval(fetchCount, 20000);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(fetchCount, 20000);
+    // تا وقتی تب مرورگر در پس‌زمینه‌ست poll متوقف می‌شه، همین که برگردد فوراً یک‌بار چک می‌شه.
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        fetchCount();
+        if (interval) clearInterval(interval);
+        interval = setInterval(fetchCount, 20000);
+      } else if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("admin-orders-changed", fetchCount);
     return () => {
       clearTimeout(initialFetch);
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("admin-orders-changed", fetchCount);
     };
   }, [fetchCount]);

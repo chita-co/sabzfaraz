@@ -22,7 +22,11 @@ export async function confirmReverseAuctionOfflinePayment(orderId: string) {
   const { data: items } = await supabase.from("order_items").select("product_id, quantity").eq("order_id", orderId);
   for (const item of items ?? []) {
     if (item.product_id) {
-      try { await admin.rpc("decrement_product_stock", { p_product_id: item.product_id, p_qty: item.quantity }); }
+      try {
+        await admin.rpc("decrement_product_stock", { p_product_id: item.product_id, p_qty: item.quantity });
+        const { data: slugRow } = await admin.from("products").select("slug").eq("id", item.product_id).single();
+        if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
+      }
       catch (e) { console.error("خطا در کسر موجودی محصول:", e); }
     }
   }

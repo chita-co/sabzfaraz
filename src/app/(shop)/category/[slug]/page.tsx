@@ -24,14 +24,17 @@ export default async function CategoryPage({
   const pageSize = ALLOWED_PAGE_SIZES.includes(Number(pageSizeParam)) ? Number(pageSizeParam) : 20;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const { data: category } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
+  // این دو کوئری (کاربر لاگین‌شده و اطلاعات دسته‌بندی) مستقل از هم هستن،
+  // پس هم‌زمان اجرا می‌شن؛ ادامه منطق (چک notFound و...) دقیقاً مثل قبل است.
+  const [{ data: { user } }, { data: category }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single(),
+  ]);
   if (!category) notFound();
 
   // دریافت اطلاعات دسته والد (اگر وجود داشته باشد)

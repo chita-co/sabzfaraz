@@ -12,7 +12,11 @@ import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import { getPostsForProduct } from "@/lib/blog/queries";
 
-export const dynamic = "force-dynamic";
+// این صفحه قبلا force-dynamic بود (رندر کامل روی سرور در هر بازدید، بدون کش).
+// چون بیشترین مصرف CPU سایت مربوط به همین صفحه بود، الان با ISR کش میشه:
+// صفحه حداکثر تا ۱ ساعت کش میمونه، ولی به محض ویرایش/تغییر قیمت یا موجودی محصول در پنل ادمین
+// (از طریق revalidatePath که در اکشن‌های مربوطه صدا زده میشه) بلافاصله کش همون محصول پاک و به‌روز میشه.
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

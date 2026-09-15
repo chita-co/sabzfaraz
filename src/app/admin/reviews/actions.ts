@@ -20,8 +20,10 @@ export async function deleteReview(reviewId: string, productId: string) {
 
   await adminClient.from("products").update({ rating_avg: avg, rating_count: count }).eq("id", productId);
 
+  const { data: productRow } = await adminClient.from("products").select("slug").eq("id", productId).single();
+
   revalidatePath("/admin/reviews");
-  revalidatePath("/products", "layout");
+  if (productRow?.slug) revalidatePath(`/products/${productRow.slug}`);
   revalidatePath("/");
   return { success: true };
 }

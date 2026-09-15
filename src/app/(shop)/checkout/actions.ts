@@ -28,6 +28,10 @@ async function decrementStockForItems(supabase: Awaited<ReturnType<typeof create
     if (item.isChinaOrder) continue;
     try {
       await supabase.rpc("decrement_product_stock", { p_product_id: item.productId, p_qty: item.quantity });
+      // موجودی محصول تغییر کرد، کش صفحه‌ی همین محصول (ISR) هم فوراً پاک بشه
+      // تا موجودی جدید بلافاصله روی سایت درست نمایش داده بشه.
+      const { data: slugRow } = await supabase.from("products").select("slug").eq("id", item.productId).single();
+      if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
     } catch (e) {
       console.error("خطا در کسر موجودی محصول:", e);
     }

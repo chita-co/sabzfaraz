@@ -4,6 +4,7 @@ import { verifyPayment } from "@/lib/sep";
 import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
+import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -77,6 +78,9 @@ export async function POST(request: NextRequest) {
                 .from("products")
                 .update({ stock: newStock })
                 .eq("id", item.product_id);
+              // موجودی همین محصول تغییر کرد، کش صفحه‌ش هم پاک بشه.
+              const { data: slugRow } = await supabase.from("products").select("slug").eq("id", item.product_id).single();
+              if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
             }
           } catch (e) {
             console.error("خطا در کسر موجودی محصول:", e);

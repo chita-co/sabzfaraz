@@ -7,11 +7,21 @@ import FeaturedPartnerForm from "@/components/admin/FeaturedPartnerForm";
 
 export default async function AdminPartnerSettingsPage() {
   const admin = createAdminClient();
-  const { data: settings } = await admin.from("partner_settings").select("*").eq("id", 1).single();
-  const { data: aiKeys } = await admin.from("partner_ai_keys").select("*").order("priority");
-  const { data: partnersList } = await admin.from("partners").select("id, business_name, phone").eq("status", "ACTIVE").order("business_name");
-  const { data: featured } = await admin.from("homepage_partner_feature").select("*").eq("id", 1).single();
-  const { data: partnerBanners } = await admin.from("banners").select("*").eq("position", "partners").order("sort_order");
+  // این ۵ کوئری کاملاً از هم مستقل‌اند (هیچ‌کدام به نتیجه دیگری نیاز ندارد)،
+  // پس به‌جای پشت‌سرهم اجرا شدن، هم‌زمان اجرا می‌شوند؛ نتیجه و ترتیب نمایش دقیقاً مثل قبل است.
+  const [
+    { data: settings },
+    { data: aiKeys },
+    { data: partnersList },
+    { data: featured },
+    { data: partnerBanners },
+  ] = await Promise.all([
+    admin.from("partner_settings").select("*").eq("id", 1).single(),
+    admin.from("partner_ai_keys").select("*").order("priority"),
+    admin.from("partners").select("id, business_name, phone").eq("status", "ACTIVE").order("business_name"),
+    admin.from("homepage_partner_feature").select("*").eq("id", 1).single(),
+    admin.from("banners").select("*").eq("position", "partners").order("sort_order"),
+  ]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

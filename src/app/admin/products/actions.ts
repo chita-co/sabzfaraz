@@ -330,7 +330,7 @@ export async function deleteProduct(id: string, images: string[]) {
   const supabase = await createClient();
   const { data: current } = await supabase
     .from("products")
-    .select("description_images")
+    .select("description_images, slug")
     .eq("id", id)
     .single();
   for (const url of images) await deleteImageByUrl(url);
@@ -340,6 +340,7 @@ export async function deleteProduct(id: string, images: string[]) {
   if (error) return { error: "خطا در حذف محصول: " + error.message };
   revalidatePath("/admin/products");
   revalidatePath("/");
+  if (current?.slug) revalidatePath(`/products/${current.slug}`);
   return { success: true };
 }
 
@@ -642,6 +643,14 @@ export async function quickUpdateProduct(
   const { error } = await supabase.from("products").update(payload).eq("id", id);
   if (error) return { error: error.message };
 
+  // اسلاگ محصول را می‌گیریم تا کش صفحه اختصاصی همین محصول (ISR) هم فوراً پاک/به‌روز بشه،
+  // چون این ادیت سریع (تغییر قیمت/موجودی) قبلاً فقط admin/products و صفحه اصلی رو رفرش می‌کرد.
+  const { data: slugRow } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("id", id)
+    .single();
+
   if (changes.price !== undefined) {
     const { data: p } = await supabase
       .from("products")
@@ -653,6 +662,7 @@ export async function quickUpdateProduct(
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
   return { success: true };
 }
 
@@ -677,6 +687,15 @@ export async function bulkAdjustProductPrices(input: {
   roundingMode: "up" | "down" | "nearest";
 }) {
   const supabase = await createClient();
+
+  // قبل از اجرای RPC، اسلاگ محصولاتی که قراره تحت تاثیر قرار بگیرن رو می‌گیریم
+  // تا بعداً بتونیم کش صفحه‌ی هرکدوم رو جدا پاک کنیم.
+  let affectedQuery = supabase.from("products").select("slug");
+  if (input.categoryIds.length > 0) {
+    affectedQuery = affectedQuery.in("category_id", input.categoryIds);
+  }
+  const { data: affectedProducts } = await affectedQuery;
+
   const { data, error } = await supabase.rpc("bulk_adjust_product_prices", {
     p_category_ids: input.categoryIds.length > 0 ? input.categoryIds : null,
     p_adjust_type: input.adjustType,
@@ -691,5 +710,8 @@ export async function bulkAdjustProductPrices(input: {
   if (result.error) return { error: result.error };
   revalidatePath("/admin/products");
   revalidatePath("/");
+  for (const p of affectedProducts ?? []) {
+    if (p.slug) revalidatePath(`/products/${p.slug}`);
+  }
   return { success: true, updatedCount: result.updatedCount ?? 0 };
 }

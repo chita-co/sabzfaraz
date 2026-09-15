@@ -40,7 +40,13 @@ export async function bulkUpdateProducts(ids: string[], changes: BulkChanges, qu
     }
   }
 
+  // صفحات اختصاصی همه محصولاتی که با هم ویرایش شدن (ISR) هم باید رفرش بشن.
+  const { data: slugRows } = await supabase.from("products").select("slug").in("id", ids);
+
   revalidatePath("/admin/products");
   revalidatePath("/");
+  for (const row of slugRows ?? []) {
+    if (row.slug) revalidatePath(`/products/${row.slug}`);
+  }
   return { success: true };
 }

@@ -17,6 +17,18 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "sabzfaraz.vercel.app" }],
+        destination: "https://sabzfaraz.ir/:path*",
+        permanent: true,
+      },
+    ];
+  },
+
   async rewrites() {
     // فقط روی حساب اصلی (Vercel 1) فعال است.
     // روی حساب دوم (Vercel 2) این متغیر را true می‌کنیم تا rewrites غیرفعال شوند.

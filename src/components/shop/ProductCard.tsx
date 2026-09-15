@@ -22,6 +22,12 @@ export default function ProductCard({
   return (
     <Link
       href={`/products/${product.slug}`}
+      // prefetch={false}: پیش‌فرض Next.js اینه که وقتی این لینک توی صفحه (مثلا لیست محصولات) دیده بشه،
+      // حتی بدون کلیک کاربر، محتوای صفحه محصول مقصد از سرور گرفته بشه. چون همین کارت توی لیست
+      // محصولات/دسته‌بندی‌ها بارها تکرار میشه، این پیش‌بارگذاری خودکار پرمصرف‌ترین عامل بود.
+      // غیرفعال کردنش هیچ قابلیتی رو از بین نمی‌بره، فقط اولین کلیک روی یک محصول به‌جای آنی، مثل
+      // یک لینک معمولی وب لود میشه (چند صدم ثانیه کندتر).
+      prefetch={false}
       className="group block overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:shadow-md"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100">

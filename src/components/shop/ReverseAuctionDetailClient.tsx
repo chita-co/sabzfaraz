@@ -45,8 +45,27 @@ export default function ReverseAuctionDetailClient({
     setStatus(state.status);
   }, [auction.id]);
   useEffect(() => {
-    pollRef.current = setInterval(poll, 6000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    // فاصله poll از ۶ثانیه به ۱۲ثانیه زیاد شد (قیمت فعلی همچنان محاسبه‌ی لحظه‌ای سمت مشتری است
+    // و به این poll وابسته نیست، فقط وضعیت فروش رو می‌گیره) و وقتی تب در پس‌زمینه‌ست
+    // هیچ درخواستی فرستاده نمی‌شه، همین که تب برمی‌گردد فوراً یک poll انجام می‌شه.
+    function startPolling() {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(poll, 12000);
+    }
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        poll();
+        startPolling();
+      } else if (pollRef.current) {
+        clearInterval(pollRef.current);
+      }
+    }
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [poll]);
 
   const isActive = status === "ACTIVE" && now !== null && new Date(auction.starts_at).getTime() <= now;

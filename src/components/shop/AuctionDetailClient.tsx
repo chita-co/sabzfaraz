@@ -119,8 +119,28 @@ export default function AuctionDetailClient({
 
   useEffect(() => {
     poll(); // چک فوری در همان لحظه‌ی بارگذاری
-    pollRef.current = setInterval(poll, 12000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    // فاصله poll از ۱۲ثانیه به ۱۸ثانیه زیاد شد و وقتی تب مرورگر در پس‌زمینه‌ست
+    // (مثلا کاربر رفته تب دیگر) هیچ درخواستی فرستاده نمی‌شه، تا مصرف بیخودی روی
+    // تب‌های باز ولی فراموش‌شده کم بشه. همین که تب برمی‌گردد، فوراً یک poll انجام می‌شه تا
+    // اطلاعات (بالاترین قیمت، تعداد شرکت‌کنندگان...) فوراً تازه بشه.
+    function startPolling() {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(poll, 18000);
+    }
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        poll();
+        startPolling();
+      } else if (pollRef.current) {
+        clearInterval(pollRef.current);
+      }
+    }
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [poll]);
 
   async function handlePayEntryFee() {

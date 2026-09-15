@@ -544,6 +544,7 @@ export async function updatePartnerProductAction(productId: string, input: Partn
 
     revalidatePath("/partner/products");
     revalidatePath("/admin/partners/products");
+    if (existing.slug) revalidatePath(`/products/${existing.slug}`);
     return { success: true };
   } catch (e: unknown) {
     console.error("updatePartnerProductAction:", e);
@@ -578,7 +579,7 @@ export async function bulkAdjustPartnerProductPricesAction(input: {
 
   const { data: products } = await admin
     .from("products")
-    .select("id, price, discount_price, partner_cost_price")
+    .select("id, slug, price, discount_price, partner_cost_price")
     .eq("partner_id", partner.id);
 
   if (!products || products.length === 0) {
@@ -631,6 +632,9 @@ export async function bulkAdjustPartnerProductPricesAction(input: {
 
   revalidatePath("/partner/products");
   revalidatePath("/partner/products/bulk-price-update");
+  for (const p of products) {
+    if (p.slug) revalidatePath(`/products/${p.slug}`);
+  }
   return { success: true, updatedCount };
 }
 
@@ -639,7 +643,7 @@ export async function deletePartnerProductAction(productId: string) {
     const partner = await requireActivePartner();
     const admin = createAdminClient();
 
-    const { data: product } = await admin.from("products").select("id, partner_id").eq("id", productId).eq("partner_id", partner.id).single();
+    const { data: product } = await admin.from("products").select("id, partner_id, slug").eq("id", productId).eq("partner_id", partner.id).single();
     if (!product) return { error: "محصول یافت نشد یا متعلق به شما نیست." };
 
     const { count } = await admin.from("order_items").select("id", { count: "exact", head: true }).eq("product_id", productId);
@@ -657,6 +661,7 @@ export async function deletePartnerProductAction(productId: string) {
     if (error) return { error: "خطا در حذف محصول: " + error.message };
 
     revalidatePath("/partner/products");
+    if (product.slug) revalidatePath(`/products/${product.slug}`);
     return { success: true };
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "خطای غیرمنتظره‌ای رخ داد.";

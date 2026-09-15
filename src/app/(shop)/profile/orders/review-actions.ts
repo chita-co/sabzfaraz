@@ -52,8 +52,10 @@ export async function submitReview(
 
   await adminClient.from("products").update({ rating_avg: avg, rating_count: count }).eq("id", productId);
 
+  const { data: productRow } = await supabase.from("products").select("slug").eq("id", productId).single();
+
   revalidatePath("/profile/orders");
-  revalidatePath("/products", "layout");
+  if (productRow?.slug) revalidatePath(`/products/${productRow.slug}`);
   revalidatePath("/");
   return { success: true };
 }
