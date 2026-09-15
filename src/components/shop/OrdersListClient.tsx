@@ -140,9 +140,9 @@ export default function OrdersListClient({
                 e.stopPropagation();
                 handleTrackParcel(o.postal_tracking_code as string);
               }}
-              className="mt-1 inline-flex items-center gap-1 text-xs text-green-700 hover:text-green-800 font-medium"
-            >
-              <Truck size={12} /> پیگیری مرسوله
+              className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-green-800 bg-white/60 backdrop-blur-sm border border-green-200/80 rounded-full px-3 py-1.5 shadow-sm hover:bg-green-50 hover:border-green-300 transition"
+>
+              <Truck size={14} /> پیگیری مرسوله
             </button>
           )}
         </div>

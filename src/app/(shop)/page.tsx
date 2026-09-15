@@ -217,8 +217,8 @@ if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.sho
 
       <PromoAdsGrid ads={(promoAds as PromoAd[]) ?? []} />
 
-      <div className="mx-auto max-w-7xl px-4 mt-46">
-        <BannerCarousel banners={(dealsBanners as Banner[]) ?? []} height={180} altPrefix="جشنواره تخفیف" />
+      <div id="deals-section" className="mx-auto max-w-7xl px-4 mt-46" style={{ scrollMarginTop: 90 }}>
+        <BannerCarousel banners={(dealsBanners as Banner[]) ?? []} height={280} altPrefix="جشنواره تخفیف" />
       </div>
       {settings?.deals_enabled && (
         <DealsSection
@@ -228,7 +228,7 @@ if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.sho
       )}
 
       <div className="mx-auto max-w-7xl px-4">
-        <BannerCarousel banners={(newestBanners as Banner[]) ?? []} height={180} altPrefix="محصولات جدید" />
+        <BannerCarousel banners={(newestBanners as Banner[]) ?? []} height={280} altPrefix="محصولات جدید" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6">
@@ -240,7 +240,7 @@ if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.sho
         />
 
         <div className="mx-auto max-w-7xl px-4">
-          <BannerCarousel banners={(popularBanners as Banner[]) ?? []} height={180} altPrefix="محصولات پرطرفدار" />
+          <BannerCarousel banners={(popularBanners as Banner[]) ?? []} height={280} altPrefix="محصولات پرطرفدار" />
         </div>
 
         <HorizontalProductSection
@@ -253,7 +253,7 @@ if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.sho
         {settings?.stock_enabled && (
           <>
             <div className="mx-auto max-w-7xl px-4">
-              <BannerCarousel banners={(stockBanners as Banner[]) ?? []} height={180} altPrefix="محصولات استوک" />
+              <BannerCarousel banners={(stockBanners as Banner[]) ?? []} height={280} altPrefix="محصولات استوک" />
             </div>
             <HorizontalProductSection
               title="محصولات استوک"

@@ -54,6 +54,11 @@ body {
   font-family: 'Vazirmatn', 'Tahoma', Helvetica, sans-serif;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
