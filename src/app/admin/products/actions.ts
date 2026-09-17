@@ -244,6 +244,11 @@ export async function updateProduct(id: string, input: ProductInput) {
   const supabase = await createClient();
   const slug = await generateUniqueSlug(supabase, input.slug || input.name, id);
 
+  const { data: prevRow } = await supabase.from("products").select("slug, previous_slugs").eq("id", id).single();
+  const previousSlugs = prevRow?.slug && prevRow.slug !== slug
+    ? Array.from(new Set([...(prevRow.previous_slugs ?? []), prevRow.slug]))
+    : (prevRow?.previous_slugs ?? []);
+
   const { data: before } = await supabase
     .from("products")
     .select("price, discount_price")
@@ -256,6 +261,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       name: input.name,
       name_en: input.nameEn,
       slug,
+      previous_slugs: previousSlugs,
       description: input.description,
       price: input.price,
       discount_price: input.discountPrice,

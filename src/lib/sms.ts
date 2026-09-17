@@ -99,3 +99,21 @@ export async function sendLoyaltyPointsEarnedSms(
     { name: "POINTS", value: points.toLocaleString("fa-IR") },
   ]);
 }
+
+
+export async function sendGroupDiscountSms(
+  mobile: string,
+  name: string,
+  discountCode: string,
+  percent: number,
+  validDays: number
+) {
+  const templateId = Number(process.env.SMSIR_GROUP_DISCOUNT_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_GROUP_DISCOUNT_TEMPLATE_ID تنظیم نشده است.");
+  return sendTemplateSms(mobile, templateId, [
+    { name: "NAME", value: name },
+    { name: "PERCENT", value: String(percent) },
+    { name: "DISCOUNT", value: discountCode },
+    { name: "DAYS", value: String(validDays) },
+  ]);
+}

@@ -4,7 +4,8 @@ export function slugify(input: string): string {
   return input
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\u200C\u200F\u200E]/g, "")
+    .replace(/[^a-z0-9\u0600-\u06FF\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");

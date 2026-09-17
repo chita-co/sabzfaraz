@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProductDetail from "@/components/shop/ProductDetail";
 import RelatedProducts from "@/components/shop/RelatedProducts";
@@ -31,7 +31,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (productError) {
     console.error(`خطای دیتابیس در دریافت محصول با اسلاگ "${slug}":`, JSON.stringify(productError));
   }
-  if (!product) notFound();
+  if (!product) {
+    const { data: moved } = await supabase
+      .from("products")
+      .select("id")
+      .contains("previous_slugs", [slug])
+      .eq("is_active", true)
+      .maybeSingle();
+    if (moved) return {};   // به‌زودی توسط خود صفحه ریدایرکت میشه، اینجا فقط جلوی 404 زودهنگام رو می‌گیریم
+    notFound();
+  }
   return {
     title: product.meta_title || `${product.name} | سبزفراز`,
     description: (product.meta_description || product.description)?.slice(0, 160),
@@ -56,7 +65,16 @@ export default async function ProductPage({
     .eq("is_active", true)
     .single();
 
-  if (!product) notFound();
+  if (!product) {
+    const { data: moved } = await supabase
+      .from("products")
+      .select("slug")
+      .contains("previous_slugs", [slug])
+      .eq("is_active", true)
+      .maybeSingle();
+    if (moved?.slug) redirect(`/products/${moved.slug}`);
+    notFound();
+  }
 
   const relatedArticles = await getPostsForProduct(product.id);
 

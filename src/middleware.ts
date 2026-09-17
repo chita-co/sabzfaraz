@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 
 const OLD_DOMAIN = "sabzfaraz.vercel.app";
 const NEW_DOMAIN = "sabzfaraz.ir";
-const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/", "/badge-company"]);
+const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/", "/badge-company", "/badge-personal", "/enamad-verify"]);
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";

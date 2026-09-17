@@ -13,15 +13,19 @@ interface SyncCartItem {
   quantity: number;
 }
 
-export async function syncCartToServer(items: SyncCartItem[]) {
+export async function syncCartToServer(items: SyncCartItem[], options?: { allowEmptyDelete?: boolean }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return []; // فقط برای کاربران واردشده ذخیره می‌شود
 
   if (items.length === 0) {
-    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    if (options?.allowEmptyDelete) {
+      await supabase.from("cart_items").delete().eq("user_id", user.id);
+    }
     return [];
   }
+
+
 
   const keys = items.map((i) => `${i.productId}|${i.selectedColor ?? ""}|${i.selectedSize ?? ""}`);
 
@@ -57,4 +61,12 @@ export async function syncCartToServer(items: SyncCartItem[]) {
     size: r.selected_size || null,
     id: r.id,
   }));
+}
+
+
+export async function clearCartOnServer() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("cart_items").delete().eq("user_id", user.id);
 }

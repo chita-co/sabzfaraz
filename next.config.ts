@@ -18,16 +18,6 @@ const nextConfig: NextConfig = {
     },
   },
 
-  async redirects() {
-    return [
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "sabzfaraz.vercel.app" }],
-        destination: "https://sabzfaraz.ir/:path*",
-        permanent: true,
-      },
-    ];
-  },
 
   async rewrites() {
     // فقط روی حساب اصلی (Vercel 1) فعال است.

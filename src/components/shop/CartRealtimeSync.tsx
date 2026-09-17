@@ -15,8 +15,9 @@ export default function CartRealtimeSync() {
     function subscribeForUser(userId: string) {
       if (channel) supabase.removeChannel(channel);
 
+      // ⚠️ اسم یکتا با timestamp تا خطای "after subscribe" رخ نده
       channel = supabase
-        .channel(`cart-sync-${userId}`)
+        .channel(`cart-sync-${userId}-${Date.now()}`)
         .on(
           "postgres_changes",
           { event: "DELETE", schema: "public", table: "cart_items", filter: `user_id=eq.${userId}` },
