@@ -15,9 +15,7 @@ import { signOut } from "@/app/(auth)/actions";
 import { useCartStore, useCartTotals } from "@/store/cart-store";
 import GooeyNav, { type GooeyNavItem } from "@/components/GooeyNav";
 import NotificationBell from "@/components/shop/NotificationBell";
-import LivePriceBadge from "@/components/shop/LivePriceBadge";
 import ShinyText from "@/components/ShinyText";
-import type { HeaderPriceSummary } from "@/lib/priceTicker/headerSummary";
 import { useShallow } from "zustand/react/shallow";
 
 const subscribeToCartHydration = (callback: () => void) =>
@@ -32,7 +30,7 @@ interface CategoryLite { id: string; name: string; slug: string; }
 interface CategoryTreeItem extends CategoryLite { children: CategoryLite[]; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار", prices,
+  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",
 }: {
   isLoggedIn: boolean;
   userName: string | null;
@@ -43,7 +41,6 @@ export default function HeaderNav({
   walletBalance?: number;
   auctionEnabled?: boolean;
   auctionLabel?: string;
-  prices?: HeaderPriceSummary;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -412,14 +409,6 @@ export default function HeaderNav({
               <Scale size={14} /> لیست مقایسه
             </button>
           </div>
-
-          {prices && (prices.usd || prices.gold18k || prices.bitcoin) && (
-            <Link href="/price-ticker" className="topbar-deals">
-              {prices.usd && <LivePriceBadge label="دلار" price={prices.usd.price} changePercent={prices.usd.changePercent} colorVar="1" />}
-              {prices.gold18k && <LivePriceBadge label="طلای ۱۸ عیار" price={prices.gold18k.price} changePercent={prices.gold18k.changePercent} colorVar="2" />}
-              {prices.bitcoin && <LivePriceBadge label="بیت‌کوین" price={prices.bitcoin.price} changePercent={prices.bitcoin.changePercent} unit="تومان" colorVar="3" />}
-            </Link>
-          )}
         </div>
 
         {/* ردیف دوم: لوگو + سرچ + آیکون‌ها */}

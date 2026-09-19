@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { BlogPost, BlogCategory } from "@/types/blog";
+import { cache } from "react";
+
 
 const POST_SELECT =
   "id, title, slug, excerpt, content, main_image_url, product_id, status, meta_title, meta_description, tags, read_time, view_count, like_count, bookmark_count, is_featured, ai_generated, created_at, published_at";
@@ -38,7 +40,7 @@ export async function getFeaturedPosts(limit = 5) {
   return (data ?? []) as BlogPost[];
 }
 
-export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+export const getPostBySlug = cache(async (slug: string): Promise<BlogPost | null> => {
   const supabase = await createClient();
   const { data: rawPost } = await supabase.from("blog_posts").select(POST_SELECT + ", pending_category_name")
     .eq("slug", slug).eq("status", "published").maybeSingle();
@@ -62,7 +64,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     }).filter(Boolean) as BlogCategory[],
     product: productResult.data,
   } as BlogPost;
-}
+});
 
 export async function getRelatedPosts(postId: string, limit = 6) {
   const supabase = await createClient();

@@ -3,7 +3,7 @@ import { uploadImage } from "@/lib/arvan";
 import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 
-export async function regenerateAllPartnerProductImages(limit = 20) {
+export async function regenerateAllPartnerProductImages(limit = 5) {
   const admin = createAdminClient();
   const { data: settings } = await admin.from("partner_settings").select("*").eq("id", 1).single();
   if (!settings?.frame_template_url) throw new Error("قالب تصویر تنظیم نشده است.");
@@ -87,8 +87,7 @@ export async function regenerateAllPartnerProductImages(limit = 20) {
       if (product) {
         const updatedImages = (product.images as string[]).map((img) => (img === src.final_image_url ? newUrl : img));
         await admin.from("products").update({ images: updatedImages }).eq("id", product.id);
-        if (product.slug) revalidatePath(`/products/${product.slug}`);
-      }
+}
       successCount++;
     } catch (e) {
       console.error(`خطا در بازتولید تصویر محصول ${src.product_id}:`, e);
@@ -98,6 +97,12 @@ export async function regenerateAllPartnerProductImages(limit = 20) {
       failCount++;
     }
   }
+
+  // بعد از اتمام همه‌ی تصاویر، کش رو یک‌بار revalidate کن (به‌جای داخل حلقه)
+  if (successCount > 0) {
+    revalidatePath("/", "layout");
+  }
+
   const { count: remaining } = await admin
     .from("partner_product_image_sources")
     .select("id", { count: "exact", head: true })

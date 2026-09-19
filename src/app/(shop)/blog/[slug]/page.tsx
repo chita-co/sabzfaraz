@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getPostBySlug, getRelatedPosts, incrementPostView, getCommentsForPost } from "@/lib/blog/queries";
+import { getPostBySlug, getRelatedPosts, getCommentsForPost } from "@/lib/blog/queries";
 import ArticleBody from "@/components/blog/ArticleBody";
 import ProductCtaBox from "@/components/blog/ProductCtaBox";
 import RelatedPostsGrid from "@/components/blog/RelatedPostsGrid";
@@ -14,6 +14,9 @@ import CommentsSection from "@/components/blog/CommentsSection";
 import NextArticle from "@/components/blog/NextArticle";
 import UserBadgesWidget from "@/components/blog/UserBadgesWidget";
 import "../blog.css";
+import BlogViewTracker from "@/components/blog/BlogViewTracker";
+
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -36,7 +39,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  incrementPostView(post.id).catch(() => {});
 
   const supabase = await createClient();
   const [related, comments, { data: { user } }] = await Promise.all([
@@ -59,6 +61,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   return (
     <article className="blog-article">
       <ReadingProgressBar />
+      <BlogViewTracker postId={post.id} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="blog-article-hero">

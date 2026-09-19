@@ -1,4 +1,7 @@
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import ProductDetail from "@/components/shop/ProductDetail";
 import RelatedProducts from "@/components/shop/RelatedProducts";
@@ -10,7 +13,6 @@ import { getLoyaltySettings } from "@/lib/loyalty/settings";
 import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
 import Breadcrumb from "@/components/shop/Breadcrumb";
-import { getPostsForProduct } from "@/lib/blog/queries";
 
 // این صفحه قبلا force-dynamic بود (رندر کامل روی سرور در هر بازدید، بدون کش).
 // چون بیشترین مصرف CPU سایت مربوط به همین صفحه بود، الان با ISR کش میشه:
@@ -18,27 +20,31 @@ import { getPostsForProduct } from "@/lib/blog/queries";
 // (از طریق revalidatePath که در اکشن‌های مربوطه صدا زده میشه) بلافاصله کش همون محصول پاک و به‌روز میشه.
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const supabase = await createClient();
-  const { data: product, error: productError } = await supabase
+
+const getProductBySlug = cache(async (slug: string) => {
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("products")
     .select("*, category:categories!products_category_id_fkey(slug, parent_id, name), partner:partners(business_name, rating_avg)")
     .eq("slug", slug)
     .eq("is_active", true)
-    .single();
+    .maybeSingle();
+  return data;
+});
 
-  if (productError) {
-    console.error(`خطای دیتابیس در دریافت محصول با اسلاگ "${slug}":`, JSON.stringify(productError));
-  }
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
   if (!product) {
-    const { data: moved } = await supabase
+    const admin = createAdminClient();
+    const { data: moved } = await admin
       .from("products")
       .select("id")
       .contains("previous_slugs", [slug])
       .eq("is_active", true)
       .maybeSingle();
-    if (moved) return {};   // به‌زودی توسط خود صفحه ریدایرکت میشه، اینجا فقط جلوی 404 زودهنگام رو می‌گیریم
+    if (moved) return {};
     notFound();
   }
   return {
@@ -49,34 +55,54 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+const getCachedProductExtras = unstable_cache(
+  async (productId: string, categoryId: string) => {
+    const admin = createAdminClient();
+    const [related, reviews, tiers, videos, attrs, blogPosts] = await Promise.all([
+      admin.from("products").select("*").eq("category_id", categoryId).eq("is_active", true).neq("id", productId).order("created_at", { ascending: false }).limit(12),
+      admin.from("product_reviews").select("*").eq("product_id", productId).order("created_at", { ascending: false }).limit(20),
+      admin.from("product_quantity_tiers").select("*").eq("product_id", productId).order("min_qty", { ascending: true }),
+      admin.from("unboxing_videos").select("*").eq("product_id", productId).eq("status", "PUBLISHED").order("published_at", { ascending: false }),
+      admin.from("product_attributes").select("*").eq("product_id", productId).order("sort_order", { ascending: true }),
+      admin.rpc("get_blog_posts_for_product", { p_product_id: productId, p_limit: 6 }),
+    ]);
+    return {
+      relatedProducts: related.data ?? [],
+      reviews: reviews.data ?? [],
+      quantityTiers: tiers.data ?? [],
+      unboxingVideos: videos.data ?? [],
+      attributes: attrs.data ?? [],
+      relatedArticles: blogPosts.data ?? [],
+    };
+  },
+  ["product-extras"],
+  { revalidate: 3600, tags: ["products"] }
+);
+
+
 export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const supabase = await createClient();
-
-  // ۱. دریافت محصول به‌همراه شناسه و نام و والد دسته‌اش
-  const { data: product } = await supabase
-    .from("products")
-    .select("*, category:categories!products_category_id_fkey(slug, parent_id, name), partner:partners(business_name, rating_avg)")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
+  const product = await getProductBySlug(slug);
 
   if (!product) {
-    const { data: moved } = await supabase
-      .from("products")
-      .select("slug")
-      .contains("previous_slugs", [slug])
-      .eq("is_active", true)
-      .maybeSingle();
+  const admin = createAdminClient();
+  const { data: moved } = await admin
+    .from("products")
+    .select("slug")
+    .contains("previous_slugs", [slug])
+    .eq("is_active", true)
+    .maybeSingle();
     if (moved?.slug) redirect(`/products/${moved.slug}`);
     notFound();
   }
 
-  const relatedArticles = await getPostsForProduct(product.id);
+  // 👇 این خط اضافه می‌شه — چون برای getUser و wishlist لازمه
+  const supabase = await createClient();
+
 
 // ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
   const categoryChain: { name: string; slug: string }[] = [];
@@ -118,38 +144,7 @@ export default async function ProductPage({
     isWishlisted = !!wish;
   }
 
-  const [{ data: relatedProducts }, { data: reviews }, { data: quantityTiers }, { data: unboxingVideos }, { data: attributes }] = await Promise.all([
-    supabase
-      .from("products")
-      .select("*")
-      .eq("category_id", product.category_id)
-      .eq("is_active", true)
-      .neq("id", product.id)
-      .order("created_at", { ascending: false })
-      .limit(12),
-    supabase
-      .from("product_reviews")
-      .select("*")
-      .eq("product_id", product.id)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("product_quantity_tiers")
-      .select("*")
-      .eq("product_id", product.id)
-      .order("min_qty", { ascending: true }),
-    supabase
-      .from("unboxing_videos")
-      .select("*")
-      .eq("product_id", product.id)
-      .eq("status", "PUBLISHED")
-      .order("published_at", { ascending: false }),
-    supabase
-      .from("product_attributes")
-      .select("*")
-      .eq("product_id", product.id)
-      .order("sort_order", { ascending: true }),
-  ]);
+  const { relatedProducts, reviews, quantityTiers, unboxingVideos, attributes, relatedArticles } = await getCachedProductExtras(product.id, product.category_id);
 
   const relatedIds = (relatedProducts ?? []).map((p) => p.id);
   let relatedWishlistIds = new Set<string>();
