@@ -1,8 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import ProductDetail from "@/components/shop/ProductDetail";
 import RelatedProducts from "@/components/shop/RelatedProducts";
 import ProductReviewsDisplay from "@/components/shop/ProductReviewsDisplay";
@@ -10,7 +9,6 @@ import { Product } from "@/types";
 import "./product-detail.css";
 import SilkBackground from "@/components/backgrounds/SilkBackground";
 import { getLoyaltySettings } from "@/lib/loyalty/settings";
-import { getUserTierMultiplier } from "@/lib/loyalty/ledger";
 import ProductUnboxingSection from "@/components/shop/ProductUnboxingSection";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 
@@ -96,12 +94,12 @@ export default async function ProductPage({
     .contains("previous_slugs", [slug])
     .eq("is_active", true)
     .maybeSingle();
-    if (moved?.slug) redirect(`/products/${moved.slug}`);
+    if (moved?.slug) permanentRedirect(`/products/${moved.slug}`);
     notFound();
   }
 
   // 👇 این خط اضافه می‌شه — چون برای getUser و wishlist لازمه
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
 
 // ۲. ساخت زنجیره کامل والدین (از دستهٔ فعلی تا ریشه)
@@ -111,7 +109,7 @@ export default async function ProductPage({
     let safetyCounter = 0;
     while (currentParentId && safetyCounter < 10) {
       safetyCounter++;
-      const { data: cat, error: catError } = await supabase
+      const { data: cat, error: catError } = await admin
         .from("categories")
         .select("name, slug, parent_id")
         .eq("id", currentParentId)
@@ -126,36 +124,13 @@ export default async function ProductPage({
     }
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const [loyaltySettings, loyaltyMultiplier] = await Promise.all([
-    getLoyaltySettings(),
-    getUserTierMultiplier(user?.id ?? null),
-  ]);
-
-  let isWishlisted = false;
-  if (user) {
-    const { data: wish } = await supabase
-      .from("wishlists")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("product_id", product.id)
-      .maybeSingle();
-    isWishlisted = !!wish;
-  }
+  const loyaltySettings = await getLoyaltySettings();
+  const loyaltyMultiplier = 1; // ضریب واقعی کاربر هنگام تسویه سفارش (earnPointsForOrder) جدا محاسبه میشه، اینجا فقط پیش‌نمایشه
+  const isWishlisted = false; // وضعیت واقعی رو خود دکمه‌ی Wishlist سمت کلاینت چک می‌کنه
 
   const { relatedProducts, reviews, quantityTiers, unboxingVideos, attributes, relatedArticles } = await getCachedProductExtras(product.id, product.category_id);
 
-  const relatedIds = (relatedProducts ?? []).map((p) => p.id);
-  let relatedWishlistIds = new Set<string>();
-  if (user && relatedIds.length > 0) {
-    const { data: wishRows } = await supabase
-      .from("wishlists")
-      .select("product_id")
-      .eq("user_id", user.id)
-      .in("product_id", relatedIds);
-    relatedWishlistIds = new Set((wishRows ?? []).map((w) => w.product_id));
-  }
+  const relatedWishlistIds = new Set<string>();
 
   // ساخت Schema.org برای سئو و ترب — قیمت‌ها به ریال تبدیل می‌شوند
   const tierPrices = (quantityTiers ?? []).map((t) => t.unit_price);
