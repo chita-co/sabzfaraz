@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "حریم خصوصی | سبزفراز",
+  description: "سیاست حفظ حریم خصوصی کاربران فروشگاه اینترنتی سبزفراز — نحوه جمع‌آوری، استفاده و نگهداری اطلاعات.",
+  alternates: { canonical: "/privacy" },
+};
+
+
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 space-y-6 text-gray-700 leading-8">

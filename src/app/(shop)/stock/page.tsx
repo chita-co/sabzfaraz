@@ -4,6 +4,14 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import { Product } from "@/types";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "محصولات استوک | سبزفراز",
+  description: "محصولات استوک الکترونیک با قیمت ویژه در فروشگاه اینترنتی سبزفراز.",
+  alternates: { canonical: "/stock" },
+};
+
 export default async function StockPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

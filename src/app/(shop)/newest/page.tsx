@@ -4,6 +4,14 @@ import ProductListClient from "@/components/shop/ProductListClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "جدیدترین محصولات | سبزفراز",
+  description: "جدیدترین محصولات الکترونیک، ماژول، سنسور و ابزار در فروشگاه اینترنتی سبزفراز.",
+  alternates: { canonical: "/newest" },
+};
+
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
 export default async function NewestProductsPage({

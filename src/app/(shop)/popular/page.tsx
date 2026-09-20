@@ -4,6 +4,14 @@ import ProductListClient from "@/components/shop/ProductListClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "محصولات پرطرفدار | سبزفراز",
+  description: "محصولات پرطرفدار و پرفروش الکترونیک در فروشگاه اینترنتی سبزفراز.",
+  alternates: { canonical: "/popular" },
+};
+
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
 export default async function PopularProductsPage({

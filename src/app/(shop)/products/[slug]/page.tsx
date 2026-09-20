@@ -32,17 +32,18 @@ const getProductBySlug = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const decodedSlug = decodeURIComponent(slug);
+  const product = await getProductBySlug(decodedSlug);
 
   if (!product) {
     const admin = createAdminClient();
     const { data: moved } = await admin
       .from("products")
-      .select("id")
-      .contains("previous_slugs", [slug])
+      .select("slug")
+      .contains("previous_slugs", [decodedSlug])
       .eq("is_active", true)
       .maybeSingle();
-    if (moved) return {};
+    if (moved?.slug) permanentRedirect(`/products/${moved.slug}`);
     notFound();
   }
   return {
@@ -84,14 +85,15 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const decodedSlug = decodeURIComponent(slug);
+  const product = await getProductBySlug(decodedSlug);
 
   if (!product) {
   const admin = createAdminClient();
   const { data: moved } = await admin
     .from("products")
     .select("slug")
-    .contains("previous_slugs", [slug])
+    .contains("previous_slugs", [decodedSlug])
     .eq("is_active", true)
     .maybeSingle();
     if (moved?.slug) permanentRedirect(`/products/${moved.slug}`);

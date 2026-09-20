@@ -4,6 +4,12 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import { Product } from "@/types";
 
+export const metadata = {
+  title: "جشنواره تخفیف | سبزفراز",
+  description: "جشنواره تخفیف ویژه محصولات الکترونیک سبزفراز — خرید با تخفیف محدود",
+  alternates: { canonical: "/deals" },
+};
+
 export default async function DealsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

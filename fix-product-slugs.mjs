@@ -91,6 +91,9 @@ async function submitUrlToIndexNow(url) {
 }
 
 async function run() {
+  const limitArg = process.argv.find((a) => a.startsWith("--limit="));
+  const limit = limitArg ? Math.max(1, parseInt(limitArg.split("=")[1], 10) || 0) : 0;
+  console.log(limit > 0 ? `⚠️ حالت تست: فقط ${limit} محصول اول اصلاح می‌شود.` : "حالت کامل: همه‌ی محصولات خراب اصلاح می‌شوند.");
   console.log("در حال خواندن همه‌ی محصولات...");
   const { data: products, error } = await supabase
     .from("products")
@@ -103,9 +106,10 @@ async function run() {
   }
 
   const broken = (products ?? []).filter((p) => isBrokenSlug(p.slug));
-  console.log(`${broken.length} محصول با اسلاگ خراب پیدا شد از مجموع ${products?.length ?? 0} محصول.\n`);
+  const targetList = limit > 0 ? broken.slice(0, limit) : broken;
+  console.log(`${targetList.length} محصول انتخاب شد از ${broken.length} محصول خراب (از مجموع ${products?.length ?? 0} محصول).\n`);
 
-  if (broken.length === 0) {
+  if (targetList.length === 0) {
     console.log("چیزی برای اصلاح نیست. ✅");
     return;
   }
@@ -114,7 +118,7 @@ async function run() {
   let fixed = 0;
   let skipped = 0;
 
-  for (const p of broken) {
+  for (const p of targetList) {
     const newSlug = await generateUniqueSlugStandalone(p.name, p.id, takenInThisRun);
 
     if (newSlug === p.slug) {

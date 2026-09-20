@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "قوانین و مقررات | سبزفراز",
+  description: "قوانین و مقررات خرید از فروشگاه اینترنتی سبزفراز — شرایط ثبت سفارش، ارسال، مرجوعی و حقوق کاربران.",
+  alternates: { canonical: "/terms" },
+};
+
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 space-y-6 text-gray-700 leading-8">

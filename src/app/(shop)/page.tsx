@@ -34,6 +34,7 @@ export const metadata = {
   title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
   description:
     "فروشگاه اینترنتی سبزفراز؛ مرجع تخصصی خرید قطعات الکترونیک، ماژول، سنسور، بردآردوینو وابزار لحیم‌کاری با قیمت مناسب و ارسال سریع از اصفهان به سراسر کشور.",
+    alternates: { canonical: "/" },
 };
 
 const categoryIcons: Record<string, React.ComponentType<{ size?: number }>> = {

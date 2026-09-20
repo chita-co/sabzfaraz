@@ -1,6 +1,13 @@
 import { Phone, Mail, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PrismaticBurstBackground from "@/components/backgrounds/PrismaticBurstBackground";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "تماس با ما | سبزفراز",
+  description: "راه‌های تماس با فروشگاه اینترنتی سبزفراز — شماره تماس، ایمیل و آدرس پشتیبانی.",
+  alternates: { canonical: "/contact" },
+};
 
 export default async function ContactPage() {
   const supabase = await createClient();

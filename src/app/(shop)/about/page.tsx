@@ -1,6 +1,13 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import AntigravityBackground from "@/components/backgrounds/AntigravityBackground";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "درباره ما | سبزفراز",
+  description: "آشنایی با فروشگاه اینترنتی سبزفراز — فروشگاه تخصصی قطعات الکترونیک، ماژول، سنسور و تجهیزات با ارسال سریع به سراسر کشور.",
+  alternates: { canonical: "/about" },
+};
 
 async function AboutContent() {
   const supabase = await createClient();

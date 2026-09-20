@@ -1,4 +1,11 @@
 import Breadcrumb from "@/components/shop/Breadcrumb";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "سوالات متداول | سبزفراز",
+  description: "پاسخ به سوالات پرتکرار درباره خرید، پرداخت، ارسال و مرجوعی در فروشگاه اینترنتی سبزفراز.",
+  alternates: { canonical: "/faq" },
+};
 
 const faqs = [
   {
