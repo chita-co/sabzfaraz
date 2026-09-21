@@ -55,7 +55,7 @@ export default function BulkOrderAdminDetail({
 
   useEffect(() => {
     getAdminBulkMessages(request.id).then(setMessages);
-    const interval = setInterval(() => getAdminBulkMessages(request.id).then(setMessages), 5000);
+    const interval = setInterval(() => getAdminBulkMessages(request.id).then(setMessages), 15000);
     return () => clearInterval(interval);
   }, [request.id]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
