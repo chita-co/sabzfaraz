@@ -18,7 +18,7 @@ export default function AdminPartnerChat({ ticketId, initialMessages, isClosed }
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setInterval(async () => setMessages(await getAdminPartnerTicketMessages(ticketId) as Message[]), 15000);
+    const timer = setInterval(async () => setMessages(await getAdminPartnerTicketMessages(ticketId) as Message[]), 4000);
     return () => clearInterval(timer);
   }, [ticketId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
