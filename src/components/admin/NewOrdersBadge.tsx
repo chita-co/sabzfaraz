@@ -16,13 +16,13 @@ export default function NewOrdersBadge() {
 
   useEffect(() => {
     const initialFetch = setTimeout(() => fetchCount(), 0);
-    let interval: ReturnType<typeof setInterval> | null = setInterval(fetchCount, 20000);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(fetchCount, 60000);
     // تا وقتی تب مرورگر در پس‌زمینه‌ست poll متوقف می‌شه، همین که برگردد فوراً یک‌بار چک می‌شه.
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         fetchCount();
         if (interval) clearInterval(interval);
-        interval = setInterval(fetchCount, 20000);
+        interval = setInterval(fetchCount, 60000);
       } else if (interval) {
         clearInterval(interval);
         interval = null;

@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       .contains("previous_slugs", [decodedSlug])
       .eq("is_active", true)
       .maybeSingle();
-    if (moved?.slug) permanentRedirect(`/products/${moved.slug}`);
+    if (moved?.slug && moved.slug !== decodedSlug) permanentRedirect(`/products/${moved.slug}`);
     notFound();
   }
   return {
@@ -96,7 +96,7 @@ export default async function ProductPage({
     .contains("previous_slugs", [decodedSlug])
     .eq("is_active", true)
     .maybeSingle();
-    if (moved?.slug) permanentRedirect(`/products/${moved.slug}`);
+    if (moved?.slug && moved.slug !== decodedSlug) permanentRedirect(`/products/${moved.slug}`);
     notFound();
   }
 

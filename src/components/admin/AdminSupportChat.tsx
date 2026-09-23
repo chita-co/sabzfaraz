@@ -27,7 +27,7 @@ export default function AdminSupportChat({
     const timer = setInterval(async () => {
       const fresh = await getAdminTicketMessages(ticketId);
       setMessages(fresh as Message[]);
-    }, 4000);
+    }, 15000);
     return () => clearInterval(timer);
   }, [ticketId]);
 

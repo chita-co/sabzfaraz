@@ -81,6 +81,8 @@
   @page { size: 148mm 105mm landscape; margin: 0; }
   body * { visibility: hidden; }
   .shipping-label-print, .shipping-label-print * { visibility: visible; }
-  .shipping-label-print { position: fixed; top: 0; left: 0; margin: 0; }
   .no-print { display: none !important; }
+  .shipping-label-page { margin: 0 !important; padding: 0 !important; }
+  .shipping-label-preview-wrap { background: none !important; padding: 0 !important; border-radius: 0 !important; }
+  .shipping-label-print { position: static !important; margin: 0 !important; }
 }

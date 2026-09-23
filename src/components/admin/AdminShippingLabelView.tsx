@@ -31,6 +31,7 @@ export default function AdminShippingLabelView({
   const labelRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [printA5, setPrintA5] = useState(false);
 
   const [trackingCode, setTrackingCode] = useState(initialTrackingCode ?? "");
   const [extraNote, setExtraNote] = useState("");
@@ -53,8 +54,12 @@ export default function AdminShippingLabelView({
 
   const BASE_W = 148;
   const BASE_H = 110;
-  const scaleX = widthMm / BASE_W;
-  const scaleY = heightMm / BASE_H;
+  const A5_SIDE_MARGIN_MM = -15;
+  const A5_HEIGHT_MM = 110; // فقط مخصوص حالت A5 — کمی کشیده‌تر از حالت عادی (۱۰۵)
+  const displayWidthMm = printA5 ? 148 - A5_SIDE_MARGIN_MM * 2 : widthMm; // ۱۲۸mm در حالت A5
+  const displayHeightMm = printA5 ? A5_HEIGHT_MM : heightMm;
+  const scaleX = displayWidthMm / BASE_W;
+  const scaleY = displayHeightMm / BASE_H;
 
   useEffect(() => {
     let mounted = true;
@@ -97,7 +102,27 @@ export default function AdminShippingLabelView({
 
   return (
     <div className="shipping-label-page">
-      <style dangerouslySetInnerHTML={{ __html: `@media print { @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; } }` }} />
+      <style dangerouslySetInnerHTML={{ __html: printA5
+        ? `@media print {
+            @page { size: 148mm 210mm portrait; margin: 0; }
+            .shipping-label-print {
+              position: fixed !important;
+              top: 10mm !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              margin: 0 !important;
+            }
+          }`
+        : `@media print {
+            @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
+            .shipping-label-print {
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              margin: 0 auto !important;
+            }
+          }` }} />
 
       <div className="no-print sl-controls">
         <div className="sl-control-group">
@@ -142,10 +167,14 @@ export default function AdminShippingLabelView({
       <div className="no-print flex gap-2 mb-4">
         <button onClick={() => window.print()} className="admin-btn admin-btn-primary flex items-center gap-2"><Printer size={16} /> چاپ مستقیم</button>
         <button onClick={handleDownload} disabled={generating} className="admin-btn admin-btn-secondary flex items-center gap-2"><Download size={16} /> {generating ? "در حال ساخت..." : "دانلود PDF"}</button>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: "#374151", cursor: "pointer" }}>
+          <input type="checkbox" checked={printA5} onChange={(e) => setPrintA5(e.target.checked)} />
+          چاپ A5
+        </label>
       </div>
 
       <div className="shipping-label-preview-wrap">
-        <div className="sl-card shipping-label-print" ref={labelRef} style={{ width: `${widthMm}mm`, height: `${heightMm}mm` }}>
+        <div className="sl-card shipping-label-print" ref={labelRef} style={{ width: `${displayWidthMm}mm`, height: `${heightMm}mm`, ...(printA5 ? { height: `${displayHeightMm}mm` } : {}) }}>
           <div className="sl-card-inner" style={{ transform: `scale(${scaleX}, ${scaleY})` }}>
           <div className="sl-top-row">
             <div className="sl-sender-box">
