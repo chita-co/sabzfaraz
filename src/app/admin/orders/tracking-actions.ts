@@ -28,5 +28,29 @@ export async function checkParcelTrackingAdmin(code: string, courierHint?: strin
 
   if (profile?.role !== "ADMIN") return { status: "unauthorized" as const };
 
-  return getPostalTrackingStatus(trimmed, courierHint);
+  // اگه از کامپوننت خودِ روش ارسال (courierHint) پاس داده نشده باشه — مثلاً
+  // ادمین کد رو تازه و دستی تایپ کرده و هنوز توی لیستِ سفارش‌های همون صفحه
+  // نیست — خودمون مستقیم از دیتابیس، روش ارسالِ سفارشِ صاحبِ این کد رو
+  // پیدا می‌کنیم تا تشخیص پست/تیپاکس از همون بار اول درست باشه.
+  let finalHint = courierHint;
+  if (!finalHint) {
+    const { data: owningOrder } = await supabase
+      .from("orders")
+      .select("shipping_method_id")
+      .eq("postal_tracking_code", trimmed)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (owningOrder?.shipping_method_id) {
+      const { data: sm } = await supabase
+        .from("shipping_methods")
+        .select("name")
+        .eq("id", owningOrder.shipping_method_id)
+        .maybeSingle();
+      finalHint = sm?.name ?? null;
+    }
+  }
+
+  return getPostalTrackingStatus(trimmed, finalHint);
 }

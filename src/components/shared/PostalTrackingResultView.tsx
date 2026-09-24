@@ -8,7 +8,7 @@ type TrackResult =
   | { status: "not_found" }
   | { status: "error"; message: string }
   | { status: "provider_not_configured"; fallbackUrl: string }
-  | { status: "open_external"; url: string; providerName: string }
+  | { status: "open_external"; url: string; providerName: string; copyCode?: string }
   | {
       status: "found";
       currentStatus: string;
@@ -24,6 +24,9 @@ type TrackResult =
 export default function PostalTrackingResultView({ result }: { result: TrackResult }) {
   useEffect(() => {
     if (result.status === "open_external") {
+      if (result.copyCode) {
+        navigator.clipboard?.writeText(result.copyCode).catch(() => {});
+      }
       window.open(result.url, "_blank", "noopener,noreferrer");
     }
   }, [result]);
@@ -52,10 +55,27 @@ export default function PostalTrackingResultView({ result }: { result: TrackResu
         href={result.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-blue-700 font-medium"
+        className="inline-flex items-center gap-1 text-blue-700 font-medium mb-2"
       >
         پیگیری در سایت {result.providerName} <ExternalLink size={14} />
       </a>
+      {result.copyCode && (
+        <div className="mt-2 rounded-md bg-white border border-blue-200 p-2 flex items-center justify-between gap-2">
+          <span dir="ltr" className="font-mono text-xs text-gray-700">{result.copyCode}</span>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard?.writeText(result.copyCode as string)}
+            className="text-xs text-blue-700 font-medium shrink-0"
+          >
+            کپی کد
+          </button>
+        </div>
+      )}
+      {result.copyCode && (
+        <p className="text-xs text-blue-600 mt-2">
+          کد رهگیری کپی شد؛ داخل صفحه‌ای که باز شد، آن را Paste کنید و «رهگیری» را بزنید.
+        </p>
+      )}
     </div>
   );
 }

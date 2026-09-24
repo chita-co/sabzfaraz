@@ -29,7 +29,7 @@ export type PostalTrackingResult =
     }
   | { status: "not_found" }
   | { status: "provider_not_configured"; fallbackUrl: string }
-  | { status: "open_external"; url: string; providerName: string }
+  | { status: "open_external"; url: string; providerName: string; copyCode?: string }
   | { status: "error"; message: string };
 
 const TRACK123_API_KEY = process.env.TRACK123_API_KEY;
@@ -53,10 +53,11 @@ export async function getPostalTrackingStatus(
     (courierHint ?? "").toLowerCase().includes("tipax");
 
   if (isTipax) {
-    if (TIPAX_ACCESS_KEY) return fetchFromTipax(code);
     return {
-      status: "provider_not_configured",
-      fallbackUrl: `https://www.tipax.ir/tracking?code=${encodeURIComponent(code)}`,
+      status: "open_external",
+      url: `https://tipaxco.com/tracking`,
+      providerName: "تیپاکس",
+      copyCode: code,
     };
   }
 
@@ -143,6 +144,7 @@ async function fetchFromTrack123(code: string): Promise<PostalTrackingResult> {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function fetchFromTipax(code: string): Promise<PostalTrackingResult> {
   try {
     const url = `${TIPAX_BASE_URL}?accessKey=${encodeURIComponent(
