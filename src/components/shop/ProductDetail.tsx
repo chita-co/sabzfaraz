@@ -75,6 +75,8 @@ export default function ProductDetail({
       image: product.images?.[0] ?? "",
       price: product.price,
       discountPrice: matchedTier ? matchedTier.unit_price : product.discount_price,
+      quantityTiers: quantityTiers.map((t) => ({ min_qty: t.min_qty, max_qty: t.max_qty, unit_price: t.unit_price })),
+      baseDiscountPrice: product.discount_price,
       selectedColor,
       selectedSize,
       quantity,

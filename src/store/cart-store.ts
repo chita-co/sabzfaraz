@@ -3,6 +3,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export interface CartQuantityTier {
+  min_qty: number;
+  max_qty: number;
+  unit_price: number;
+}
+
 export interface CartItem {
   productId: string;
   name: string;
@@ -22,6 +28,8 @@ export interface CartItem {
   chinaTermsText?: string | null;
   chinaOrderNote?: string | null;
   cartItemId?: string | null;
+  quantityTiers?: CartQuantityTier[];
+  baseDiscountPrice?: number | null;
 }
 
 interface CartState {
@@ -33,9 +41,19 @@ interface CartState {
   restoreItems: (items: CartItem[]) => void;
   orderNote: string;
   setOrderNote: (note: string) => void;
-  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null }[]) => void;
+  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null; quantityTiers?: CartQuantityTier[] }[]) => void;
   setCartItemIds: (mapping: { productId: string; color: string | null; size: string | null; id: string }[]) => void;
   removeItemById: (id: string) => void;
+}
+
+// قیمت واحد را بر اساس تعداد فعلی و قیمت پلکانی محصول حساب می‌کند.
+// برای محصولاتی که قیمت پلکانی ندارند هیچ تغییری نمی‌دهد.
+function withTierPrice(item: CartItem): CartItem {
+  const tiers = item.quantityTiers;
+  if (!tiers || tiers.length === 0 || item.isChinaOrder) return item;
+  const matched = tiers.find((t) => item.quantity >= t.min_qty && item.quantity <= t.max_qty);
+  const discountPrice = matched ? matched.unit_price : (item.baseDiscountPrice ?? null);
+  return discountPrice === item.discountPrice ? item : { ...item, discountPrice };
 }
 
 function sameLine(a: CartItem, productId: string, color: string | null, size: string | null) {
@@ -53,12 +71,17 @@ export const useCartStore = create<CartState>()(
           set({
             items: get().items.map((i) =>
               sameLine(i, item.productId, item.selectedColor, item.selectedSize)
-                ? { ...i, quantity: Math.min(i.quantity + item.quantity, i.stock ?? Infinity) }
+                ? withTierPrice({
+                    ...i,
+                    quantity: Math.min(i.quantity + item.quantity, i.stock ?? Infinity),
+                    quantityTiers: item.quantityTiers ?? i.quantityTiers,
+                    baseDiscountPrice: item.baseDiscountPrice !== undefined ? item.baseDiscountPrice : i.baseDiscountPrice,
+                  })
                 : i
             ),
           });
         } else {
-          set({ items: [...get().items, item] });
+          set({ items: [...get().items, withTierPrice(item)] });
         }
       },
       removeItem: (productId, color, size) => {
@@ -68,13 +91,13 @@ export const useCartStore = create<CartState>()(
         set({
           items: get().items.map((i) =>
             sameLine(i, productId, color, size)
-              ? { ...i, quantity: Math.max(1, Math.min(quantity, i.stock ?? Infinity)) }
+              ? withTierPrice({ ...i, quantity: Math.max(1, Math.min(quantity, i.stock ?? Infinity)) })
               : i
           ),
         });
       },
       clearCart: () => set({ items: [] }),
-      restoreItems: (items) => set({ items: [...get().items, ...items] }),
+      restoreItems: (items) => set({ items: [...get().items, ...items.map(withTierPrice)] }),
       setOrderNote: (note) => set({ orderNote: note }),
       syncPrices: (updates) => {
         set({
@@ -82,13 +105,15 @@ export const useCartStore = create<CartState>()(
             const u = updates.find((x) => x.productId === i.productId);
             if (!u) return i;
             const newStock = u.stock;
-            return {
+            return withTierPrice({
               ...i,
               price: u.price,
               discountPrice: u.discountPrice,
+              baseDiscountPrice: u.discountPrice,
+              quantityTiers: u.quantityTiers !== undefined ? u.quantityTiers : i.quantityTiers,
               stock: newStock,
               quantity: newStock !== null ? Math.min(i.quantity, Math.max(newStock, 0)) : i.quantity,
-            };
+            });
           }),
         });
       },
