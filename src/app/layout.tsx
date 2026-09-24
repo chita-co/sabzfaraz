@@ -49,13 +49,28 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               name: "سبزفراز",
+              alternateName: "SabzFaraz",
               url: "https://sabzfaraz.ir",
-              logo: "https://sabzfaraz.ir/icon.png",
+              description: "فروشگاه اینترنتی سبزفراز - خرید آنلاین انواع کالا",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://sabzfaraz.ir/icon.png",
+                width: 512,
+                height: 512,
+              },
+              image: "https://sabzfaraz.ir/icon.png",
               sameAs: [
                 "https://www.instagram.com/sabz.faraz",
                 "https://www.youtube.com/@sabz-faraz",
                 "https://www.aparat.com/sabzfaraz",
               ],
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer support",
+                email: "info@sabzfaraz.ir",
+                areaServed: "IR",
+                availableLanguage: ["fa"],
+              },
             }),
           }}
         />
