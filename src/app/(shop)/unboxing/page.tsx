@@ -6,6 +6,7 @@ import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 export const metadata = {
   title: "آنباکس مشتریان سبزفراز | ویدیوتو بفرست، جایزه بگیر",
   description: "صدها ویدیوی آنباکس واقعی مشتریان سبزفراز را ببینید. ویدیوی خودتان را بفرستید و بین ۱۰۰ هزار تا ۱ میلیون تومان جایزه بگیرید.",
+  alternates: { canonical: "/unboxing" },
 };
 
 export default async function UnboxingPage() {
