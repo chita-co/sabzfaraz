@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Share2, ShoppingCart, Check, ChevronDown, Ship, Clock, AlertTriangle, Store } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { Share2, ShoppingCart, Check, ChevronDown, ChevronLeft, ChevronRight, Ship, Clock, AlertTriangle, Store } from "lucide-react";
 import { Product, ProductQuantityTier, ProductAttribute } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
@@ -20,6 +21,13 @@ export default function ProductDetail({
   tomanPerPoint?: number; pointsMultiplier?: number; pointValueToman?: number;
 }) {
   const [activeImage, setActiveImage] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+const [zoomScale, setZoomScale] = useState(1);
+const [zoomOffset, setZoomOffset] = useState({ x: 0, y: 0 });
+const lastTouchDistanceRef = useRef<number | null>(null);
+const lastPanRef = useRef<{ x: number; y: number } | null>(null);
+const isDraggingRef = useRef(false);
+const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name ?? null);
   const [selectedSize, setSelectedSize] = useState<string | null>(product.sizes?.[0] ?? null);
   const minQuantity = product.has_min_order_quantity && product.min_order_quantity
@@ -129,17 +137,123 @@ export default function ProductDetail({
     }
   }
 
+   const resetZoom = useCallback(() => {
+    setZoomScale(1);
+    setZoomOffset({ x: 0, y: 0 });
+  }, []);
+
+  const openZoom = useCallback(() => {
+    resetZoom();
+    setZoomOpen(true);
+  }, [resetZoom]);
+
+  const closeZoom = useCallback(() => {
+    setZoomOpen(false);
+    resetZoom();
+  }, [resetZoom]);
+
+  function handleZoomWheel(e: React.WheelEvent) {
+    e.preventDefault();
+    setZoomScale((s) => Math.min(4, Math.max(1, s - e.deltaY * 0.0015)));
+  }
+
+  function handleZoomDoubleClick() {
+    setZoomScale((s) => (s > 1 ? 1 : 2.5));
+    setZoomOffset({ x: 0, y: 0 });
+  }
+
+  const goPrevImage = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!product.images || product.images.length < 2) return;
+    setActiveImage((i) => (i - 1 + product.images!.length) % product.images!.length);
+    resetZoom();
+  }, [product.images, resetZoom]);
+
+  const goNextImage = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!product.images || product.images.length < 2) return;
+    setActiveImage((i) => (i + 1) % product.images!.length);
+    resetZoom();
+  }, [product.images, resetZoom]);
+
+  function getTouchDistance(touches: React.TouchList) {
+    const t1 = touches[0], t2 = touches[1];
+    return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+  }
+
+  function handleZoomTouchStart(e: React.TouchEvent) {
+    if (e.touches.length === 2) {
+      lastTouchDistanceRef.current = getTouchDistance(e.touches);
+    } else if (e.touches.length === 1 && zoomScale > 1) {
+      isDraggingRef.current = true;
+      lastPanRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 1) {
+      swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  }
+
+  function handleZoomTouchMove(e: React.TouchEvent) {
+    if (e.touches.length === 2 && lastTouchDistanceRef.current) {
+      e.preventDefault();
+      const newDistance = getTouchDistance(e.touches);
+      const delta = newDistance / lastTouchDistanceRef.current;
+      setZoomScale((s) => Math.min(4, Math.max(1, s * delta)));
+      lastTouchDistanceRef.current = newDistance;
+    } else if (e.touches.length === 1 && isDraggingRef.current && lastPanRef.current) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - lastPanRef.current.x;
+      const dy = e.touches[0].clientY - lastPanRef.current.y;
+      setZoomOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
+      lastPanRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  }
+
+  function handleZoomTouchEnd(e: React.TouchEvent) {
+    if (e.touches.length < 2) lastTouchDistanceRef.current = null;
+    if (e.touches.length === 0) {
+      isDraggingRef.current = false;
+      lastPanRef.current = null;
+      if (zoomScale <= 1) setZoomOffset({ x: 0, y: 0 });
+
+      if (swipeStartRef.current && e.changedTouches.length > 0 && zoomScale <= 1) {
+        const dx = e.changedTouches[0].clientX - swipeStartRef.current.x;
+        const dy = e.changedTouches[0].clientY - swipeStartRef.current.y;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          if (dx < 0) goNextImage();
+          else goPrevImage();
+        }
+      }
+      swipeStartRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    if (!zoomOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeZoom();
+      else if (e.key === "ArrowRight") goNextImage();
+      else if (e.key === "ArrowLeft") goPrevImage();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zoomOpen, closeZoom, goNextImage, goPrevImage]);
+
   return (
     <div className="product-page" style={{ "--primary": accentColor } as React.CSSProperties}>
       <div className="product-card">
         <div className="product-gallery">
           <div className="product-gallery-main">
-            {product.images?.[activeImage] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={product.images[activeImage]} alt={product.name} />
-            ) : (
-              <div className="product-no-image">بدون تصویر</div>
-            )}
+  {product.images?.[activeImage] ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={product.images[activeImage]}
+      alt={product.name}
+      className="product-image-zoomable"
+      onClick={openZoom}
+    />
+  ) : (
+    <div className="product-no-image">بدون تصویر</div>
+  )}
             {product.stock !== null && product.stock <= 0 && showInstant ? (
               <div className="out-of-stock-stamp">
                 <div className="out-of-stock-stamp-inner">
@@ -174,6 +288,50 @@ export default function ProductDetail({
             </div>
           )}
         </div>
+
+        {zoomOpen && product.images?.[activeImage] && typeof document !== "undefined" &&
+  createPortal(
+    <div
+      className="product-image-lightbox"
+      onClick={closeZoom}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 2147483647,
+        isolation: "isolate",
+      }}
+    >
+      <button className="product-image-lightbox-close" onClick={closeZoom}>✕</button>
+      {product.images.length > 1 && (
+        <>
+          <button className="product-image-lightbox-nav product-image-lightbox-prev" onClick={goPrevImage}>
+            <ChevronLeft size={22} />
+          </button>
+          <button className="product-image-lightbox-nav product-image-lightbox-next" onClick={goNextImage}>
+            <ChevronRight size={22} />
+          </button>
+        </>
+      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={product.images[activeImage]}
+        alt={product.name}
+        className="product-image-lightbox-img"
+        style={{
+          transform: `scale(${zoomScale}) translate(${zoomOffset.x / zoomScale}px, ${zoomOffset.y / zoomScale}px)`,
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onWheel={handleZoomWheel}
+        onDoubleClick={handleZoomDoubleClick}
+        onTouchStart={handleZoomTouchStart}
+        onTouchMove={handleZoomTouchMove}
+        onTouchEnd={handleZoomTouchEnd}
+        draggable={false}
+      />
+    </div>,
+    document.body
+  )
+}
 
         <div className="product-info">
           <div className="product-name-row">

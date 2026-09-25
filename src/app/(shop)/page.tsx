@@ -30,6 +30,8 @@ import PromoAdsGrid from "@/components/shop/PromoAdsGrid";
 import PartnerProductRows from "@/components/shop/PartnerProductRows";
 import PartnerBioAccordion from "@/components/shop/PartnerBioAccordion";
 
+const PRODUCT_CARD_FIELDS = "id, name, slug, price, discount_price, stock, images, is_stock, name_en, rating_avg, rating_count";
+
 export const metadata = {
   title: "سبزفراز | فروشگاه اینترنتی قطعات الکترونیک",
   description:
@@ -86,7 +88,7 @@ export default async function HomePage() {
       .order("name"),
     supabase
       .from("products")
-      .select("*")
+      .select(PRODUCT_CARD_FIELDS)
       .eq("is_active", true)
       .eq("show_in_newest", true)
       .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
@@ -107,7 +109,7 @@ export default async function HomePage() {
       .single(),
     supabase
       .from("products")
-      .select("*")
+      .select(PRODUCT_CARD_FIELDS)
       .eq("is_active", true)
       .eq("is_deal", true)
       .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
@@ -115,7 +117,7 @@ export default async function HomePage() {
       .limit(20),
     supabase
       .from("products")
-      .select("*")
+      .select(PRODUCT_CARD_FIELDS)
       .eq("is_active", true)
       .eq("is_popular", true)
       .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
@@ -123,7 +125,7 @@ export default async function HomePage() {
       .limit(20),
     supabase
       .from("products")
-      .select("*")
+      .select(PRODUCT_CARD_FIELDS)
       .eq("is_active", true)
       .eq("is_stock", true)
       .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
@@ -158,7 +160,7 @@ supabase.from("promo_ads").select("*").order("sort_order"),
 if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.show_products) {
   const { data: fp } = await supabase
     .from("products")
-    .select("*")
+    .select(PRODUCT_CARD_FIELDS)
     .eq("partner_id", partnerFeature.partner_id)
     .eq("is_active", true)
     .eq("partner_approval_status", "APPROVED")

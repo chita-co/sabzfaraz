@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
 import { consumeDiscountCode } from "@/lib/discountCode";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
+import { cookies } from "next/headers";
 
 interface CheckoutItem {
   productId: string;
@@ -61,6 +62,9 @@ export async function createOrderAndPay(
     return { error: "اطلاعات آدرس (نام گیرنده، کد پستی، آدرس کامل) ناقص است. لطفاً از بخش پروفایل تکمیل کنید." };
   }
 
+  const cookieStore = await cookies();
+  const torobClid = cookieStore.get("torob_clid")?.value ?? null;
+
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;
   const isChinaOrder = items.some((i) => i.isChinaOrder);
@@ -86,6 +90,7 @@ export async function createOrderAndPay(
       china_delivery_text: chinaDeliveryText,
       china_terms_text: chinaTermsText,
       china_order_note: chinaOrderNote,
+      torob_clid: torobClid,
     })
     .select()
     .single();
@@ -203,6 +208,9 @@ export async function createOfflineOrder(
     .from("bank_accounts").select("id").eq("id", bankAccountId).eq("is_active", true).single();
   if (!bankAccount) return { error: "حساب بانکی انتخابی معتبر نیست." };
 
+  const cookieStore = await cookies();
+  const torobClid = cookieStore.get("torob_clid")?.value ?? null;
+
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;
   const isChinaOrder = items.some((i) => i.isChinaOrder);
@@ -230,6 +238,7 @@ export async function createOfflineOrder(
       china_delivery_text: chinaDeliveryText,
       china_terms_text: chinaTermsText,
       china_order_note: chinaOrderNote,
+      torob_clid: torobClid,
     })
     .select()
     .single();

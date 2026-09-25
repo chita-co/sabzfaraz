@@ -167,6 +167,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/settings/general", label: "تنظیمات عمومی" },
       { href: "/admin/shipping", label: "هزینه ارسال" },
       { href: "/admin/tracking-settings", label: "پیام‌های پیگیری" },
+      { href: "/admin/torob-settings", label: "اتصال ترب (پیگیری سفارش)" },
       { href: "/admin/shipping-methods", label: "روش‌های ارسال (وزنی)" },
       { href: "/admin/site-settings", label: "لوگو و بنر سایت" },
       { href: "/admin/settings/backup", label: "پشتیبان‌گیری" },

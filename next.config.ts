@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+process.env.TZ = "Asia/Tehran";
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
   turbopack: {

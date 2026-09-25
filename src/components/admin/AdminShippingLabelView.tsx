@@ -52,11 +52,11 @@ export default function AdminShippingLabelView({
 
   const qrValue = trackingCode.trim() || orderNumber;
 
-  const BASE_W = 148;
+  const BASE_W = 152;
   const BASE_H = 110;
   const A5_SIDE_MARGIN_MM = -15;
-  const A5_HEIGHT_MM = 110; // فقط مخصوص حالت A5 — کمی کشیده‌تر از حالت عادی (۱۰۵)
-  const displayWidthMm = printA5 ? 148 - A5_SIDE_MARGIN_MM * 2 : widthMm; // ۱۲۸mm در حالت A5
+  const A5_HEIGHT_MM = 130; // فقط مخصوص حالت A5 — کمی کشیده‌تر از حالت عادی (۱۰۵)
+  const displayWidthMm = printA5 ? 152 - A5_SIDE_MARGIN_MM * 2 : widthMm; // ۱۲۸mm در حالت A5
   const displayHeightMm = printA5 ? A5_HEIGHT_MM : heightMm;
   const scaleX = displayWidthMm / BASE_W;
   const scaleY = displayHeightMm / BASE_H;
@@ -202,7 +202,7 @@ export default function AdminShippingLabelView({
 
             <div className="sl-tracking-box">
               <canvas ref={qrRef} />
-             <p className="sl-qr-instruction">اول اسکن کن<br />بعد باز کن</p>
+             <p className="sl-qr-instruction"> اول اسکن کن<br />بعد باز کن</p>
             </div>
           </div>
 

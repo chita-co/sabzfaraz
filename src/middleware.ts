@@ -51,11 +51,23 @@ export async function middleware(request: NextRequest) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
 
+  // اگر کاربر از طریق ترب وارد سایت شده (torob_clid در URL)، آن را در کوکی ذخیره کن
+  // تا در زمان تسویه‌حساب به سفارش متصل شود. مدل اتریبیوشن ترب ۷ روزه (۱۶۸ ساعت) است.
+  const torobClid = request.nextUrl.searchParams.get("torob_clid");
+  if (torobClid) {
+    response.cookies.set("torob_clid", torobClid, {
+      maxAge: 60 * 60 * 168,
+      path: "/",
+      sameSite: "lax",
+    });
+  }
+
+
   return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|blog|price-ticker|calendar|api/payment/callback|api/auctions/winner-payment/callback|api/reverse-auctions/payment/callback|api/bulk-order/payment/callback|api/wallet/topup/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|blog|price-ticker|calendar|api/payment/callback|api/auctions/winner-payment/callback|api/reverse-auctions/payment/callback|api/bulk-order/payment/callback|api/wallet/topup/callback|api/torob/v1/orders|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
