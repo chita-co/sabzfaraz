@@ -9,6 +9,8 @@ type ReviewRow = {
   rating: number;
   comment: string | null;
   created_at: string;
+  admin_reply: string | null;
+  admin_replied_at: string | null;
   product: { name: string } | null;
 };
 
@@ -26,6 +28,8 @@ export default async function AdminReviewsPage() {
     rating: r.rating,
     comment: r.comment,
     created_at: r.created_at,
+    admin_reply: r.admin_reply,
+    admin_replied_at: r.admin_replied_at,
     product_name: r.product?.name ?? "—",
   }));
 

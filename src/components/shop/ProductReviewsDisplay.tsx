@@ -6,6 +6,8 @@ interface ReviewRow {
   rating: number;
   comment: string | null;
   created_at: string;
+  admin_reply: string | null;
+  admin_replied_at: string | null;
 }
 
 export default function ProductReviewsDisplay({
@@ -51,6 +53,12 @@ export default function ProductReviewsDisplay({
                 </div>
               </div>
               {r.comment && <p className="review-card-comment">{r.comment}</p>}
+              {r.admin_reply && (
+  <div className="review-card-admin-reply">
+    <span className="review-card-admin-reply-label">پاسخ فروشگاه سبزفراز</span>
+    <p>{r.admin_reply}</p>
+  </div>
+)}
               <p className="review-card-date">{new Date(r.created_at).toLocaleDateString("fa-IR")}</p>
             </div>
           ))}

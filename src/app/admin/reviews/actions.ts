@@ -27,3 +27,24 @@ export async function deleteReview(reviewId: string, productId: string) {
   revalidatePath("/");
   return { success: true };
 }
+
+export async function replyToReview(reviewId: string, productId: string, replyText: string) {
+  const adminClient = createAdminClient();
+  const trimmed = replyText.trim();
+
+  const { error } = await adminClient
+    .from("product_reviews")
+    .update({
+      admin_reply: trimmed || null,
+      admin_replied_at: trimmed ? new Date().toISOString() : null,
+    })
+    .eq("id", reviewId);
+
+  if (error) return { error: error.message };
+
+  const { data: productRow } = await adminClient.from("products").select("slug").eq("id", productId).single();
+
+  revalidatePath("/admin/reviews");
+  if (productRow?.slug) revalidatePath(`/products/${productRow.slug}`);
+  return { success: true };
+}

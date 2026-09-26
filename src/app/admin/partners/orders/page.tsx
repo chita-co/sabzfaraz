@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import PartnerOrdersManager from "@/components/admin/PartnerOrdersManager";
+import { getPaidOrderIdSet } from "@/lib/partners/orderIntegration";
 
 interface OrderWithShippingMethod {
   id: string;
@@ -31,18 +32,23 @@ export default async function AdminPartnerOrdersPage({
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
 
   const [
-    { count: todayCount }, { count: pendingCount }, { count: readyCount },
-    { count: deliveredCount }, { count: shortageCount },
+    { data: statsRawItems },
     { data: partnersForBalance }, { data: partners },
   ] = await Promise.all([
-    admin.from("order_items").select("id", { count: "exact", head: true }).not("partner_id", "is", null).gte("created_at", todayStart.toISOString()),
-    admin.from("order_items").select("id", { count: "exact", head: true }).eq("partner_fulfillment_status", "PENDING").not("partner_id", "is", null),
-    admin.from("order_items").select("id", { count: "exact", head: true }).eq("partner_fulfillment_status", "READY_FOR_PICKUP"),
-    admin.from("order_items").select("id", { count: "exact", head: true }).eq("partner_fulfillment_status", "DELIVERED_TO_CUSTOMER"),
-    admin.from("order_items").select("id", { count: "exact", head: true }).eq("partner_fulfillment_status", "STOCK_SHORTAGE"),
+    admin.from("order_items").select("id, order_id, partner_fulfillment_status, created_at").not("partner_id", "is", null),
     admin.from("partners").select("wallet_available_balance, wallet_pending_balance"),
     admin.from("partners").select("id, business_name, partner_code").order("business_name"),
   ]);
+
+  const statsOrderIds = [...new Set((statsRawItems ?? []).map((i) => i.order_id).filter(Boolean))];
+  const statsPaidOrderIds = await getPaidOrderIdSet(admin, statsOrderIds);
+  const paidStatsItems = (statsRawItems ?? []).filter((i) => i.order_id && statsPaidOrderIds.has(i.order_id));
+
+  const todayCount = paidStatsItems.filter((i) => new Date(i.created_at) >= todayStart).length;
+  const pendingCount = paidStatsItems.filter((i) => i.partner_fulfillment_status === "PENDING").length;
+  const readyCount = paidStatsItems.filter((i) => i.partner_fulfillment_status === "READY_FOR_PICKUP").length;
+  const deliveredCount = paidStatsItems.filter((i) => i.partner_fulfillment_status === "DELIVERED_TO_CUSTOMER").length;
+  const shortageCount = paidStatsItems.filter((i) => i.partner_fulfillment_status === "STOCK_SHORTAGE").length;
 
   const totalPayable = (partnersForBalance ?? []).reduce((s, p) => s + p.wallet_available_balance + p.wallet_pending_balance, 0);
 
@@ -61,7 +67,9 @@ export default async function AdminPartnerOrdersPage({
   const { data: rawItems } = await query;
 
   const orderIds = [...new Set((rawItems ?? []).map((i) => i.order_id).filter(Boolean))];
-  const partnerIdsInList = [...new Set((rawItems ?? []).map((i) => i.partner_id).filter(Boolean))];
+  const paidOrderIds = await getPaidOrderIdSet(admin, orderIds);
+  const paidRawItems = (rawItems ?? []).filter((i) => i.order_id && paidOrderIds.has(i.order_id));
+  const partnerIdsInList = [...new Set(paidRawItems.map((i) => i.partner_id).filter(Boolean))];
 
   const [{ data: ordersData }, { data: partnersData }] = await Promise.all([
     orderIds.length > 0
@@ -75,7 +83,7 @@ export default async function AdminPartnerOrdersPage({
   const ordersMap = new Map((ordersData ?? []).map((o) => [o.id, o]));
   const partnersMap = new Map((partnersData ?? []).map((p) => [p.id, p]));
 
-  const items = (rawItems ?? []).map((it) => ({
+    const items = paidRawItems.map((it) => ({
     ...it,
     order: it.order_id ? ordersMap.get(it.order_id) ?? null : null,
     partner: it.partner_id ? partnersMap.get(it.partner_id) ?? null : null,

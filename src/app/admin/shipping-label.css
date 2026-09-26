@@ -5,12 +5,14 @@
   background: #fff; box-sizing: border-box;
   border: 1.5px solid #111827; border-radius: 6mm;
   overflow: hidden; position: relative;
+  display: flex; align-items: center; justify-content: center;
 }
 .sl-card-inner {
   width: 148mm; height: 105mm; padding: 6mm; box-sizing: border-box;
   font-family: Tahoma, Arial, sans-serif; direction: rtl; color: #111827;
   display: flex; flex-direction: column; gap: 2.5mm;
-  transform-origin: top right;
+  transform-origin: center center;
+  flex-shrink: 0;
 }
 
 .sl-top-row { display: flex; gap: 3mm; flex: 1.5; }

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { earnPointsForOrder, refundRedeemedPoints, reverseEarnedPoints } from "@/lib/loyalty/ledger";
 import { createNotification } from "@/lib/notifications";
 import { sendPostalTrackingSms } from "@/lib/sms";
+import { deleteUserCartAction } from "@/app/admin/carts/actions";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
@@ -57,6 +58,9 @@ export async function updateOrderStatus(orderId: string, status: string) {
       await reverseEarnedPoints(orderId);
     } catch (e) {
       console.error("خطا در بازگشت امتیاز وفاداری:", e);
+    }
+    if (existingOrder?.user_id) {
+      await deleteUserCartAction(existingOrder.user_id);
     }
   }
 

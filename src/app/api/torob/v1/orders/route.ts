@@ -8,6 +8,26 @@ export const runtime = "nodejs";
 const SITE_ORIGIN = "https://sabzfaraz.ir";
 const MAX_LIMIT = 1000;
 
+// نرمال‌سازی شماره موبایل به فرمت 09xxxxxxxxx (مورد نیاز ترب)
+function normalizePhone(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  // حذف همه کاراکترهای غیرعددی (فاصله، خط تیره، پرانتز و...)
+  let digits = String(raw).replace(/\D/g, "");
+  // حذف پیش‌شماره بین‌المللی 98
+  if (digits.startsWith("98") && digits.length === 12) {
+    digits = "0" + digits.slice(2);
+  }
+  // اگه با 9 شروع بشه و 10 رقم باشه، 0 به اولش اضافه کن
+  if (digits.startsWith("9") && digits.length === 10) {
+    digits = "0" + digits;
+  }
+  // فقط اگه فرمت نهایی درست بود (11 رقم و با 09 شروع بشه) برگردون
+  if (digits.length === 11 && digits.startsWith("09")) {
+    return digits;
+  }
+  return null;
+}
+
 // کلید عمومی واقعی ترب (پیش‌فرض تولید). فقط برای تست لوکال می‌تونی با ست‌کردن
 // TOROB_PUBLIC_KEY_PEM توی .env.local موقتاً یه کلید تستی جایگزینش کنی؛
 // روی ورسل/تولید چیزی لازم نیست ست بشه، همین کلید واقعی استفاده می‌شه.
@@ -183,7 +203,8 @@ export async function GET(request: NextRequest) {
       shipping_amount: shippingCost,
     };
 
-    if (address?.phone) record.phone_number = address.phone;
+    const normalizedPhone = normalizePhone(address?.phone);
+    if (normalizedPhone) record.phone_number = normalizedPhone;
     if (products.length > 0) record.products = products;
 
     return record;

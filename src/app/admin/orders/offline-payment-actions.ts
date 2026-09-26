@@ -3,9 +3,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendSms } from "@/lib/sms";
+import { deleteUserCartAction } from "@/app/admin/carts/actions";
 
 interface OrderWithAddress {
   order_number: string;
+  user_id: string;
   address: { phone: string | null } | null;
 }
 
@@ -14,12 +16,15 @@ export async function confirmOfflinePayment(orderId: string) {
 
   const { data: existingOrder } = await supabase
     .from("orders")
-    .select("payment_status, order_type")
+    .select("payment_status, order_type, user_id")
     .eq("id", orderId)
     .single();
 
   const { error } = await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", orderId);
   if (error) return { error: error.message };
+  if (existingOrder?.user_id) {
+    await deleteUserCartAction(existingOrder.user_id);
+  }
 
   if (existingOrder?.payment_status !== "PAID" && existingOrder?.order_type !== "CHINA_ORDER") {
     const { data: orderItems } = await supabase
@@ -44,6 +49,10 @@ export async function confirmOfflinePayment(orderId: string) {
 
 const order = data as OrderWithAddress | null;
 
+if (order?.user_id) {
+    await deleteUserCartAction(order.user_id);
+  }
+
   const phone = order?.address?.phone;
   if (phone && order) {
     try {
@@ -64,7 +73,7 @@ export async function rejectOfflinePayment(orderId: string) {
   if (error) return { error: error.message };
 
   const { data } = await supabase
-    .from("orders").select("order_number, address:addresses(phone)").eq("id", orderId).single();
+    .from("orders").select("order_number, user_id, address:addresses(phone)").eq("id", orderId).single();
 
   const order = data as OrderWithAddress | null;
   const phone = order?.address?.phone;

@@ -8,6 +8,7 @@ import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
 import { consumeDiscountCode } from "@/lib/discountCode";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
 import { cookies } from "next/headers";
+import { deleteUserCartAction } from "@/app/admin/carts/actions";
 
 interface CheckoutItem {
   productId: string;
@@ -157,6 +158,7 @@ export async function createOrderAndPay(
   if (remainder === 0) {
     await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
+    await deleteUserCartAction(user.id);
     redirect(`/order/${order.id}?payment=success`);
   }
 
@@ -303,6 +305,7 @@ export async function createOfflineOrder(
   if (remainder === 0) {
     await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
+    await deleteUserCartAction(user.id);
     redirect(`/order/${order.id}?payment=success`);
   }
 

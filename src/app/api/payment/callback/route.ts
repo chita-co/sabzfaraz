@@ -5,6 +5,7 @@ import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
 import { revalidatePath } from "next/cache";
+import { deleteUserCartAction } from "@/app/admin/carts/actions";
 
 export async function POST(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
   if (state !== "OK" || status !== "2") {
     console.log("CALLBACK FAILED STATE", { state, status });
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
+    await deleteUserCartAction(order.user_id);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   }
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
         status: "PROCESSING",
         sep_ref_num: refNum,
       }).eq("id", orderId);
+      await deleteUserCartAction(order.user_id);
       
       const { data: orderItemsForStock } = await supabase
         .from("order_items")
@@ -107,6 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
     }
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
+    await deleteUserCartAction(order.user_id);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   } catch {

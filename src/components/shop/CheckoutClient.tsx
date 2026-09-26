@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Wallet } from "lucide-react";
+import { Wallet, Loader2 } from "lucide-react";
 import { useCartStore, useCartWeight } from "@/store/cart-store";
 import { createOrderAndPay, createOfflineOrder } from "@/app/(shop)/checkout/actions";
 import ProformaInvoiceButton from "./ProformaInvoiceButton";
@@ -366,6 +366,17 @@ export default function CheckoutClient({
                 انصراف
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {loading && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
+            <Loader2 size={36} className="animate-spin mx-auto mb-4 text-green-600" />
+            <h3 className="font-bold text-gray-900 mb-2">در حال انتقال به صفحه پرداخت</h3>
+            <p className="text-sm text-gray-600">
+              لطفاً تا انتقال به درگاه پرداخت منتظر بمانید.
+            </p>
           </div>
         </div>
       )}
