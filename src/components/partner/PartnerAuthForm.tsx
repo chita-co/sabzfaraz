@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 import {
   loginPartnerAction, registerPartnerAction,
   requestPasswordResetAction, confirmPasswordResetAction,
@@ -33,6 +34,9 @@ export default function PartnerAuthForm({
   // ورود
   const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   // فراموشی رمز
   const [forgotPhone, setForgotPhone] = useState("");
@@ -180,7 +184,12 @@ export default function PartnerAuthForm({
       {mode === "login" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input className="partner-input" placeholder="شماره موبایل" dir="ltr" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} />
-          <input className="partner-input" type="password" placeholder="رمز عبور" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+          <div style={{ position: "relative" }}>
+            <input className="partner-input" type={showLoginPassword ? "text" : "password"} placeholder="رمز عبور" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} style={{ paddingLeft: 36 }} />
+            <span onClick={() => setShowLoginPassword((v) => !v)} onMouseDown={(e) => e.preventDefault()} role="button" aria-label={showLoginPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"} style={{ position: "absolute", top: "50%", left: 8, transform: "translateY(-50%)", cursor: "pointer", display: "flex", color: "#6b7280" }}>
+              {showLoginPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </span>
+          </div>
           <button type="button" onClick={handleLogin} disabled={loading} className="partner-btn partner-btn-primary">{loading ? "در حال ورود..." : "ورود"}</button>
           <button onClick={() => setMode("forgot")} style={{ fontSize: 12.5, color: "#6b7280", background: "none", border: "none", cursor: "pointer" }}>رمز عبور را فراموش کرده‌ام</button>
         </div>
@@ -218,7 +227,12 @@ export default function PartnerAuthForm({
             <input className="partner-input" placeholder="شماره شبا *" dir="ltr" value={sheba} onChange={(e) => setSheba(toEnglishDigits(e.target.value))} />
             <input className="partner-input" placeholder="شماره کارت (اختیاری)" dir="ltr" value={card} onChange={(e) => setCard(toEnglishDigits(e.target.value))} />
           </div>
-          <input className="partner-input" type="password" placeholder="رمز عبور *" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div style={{ position: "relative" }}>
+            <input className="partner-input" type={showRegisterPassword ? "text" : "password"} placeholder="رمز عبور *" value={password} onChange={(e) => setPassword(e.target.value)} style={{ paddingLeft: 36 }} />
+            <span onClick={() => setShowRegisterPassword((v) => !v)} onMouseDown={(e) => e.preventDefault()} role="button" aria-label={showRegisterPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"} style={{ position: "absolute", top: "50%", left: 8, transform: "translateY(-50%)", cursor: "pointer", display: "flex", color: "#6b7280" }}>
+              {showRegisterPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </span>
+          </div>
           <textarea className="partner-input" placeholder="توضیح درباره فروشگاه (اختیاری)" rows={2} value={bio} onChange={(e) => setBio(e.target.value)} />
 
           <div>

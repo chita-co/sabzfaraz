@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPaidOrderIdSet } from "./orderIntegration";
 
 export interface WeeklySalesPoint { week: string; sales: number; }
 
@@ -6,12 +7,16 @@ export async function getPartnerWeeklySales(partnerId: string): Promise<WeeklySa
   const admin = createAdminClient();
   const since = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data: items } = await admin
+  const { data: rawItems } = await admin
     .from("order_items")
-    .select("price, quantity, created_at")
+    .select("order_id, price, quantity, created_at")
     .eq("partner_id", partnerId)
     .neq("partner_fulfillment_status", "CANCELLED")
     .gte("created_at", since);
+
+  const orderIds = [...new Set((rawItems ?? []).map((i) => i.order_id))];
+  const paidOrderIds = await getPaidOrderIdSet(admin, orderIds);
+  const items = (rawItems ?? []).filter((i) => paidOrderIds.has(i.order_id));
 
   const buckets = new Map<string, number>();
   for (let i = 0; i < 8; i++) buckets.set(`هفته ${i + 1}`, 0);

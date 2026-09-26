@@ -9,6 +9,7 @@ export interface Partner {
   phone: string;
   email: string | null;
   national_id: string | null;
+  national_card_image_url: string | null;
   address: string;
   logo_url: string | null;
   bio: string | null;

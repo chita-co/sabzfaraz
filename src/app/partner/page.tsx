@@ -4,19 +4,26 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Package, ShoppingCart, Wallet, PlusCircle } from "lucide-react";
 import { getPartnerWeeklySales } from "@/lib/partners/stats";
 import PartnerSalesChart from "@/components/partner/PartnerSalesChart";
+import { getPaidOrderIdSet } from "@/lib/partners/orderIntegration";
 
 export default async function PartnerDashboardPage() {
   const partner = await requirePartnerForPage();
   const admin = createAdminClient();
 
-  const [{ count: activeCount }, { count: pendingCount }, { count: newOrdersCount }, { data: recentItems }, { data: recentNotifs }, weeklySales] = await Promise.all([
+  const [{ count: activeCount }, { count: pendingCount }, { data: pendingItemsRaw }, { data: recentItemsRaw }, { data: recentNotifs }, weeklySales] = await Promise.all([
     admin.from("products").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_approval_status", "APPROVED"),
     admin.from("products").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_approval_status", "PENDING_REVIEW"),
-    admin.from("order_items").select("id", { count: "exact", head: true }).eq("partner_id", partner.id).eq("partner_fulfillment_status", "PENDING"),
-    admin.from("order_items").select("id, product_name, quantity, order:orders(order_number)").eq("partner_id", partner.id).order("id", { ascending: false }).limit(5),
+    admin.from("order_items").select("id, order_id").eq("partner_id", partner.id).eq("partner_fulfillment_status", "PENDING"),
+    admin.from("order_items").select("id, order_id, product_name, quantity, order:orders(order_number)").eq("partner_id", partner.id).order("id", { ascending: false }).limit(20),
     admin.from("notifications").select("id, title, message").eq("user_id", partner.id).order("created_at", { ascending: false }).limit(5),
     getPartnerWeeklySales(partner.id),
   ]);
+
+  const candidateOrderIds = [...new Set([...(pendingItemsRaw ?? []).map((i) => i.order_id), ...(recentItemsRaw ?? []).map((i) => i.order_id)])];
+  const paidOrderIds = await getPaidOrderIdSet(admin, candidateOrderIds);
+
+  const newOrdersCount = (pendingItemsRaw ?? []).filter((i) => paidOrderIds.has(i.order_id)).length;
+  const recentItems = (recentItemsRaw ?? []).filter((i) => paidOrderIds.has(i.order_id)).slice(0, 5);
 
   return (
     <div>

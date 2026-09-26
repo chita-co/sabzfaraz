@@ -52,6 +52,21 @@ export default function PartnerInfoEditForm({ partner }: { partner: Partner }) {
         <label className="admin-form-group"><span>سقف سفارش‌های فعال (خالی = بی‌سقف)</span><input className="admin-input" type="number" value={maxOrders} onChange={(e) => setMaxOrders(e.target.value)} /></label>
         <label className="admin-form-group"><span>سقف روزانه پرکردن خودکار AI (خالی = بی‌سقف)</span><input className="admin-input" type="number" value={aiLimit} onChange={(e) => setAiLimit(e.target.value)} /></label>
       </div>
+      <div style={{ marginTop: 14 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, display: "block", marginBottom: 6 }}>تصویر کارت ملی</span>
+        {partner.national_card_image_url ? (
+          <a href={partner.national_card_image_url} target="_blank" rel="noreferrer">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={partner.national_card_image_url}
+              alt="کارت ملی همکار"
+              style={{ width: 160, height: 100, borderRadius: 8, objectFit: "cover", border: "1px solid #e5e7eb", cursor: "pointer" }}
+            />
+          </a>
+        ) : (
+          <span style={{ fontSize: 12, color: "#9ca3af" }}>تصویری آپلود نشده است.</span>
+        )}
+      </div>
       <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 10 }}>تاریخ ثبت‌نام: {new Date(partner.created_at).toLocaleDateString("fa-IR")}{partner.approved_at ? ` — تاریخ تأیید: ${new Date(partner.approved_at).toLocaleDateString("fa-IR")}` : ""}</p>
       <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary" style={{ marginTop: 14 }}>{saving ? "در حال ذخیره..." : "ذخیره اطلاعات همکار"}</button>
     </div>

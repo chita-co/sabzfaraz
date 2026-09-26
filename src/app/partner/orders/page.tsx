@@ -1,16 +1,21 @@
 import { requirePartnerForPage } from "@/lib/partners/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPaidOrderIdSet } from "@/lib/partners/orderIntegration";
 import PartnerOrderStatusControl from "@/components/partner/PartnerOrderStatusControl";
 
 export default async function PartnerOrdersPage() {
   const partner = await requirePartnerForPage();
   const admin = createAdminClient();
 
-  const { data: items } = await admin
+  const { data: allItems } = await admin
     .from("order_items")
-    .select("id, product_name, quantity, partner_cost_price, partner_fulfillment_status, order:orders(order_number, created_at)")
+    .select("id, order_id, product_name, quantity, partner_cost_price, partner_fulfillment_status, order:orders(order_number, created_at)")
     .eq("partner_id", partner.id)
     .order("id", { ascending: false });
+
+  const orderIds = [...new Set((allItems ?? []).map((i) => i.order_id))];
+  const paidOrderIds = await getPaidOrderIdSet(admin, orderIds);
+  const items = (allItems ?? []).filter((i) => paidOrderIds.has(i.order_id));
 
   return (
     <div>
@@ -21,7 +26,7 @@ export default async function PartnerOrdersPage() {
             <th style={{ padding: 8 }}>شماره فاکتور</th><th style={{ padding: 8 }}>محصول</th><th style={{ padding: 8 }}>تعداد</th><th style={{ padding: 8 }}>مبلغ دریافتی</th><th style={{ padding: 8 }}>وضعیت</th>
           </tr></thead>
           <tbody>
-            {(items ?? []).map((it: {
+            {items.map((it: {
               id: string;
               product_name: string;
               quantity: number;
@@ -42,7 +47,7 @@ export default async function PartnerOrdersPage() {
             })}
           </tbody>
         </table>
-        {(!items || items.length === 0) && <p style={{ textAlign: "center", color: "#9ca3af", padding: 20 }}>هنوز سفارشی ثبت نشده.</p>}
+        {items.length === 0 && <p style={{ textAlign: "center", color: "#9ca3af", padding: 20 }}>هنوز سفارشی ثبت نشده.</p>}
       </div>
     </div>
   );

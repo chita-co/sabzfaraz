@@ -1,4 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
+import type { createAdminClient } from "@/lib/supabase/admin";
 
 export async function attachPartnerInfoToItems(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -11,4 +12,17 @@ export async function attachPartnerInfoToItems(
   const map = new Map<string, { partnerId: string | null; partnerCostPrice: number | null }>();
   (data ?? []).forEach((p) => map.set(p.id, { partnerId: p.partner_id, partnerCostPrice: p.partner_cost_price }));
   return map;
+}
+
+export async function getPaidOrderIdSet(
+  admin: Awaited<ReturnType<typeof createAdminClient>>,
+  orderIds: string[]
+): Promise<Set<string>> {
+  if (orderIds.length === 0) return new Set();
+  const { data } = await admin
+    .from("orders")
+    .select("id")
+    .eq("payment_status", "PAID")
+    .in("id", orderIds);
+  return new Set((data ?? []).map((o: { id: string }) => o.id));
 }
