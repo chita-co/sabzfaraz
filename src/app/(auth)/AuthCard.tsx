@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, X } from "lucide-react";
-import { signIn, signUp, requestPasswordResetOtp, resetPasswordWithOtp } from "./actions";
+import { User, Mail, Phone, CreditCard, X } from "lucide-react";
+import { signIn, requestSignupOtp, verifySignupOtpAndCreateAccount, requestPasswordResetOtp, resetPasswordWithOtp } from "./actions";
+import { toEnglishDigits } from "@/lib/nationalId";
 import PasswordInput from "./PasswordInput";
 import GridScanBackground from "@/components/backgrounds/GridScanBackground";
 
@@ -29,6 +30,18 @@ export default function AuthCard({
 
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [nationalIdInput, setNationalIdInput] = useState("");
+
+  // State مودال تایید ثبت‌نام با پیامک
+  const [pendingRegistration, setPendingRegistration] = useState<{
+    fullName: string; phone: string; nationalId: string; email: string; password: string;
+  } | null>(null);
+  const [isRegisterOtpOpen, setIsRegisterOtpOpen] = useState(false);
+  const [registerOtp, setRegisterOtp] = useState("");
+  const [registerOtpError, setRegisterOtpError] = useState<string | null>(null);
+  const [registerOtpLoading, setRegisterOtpLoading] = useState(false);
+  const [registerOtpTimer, setRegisterOtpTimer] = useState(120);
+  const [registerResendAvailable, setRegisterResendAvailable] = useState(false);
 
   // State مودال (بازنشانی با OTP)
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -61,6 +74,23 @@ export default function AuthCard({
     }
   }, [forgotStep]);
 
+  useEffect(() => {
+    if (!isRegisterOtpOpen) return;
+    if (registerResendAvailable) return;
+    const interval = setInterval(() => {
+      setRegisterOtpTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setRegisterResendAvailable(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRegisterOtpOpen, registerResendAvailable]);
+
+
   async function handleLogin(formData: FormData) {
     setLoginLoading(true);
     setLoginError(null);
@@ -74,11 +104,67 @@ export default function AuthCard({
   async function handleRegister(formData: FormData) {
     setRegisterLoading(true);
     setRegisterError(null);
-    const result = await signUp(formData);
+
+    const fullName = (formData.get("fullName") as string) || "";
+    const phone = (formData.get("phone") as string) || "";
+    const nationalId = (formData.get("nationalId") as string) || "";
+    const email = (formData.get("email") as string) || "";
+    const password = (formData.get("password") as string) || "";
+
+    const result = await requestSignupOtp(formData);
+    setRegisterLoading(false);
     if (result?.error) {
       setRegisterError(result.error);
-      setRegisterLoading(false);
+      return;
     }
+    setPendingRegistration({ fullName, phone, nationalId, email, password });
+    setRegisterOtp("");
+    setRegisterOtpError(null);
+    setRegisterOtpTimer(120);
+    setRegisterResendAvailable(false);
+    setIsRegisterOtpOpen(true);
+  }
+
+  function buildPendingFormData() {
+    const fd = new FormData();
+    if (!pendingRegistration) return fd;
+    fd.append("fullName", pendingRegistration.fullName);
+    fd.append("phone", pendingRegistration.phone);
+    fd.append("nationalId", pendingRegistration.nationalId);
+    fd.append("email", pendingRegistration.email);
+    fd.append("password", pendingRegistration.password);
+    return fd;
+  }
+
+  async function handleRegisterOtpResend() {
+    setRegisterOtpLoading(true);
+    setRegisterOtpError(null);
+    const result = await requestSignupOtp(buildPendingFormData());
+    setRegisterOtpLoading(false);
+    if (result?.error) {
+      setRegisterOtpError(result.error);
+    } else {
+      setRegisterOtpTimer(120);
+      setRegisterResendAvailable(false);
+    }
+  }
+
+  async function handleRegisterOtpVerify(e: React.FormEvent) {
+    e.preventDefault();
+    setRegisterOtpError(null);
+    if (!registerOtp.trim()) {
+      setRegisterOtpError("کد تایید را وارد کنید.");
+      return;
+    }
+    setRegisterOtpLoading(true);
+    const fd = buildPendingFormData();
+    fd.append("code", registerOtp.trim());
+    const result = await verifySignupOtpAndCreateAccount(fd);
+    setRegisterOtpLoading(false);
+    if (result?.error) {
+      setRegisterOtpError(result.error);
+    }
+    // در صورت موفقیت، خود سرور اکشن ریدایرکت به "/" را انجام می‌دهد
   }
 
   // مرحله ۱: ارسال کد OTP به شماره موبایل
@@ -259,6 +345,23 @@ export default function AuthCard({
 
               <div
                 className="input-box animation"
+                style={{ "--li": 19, "--S": 2.3 } as AnimationStyle}
+              >
+                <input
+                  type="text"
+                  name="nationalId"
+                  dir="ltr"
+                  maxLength={10}
+                  required
+                  value={nationalIdInput}
+                  onChange={(e) => setNationalIdInput(toEnglishDigits(e.target.value).replace(/\D/g, "").slice(0, 10))}
+                />
+                <label>کد ملی</label>
+                <CreditCard size={18} />
+              </div>
+
+              <div
+                className="input-box animation"
                 style={{ "--li": 19, "--S": 2.5 } as AnimationStyle}
               >
                 <input type="email" name="email" dir="ltr" />
@@ -427,6 +530,64 @@ export default function AuthCard({
                   </div>
                 </form>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* مودال تایید ثبت‌نام با پیامک */}
+        {isRegisterOtpOpen && pendingRegistration && (
+          <div className="forgot-modal-overlay">
+            <div className="forgot-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="forgot-modal-close"
+                onClick={() => { setIsRegisterOtpOpen(false); setRegisterLoading(false); }}
+              >
+                <X size={20} />
+              </button>
+
+              <h2 className="forgot-modal-title">تایید شماره موبایل</h2>
+
+              <form onSubmit={handleRegisterOtpVerify} className="forgot-form">
+                <p className="text-sm text-gray-300 mb-2">
+                  کد ۴ رقمی به شماره {pendingRegistration.phone} پیامک شد.
+                </p>
+                <div className="forgot-input-box">
+                  <input
+                    type="text"
+                    id="register-otp"
+                    name="registerOtp"
+                    value={registerOtp}
+                    onChange={(e) => setRegisterOtp(toEnglishDigits(e.target.value).replace(/\D/g, "").slice(0, 4))}
+                    dir="ltr"
+                    maxLength={4}
+                    required
+                    placeholder=" "
+                  />
+                  <label>کد تایید</label>
+                </div>
+                {registerOtpError && <p className="forgot-error-message">{registerOtpError}</p>}
+                {registerResendAvailable ? (
+                  <div className="forgot-input-box">
+                    <button
+                      type="button"
+                      className="forgot-btn"
+                      onClick={handleRegisterOtpResend}
+                      disabled={registerOtpLoading}
+                    >
+                      {registerOtpLoading ? "در حال ارسال..." : "ارسال مجدد کد"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="forgot-timer">
+                    {`${Math.floor(registerOtpTimer / 60)}:${(registerOtpTimer % 60).toString().padStart(2, "0")} تا پایان اعتبار کد`}
+                  </p>
+                )}
+                <div className="forgot-input-box">
+                  <button className="forgot-btn" type="submit" disabled={registerOtpLoading}>
+                    {registerOtpLoading ? "در حال بررسی..." : "تایید و ساخت حساب"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

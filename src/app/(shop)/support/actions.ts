@@ -40,13 +40,6 @@ export async function sendUserMessage(ticketId: string, message: string, imageUr
   return { success: true };
 }
 
-export async function editUserMessage(messageId: string, newText: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("support_messages").update({ message: newText }).eq("id", messageId);
-  if (error) return { error: error.message };
-  return { success: true };
-}
-
 export async function getTicketMessages(ticketId: string) {
   const supabase = await createClient();
   const { data } = await supabase

@@ -40,6 +40,7 @@ export default async function AdminUserDetailPage({
             ایمیل: {authUser?.user?.email ?? "—"}
           </p>
           <p className="text-sm text-gray-700 mb-1">تلفن: {profile.phone ?? "—"}</p>
+          <p className="text-sm text-gray-700 mb-1">کد ملی: {profile.national_id ?? "—"}</p>
           <p className="text-sm text-gray-700 mb-3">
             تاریخ عضویت: {new Date(profile.created_at).toLocaleDateString("fa-IR")}
           </p>

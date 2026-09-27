@@ -2,7 +2,16 @@
 import { useState } from "react";
 import { updateOrderItemFulfillmentAction } from "@/app/partner/orders/actions";
 
-const labels: Record<string, string> = { PENDING: "در انتظار", PREPARING: "در حال آماده‌سازی", READY_FOR_PICKUP: "تحویل سفارش به پیک فروشگاه", PICKED_UP: "تحویل به پیک", CANCELLED: "لغو‌شده" };
+const labels: Record<string, string> = {
+  PENDING: "در انتظار",
+  PREPARING: "در حال آماده‌سازی",
+  READY_FOR_PICKUP: "تحویل سفارش به پیک فروشگاه",
+  PICKED_UP: "تحویل به پیک",
+  DELIVERED_TO_CUSTOMER: "تحویل به مشتری شد",
+  STOCK_SHORTAGE: "عدم تامین ثبت شد",
+  RETURNED_BY_CUSTOMER: "برگشت از مشتری",
+  CANCELLED: "لغو‌شده",
+};
 
 export default function PartnerOrderStatusControl({ itemId, currentStatus }: { itemId: string; currentStatus: string }) {
   const [status, setStatus] = useState(currentStatus);
@@ -15,7 +24,7 @@ export default function PartnerOrderStatusControl({ itemId, currentStatus }: { i
     if (!res.error) setStatus(next);
   }
 
-  if (status === "PICKED_UP" || status === "CANCELLED") return <span>{labels[status]}</span>;
+  if (["PICKED_UP", "DELIVERED_TO_CUSTOMER", "STOCK_SHORTAGE", "RETURNED_BY_CUSTOMER", "CANCELLED"].includes(status)) return <span>{labels[status]}</span>;
 
   return (
     <select value={status} disabled={saving} onChange={(e) => handleChange(e.target.value as "PREPARING" | "READY_FOR_PICKUP")} className="partner-input" style={{ fontSize: 12, padding: "4px 8px" }}>

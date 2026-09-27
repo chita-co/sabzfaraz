@@ -46,19 +46,13 @@ function ReviewRow({
   product: ProductForReview;
   defaultReviewerName: string;
 }) {
-  const [editing, setEditing] = useState(!product.existingReview);
+  const [editing] = useState(!product.existingReview);
   const [rating, setRating] = useState(product.existingReview?.rating ?? 0);
   const [comment, setComment] = useState(product.existingReview?.comment ?? "");
   const [reviewerName, setReviewerName] = useState(defaultReviewerName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(!!product.existingReview);
-
-  const [editLocked] = useState(() => {
-    return product.existingReview
-      ? (Date.now() - new Date(product.existingReview.created_at).getTime()) / (1000 * 60 * 60) > 24
-      : false;
-  });
 
   async function handleSubmit() {
     if (rating === 0) {
@@ -73,7 +67,6 @@ function ReviewRow({
       setError(result.error);
     } else {
       setSaved(true);
-      setEditing(false);
     }
   }
 
@@ -94,9 +87,7 @@ function ReviewRow({
         {!editing && saved ? (
           <div className="flex items-center gap-2">
             <StarRatingDisplay value={rating} size={16} />
-            <button onClick={() => setEditing(true)} className="text-xs text-green-600 hover:underline">
-              {editLocked ? "دیدن نظر" : "ویرایش نظر"}
-            </button>
+            <span className="text-xs text-gray-400">نظر شما ثبت شد</span>
           </div>
         ) : (
           <div className="space-y-2">
@@ -106,36 +97,23 @@ function ReviewRow({
               placeholder="نام شما (نمایش داده می‌شود)"
               value={reviewerName}
               onChange={(e) => setReviewerName(e.target.value)}
-              disabled={editLocked}
-              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
             />
             <textarea
               placeholder="نظر شما (اختیاری)"
               rows={2}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              disabled={editLocked}
-              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
             />
-            {editLocked ? (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">مهلت ۲۴ ساعته ویرایش این نظر به پایان رسیده است.</span>
-                <button onClick={() => setEditing(false)} className="text-xs text-gray-500 hover:underline">
-                  بستن
-                </button>
-              </div>
-            ) : (
-              <>
-                {error && <p className="text-red-600 text-xs">{error}</p>}
-                <button
-                  onClick={handleSubmit}
-                  disabled={saving}
-                  className="rounded-lg bg-green-600 px-4 py-1.5 text-xs text-white hover:bg-green-700 disabled:opacity-50"
-                >
-                  {saving ? "در حال ثبت..." : "ثبت امتیاز و نظر"}
-                </button>
-              </>
-            )}
+            {error && <p className="text-red-600 text-xs">{error}</p>}
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="rounded-lg bg-green-600 px-4 py-1.5 text-xs text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {saving ? "در حال ثبت..." : "ثبت امتیاز و نظر"}
+            </button>
           </div>
         )}
       </div>

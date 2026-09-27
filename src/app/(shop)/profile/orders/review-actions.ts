@@ -16,28 +16,22 @@ export async function submitReview(
 
   const { data: existing } = await supabase
     .from("product_reviews")
-    .select("created_at")
+    .select("id")
     .eq("user_id", user.id)
     .eq("product_id", productId)
     .maybeSingle();
 
   if (existing) {
-    const hoursPassed = (Date.now() - new Date(existing.created_at).getTime()) / (1000 * 60 * 60);
-    if (hoursPassed > 24) {
-      return { error: "مهلت ۲۴ ساعته برای ویرایش این نظر به پایان رسیده است." };
-    }
+    return { error: "شما قبلاً برای این محصول نظر ثبت کرده‌اید و امکان ویرایش یا حذف آن وجود ندارد." };
   }
 
-  const { error } = await supabase.from("product_reviews").upsert(
-    {
-      product_id: productId,
-      user_id: user.id,
-      rating,
-      comment: comment || null,
-      reviewer_name: reviewerName || "کاربر سبزفراز",
-    },
-    { onConflict: "user_id,product_id" }
-  );
+  const { error } = await supabase.from("product_reviews").insert({
+    product_id: productId,
+    user_id: user.id,
+    rating,
+    comment: comment || null,
+    reviewer_name: reviewerName || "کاربر سبزفراز",
+  });
 
   if (error) return { error: error.message };
 
