@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Notif { id: string; title: string; message: string; is_read: boolean; created_at: string; }
 
@@ -21,10 +22,20 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 60000);
-    return () => clearInterval(interval);
+    let active = true;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active || !session?.user) return; // کاربر مهمان است، نیازی به poll نیست
+      fetchNotifs();
+      interval = setInterval(fetchNotifs, 120000);
+    });
+
+    return () => {
+      active = false;
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {

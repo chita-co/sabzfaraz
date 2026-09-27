@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SupportUnreadBadgeUser() {
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
     async function fetchCount() {
       try {
         const res = await fetch("/api/support/unread-count");
@@ -15,9 +18,7 @@ export default function SupportUnreadBadgeUser() {
         if (active) setCount(0);
       }
     }
-    fetchCount();
-    let timer: ReturnType<typeof setInterval> | null = setInterval(fetchCount, 20000);
-    // تا وقتی تب مرورگر در پس‌زمینه‌ست poll متوقف می‌شه، همین که برگردد فوراً یک‌بار چک می‌شه.
+
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         fetchCount();
@@ -28,7 +29,15 @@ export default function SupportUnreadBadgeUser() {
         timer = null;
       }
     }
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active || !session?.user) return; // کاربر مهمان است، نیازی به poll نیست
+      fetchCount();
+      timer = setInterval(fetchCount, 60000);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    });
+
     return () => {
       active = false;
       if (timer) clearInterval(timer);
