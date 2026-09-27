@@ -19,7 +19,8 @@ import {
   Film,
   Gavel,
   Newspaper,
-  Handshake
+  Handshake,
+  Images,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import PendingWalletBadge from "./PendingWalletBadge";
@@ -161,6 +162,7 @@ const navConfig: NavItem[] = [
     ],
   },
   { href: "/admin/unboxing", label: "ویدیوهای آنباکس", icon: Film },
+  { href: "/admin/gallery", label: "گالری ویدیوها", icon: Images },
   {
     id: "settings", label: "تنظیمات", icon: Settings,
     children: [

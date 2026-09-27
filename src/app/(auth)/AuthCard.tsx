@@ -31,6 +31,10 @@ export default function AuthCard({
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [nationalIdInput, setNationalIdInput] = useState("");
+  const [fullNameInput, setFullNameInput] = useState("");
+  const [phoneInput, setPhoneInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
 
   // State مودال تایید ثبت‌نام با پیامک
   const [pendingRegistration, setPendingRegistration] = useState<{
@@ -110,6 +114,12 @@ export default function AuthCard({
     const nationalId = (formData.get("nationalId") as string) || "";
     const email = (formData.get("email") as string) || "";
     const password = (formData.get("password") as string) || "";
+
+    if (password.length < 6) {
+      setRegisterError("رمز عبور باید حداقل ۶ کاراکتر باشد.");
+      setRegisterLoading(false);
+      return;
+    }
 
     const result = await requestSignupOtp(formData);
     setRegisterLoading(false);
@@ -329,7 +339,7 @@ export default function AuthCard({
                 className="input-box animation"
                 style={{ "--li": 18, "--S": 1 } as AnimationStyle}
               >
-                <input type="text" name="fullName" required />
+                <input type="text" name="fullName" required value={fullNameInput} onChange={(e) => setFullNameInput(e.target.value)} />
                 <label>نام و نام خانوادگی</label>
                 <User size={18} />
               </div>
@@ -338,7 +348,7 @@ export default function AuthCard({
                 className="input-box animation"
                 style={{ "--li": 19, "--S": 2 } as AnimationStyle}
               >
-                <input type="tel" name="phone" dir="ltr" maxLength={11} required />
+                <input type="tel" name="phone" dir="ltr" maxLength={11} required value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
                 <label>شماره موبایل</label>
                 <Phone size={18} />
               </div>
@@ -364,7 +374,7 @@ export default function AuthCard({
                 className="input-box animation"
                 style={{ "--li": 19, "--S": 2.5 } as AnimationStyle}
               >
-                <input type="email" name="email" dir="ltr" />
+                <input type="email" name="email" dir="ltr" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} />
                 <label>ایمیل (اختیاری)</label>
                 <Mail size={18} />
               </div>
@@ -372,6 +382,8 @@ export default function AuthCard({
                 name="password"
                 label="رمز عبور"
                 style={{ "--li": 19, "--S": 3 } as AnimationStyle}
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
               />
 
               {registerError && <p className="error-message">{registerError}</p>}

@@ -31,7 +31,6 @@ export default function PasswordInput({
         type={visible ? "text" : "password"}
         name={name}
         required
-        minLength={6}
         value={value}
         onChange={onChange}
         placeholder=" "

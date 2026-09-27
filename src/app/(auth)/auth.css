@@ -26,6 +26,10 @@
   border-radius: 15px;
 }
 
+.auth-page .container.active {
+  height: 620px;
+}
+
 .auth-page .container .form-box {
   position: absolute;
   top: 0;

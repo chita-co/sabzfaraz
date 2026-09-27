@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import UnboxingChannelButtons from "@/components/shop/UnboxingChannelButtons";
 import UnboxingSearchGrid from "@/components/shop/UnboxingSearchGrid";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
+import GalleryVideoGrid from "@/components/shop/GalleryVideoGrid";
 
 export const metadata = {
   title: "آنباکس مشتریان سبزفراز | ویدیوتو بفرست، جایزه بگیر",
@@ -11,7 +12,7 @@ export const metadata = {
 
 export default async function UnboxingPage() {
   const supabase = await createClient();
-  const [{ data: videos }, { data: settings }] = await Promise.all([
+  const [{ data: videos }, { data: settings }, { data: galleryVideos }] = await Promise.all([
     supabase
       .from("unboxing_videos")
       .select("*")
@@ -19,6 +20,7 @@ export default async function UnboxingPage() {
       .order("is_featured", { ascending: false })
       .order("published_at", { ascending: false }),
     supabase.from("site_settings").select("unboxing_whatsapp_number, unboxing_telegram_id, unboxing_instagram_handle").eq("id", 1).single(),
+    supabase.from("gallery_videos").select("*").order("platform", { ascending: true }).order("created_at", { ascending: false }),
   ]);
 
   const list = videos ?? [];
@@ -71,6 +73,7 @@ export default async function UnboxingPage() {
 
         <h2 className="section-title" style={{ marginTop: 36 }}>گالری ویدیوهای مشتریان</h2>
         <UnboxingSearchGrid videos={list} />
+        <GalleryVideoGrid videos={galleryVideos ?? []} />
       </div>
 
       <div className="unboxing-mobile-sticky">
