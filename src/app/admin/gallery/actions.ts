@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { extractVideoId } from "@/lib/unboxing/videoHelpers";
 import { buildInstagramEmbedUrl } from "@/lib/gallery/galleryHelpers";
+import { deleteImageByUrl } from "@/lib/arvan";
 
 export async function getGalleryVideos() {
   const admin = createAdminClient();
@@ -52,7 +53,12 @@ export async function createGalleryVideo(input: {
 
 export async function deleteGalleryVideo(id: string) {
   const admin = createAdminClient();
+  const { data: row } = await admin.from("gallery_videos").select("cover_image_url").eq("id", id).single();
   await admin.from("gallery_videos").delete().eq("id", id);
+  const endpoint = process.env.ARVAN_ENDPOINT;
+  if (row?.cover_image_url && endpoint && row.cover_image_url.startsWith(endpoint)) {
+    await deleteImageByUrl(row.cover_image_url);
+  }
   revalidatePath("/admin/gallery");
   revalidatePath("/unboxing");
 }

@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyAllAdmins } from "@/lib/notifications";
-import { sendSms } from "@/lib/sms";
+import { sendSms, sendTemplateSms } from "@/lib/sms";
 import { redirect } from "next/navigation";
 import sharp from "sharp";
 import { uploadImage } from "@/lib/arvan";
@@ -192,14 +192,19 @@ export async function requestPasswordResetAction(phone: string) {
   });
 
   try {
-    await sendSms(phone.trim(), `سبزفراز\nکد بازیابی رمز عبور شما: ${code}\nاعتبار: ۱۰ دقیقه`);
+    const templateId = Number(process.env.SMSIR_PARTNER_PASSWORD_RESET_TEMPLATE_ID);
+    if (!templateId) {
+      // fallback: اگه قالب تنظیم نشده بود، از روش قبلی استفاده کن
+      await sendSms(phone.trim(), `سبزفراز\nکد بازیابی رمز عبور شما: ${code}\nاعتبار: ۱۰ دقیقه`);
+    } else {
+      await sendTemplateSms(phone.trim(), templateId, [{ name: "CODE", value: code }]);
+    }
   } catch (e) {
     console.error(e);
     return { error: "خطا در ارسال پیامک." };
   }
   return { success: true };
 }
-
 export async function confirmPasswordResetAction(phone: string, code: string, newPassword: string) {
   if (newPassword.length < 6) return { error: "رمز عبور باید حداقل ۶ کاراکتر باشد." };
   const admin = createAdminClient();

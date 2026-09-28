@@ -16,12 +16,22 @@ export const metadata: Metadata = {
   ),
   title: "سبزفراز | فروشگاه اینترنتی",
   description: "خرید آنلاین انواع کالا از سبزفراز",
-  icons: { icon: "/icon.png", apple: "/apple-icon.png" },
-appleWebApp: { title: "سبزفراز", capable: true, statusBarStyle: "default" },
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: "/apple-icon.png",
+    shortcut: "/favicon.ico",
+  },
+  appleWebApp: { title: "سبزفراز", capable: true, statusBarStyle: "default" },
   verification: {
     google: "BI5RoL6RuvmrwnG5vgJndjwmWQf6Pa9R5ks6E8YSYBw",
     other: {
-      "enamad": "17737796",
+      enamad: "17737796",
       "msvalidate.01": "0147EAAA6AFD09373328DA12666E26BF",
     },
   },
