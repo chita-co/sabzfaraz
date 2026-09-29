@@ -20,6 +20,10 @@ export function extractVideoId(platform: VideoPlatform, rawInput: string): strin
   if (shortMatch) return shortMatch[1];
   const embedMatch = input.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{6,})/);
   if (embedMatch) return embedMatch[1];
+  const shortsMatch = input.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{6,})/);
+  if (shortsMatch) return shortsMatch[1];
+  const liveMatch = input.match(/youtube\.com\/live\/([a-zA-Z0-9_-]{6,})/);
+  if (liveMatch) return liveMatch[1];
   if (/^[a-zA-Z0-9_-]{6,}$/.test(input)) return input;
   return null;
 }

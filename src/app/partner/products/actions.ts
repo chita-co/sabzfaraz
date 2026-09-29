@@ -668,3 +668,52 @@ export async function deletePartnerProductAction(productId: string) {
     return { error: message };
   }
 }
+
+export async function updatePartnerProductQuickFieldsAction(input: {
+  productId: string;
+  price?: number;
+  partnerCostPrice?: number;
+  stock?: number;
+}) {
+  try {
+    const partner = await requireActivePartner();
+    const admin = createAdminClient();
+
+    const { data: product } = await admin
+      .from("products")
+      .select("id, slug, partner_id, price, partner_cost_price, partner_stock_unlimited")
+      .eq("id", input.productId)
+      .single();
+
+    if (!product || product.partner_id !== partner.id) {
+      return { error: "دسترسی به این محصول ندارید." };
+    }
+
+    const nextPrice = input.price !== undefined ? Math.round(input.price) : product.price;
+    const nextCost = input.partnerCostPrice !== undefined ? Math.round(input.partnerCostPrice) : (product.partner_cost_price ?? 0);
+
+    if (input.price !== undefined || input.partnerCostPrice !== undefined) {
+      const settings = await getPartnerSettings();
+      const profitPercent = nextPrice > 0 ? ((nextPrice - nextCost) / nextPrice) * 100 : 0;
+      if (profitPercent < settings.min_profit_percent) {
+        return { error: `سود سایت باید حداقل ${settings.min_profit_percent}٪ باشد.` };
+      }
+    }
+
+    const updatePayload: Record<string, number> = {};
+    if (input.price !== undefined) updatePayload.price = nextPrice;
+    if (input.partnerCostPrice !== undefined) updatePayload.partner_cost_price = nextCost;
+    if (input.stock !== undefined && !product.partner_stock_unlimited) updatePayload.stock = Math.round(input.stock);
+
+    if (Object.keys(updatePayload).length === 0) return { error: "مقداری برای تغییر وارد نشده." };
+
+    const { error } = await admin.from("products").update(updatePayload).eq("id", product.id);
+    if (error) return { error: "خطا در ذخیره تغییرات." };
+
+    revalidatePath("/partner/products");
+    if (product.slug) revalidatePath(`/products/${product.slug}`);
+    return { success: true };
+  } catch {
+    return { error: "خطا در ذخیره تغییرات." };
+  }
+}

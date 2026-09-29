@@ -334,6 +334,19 @@ product?: any;
 
   const profit = (Number(sellPrice) || 0) - (Number(partnerCostPrice) || 0);
   const profitPercent = Number(sellPrice) > 0 ? (profit / Number(sellPrice)) * 100 : 0;
+  // محاسبه‌ی سریع بر اساس درصد سود سایت (همان فرمول: سود ÷ قیمت فروش)
+  function applySellPercent(percent: number) {
+    const sell = Number(sellPrice);
+    if (!sell || sell <= 0) return toast.error("ابتدا قیمت فروش به مشتری را وارد کنید.");
+    const raw = sell * (1 - percent / 100);
+    setPartnerCostPrice(String(Math.round(raw / 1000) * 1000));
+  }
+  function applyReceivedPercent(percent: number) {
+    const received = Number(partnerCostPrice);
+    if (!received || received <= 0) return toast.error("ابتدا قیمتی که دریافت می‌کنید را وارد کنید.");
+    const raw = received / (1 - percent / 100);
+    setSellPrice(String(Math.round(raw / 1000) * 1000));
+  }
 
   async function handleSubmit() {
     console.log("Submit clicked", { title, categoryId, suggestingNewCategory, images: images.length, sellPrice, partnerCostPrice, stock, stockUnlimited });
@@ -554,6 +567,19 @@ product?: any;
               <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>قیمت فروش به مشتری (تومان)</label>
               <input className="partner-input" type="number" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} style={{ width: "100%" }} />
               <p style={{ fontSize: 10.5, color: "#9ca3af", marginTop: 3 }}>همان مبلغی که مشتری در سایت پرداخت می‌کند.</p>
+              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                {[11, 13, 15].map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => applySellPercent(p)}
+                    title={`سود سایت ${p}٪ — قیمت دریافتی خودکار محاسبه شود`}
+                    style={{ width: 38, height: 38, borderRadius: "50%", border: "1px solid #16a34a", background: "#f0fdf4", color: "#166534", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    {p}٪
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>قیمت بعد از تخفیف (اختیاری)</label>
@@ -563,6 +589,19 @@ product?: any;
               <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>قیمتی که شما دریافت می‌کنید (تومان)</label>
               <input className="partner-input" type="number" value={partnerCostPrice} onChange={(e) => setPartnerCostPrice(e.target.value)} style={{ width: "100%" }} />
               <p style={{ fontSize: 10.5, color: "#9ca3af", marginTop: 3 }}>مبلغی که بابت فروش این محصول به کیف پول شما واریز می‌شود.</p>
+              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                {[11, 13, 15].map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => applyReceivedPercent(p)}
+                    title={`سود سایت ${p}٪ — قیمت فروش خودکار محاسبه شود`}
+                    style={{ width: 38, height: 38, borderRadius: "50%", border: "1px solid #16a34a", background: "#f0fdf4", color: "#166534", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    {p}٪
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>وزن هر واحد (گرم — برای هزینه ارسال)</label>
