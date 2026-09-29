@@ -55,3 +55,22 @@ export async function updatePartnerInfoAction(partnerId: string, input: {
   revalidatePath(`/admin/partners/${partnerId}`);
   return { success: true };
 }
+
+export async function releasePartnerPendingAction(partnerId: string) {
+  const admin = createAdminClient();
+  
+  // همه PENDING رو available کن
+  await admin
+    .from("partner_wallet_transactions")
+    .update({ available_at: new Date().toISOString() })
+    .eq("partner_id", partnerId)
+    .eq("type", "SALE_EARNING")
+    .eq("status", "PENDING");
+
+  // بعد آزادشون کن
+  const { releaseMaturedPartnerBalances } = await import("@/lib/partners/wallet");
+  await releaseMaturedPartnerBalances(partnerId);
+
+  revalidatePath(`/admin/partners/${partnerId}`);
+  return { success: true };
+}

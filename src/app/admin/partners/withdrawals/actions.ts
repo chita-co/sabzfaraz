@@ -24,9 +24,47 @@ export async function approveWithdrawalAction(requestId: string, referenceNumber
   return { success: true };
 }
 
-export async function rejectWithdrawalAction(requestId: string) {
+export async function rejectWithdrawalAction(requestId: string, adminNote?: string) {
   const admin = createAdminClient();
-  await admin.from("partner_withdrawal_requests").update({ status: "REJECTED" }).eq("id", requestId);
+  const { data: req } = await admin.from("partner_withdrawal_requests").select("partner_id, amount").eq("id", requestId).single();
+  const reason = adminNote?.trim() || null;
+
+  await admin
+    .from("partner_withdrawal_requests")
+    .update({ 
+      status: "REJECTED", 
+      admin_note: reason,
+      processed_at: new Date().toISOString(),
+    })
+    .eq("id", requestId);
+
+  // ثبت در تاریخچه تراکنش‌های کیف پول همکار
+  if (req?.partner_id) {
+    try {
+      await admin.from("partner_wallet_transactions").insert({
+        partner_id: req.partner_id,
+        type: "WITHDRAWAL",
+        amount: -req.amount,
+        status: "REJECTED",
+        description: `درخواست برداشت ${req.amount.toLocaleString("fa-IR")} تومان رد شد${reason ? ` — دلیل: ${reason}` : ""}`,
+      });
+    } catch (e) {
+      console.error("خطا در ثبت تراکنش رد شدن:", e);
+    }
+  }
+
+  if (req?.partner_id) {
+    try {
+      await createNotification(
+        req.partner_id,
+        "درخواست برداشت رد شد ❌",
+        `درخواست برداشت ${req.amount.toLocaleString("fa-IR")} تومان شما رد شد.${reason ? `\nدلیل: ${reason}` : ""}`
+      );
+    } catch (e) {
+      console.error("خطا در ارسال نوتیفیکیشن:", e);
+    }
+  }
+
   revalidatePath("/admin/partners/withdrawals");
   return { success: true };
 }

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { suspendPartnerAction, activatePartnerAction, applyPenaltyAction, overrideRatingAction } from "../actions";
 import { recordSettlementAction } from "./actions";
 import PartnerInfoEditForm from "@/components/admin/PartnerInfoEditForm";
+import { releasePartnerPendingAction } from "./actions";
 
 export default async function AdminPartnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,6 +49,19 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
         <div className="stat-card"><div><p className="stat-label">در انتظار</p><p className="stat-value">{partner.wallet_pending_balance.toLocaleString("fa-IR")}</p></div></div>
         <div className="stat-card"><div><p className="stat-label">ضمانت</p><p className="stat-value">{partner.reserve_balance.toLocaleString("fa-IR")}</p></div></div>
       </div>
+
+      {/* آزادسازی فوری موجودی در انتظار */}
+      {partner.wallet_pending_balance > 0 && (
+        <div className="admin-card" style={{ maxWidth: 480 }}>
+          <h2 style={{ fontWeight: 800, marginBottom: 8 }}>آزادسازی فوری موجودی در انتظار</h2>
+          <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 10 }}>
+            مبلغ در انتظار: {partner.wallet_pending_balance.toLocaleString("fa-IR")} تومان — با زدن این دکمه، همه این مبلغ بلافاصله قابل برداشت می‌شود.
+          </p>
+          <form action={async () => { "use server"; await releasePartnerPendingAction(id); }}>
+            <button className="admin-btn admin-btn-primary">آزادسازی فوری</button>
+          </form>
+        </div>
+      )}
 
       {/* تسویه حساب */}
       <div className="admin-card" style={{ maxWidth: 480 }}>

@@ -8,7 +8,7 @@ export async function updatePartnerSettingsAction(formData: FormData) {
   const admin = createAdminClient();
   await admin.from("partner_settings").update({
     min_profit_percent: Number(formData.get("min_profit_percent")) || 15,
-    settlement_hold_days: Number(formData.get("settlement_hold_days")) || 7,
+    settlement_hold_days: formData.get("settlement_hold_days") === "" ? 0 : Math.max(0, Number(formData.get("settlement_hold_days")) || 0),
     reserve_balance_amount: Number(formData.get("reserve_balance_amount")) || 0,
     min_withdrawal_amount: Number(formData.get("min_withdrawal_amount")) || 200000,
     registration_open: formData.get("registration_open") === "on",
