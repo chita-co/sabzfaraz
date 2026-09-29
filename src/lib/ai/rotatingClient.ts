@@ -35,16 +35,21 @@ async function markKeyUsed(id: string, error?: string) {
   }
 }
 
-async function callGeminiWithKey(apiKey: string, prompt: string): Promise<string> {
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
+
+async function callGeminiWithKey(apiKey: string, prompt: string, model: string): Promise<string> {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, responseMimeType: "application/json" },
+      generationConfig: { responseMimeType: "application/json" },
     }),
   });
-  if (!res.ok) throw new Error(`status ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    throw new Error(`status ${res.status}: ${errBody.slice(0, 300)}`);
+  }
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("پاسخ خالی");
@@ -56,16 +61,19 @@ export async function callAiWithRotation(prompt: string, mode: "SEQUENTIAL" | "R
   if (keys.length === 0) throw new Error("هیچ کلید هوش مصنوعی فعالی تنظیم نشده است.");
   if (mode === "RANDOM") keys = [...keys].sort(() => Math.random() - 0.5);
 
-  let lastError: string = "";
-  for (const key of keys) {
-    try {
-      const result = await callGeminiWithKey(key.api_key, prompt);
-      await markKeyUsed(key.id);
-      return result;
-    } catch (e: unknown) {
-      lastError = e instanceof Error ? e.message : "خطای نامشخص";
-      await markKeyUsed(key.id, lastError);
-      continue;
+  for (const model of GEMINI_MODELS) {
+    for (const key of keys) {
+      try {
+        const result = await callGeminiWithKey(key.api_key, prompt, model);
+        await markKeyUsed(key.id);
+        return result;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "خطای نامشخص";
+        console.error("Gemini fail:", model, msg);
+        await markKeyUsed(key.id, `${model}: ${msg}`);
+        // 503 یعنی خود مدل شلوغ است، نه کلید؛ امتحان بقیه کلیدها روی همین مدل فایده ندارد
+        if (msg.startsWith("status 503")) break;
+      }
     }
   }
   throw new Error("مشکلی پیش آمده، لطفاً دوباره تلاش کنید.");

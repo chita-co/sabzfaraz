@@ -55,7 +55,8 @@ function matchesQuery(name: string, query: string): boolean {
 
 export default function PartnerProductsTable({ products }: { products: ProductRow[] }) {
   const [search, setSearch] = useState("");
-  const [showImages, setShowImages] = useState(false);
+  const [hideImages, setHideImages] = useState(false);
+  const showImages = !hideImages;
   const [rows, setRows] = useState(products);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
@@ -129,8 +130,8 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
           style={{ maxWidth: 320 }}
         />
         <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, cursor: "pointer", userSelect: "none" }}>
-          <input type="checkbox" checked={showImages} onChange={(e) => setShowImages(e.target.checked)} />
-          نمایش تصویر محصولات
+          <input type="checkbox" checked={hideImages} onChange={(e) => setHideImages(e.target.checked)} />
+          عدم نمایش تصویر محصولات
         </label>
         {search && (
           <span style={{ fontSize: 12, color: "#6b7280" }}>
@@ -160,9 +161,16 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
                 {showImages && (
                   <td style={{ padding: 8 }}>
                     {p.images?.[0] ? (
-                      <Image src={p.images[0]} alt={p.name} width={40} height={40} className="w-10 h-10 object-cover rounded-lg" unoptimized />
+                      <Image
+                        src={p.images[0]}
+                        alt={p.name}
+                        width={340}
+                        height={74}
+                        unoptimized
+                        style={{ width: 340, height: 74, objectFit: "cover", borderRadius: 10 }}
+                      />
                     ) : (
-                      <div style={{ width: 40, height: 40, background: "#f3f4f6", borderRadius: 8 }} />
+                      <div style={{ width: 340, height: 74, background: "#f3f4f6", borderRadius: 10 }} />
                     )}
                   </td>
                 )}

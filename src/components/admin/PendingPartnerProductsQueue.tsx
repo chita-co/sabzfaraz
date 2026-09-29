@@ -33,6 +33,7 @@ export default function PendingPartnerProductsQueue({ products }: { products: Pe
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [groupReason, setGroupReason] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
+  const [selectedReason, setSelectedReason] = useState(REJECT_REASONS[2]);
 
   const groups = useMemo(() => {
     const map = new Map<string, PendingProduct[]>();
@@ -77,12 +78,44 @@ export default function PendingPartnerProductsQueue({ products }: { products: Pe
     });
   }
 
-  function handleSingleReject(id: string, reason: string) {
+    function handleSingleReject(id: string, reason: string) {
     startTransition(async () => {
       const res = await rejectPartnerProductAction(id, reason);
       if (res?.error) { toast.error(res.error); return; }
       toast.success("محصول رد شد.");
       clearFromSelection([id]);
+    });
+  }
+
+  const allIds = useMemo(() => products.map((p) => p.id), [products]);
+  const selectedCount = allIds.filter((id) => selected.has(id)).length;
+  const allSelected = allIds.length > 0 && selectedCount === allIds.length;
+
+  function toggleAll(checked: boolean) {
+    setSelected(checked ? new Set(allIds) : new Set());
+  }
+
+  function handleApproveSelected() {
+    const chosen = allIds.filter((id) => selected.has(id));
+    if (chosen.length === 0) return toast.error("هیچ محصولی انتخاب نشده.");
+    if (!window.confirm(`${chosen.length.toLocaleString("fa-IR")} محصول تأیید و منتشر شود؟`)) return;
+    startTransition(async () => {
+      const res = await bulkApprovePartnerProductsAction(chosen);
+      if (res?.error) { toast.error(res.error); return; }
+      toast.success(`${res.count} محصول تأیید و منتشر شد.`);
+      clearFromSelection(chosen);
+    });
+  }
+
+  function handleRejectSelected() {
+    const chosen = allIds.filter((id) => selected.has(id));
+    if (chosen.length === 0) return toast.error("هیچ محصولی انتخاب نشده.");
+    if (!window.confirm(`${chosen.length.toLocaleString("fa-IR")} محصول با دلیل «${selectedReason}» رد شود؟`)) return;
+    startTransition(async () => {
+      const res = await bulkRejectPartnerProductsAction(chosen, selectedReason);
+      if (res?.error) { toast.error(res.error); return; }
+      toast.success(`${res.count} محصول رد شد.`);
+      clearFromSelection(chosen);
     });
   }
 
@@ -111,6 +144,53 @@ export default function PendingPartnerProductsQueue({ products }: { products: Pe
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      <div
+        style={{
+          position: "sticky", top: 0, zIndex: 5, background: "#fff",
+          border: "1px solid #e5e7eb", borderRadius: 12, padding: "10px 14px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 8,
+        }}
+      >
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(el) => { if (el) el.indeterminate = !allSelected && selectedCount > 0; }}
+            onChange={(e) => toggleAll(e.target.checked)}
+          />
+          انتخاب همه ({allIds.length.toLocaleString("fa-IR")} محصول)
+        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: "#6b7280" }}>
+            {selectedCount.toLocaleString("fa-IR")} محصول انتخاب شده
+          </span>
+          <select
+            className="admin-input"
+            style={{ fontSize: 11 }}
+            value={selectedReason}
+            onChange={(e) => setSelectedReason(e.target.value)}
+          >
+            {REJECT_REASONS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <button
+            disabled={pending || selectedCount === 0}
+            className="admin-btn admin-btn-danger"
+            onClick={handleRejectSelected}
+          >
+            رد انتخاب‌شده‌ها
+          </button>
+          <button
+            disabled={pending || selectedCount === 0}
+            className="admin-btn admin-btn-primary"
+            onClick={handleApproveSelected}
+          >
+            {pending ? "در حال انجام..." : "تأیید و انتشار انتخاب‌شده‌ها"}
+          </button>
+        </div>
+      </div>
       {groups.map(([groupName, groupProducts]) => {
         const ids = groupProducts.map((p) => p.id);
         const allChecked = ids.every((id) => selected.has(id));

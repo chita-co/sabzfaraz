@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import PendingPartnerProductsQueue from "@/components/admin/PendingPartnerProductsQueue";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function AdminPartnerProductsQueuePage() {
   const admin = createAdminClient();
