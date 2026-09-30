@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function restockProduct(productId: string, quantity: number) {
   if (quantity <= 0) return { error: "تعداد باید بزرگ‌تر از صفر باشد." };
@@ -13,6 +13,7 @@ export async function restockProduct(productId: string, quantity: number) {
   revalidatePath("/admin/out-of-stock");
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products");
   if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
   return { success: true };
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 interface BulkChanges {
   price?: number;
@@ -45,6 +45,7 @@ export async function bulkUpdateProducts(ids: string[], changes: BulkChanges, qu
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products");
   for (const row of slugRows ?? []) {
     if (row.slug) revalidatePath(`/products/${row.slug}`);
   }

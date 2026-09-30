@@ -29,7 +29,14 @@ export default async function AdminPartnerSettingsPage() {
         <h2 style={{ fontWeight: 800, marginBottom: 14 }}>تنظیمات کلی همکاران</h2>
         <form action={updatePartnerSettingsAction} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <label className="admin-form-group"><span>حداقل درصد سود سایت (٪)</span><input className="admin-input" name="min_profit_percent" type="number" step="0.1" defaultValue={settings?.min_profit_percent} /></label>
-          <label className="admin-form-group"><span>دوره تسویه (روز تا قابل‌برداشت‌شدن)</span><input className="admin-input" name="settlement_hold_days" type="number" defaultValue={settings?.settlement_hold_days} /></label>
+          <label className="admin-form-group"><span>نحوه تسویه (قابل‌برداشت‌شدن پس از تحویل به مشتری)</span>
+            <select className="admin-input" name="settlement_hold_days" defaultValue={String(settings?.settlement_hold_days ?? 1)}>
+              <option value="0">فوری (همان لحظه تحویل به مشتری)</option>
+              {[...new Set([1, 2, 3, 5, 7, 10, 14, 21, 30, ...((settings?.settlement_hold_days ?? 0) > 0 ? [Number(settings?.settlement_hold_days)] : [])])]
+                .sort((a, b) => a - b)
+                .map((d) => <option key={d} value={d}>{d} روز بعد از تحویل</option>)}
+            </select>
+          </label>
           <label className="admin-form-group"><span>مبلغ ذخیره تضمین (تومان)</span><input className="admin-input" name="reserve_balance_amount" type="number" defaultValue={settings?.reserve_balance_amount} /></label>
           <label className="admin-form-group"><span>حداقل مبلغ برداشت (تومان)</span><input className="admin-input" name="min_withdrawal_amount" type="number" defaultValue={settings?.min_withdrawal_amount} /></label>
           <label className="admin-form-group"><span>حداکثر تعداد تخلف مجاز قبل از تعلیق خودکار</span><input className="admin-input" name="auto_suspend_after_violations" type="number" defaultValue={settings?.auto_suspend_after_violations} /></label>

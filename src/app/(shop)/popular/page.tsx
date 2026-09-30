@@ -5,6 +5,8 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
 import type { Metadata } from "next";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
+import type { Product } from "@/types";
 
 export const metadata: Metadata = {
   title: "محصولات پرطرفدار | سبزفراز",
@@ -24,7 +26,7 @@ export default async function PopularProductsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase.from("products").select("*", { count: "exact" }).eq("is_active", true).eq("is_popular", true);
+  let query = supabase.from("products").select(PRODUCT_LIST_FIELDS, { count: "exact" }).eq("is_active", true).eq("is_popular", true);
   if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
   else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
   else if (sort === "popular") query = query.order("rating_avg", { ascending: false });
@@ -52,7 +54,7 @@ export default async function PopularProductsPage({
         </div>
         <p className="text-sm text-gray-300 mb-6">{(count ?? 0).toLocaleString("fa-IR")} محصول</p>
 
-        <ProductListClient mode="popular" sort={sort} initialProducts={products ?? []} initialCount={count ?? 0} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath="/popular" />
+        <ProductListClient mode="popular" sort={sort} initialProducts={(products ?? []) as unknown as Product[]} initialCount={count ?? 0} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath="/popular" />
       </div>
     </>
   );

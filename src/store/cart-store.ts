@@ -88,45 +88,61 @@ export const useCartStore = create<CartState>()(
         set({ items: get().items.filter((i) => !sameLine(i, productId, color, size)) });
       },
       updateQuantity: (productId, color, size, quantity) => {
-        set({
-          items: get().items.map((i) =>
-            sameLine(i, productId, color, size)
-              ? withTierPrice({ ...i, quantity: Math.max(1, Math.min(quantity, i.stock ?? Infinity)) })
-              : i
-          ),
+        let changed = false;
+        const next = get().items.map((i) => {
+          if (!sameLine(i, productId, color, size)) return i;
+          const updated = withTierPrice({ ...i, quantity: Math.max(1, Math.min(quantity, i.stock ?? Infinity)) });
+          if (updated.quantity === i.quantity && updated.discountPrice === i.discountPrice) return i;
+          changed = true;
+          return updated;
         });
+        if (changed) set({ items: next });
       },
       clearCart: () => set({ items: [] }),
       restoreItems: (items) => set({ items: [...get().items, ...items.map(withTierPrice)] }),
       setOrderNote: (note) => set({ orderNote: note }),
       syncPrices: (updates) => {
-        set({
-          items: get().items.map((i) => {
-            const u = updates.find((x) => x.productId === i.productId);
-            if (!u) return i;
-            const newStock = u.stock;
-            return withTierPrice({
-              ...i,
-              price: u.price,
-              discountPrice: u.discountPrice,
-              baseDiscountPrice: u.discountPrice,
-              quantityTiers: u.quantityTiers !== undefined ? u.quantityTiers : i.quantityTiers,
-              stock: newStock,
-              quantity: newStock !== null ? Math.min(i.quantity, Math.max(newStock, 0)) : i.quantity,
-            });
-          }),
+        let changed = false;
+        const next = get().items.map((i) => {
+          const u = updates.find((x) => x.productId === i.productId);
+          if (!u) return i;
+          const newStock = u.stock;
+          const updated = withTierPrice({
+            ...i,
+            price: u.price,
+            discountPrice: u.discountPrice,
+            baseDiscountPrice: u.discountPrice,
+            quantityTiers: u.quantityTiers !== undefined ? u.quantityTiers : i.quantityTiers,
+            stock: newStock,
+            quantity: newStock !== null ? Math.min(i.quantity, Math.max(newStock, 0)) : i.quantity,
+          });
+          const same =
+            updated.price === i.price &&
+            updated.discountPrice === i.discountPrice &&
+            updated.baseDiscountPrice === i.baseDiscountPrice &&
+            updated.stock === i.stock &&
+            updated.quantity === i.quantity &&
+            JSON.stringify(updated.quantityTiers ?? null) === JSON.stringify(i.quantityTiers ?? null);
+          if (same) return i;
+          changed = true;
+          return updated;
         });
+        if (changed) set({ items: next });
       },
       setCartItemIds: (mapping) => {
-        set({
-          items: get().items.map((i) => {
-            const m = mapping.find((x) => x.productId === i.productId && x.color === i.selectedColor && x.size === i.selectedSize);
-            return m ? { ...i, cartItemId: m.id } : i;
-          }),
+        let changed = false;
+        const next = get().items.map((i) => {
+          const m = mapping.find((x) => x.productId === i.productId && x.color === i.selectedColor && x.size === i.selectedSize);
+          if (!m || i.cartItemId === m.id) return i;
+          changed = true;
+          return { ...i, cartItemId: m.id };
         });
+        if (changed) set({ items: next });
       },
       removeItemById: (id) => {
-        set({ items: get().items.filter((i) => i.cartItemId !== id) });
+        const items = get().items;
+        if (!items.some((i) => i.cartItemId === id)) return;
+        set({ items: items.filter((i) => i.cartItemId !== id) });
       },
     }),
     { name: "sabzfaraz-cart" }

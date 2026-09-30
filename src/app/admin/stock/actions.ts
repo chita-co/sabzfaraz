@@ -1,6 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function toggleStockEnabled(enabled: boolean) {
   const supabase = await createClient();
@@ -8,6 +8,7 @@ export async function toggleStockEnabled(enabled: boolean) {
   if (error) return { error: error.message };
   revalidatePath("/admin/stock");
   revalidatePath("/");
+  updateTag("products");
   return { success: true };
 }
 
@@ -19,6 +20,7 @@ export async function toggleProductStock(productId: string, isStock: boolean) {
   const { data: slugRow } = await supabase.from("products").select("slug").eq("id", productId).single();
   revalidatePath("/admin/stock");
   revalidatePath("/");
+  updateTag("products");
   revalidatePath("/stock");
   if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
   return { success: true };

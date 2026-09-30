@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function deleteReview(reviewId: string, productId: string) {
   const supabase = await createClient();
@@ -25,6 +25,7 @@ export async function deleteReview(reviewId: string, productId: string) {
   revalidatePath("/admin/reviews");
   if (productRow?.slug) revalidatePath(`/products/${productRow.slug}`);
   revalidatePath("/");
+  updateTag("products");
   return { success: true };
 }
 
@@ -46,5 +47,6 @@ export async function replyToReview(reviewId: string, productId: string, replyTe
 
   revalidatePath("/admin/reviews");
   if (productRow?.slug) revalidatePath(`/products/${productRow.slug}`);
+  updateTag("products");
   return { success: true };
 }

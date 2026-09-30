@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
 
 export async function createBanner(
@@ -19,6 +19,7 @@ export async function createBanner(
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/banners");
+  updateTag("banners");
   revalidatePath("/");
   return { success: true };
 }
@@ -31,6 +32,7 @@ export async function toggleBannerActive(id: string, isActive: boolean) {
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/banners");
+  updateTag("banners");
   revalidatePath("/");
   return { success: true };
 }
@@ -41,6 +43,7 @@ export async function deleteBanner(id: string, imageUrl: string) {
   const { error } = await supabase.from("banners").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/banners");
+  updateTag("banners");
   revalidatePath("/");
   return { success: true };
 }

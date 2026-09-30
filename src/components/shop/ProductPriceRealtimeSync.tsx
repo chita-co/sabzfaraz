@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/store/cart-store";
+import { getLatestPrices } from "@/lib/cart/getLatestPrices";
 
+const POLL_MS = 30000;
+
+// قیمت و موجودی سبد را هر ۳۰ ثانیه (فقط وقتی تب دیده می‌شود) و هنگام برگشتن به تب تازه می‌کند.
+// بار اولِ باز شدن صفحه را PriceSyncEffect انجام می‌دهد.
 export default function ProductPriceRealtimeSync() {
   const syncPrices = useCartStore((s) => s.syncPrices);
   const idsKey = useCartStore((s) =>
@@ -11,30 +15,33 @@ export default function ProductPriceRealtimeSync() {
   );
 
   useEffect(() => {
-    if (!idsKey) return; // سبد خالی است، نیازی به سابسکرایب نیست
-
-    const supabase = createClient();
+    if (!idsKey) return;
     const ids = idsKey.split(",");
+    let cancelled = false;
+    let lastRun = 0;
 
-    const channel = supabase
-      .channel(`products-price-sync-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "products",
-          filter: `id=in.(${ids.join(",")})`,
-        },
-        (payload) => {
-          const row = payload.new as { id: string; price: number; discount_price: number | null; stock: number | null };
-          syncPrices([{ productId: row.id, price: row.price, discountPrice: row.discount_price, stock: row.stock }]);
-        }
-      )
-      .subscribe();
+    async function refresh() {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastRun < 5000) return;
+      lastRun = Date.now();
+      try {
+        const updates = await getLatestPrices(ids);
+        if (!cancelled && updates.length > 0) syncPrices(updates);
+      } catch (e) {
+        console.warn("به‌روزرسانی قیمت سبد ناموفق بود:", e);
+      }
+    }
+
+    const interval = setInterval(refresh, POLL_MS);
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
     };
   }, [idsKey, syncPrices]);
 

@@ -2,9 +2,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function recordSettlementAction(partnerId: string, amount: number, method: "CARD_TO_CARD" | "SHEBA" | "POS", referenceNumber: string) {
   const admin = createAdminClient();
+  await requireAdmin();
   const { data: partner } = await admin.from("partners").select("wallet_available_balance, reserve_balance").eq("id", partnerId).single();
   if (!partner) return { error: "همکار یافت نشد" };
   const withdrawable = partner.wallet_available_balance - partner.reserve_balance;
@@ -26,6 +28,7 @@ export async function updatePartnerInfoAction(partnerId: string, input: {
   address: string; bio: string; shebaNumber: string; cardNumber: string; logoUrl: string | null;
   maxActiveProducts: number | null; maxActiveOrders: number | null; aiDailyRequestLimit: number | null;
 }) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: current } = await admin.from("partners").select("phone").eq("id", partnerId).single();
   if (!current) return { error: "همکار یافت نشد" };
@@ -57,6 +60,7 @@ export async function updatePartnerInfoAction(partnerId: string, input: {
 }
 
 export async function releasePartnerPendingAction(partnerId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   
   // همه PENDING رو available کن

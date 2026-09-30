@@ -23,7 +23,7 @@ import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import TopFilterBar from "@/components/shop/TopFilterBar";
 // import HomePriceWidget from "@/components/price-ticker/HomePriceWidget";
 import CalendarWidget from "@/components/calendar/CalendarWidget";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getHomeCategories, getHomeNewest, getHomeDeals, getHomePopular, getHomeStock, getHomeBanners, getHomeSettings, getHomeCounts } from "@/lib/cache/siteData";
 import BannerCarousel from "@/components/shop/BannerCarousel";
 import PartnerAdsGrid from "@/components/shop/PartnerAdsGrid"; // آیتم ۵ - پایین‌تر می‌سازیمش
 import PromoAdsGrid from "@/components/shop/PromoAdsGrid";
@@ -57,7 +57,7 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const admin = createAdminClient();
+  const homeCounts = getHomeCounts().catch(() => ({ products: 0, users: 0, partners: 0, totalStock: 0 }));
 
   const [
     { data: categories },
@@ -80,79 +80,27 @@ export default async function HomePage() {
     { data: partnerFeature },
     { data: promoAds },
   ] = await Promise.all([
-    supabase
-      .from("categories")
-      .select("*")
-      .is("parent_id", null)
-      .eq("is_active", true)
-      .order("name"),
-    supabase
-      .from("products")
-      .select(PRODUCT_CARD_FIELDS)
-      .eq("is_active", true)
-      .eq("show_in_newest", true)
-      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("banners")
-      .select("*")
-      .eq("is_active", true)
-      .eq("position", "hero")
-      .order("sort_order"),
-    supabase
-      .from("site_settings")
-      .select(
-        "deals_enabled, deals_banner_image, deals_banner_link, new_products_banner_image, new_products_banner_link, stock_enabled, total_site_visits"
-      )
-      .eq("id", 1)
-      .single(),
-    supabase
-      .from("products")
-      .select(PRODUCT_CARD_FIELDS)
-      .eq("is_active", true)
-      .eq("is_deal", true)
-      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("products")
-      .select(PRODUCT_CARD_FIELDS)
-      .eq("is_active", true)
-      .eq("is_popular", true)
-      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("products")
-      .select(PRODUCT_CARD_FIELDS)
-      .eq("is_active", true)
-      .eq("is_stock", true)
-      .or("partner_id.is.null,partner_approval_status.eq.APPROVED")
-      .order("created_at", { ascending: false })
-      .limit(12),
+    getHomeCategories().catch(() => ({ data: null })),
+    getHomeNewest().catch(() => ({ data: null })),
+    getHomeBanners("hero").catch(() => ({ data: null })),
+    getHomeSettings().catch(() => ({ data: null })),
+    getHomeDeals().catch(() => ({ data: null })),
+    getHomePopular().catch(() => ({ data: null })),
+    getHomeStock().catch(() => ({ data: null })),
     user
       ? supabase.from("wishlists").select("product_id").eq("user_id", user.id)
       : Promise.resolve({ data: [] as { product_id: string }[] }),
-    supabase
-      .from("products")
-      .select("*", { count: "exact", head: true })
-      .eq("is_active", true)
-      .or("partner_id.is.null,partner_approval_status.eq.APPROVED"),
-    supabase
-      .from("products")
-      .select("stock")
-      .eq("is_active", true)
-      .or("partner_id.is.null,partner_approval_status.eq.APPROVED"),
-    admin.from("profiles").select("*", { count: "exact", head: true }).eq("role", "USER"),
-    admin.from("partners").select("*", { count: "exact", head: true }),
-    supabase.from("banners").select("*").eq("is_active", true).eq("position", "deals").order("sort_order"),
-supabase.from("banners").select("*").eq("is_active", true).eq("position", "newest").order("sort_order"),
-supabase.from("banners").select("*").eq("is_active", true).eq("position", "popular").order("sort_order"),
-supabase.from("banners").select("*").eq("is_active", true).eq("position", "stock").order("sort_order"),
-supabase.from("banners").select("*").eq("is_active", true).eq("position", "partners").order("sort_order").limit(6),
-supabase.from("homepage_partner_feature").select("*").eq("id", 1).single(),
-supabase.from("promo_ads").select("*").order("sort_order"),
+    homeCounts.then((c) => ({ count: c.products })),
+    homeCounts.then((c) => ({ data: [{ stock: c.totalStock }] })),
+    homeCounts.then((c) => ({ count: c.users })),
+    homeCounts.then((c) => ({ count: c.partners })),
+    getHomeBanners("deals").catch(() => ({ data: null })),
+    getHomeBanners("newest").catch(() => ({ data: null })),
+    getHomeBanners("popular").catch(() => ({ data: null })),
+    getHomeBanners("stock").catch(() => ({ data: null })),
+    getHomeBanners("partners", 6).catch(() => ({ data: null })),
+    supabase.from("homepage_partner_feature").select("*").eq("id", 1).single(),
+    supabase.from("promo_ads").select("*").order("sort_order"),
   ]);
 
 

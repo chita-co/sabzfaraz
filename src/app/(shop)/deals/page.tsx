@@ -3,6 +3,7 @@ import ProductCard from "@/components/shop/ProductCard";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import { Product } from "@/types";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
 
 export const metadata = {
   title: "جشنواره تخفیف | سبزفراز",
@@ -15,7 +16,7 @@ export default async function DealsPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [{ data: products }, { data: wishlistRows }] = await Promise.all([
-    supabase.from("products").select("*").eq("is_active", true).eq("is_deal", true).order("created_at", { ascending: false }),
+    supabase.from("products").select(PRODUCT_LIST_FIELDS).eq("is_active", true).eq("is_deal", true).order("created_at", { ascending: false }),
     user ? supabase.from("wishlists").select("product_id").eq("user_id", user.id) : Promise.resolve({ data: [] as { product_id: string }[] }),
   ]);
 

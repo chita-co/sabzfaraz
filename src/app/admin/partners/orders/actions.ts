@@ -59,6 +59,9 @@ export async function confirmDeliveryToCustomerAction(itemIds: string[]) {
   if (error) return { error: error.message };
 
   const settings = await getPartnerSettings();
+  const rawHold = settings.settlement_hold_days;
+  const isInstant = rawHold !== null && rawHold !== undefined && Number(rawHold) === 0;
+  const holdDays = rawHold !== null && rawHold !== undefined && Number.isFinite(Number(rawHold)) ? Number(rawHold) : 1;
 
   for (const item of items) {
     if (!item.partner_id) continue;
@@ -73,21 +76,34 @@ export async function confirmDeliveryToCustomerAction(itemIds: string[]) {
       .maybeSingle();
     if (alreadyCredited) continue;
 
-    const availableAt = new Date(Date.now() + settings.settlement_hold_days * 24 * 60 * 60 * 1000).toISOString();
-    await admin.from("partner_wallet_transactions").insert({
+    const availableAt = new Date(Date.now() + (isInstant ? 0 : holdDays) * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: txError } = await admin.from("partner_wallet_transactions").insert({
       partner_id: item.partner_id, order_id: item.order_id, order_item_id: item.id,
-      type: "SALE_EARNING", amount, status: "PENDING",
+      type: "SALE_EARNING", amount, status: isInstant ? "AVAILABLE" : "PENDING",
       description: `فروش «${item.product_name}» — تحویل‌شده به مشتری`, available_at: availableAt,
     });
+    if (txError) { console.error("خطا در ثبت تراکنش درآمد همکار:", txError.message); continue; }
 
     try {
-      await admin.rpc("increment_partner_pending_balance", { p_partner_id: item.partner_id, p_amount: amount });
+      if (isInstant) {
+        const { data: p } = await admin.from("partners").select("wallet_available_balance").eq("id", item.partner_id).single();
+        await admin.from("partners").update({ wallet_available_balance: (p?.wallet_available_balance ?? 0) + amount }).eq("id", item.partner_id);
+      } else {
+        await admin.rpc("increment_partner_pending_balance", { p_partner_id: item.partner_id, p_amount: amount });
+      }
     } catch (e) { console.error(e); }
 
     try {
-      await createNotification(item.partner_id, "تحویل موفق به مشتری ✅", `محصول «${item.product_name}» به مشتری تحویل داده شد و مبلغ آن به کیف پول شما (در انتظار تسویه) اضافه شد.`);
+      await createNotification(
+        item.partner_id,
+        "تحویل موفق به مشتری ✅",
+        isInstant
+          ? `محصول «${item.product_name}» به مشتری تحویل داده شد و مبلغ آن به موجودی قابل‌برداشت شما اضافه شد.`
+          : `محصول «${item.product_name}» به مشتری تحویل داده شد و مبلغ آن به کیف پول شما (در انتظار تسویه) اضافه شد.`
+      );
     } catch (e) { console.error(e); }
-  }
+  } 
 
   revalidatePath("/admin/partners/orders");
   return { success: true, count: items.length };

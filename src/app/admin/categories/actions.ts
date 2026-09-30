@@ -2,7 +2,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
 import { submitUrlToIndexNow } from "@/lib/indexNow";
 
@@ -44,6 +44,7 @@ export async function createCategory(formData: FormData) {
   }
 
   revalidatePath("/admin/categories");
+  updateTag("categories");
   revalidatePath("/");
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 await submitUrlToIndexNow(`${baseUrl}/category/${slug}`);
@@ -88,6 +89,7 @@ export async function updateCategory(id: string, formData: FormData) {
   if (error) return { error: "خطا: " + error.message };
 
   revalidatePath("/admin/categories");
+  updateTag("categories");
   revalidatePath("/");
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 await submitUrlToIndexNow(`${baseUrl}/category/${slug}`);
@@ -119,6 +121,7 @@ export async function deleteCategory(id: string) {
   }
 
   revalidatePath("/admin/categories");
+  updateTag("categories"); 
   revalidatePath("/");
   return { success: true };
 }

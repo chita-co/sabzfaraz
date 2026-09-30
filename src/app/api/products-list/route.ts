@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase.from("products").select("*", { count: "exact" }).eq("is_active", true);
+  let query = supabase.from("products").select(PRODUCT_LIST_FIELDS, { count: "exact" }).eq("is_active", true);
 
   if (mode === "newest") query = query.eq("show_in_newest", true);
   else if (mode === "popular") query = query.eq("is_popular", true);

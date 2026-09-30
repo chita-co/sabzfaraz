@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getHeaderData } from "@/lib/cache/siteData";
 import HeaderNav from "./HeaderNav";
 
 export default async function Header() {
@@ -11,12 +12,9 @@ export default async function Header() {
     profile = data;
   }
 
-  const [{ data: categories }, { data: allCategories }, { data: settings }, { data: fullProfile }] = await Promise.all([
-    supabase.from("categories").select("id, name, slug").is("parent_id", null).eq("is_active", true).order("name"),
-    supabase.from("categories").select("id, name, slug, parent_id").eq("is_active", true).order("name"),
-    supabase.from("site_settings").select("logo_url, auction_header_enabled, auction_header_label").eq("id", 1).single(),
+  const [{ categories, allCategories, settings }, { data: fullProfile }] = await Promise.all([
+    getHeaderData().catch(() => ({ categories: null, allCategories: null, settings: null })),
     user ? supabase.from("profiles").select("wallet_balance").eq("id", user.id).single() : Promise.resolve({ data: null }),
-
   ]);
 
   const walletBalance = fullProfile?.wallet_balance ?? 0;

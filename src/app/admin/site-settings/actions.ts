@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 interface SiteAssetsInput {
   logoUrl: string | null;
@@ -26,5 +26,6 @@ export async function updateSiteAssets(input: SiteAssetsInput) {
 
   if (error) return { error: error.message };
   revalidatePath("/", "layout");
+  updateTag("settings");
   return { success: true };
 }

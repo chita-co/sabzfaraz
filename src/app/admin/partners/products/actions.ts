@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { submitUrlToIndexNow, submitUrlsToIndexNow } from "@/lib/indexNow";
 
 async function requireAdmin() {
@@ -25,6 +25,7 @@ export async function approvePartnerProductAction(productId: string) {
     await createNotification(product.partner_id, "محصول شما تأیید شد ✅", `محصول «${product.name}» بررسی و در سایت منتشر شد.`);
   }
   revalidatePath("/admin/partners/products");
+  updateTag("products");
   revalidatePath(`/products/${product.slug}`);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 await submitUrlToIndexNow(`${baseUrl}/products/${product.slug}`);
@@ -43,6 +44,7 @@ export async function rejectPartnerProductAction(productId: string, reason: stri
     await createNotification(product.partner_id, "محصول شما رد شد ❌", `محصول «${product.name}» تأیید نشد. دلیل: ${reason}`);
   }
   revalidatePath("/admin/partners/products");
+  updateTag("products");
   // رد شدن = محصول غیرفعال می‌شه (is_active: false)، صفحه‌ش هم باید فوراً از کش پاک بشه.
   if (product.slug) revalidatePath(`/products/${product.slug}`);
   return { success: true };
@@ -95,6 +97,7 @@ export async function bulkApprovePartnerProductsAction(productIds: string[]) {
     if (p.slug) revalidatePath(`/products/${p.slug}`);
   }
   revalidatePath("/admin/partners/products");
+  updateTag("products");
 
   // اطلاع به موتورهای جستجو (یک درخواست برای همه)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
@@ -159,6 +162,7 @@ export async function bulkRejectPartnerProductsAction(productIds: string[], reas
     if (p.slug) revalidatePath(`/products/${p.slug}`);
   }
   revalidatePath("/admin/partners/products");
+  updateTag("products");
 
   if (firstError && rejected.length === 0) {
     return { error: "خطا در رد محصولات: " + firstError, count: 0 };
@@ -185,6 +189,7 @@ export async function adminUpdatePartnerProductAction(productId: string, payload
   .eq("id", productId)
   .single();
   revalidatePath("/admin/partners/products");
+  updateTag("products");
   if (updatedProduct?.slug) revalidatePath(`/products/${updatedProduct.slug}`);
   if (updatedProduct && updatedProduct.partner_approval_status === "APPROVED" && updatedProduct.is_active) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";

@@ -17,13 +17,13 @@ export default function PendingWalletBadge() {
       }
     }
     fetchCount();
-    let timer: ReturnType<typeof setInterval> | null = setInterval(fetchCount, 30000);
+    let timer: ReturnType<typeof setInterval> | null = setInterval(fetchCount, 120000);
     // تا وقتی تب مرورگر در پس‌زمینه‌ست poll متوقف می‌شه، همین که برگردد فوراً یک‌بار چک می‌شه.
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         fetchCount();
         if (timer) clearInterval(timer);
-        timer = setInterval(fetchCount, 30000);
+        timer = setInterval(fetchCount, 120000);
       } else if (timer) {
         clearInterval(timer);
         timer = null;

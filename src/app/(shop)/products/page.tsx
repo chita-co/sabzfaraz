@@ -3,6 +3,8 @@ import ProductSortSelect from "@/components/shop/ProductSortSelect";
 import ProductListClient from "@/components/shop/ProductListClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
+import type { Product } from "@/types";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -18,7 +20,7 @@ export default async function AllProductsPage({
 
   let query = supabase
   .from("products")
-  .select("*", { count: "exact" })
+  .select(PRODUCT_LIST_FIELDS, { count: "exact" })
   .eq("is_active", true)
   .or("partner_id.is.null,partner_approval_status.eq.APPROVED");
   if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
@@ -48,7 +50,7 @@ export default async function AllProductsPage({
         </div>
         <p className="text-sm text-gray-300 mb-6">{(count ?? 0).toLocaleString("fa-IR")} محصول</p>
 
-        <ProductListClient mode="all" sort={sort} initialProducts={products ?? []} initialCount={count ?? 0} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath="/products" />
+        <ProductListClient mode="all" sort={sort} initialProducts={(products ?? []) as unknown as Product[]}initialCount={count ?? 0} initialPage={page} initialPageSize={pageSize} initialWishlistIds={wishlistIds} basePath="/products" />
       </div>
     </>
   );

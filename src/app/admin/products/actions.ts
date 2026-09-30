@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteImageByUrl } from "@/lib/arvan";
 import { buildProductCode } from "@/lib/sku";
@@ -235,6 +235,7 @@ export async function createProduct(input: ProductInput) {
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products");
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 await submitUrlToIndexNow(`${baseUrl}/products/${created.slug}`);
   redirect("/admin/products");
@@ -326,6 +327,7 @@ export async function updateProduct(id: string, input: ProductInput) {
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products");
   revalidatePath(`/products/${slug}`);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 await submitUrlToIndexNow(`${baseUrl}/products/${slug}`);
@@ -346,6 +348,7 @@ export async function deleteProduct(id: string, images: string[]) {
   if (error) return { error: "خطا در حذف محصول: " + error.message };
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products"); 
   if (current?.slug) revalidatePath(`/products/${current.slug}`);
   return { success: true };
 }
@@ -510,6 +513,7 @@ export async function createProductsBulk(
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products");
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
 for (const slug of createdSlugs) {
   await submitUrlToIndexNow(`${baseUrl}/products/${slug}`);
@@ -668,6 +672,7 @@ export async function quickUpdateProduct(
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products");
   if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
   return { success: true };
 }
@@ -716,6 +721,7 @@ export async function bulkAdjustProductPrices(input: {
   if (result.error) return { error: result.error };
   revalidatePath("/admin/products");
   revalidatePath("/");
+  updateTag("products"); 
   for (const p of affectedProducts ?? []) {
     if (p.slug) revalidatePath(`/products/${p.slug}`);
   }

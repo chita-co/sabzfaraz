@@ -2,7 +2,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
 import { sendSms } from "@/lib/sms";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function approvePartnerAction(partnerId: string) {
   const admin = createAdminClient();
@@ -33,6 +33,7 @@ export async function suspendPartnerAction(partnerId: string) {
   revalidatePath("/admin/partners");
   for (const p of partnerProducts ?? []) {
     if (p.slug) revalidatePath(`/products/${p.slug}`);
+    updateTag("products");
   }
   return { success: true };
 }

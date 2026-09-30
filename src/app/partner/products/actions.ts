@@ -6,7 +6,7 @@ import { callAiWithRotation } from "@/lib/ai/rotatingClient";
 import { generateUniqueSlug } from "@/lib/slug";
 import { uploadImage } from "@/lib/arvan";
 import { notifyAllAdmins } from "@/lib/notifications";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import sharp from "sharp";
 
 export async function uploadPartnerLogoAction(formData: FormData) {
@@ -375,6 +375,7 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
     } catch (e) { console.error(e); }
 
     revalidatePath("/partner/products");
+    updateTag("products");
     revalidatePath("/admin/partners/products");
     return { success: true, productId: product.id };
   } catch (e: unknown) {
@@ -479,6 +480,7 @@ export async function createPartnerBulkProductsAction(common: PartnerProductInpu
     }
 
     revalidatePath("/partner/products");
+    updateTag("products");
     revalidatePath("/admin/partners/products");
     return { success: createdIds.length > 0, successCount: createdIds.length, failures };
   } catch (e: unknown) {
@@ -543,6 +545,7 @@ export async function updatePartnerProductAction(productId: string, input: Partn
     await savePartnerProductCategories(admin, productId, input.categoryId, input.extraCategoryIds);
 
     revalidatePath("/partner/products");
+    updateTag("products"); 
     revalidatePath("/admin/partners/products");
     if (existing.slug) revalidatePath(`/products/${existing.slug}`);
     return { success: true };
@@ -631,6 +634,7 @@ export async function bulkAdjustPartnerProductPricesAction(input: {
   }
 
   revalidatePath("/partner/products");
+  updateTag("products");
   revalidatePath("/partner/products/bulk-price-update");
   for (const p of products) {
     if (p.slug) revalidatePath(`/products/${p.slug}`);
@@ -661,6 +665,7 @@ export async function deletePartnerProductAction(productId: string) {
     if (error) return { error: "خطا در حذف محصول: " + error.message };
 
     revalidatePath("/partner/products");
+    updateTag("products");
     if (product.slug) revalidatePath(`/products/${product.slug}`);
     return { success: true };
   } catch (e: unknown) {
@@ -711,6 +716,7 @@ export async function updatePartnerProductQuickFieldsAction(input: {
     if (error) return { error: "خطا در ذخیره تغییرات." };
 
     revalidatePath("/partner/products");
+    updateTag("products");
     if (product.slug) revalidatePath(`/products/${product.slug}`);
     return { success: true };
   } catch {

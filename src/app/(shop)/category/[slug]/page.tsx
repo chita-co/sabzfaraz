@@ -8,6 +8,7 @@ import ParticlesBackground from "@/components/backgrounds/ParticlesBackground";
 import { LayoutGrid } from "lucide-react";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import DescriptionModal from "@/components/shop/DescriptionModal";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -63,7 +64,7 @@ export default async function CategoryPage({
   if (!hasSubCategories) {
     let query = supabase
       .from("products")
-      .select("*", { count: "exact" })
+      .select(PRODUCT_LIST_FIELDS, { count: "exact" })
       .eq("category_id", category.id)
       .eq("is_active", true);
     if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
@@ -74,7 +75,7 @@ export default async function CategoryPage({
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     const { data, count: c } = await query.range(from, to);
-    products = data ?? [];
+    products = (data ?? []) as unknown as Product[];
     count = c ?? 0;
 
     if (user && products.length > 0) {

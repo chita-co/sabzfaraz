@@ -5,6 +5,7 @@ import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import { Product } from "@/types";
 
 import type { Metadata } from "next";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
 
 export const metadata: Metadata = {
   title: "محصولات استوک | سبزفراز",
@@ -17,7 +18,7 @@ export default async function StockPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [{ data: products }, { data: wishlistRows }] = await Promise.all([
-    supabase.from("products").select("*").eq("is_active", true).eq("is_stock", true).order("created_at", { ascending: false }),
+    supabase.from("products").select(PRODUCT_LIST_FIELDS).eq("is_active", true).eq("is_stock", true).order("created_at", { ascending: false }),
     user ? supabase.from("wishlists").select("product_id").eq("user_id", user.id) : Promise.resolve({ data: [] as { product_id: string }[] }),
   ]);
   const wishlistIds = new Set((wishlistRows ?? []).map((w) => w.product_id));

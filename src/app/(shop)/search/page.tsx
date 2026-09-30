@@ -5,6 +5,7 @@ import Pagination from "@/components/shop/Pagination";
 import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
 import { Product } from "@/types";
 import SimilarSearchSuggestions from "@/components/shop/SimilarSearchSuggestions";
+import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
 
 const PAGE_SIZE = 20;
 
@@ -28,7 +29,7 @@ export default async function SearchPage({
   if (normalizedQ) {
     let query = supabase
       .from("products")
-      .select("*", { count: "exact" })
+      .select(PRODUCT_LIST_FIELDS, { count: "exact" })
       .eq("is_active", true)
       .ilike("name", `%${normalizedQ}%`);
 
