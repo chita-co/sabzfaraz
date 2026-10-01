@@ -11,13 +11,9 @@ export default function FloatingSupportButton() {
         <img
           src="/p-icon.png"
           alt="پشتیبانی"
-          style={{
-            width: "165%",
-            height: "165%",
-            objectFit: "cover",
-            objectPosition: "center 25%",
-            display: "block",
-          }}
+          width={480}
+          height={380}
+          style={{ width: "100%", height: "auto", display: "block" }}
         />
       </Link>
       <SupportUnreadBadgeUser />

@@ -51,14 +51,14 @@ export const getHomeCounts = unstable_cache(async () => {
     pub.from("products").select("*", { count: "exact", head: true }).eq("is_active", true).or(VISIBLE),
     admin.from("profiles").select("*", { count: "exact", head: true }).eq("role", "USER"),
     admin.from("partners").select("*", { count: "exact", head: true }),
-    pub.from("products").select("stock").eq("is_active", true).or(VISIBLE),
+    pub.rpc("get_total_stock"),
   ]);
   if (p.error || u.error || pa.error || s.error) throw new Error("home counts failed");
   return {
     products: p.count ?? 0,
     users: u.count ?? 0,
     partners: pa.count ?? 0,
-    totalStock: (s.data ?? []).reduce((sum, r) => sum + (r.stock ?? 0), 0),
+    totalStock: Number(s.data ?? 0),
   };
 }, ["home-counts"], { revalidate: 900, tags: ["products", "counts"] });
 

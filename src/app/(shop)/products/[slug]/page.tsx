@@ -165,9 +165,29 @@ export default async function ProductPage({
     }),
   };
 
+  // متاتگ‌های ایران‌مارکت — قیمت‌ها به تومان
+  const imMeta = (v: string) => v.replace(/,/g, " ").trim(); // ویرگول جداکننده است
+  const imOff =
+    product.discount_price && product.discount_price < product.price
+      ? Math.min(99, Math.max(0, Math.round((1 - product.discount_price / product.price) * 100)))
+      : 0;
+  const imCategories = [
+    ...categoryChain.map((c) => c.name),
+    ...(product.category?.name ? [product.category.name] : []),
+  ].map(imMeta).filter(Boolean).join(",");
+  const imImages = (product.images ?? []).filter(Boolean).filter((u: string) => !u.includes(",")).join(",");
+  const imAvailable = product.stock === null || product.stock > 0 ? "1" : "0";
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <meta property="product_title" content={product.name} />
+      <meta property="product_price" content={String(product.price)} />
+      <meta property="product_id" content={String(product.sku || product.id)} />
+      <meta property="product_available" content={imAvailable} />
+      <meta property="product_off" content={String(imOff)} />
+      <meta property="product_category" content={imCategories} />
+      <meta property="product_image" content={imImages} />
       <SilkBackground />
       <div className="mx-auto max-w-7xl px-4 pt-8">
         <Breadcrumb

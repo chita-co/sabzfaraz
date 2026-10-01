@@ -2097,39 +2097,33 @@
 /* ===== دکمه‌ی شناور پشتیبانی ===== */
 .floating-support-wrap {
   position: fixed;
-  bottom: 22px;
-  left: 22px;
+  bottom: 18px;
+  left: 18px;
   z-index: 9999;
-  width: 54px;
-  height: 54px;
+  width: 160px;
 }
 .floating-support-btn {
   position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #ffffff;
-  color: #16a34a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  display: block;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
   transition: transform 0.2s ease;
 }
-
 .floating-support-btn:hover {
-  transform: scale(1.08);
-  color: #15803d;
+  transform: scale(1.05);
 }
 @media (max-width: 640px) {
   .floating-support-wrap {
-    /* بالاتر از نوار پایین موبایل قرار می‌گیرد و کامل و بدون بریدگی دیده می‌شود */
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 14px);
-    left: 22px;
-    width: 48px;
-    height: 48px;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+    left: 12px;
+    width: 110px;
   }
+}
+
+/* فقط جای شمارنده‌ی پیام جدید را به لبه‌ی حلقه می‌برد */
+.floating-support-wrap .support-badge-user {
+  top: 24% !important;
+  right: 10% !important;
+  left: auto !important;
 }
 
 /* ===== بخش مستقل نشان‌ها، قبل از خط پایانی فوتر ===== */
