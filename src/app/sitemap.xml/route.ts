@@ -12,16 +12,41 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
+async function fetchAllPages<T>(
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  const PAGE_SIZE = 1000;
+  const all: T[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+    if (error || !data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
 export async function GET() {
   const supabase = await createClient();
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir").replace(/\/$/, "");
 
-  const [{ data: products }, { data: categories }, { data: blogPosts }, { data: blogCategories }] = await Promise.all([
-    supabase.from("products").select("slug, updated_at").eq("is_active", true).limit(10000),
-    supabase.from("categories").select("slug").eq("is_active", true).limit(10000),
-    supabase.from("blog_posts").select("slug, published_at").eq("status", "published").limit(10000),
-    supabase.from("blog_categories").select("slug").eq("status", "active").limit(10000),
-  ]);
+  const [products, categories, blogPosts, blogCategories] = await Promise.all([
+  fetchAllPages<{ slug: string; updated_at: string | null }>((from, to) =>
+    supabase.from("products").select("slug, updated_at").eq("is_active", true).order("id").range(from, to)
+  ),
+  fetchAllPages<{ slug: string }>((from, to) =>
+    supabase.from("categories").select("slug").eq("is_active", true).order("id").range(from, to)
+  ),
+  fetchAllPages<{ slug: string; published_at: string | null }>((from, to) =>
+    supabase.from("blog_posts").select("slug, published_at").eq("status", "published").order("id").range(from, to)
+  ),
+  fetchAllPages<{ slug: string }>((from, to) =>
+    supabase.from("blog_categories").select("slug").eq("status", "active").order("id").range(from, to)
+  ),
+]);
 
   const staticUrls = [
     { loc: `${baseUrl}/`, changefreq: "daily", priority: "1.0" },
