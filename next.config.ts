@@ -18,6 +18,7 @@ const cspConnectSrc = [
 ].filter(Boolean).join(" ");
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   serverExternalPackages: ["sharp"],
   turbopack: {
     root: __dirname,
