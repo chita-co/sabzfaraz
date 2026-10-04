@@ -279,12 +279,7 @@ export default function AuthCard({
               <input type="hidden" name="redirect" value={redirectTo ?? "/"} />
               <div className="input-box animation" style={{ "--D": 1, "--S": 22 } as AnimationStyle}>
                 <input type="tel" name="phone" dir="ltr" placeholder=" " maxLength={11} required />
-                <label>
-  شماره موبایل{" "}
-  <small style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, whiteSpace: "nowrap" }}>
-    (شماره موبایل و کدملی متلعق به یک شخص باشند)
-  </small>
-</label>
+                <label>شماره موبایل</label>
                 <Phone size={18} />
               </div>
 
@@ -387,7 +382,12 @@ export default function AuthCard({
                 style={{ "--li": 19, "--S": 2 } as AnimationStyle}
               >
                 <input type="tel" name="phone" dir="ltr" maxLength={11} required value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
-                <label>شماره موبایل</label>
+                <label>
+  شماره موبایل{" "}
+  <small style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, whiteSpace: "nowrap" }}>
+    (به نام صاحب کد ملی باشد)
+  </small>
+</label>
                 <Phone size={18} />
               </div>
 
