@@ -188,7 +188,8 @@ export async function createOrderAndPay(
     return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
-  await supabase.from("orders").update({ sep_token: payment.token, gateway_amount: remainder }).eq("id", order.id);
+  const adminForPayment = createAdminClient();
+await adminForPayment.from("orders").update({ sep_token: payment.token, gateway_amount: remainder }).eq("id", order.id);
 
   redirect(payment.url);
 }
@@ -330,7 +331,8 @@ export async function createOfflineOrder(
     redirect(`/order/${order.id}?payment=success`);
   }
 
-  await supabase.from("orders").update({ payment_status: "AWAITING_CONFIRMATION" }).eq("id", order.id);
+  const adminForOffline = createAdminClient();
+await adminForOffline.from("orders").update({ payment_status: "AWAITING_CONFIRMATION" }).eq("id", order.id);
 
   redirect(`/order/${order.id}?payment=offline&status=registered`);
 }

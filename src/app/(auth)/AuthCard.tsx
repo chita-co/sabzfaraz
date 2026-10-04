@@ -385,7 +385,7 @@ export default function AuthCard({
                 <label>
   شماره موبایل{" "}
   <small style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, whiteSpace: "nowrap" }}>
-    (به نام صاحب کد ملی باشد)
+    (شماره موبایل و کدملی متلعق به یک شخص باشد)
   </small>
 </label>
                 <Phone size={18} />
