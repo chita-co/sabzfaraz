@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { CartItem } from "@/store/cart-store";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
+import { priceCheckoutItems } from "@/lib/checkout/serverPricing";
 
 export async function createPendingCheckout(items: CartItem[], shippingMethodId: string | null, shippingCost: number) {
   const supabase = await createClient();
@@ -67,6 +68,11 @@ export async function createOrderFromPendingCheckout(
 
   const { data: pendingCheckout } = await supabase
     .from("pending_checkouts").select("shipping_method_id").eq("id", pendingCheckoutId).single();
+
+  const priced = await priceCheckoutItems(items, pendingCheckout?.shipping_method_id ?? null);
+  if ("error" in priced) return { error: priced.error };
+  items = priced.items;
+  shippingCost = priced.shippingCost;
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;

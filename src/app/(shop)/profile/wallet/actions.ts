@@ -6,6 +6,22 @@ import { redirect } from "next/navigation";
 import { requestPayment } from "@/lib/sep";
 import { createNotification } from "@/lib/notifications";
 
+async function validateTopupAmount(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  amount: number
+): Promise<string | null> {
+  if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
+    return "مبلغ نامعتبر است.";
+  }
+  const { data: settings } = await supabase
+    .from("auction_settings").select("min_topup_amount, max_topup_amount").eq("id", 1).single();
+  const min = settings?.min_topup_amount ?? 50000;
+  const max = settings?.max_topup_amount ?? null;
+  if (amount < min) return `حداقل مبلغ شارژ ${min.toLocaleString("fa-IR")} تومان است.`;
+  if (max && amount > max) return `حداکثر مبلغ شارژ ${max.toLocaleString("fa-IR")} تومان است.`;
+  return null;
+}
+
 export async function getMyWalletData() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -34,7 +50,8 @@ export async function topUpWalletOnline(amount: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "ابتدا وارد شوید." };
-  if (amount <= 0) return { error: "مبلغ نامعتبر است." };
+  const amountError = await validateTopupAmount(supabase, amount);
+  if (amountError) return { error: amountError };
 
   const { data: profile } = await supabase.from("profiles").select("phone").eq("id", user.id).single();
 
@@ -85,7 +102,8 @@ export async function submitManualTopupRequest(amount: number, method: "CARD_TO_
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "ابتدا وارد شوید." };
-  if (!amount || amount <= 0) return { error: "مبلغ نامعتبر است." };
+  const amountError = await validateTopupAmount(supabase, amount);
+  if (amountError) return { error: amountError };
   if (!bankAccountId) return { error: "لطفاً یک حساب بانکی انتخاب کنید." };
 
   const { error } = await supabase.from("wallet_topup_requests").insert({

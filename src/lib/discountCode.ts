@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function consumeDiscountCode(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -19,7 +20,10 @@ export async function consumeDiscountCode(
 
   const discountAmount = result.discountAmount ?? 0;
 
-  await supabase
+  // چون RLS روی جدول orders فقط به ادمین اجازه‌ی UPDATE می‌دهد،
+  // از admin client استفاده می‌کنیم تا مبلغ تخفیف واقعاً ذخیره شود.
+  const admin = createAdminClient();
+  await admin
     .from("orders")
     .update({ discount_code_amount: discountAmount })
     .eq("id", orderId);

@@ -70,6 +70,12 @@ export async function sendSignupOtpSms(mobile: string, code: string) {
   return sendTemplateSms(mobile, templateId, [{ name: "CODE", value: code }]);
 }
 
+export async function sendQuickOtpSms(mobile: string, code: string) {
+  const templateId = Number(process.env.SMSIR_QUICK_OTP_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_QUICK_OTP_TEMPLATE_ID تنظیم نشده است.");
+  return sendTemplateSms(mobile, templateId, [{ name: "CODE", value: code }]);
+}
+
 export async function sendPostalTrackingSms(mobile: string, trackingCode: string) {
   const templateId = Number(process.env.SMSIR_POSTAL_TRACKING_TEMPLATE_ID);
   if (!templateId) throw new Error("SMSIR_POSTAL_TRACKING_TEMPLATE_ID تنظیم نشده است.");

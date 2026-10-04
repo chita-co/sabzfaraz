@@ -9,6 +9,8 @@ import { consumeDiscountCode } from "@/lib/discountCode";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
 import { cookies } from "next/headers";
 import { deleteUserCartAction } from "@/app/admin/carts/actions";
+import { priceCheckoutItems } from "@/lib/checkout/serverPricing";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 interface CheckoutItem {
   productId: string;
@@ -62,6 +64,12 @@ export async function createOrderAndPay(
   if (!address.postal_code || !address.full_name || !address.address_line) {
     return { error: "اطلاعات آدرس (نام گیرنده، کد پستی، آدرس کامل) ناقص است. لطفاً از بخش پروفایل تکمیل کنید." };
   }
+
+  // قیمت و هزینه ارسال از دیتابیس محاسبه می‌شود؛ مقدار ارسالی مرورگر معتبر نیست
+  const priced = await priceCheckoutItems(items, shippingMethodId);
+  if ("error" in priced) return { error: priced.error };
+  items = priced.items;
+  shippingCost = priced.shippingCost;
 
   const cookieStore = await cookies();
   const torobClid = cookieStore.get("torob_clid")?.value ?? null;
@@ -131,9 +139,11 @@ export async function createOrderAndPay(
     if (finalAmount < 0) finalAmount = 0;
   }
 
-  // ثبت ارزش واقعی و نهایی سفارش (پس از تخفیف‌ها) — این مقدار دیگر توسط هیچ مرحله‌ای صفر نمی‌شود
+// ثبت ارزش واقعی و نهایی سفارش (پس از تخفیف‌ها)
+  // چون RLS اجازه‌ی UPDATE به کاربر عادی نمی‌دهد، از admin استفاده می‌کنیم
   if (finalAmount !== totalAmount) {
-    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+    const admin = createAdminClient();
+    await admin.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
   }
 
   let remainder = finalAmount;
@@ -156,7 +166,9 @@ export async function createOrderAndPay(
   }
 
   if (remainder === 0) {
-    await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
+    // پرداخت کامل با کیف پول — چون RLS اجازه‌ی UPDATE به کاربر عادی نمی‌دهد، از admin استفاده می‌کنیم
+    const admin = createAdminClient();
+    await admin.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
     await deleteUserCartAction(user.id);
     redirect(`/order/${order.id}?payment=success`);
@@ -205,6 +217,12 @@ export async function createOfflineOrder(
   if (!address.postal_code || !address.full_name || !address.address_line) {
     return { error: "اطلاعات آدرس (نام گیرنده، کد پستی، آدرس کامل) ناقص است. لطفاً از بخش پروفایل تکمیل کنید." };
   }
+
+  // قیمت و هزینه ارسال از دیتابیس محاسبه می‌شود؛ مقدار ارسالی مرورگر معتبر نیست
+  const priced = await priceCheckoutItems(items, shippingMethodId);
+  if ("error" in priced) return { error: priced.error };
+  items = priced.items;
+  shippingCost = priced.shippingCost;
 
   const { data: bankAccount } = await supabase
     .from("bank_accounts").select("id").eq("id", bankAccountId).eq("is_active", true).single();
@@ -281,7 +299,8 @@ export async function createOfflineOrder(
   }
 
   if (finalAmount !== totalAmount) {
-    await supabase.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+    const admin = createAdminClient();
+    await admin.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
   }
 
   let remainder = finalAmount;
@@ -303,7 +322,9 @@ export async function createOfflineOrder(
   }
 
   if (remainder === 0) {
-    await supabase.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
+    // پرداخت کامل با کیف پول — چون RLS اجازه‌ی UPDATE به کاربر عادی نمی‌دهد، از admin استفاده می‌کنیم
+    const admin = createAdminClient();
+    await admin.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
     await deleteUserCartAction(user.id);
     redirect(`/order/${order.id}?payment=success`);

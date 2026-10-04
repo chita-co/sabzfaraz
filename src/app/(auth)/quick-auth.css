@@ -1,0 +1,143 @@
+/* src/app/(auth)/quick-auth.css */
+
+/* ---------- تب‌ها (داخل .auth-page) ---------- */
+.auth-page .auth-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 4px;
+  border: 1px solid rgba(74, 158, 255, 0.55);
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.auth-page .auth-tabs button {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 40px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.auth-page .auth-tabs button.on {
+  background: #4a9eff;
+}
+
+/* ---------- پاپ‌آپ‌ها (Portal روی body) ---------- */
+.qa-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  direction: rtl;
+  animation: qaFade 0.3s ease;
+}
+.qa-overlay.qa-top { z-index: 3100; }
+.qa-overlay.qa-loading { z-index: 3200; }
+.qa-overlay * {
+  box-sizing: border-box;
+  font-family: "Vazirmatn", "Tahoma", "Arial", sans-serif;
+  color: #fff;
+}
+.qa-overlay .qa-box {
+  position: relative;
+  width: 90%;
+  max-width: 330px;
+  padding: 28px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid #4a9eff;
+  box-shadow: 0 0 25px #4a9eff;
+  border-radius: 15px;
+  animation: qaScale 0.3s ease;
+}
+.qa-overlay .qa-box.qa-box-otp { max-width: 400px; padding: 36px 32px; }
+.qa-overlay .qa-icon {
+  width: 48px; height: 48px; margin: 0 auto 14px;
+  border-radius: 50%; border: 2px solid #ff8080; color: #ff8080;
+  font-size: 26px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.qa-overlay .qa-text { font-size: 15px; line-height: 1.9; margin: 0 0 18px; }
+.qa-overlay .qa-text.qa-nomargin { margin-bottom: 0; }
+.qa-overlay .qa-title { font-size: 22px; margin: 0 0 1rem; }
+.qa-overlay .qa-hint { font-size: 14px; color: #d0d0d0; margin: 0 0 4px; }
+.qa-overlay .qa-timer { font-size: 13px; color: #aaa; margin: 12px 0 0; }
+.qa-overlay .qa-close {
+  position: absolute; top: 1rem; left: 1rem;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.qa-overlay .qa-close:hover { color: #4a9eff; }
+.qa-overlay .qa-btn {
+  width: 100%; height: 44px; margin-top: 16px;
+  border-radius: 40px; border: 2px solid #4a9eff; background: transparent;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.3s;
+}
+.qa-overlay .qa-btn:hover:not(:disabled) { background: #4a9eff; }
+.qa-overlay .qa-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.qa-overlay .qa-form { display: flex; flex-direction: column; }
+.qa-overlay .qa-input-box { position: relative; width: 100%; height: 50px; margin-top: 22px; }
+.qa-overlay .qa-input-box input {
+  width: 100%; height: 100%; background: transparent; border: none; outline: none;
+  border-bottom: 2px solid #fff; font-size: 20px; font-weight: 600;
+  letter-spacing: 8px; text-align: center; direction: ltr; transition: 0.5s;
+}
+.qa-overlay .qa-input-box input:focus,
+.qa-overlay .qa-input-box input:not(:placeholder-shown) { border-bottom-color: #4a9eff; }
+.qa-overlay .qa-input-box label {
+  position: absolute; top: 50%; right: 0; transform: translateY(-50%);
+  font-size: 15px; pointer-events: none; transition: 0.5s;
+}
+.qa-overlay .qa-input-box input:focus ~ label,
+.qa-overlay .qa-input-box input:not(:placeholder-shown) ~ label { top: -5px; color: #4a9eff; }
+.qa-overlay .qa-spinner {
+  width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%;
+  border: 4px solid rgba(74, 158, 255, 0.25); border-top-color: #4a9eff;
+  animation: qaSpin 0.8s linear infinite;
+}
+
+@keyframes qaFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes qaScale { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes qaSpin { to { transform: rotate(360deg); } }
+
+/* دکمه‌ی انتخاب تصویر در ثبت‌نام با تصویر */
+.auth-page .auth-file-btn {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #fff;
+  padding: 0 23px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  direction: rtl;
+  overflow: hidden;
+  transition: 0.5s;
+}
+.auth-page .auth-file-btn.has-file {
+  border-bottom-color: #4a9eff;
+}
+.auth-page .auth-file-btn span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.auth-page .auth-file-thumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #4a9eff;
+}

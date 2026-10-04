@@ -27,6 +27,14 @@ export default async function AdminUserDetailPage({
 
   if (!profile) notFound();
 
+   let documentUrl: string | null = null;
+  if (profile.id_document_path) {
+    const { data: signed } = await adminClient.storage
+      .from("id-documents")
+      .createSignedUrl(profile.id_document_path, 600); // ۱۰ دقیقه اعتبار
+    documentUrl = signed?.signedUrl ?? null;
+  }
+
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-5">
@@ -41,6 +49,14 @@ export default async function AdminUserDetailPage({
           </p>
           <p className="text-sm text-gray-700 mb-1">تلفن: {profile.phone ?? "—"}</p>
           <p className="text-sm text-gray-700 mb-1">کد ملی: {profile.national_id ?? "—"}</p>
+          <p className="text-sm text-gray-700 mb-1">
+            نوع ثبت‌نام:{" "}
+            {profile.signup_method === "QUICK"
+              ? "سریع (بدون احراز هویت)"
+              : profile.signup_method === "IMAGE"
+                ? "با تصویر مدرک (بدون احراز هویت)"
+                : "کامل (احراز شده)"}
+          </p>
           <p className="text-sm text-gray-700 mb-3">
             تاریخ عضویت: {new Date(profile.created_at).toLocaleDateString("fa-IR")}
           </p>
@@ -87,6 +103,26 @@ export default async function AdminUserDetailPage({
           ) : (
             <p className="text-sm text-gray-500">هنوز سفارشی ثبت نکرده است.</p>
           )}
+          {profile.id_document_path && (
+          <div className="admin-card lg:col-span-3">
+            <h2 className="font-bold text-gray-800 mb-3">تصویر مدرک هویتی (کارت ملی / گواهینامه)</h2>
+            {documentUrl ? (
+              <a href={documentUrl} target="_blank" rel="noopener noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={documentUrl}
+                  alt="مدرک هویتی کاربر"
+                  className="max-w-full max-h-96 rounded border"
+                />
+              </a>
+            ) : (
+              <p className="text-sm text-gray-500">خطا در بارگذاری تصویر مدرک.</p>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              این لینک ۱۰ دقیقه اعتبار دارد؛ با رفرش صفحه، لینک جدید ساخته می‌شود.
+            </p>
+          </div>
+        )}
         </div>
       </div>
     </div>

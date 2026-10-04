@@ -6,6 +6,8 @@ import { User, Mail, Phone, CreditCard, X } from "lucide-react";
 import { signIn, requestSignupOtp, verifySignupOtpAndCreateAccount, requestPasswordResetOtp, resetPasswordWithOtp } from "./actions";
 import { toEnglishDigits } from "@/lib/nationalId";
 import PasswordInput from "./PasswordInput";
+import { QuickSignupForm, QuickLoginForm } from "./QuickAuth";
+import ImageSignupForm from "./ImageSignup";
 import GridScanBackground from "@/components/backgrounds/GridScanBackground";
 
 type AnimationStyle = React.CSSProperties & {
@@ -27,6 +29,8 @@ export default function AuthCard({
 
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginTab, setLoginTab] = useState<"password" | "otp">("password");
+  const [registerTab, setRegisterTab] = useState<"full" | "quick" | "image">("full");
 
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -114,6 +118,12 @@ export default function AuthCard({
     const nationalId = (formData.get("nationalId") as string) || "";
     const email = (formData.get("email") as string) || "";
     const password = (formData.get("password") as string) || "";
+
+    if (email.trim() && !/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setRegisterError("فرمت ایمیل وارد شده صحیح نیست.");
+      setRegisterLoading(false);
+      return;
+    }
 
     if (password.length < 6) {
       setRegisterError("رمز عبور باید حداقل ۶ کاراکتر باشد.");
@@ -257,11 +267,24 @@ export default function AuthCard({
             >
               ورود
             </h2>
-            <form action={handleLogin}>
+            <div className="auth-tabs animation" style={{ "--D": 0.5, "--S": 21.5 } as AnimationStyle}>
+              <button type="button" className={loginTab === "password" ? "on" : ""} onClick={() => setLoginTab("password")}>
+                ورود با رمز
+              </button>
+              <button type="button" className={loginTab === "otp" ? "on" : ""} onClick={() => setLoginTab("otp")}>
+                رمز یکبار مصرف
+              </button>
+            </div>
+            <form action={handleLogin} style={loginTab === "password" ? undefined : { display: "none" }}>
               <input type="hidden" name="redirect" value={redirectTo ?? "/"} />
               <div className="input-box animation" style={{ "--D": 1, "--S": 22 } as AnimationStyle}>
                 <input type="tel" name="phone" dir="ltr" placeholder=" " maxLength={11} required />
-                <label>شماره موبایل</label>
+                <label>
+  شماره موبایل{" "}
+  <small style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, whiteSpace: "nowrap" }}>
+    (شماره موبایل و کدملی متلعق به یک شخص باشند)
+  </small>
+</label>
                 <Phone size={18} />
               </div>
 
@@ -283,8 +306,6 @@ export default function AuthCard({
                   رمز عبور را فراموش کرده‌اید؟
                 </button>
               </div>
-
-              {loginError && <p className="error-message">{loginError}</p>}
 
               <div
                 className="input-box animation"
@@ -308,6 +329,11 @@ export default function AuthCard({
                 </p>
               </div>
             </form>
+            <QuickLoginForm
+              hidden={loginTab !== "otp"}
+              redirectTo={redirectTo}
+              onGoRegister={() => setIsRegisterActive(true)}
+            />
           </div>
 
           <div className="info-content Login">
@@ -334,7 +360,19 @@ export default function AuthCard({
             >
               ثبت نام
             </h2>
-            <form action={handleRegister}>
+            <div className="auth-tabs animation" style={{ "--li": 17.5, "--S": 0.5 } as AnimationStyle}>
+              <button type="button" className={registerTab === "full" ? "on" : ""} onClick={() => setRegisterTab("full")}>
+                ثبت نام کامل
+              </button>
+              <button type="button" className={registerTab === "quick" ? "on" : ""} onClick={() => setRegisterTab("quick")}>
+                ثبت نام سریع
+              </button>
+              <button type="button" className={registerTab === "image" ? "on" : ""} onClick={() => setRegisterTab("image")}>
+                ثبت نام با تصویر
+              </button>
+            </div>
+            <form action={handleRegister} noValidate style={registerTab === "full" ? undefined : { display: "none" }}>
+
               <div
                 className="input-box animation"
                 style={{ "--li": 18, "--S": 1 } as AnimationStyle}
@@ -386,8 +424,6 @@ export default function AuthCard({
                 onChange={(e) => setPasswordInput(e.target.value)}
               />
 
-              {registerError && <p className="error-message">{registerError}</p>}
-
               <div
                 className="input-box animation"
                 style={{ "--li": 20, "--S": 4 } as AnimationStyle}
@@ -413,6 +449,14 @@ export default function AuthCard({
                 </p>
               </div>
             </form>
+            <QuickSignupForm
+              hidden={registerTab !== "quick"}
+              onGoLogin={() => setIsRegisterActive(false)}
+            />
+            <ImageSignupForm
+              hidden={registerTab !== "image"}
+              onGoLogin={() => setIsRegisterActive(false)}
+            />
           </div>
 
           <div className="info-content Register">
@@ -577,7 +621,6 @@ export default function AuthCard({
                   />
                   <label>کد تایید</label>
                 </div>
-                {registerOtpError && <p className="forgot-error-message">{registerOtpError}</p>}
                 {registerResendAvailable ? (
                   <div className="forgot-input-box">
                     <button
@@ -600,6 +643,47 @@ export default function AuthCard({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* پاپ‌آپ خطا (ثبت‌نام + کد تایید) */}
+        {(registerError || registerOtpError || loginError) && (
+          <div className="auth-popup-overlay">
+            <div className="auth-popup-box" role="alertdialog">
+              <div className="auth-popup-icon">!</div>
+              <p className="auth-popup-text">{registerError || registerOtpError || loginError}</p>
+              <button
+                type="button"
+                className="auth-popup-btn"
+                onClick={() => {
+                  setRegisterError(null);
+                  setRegisterOtpError(null);
+                  setLoginError(null);
+                }}
+              >
+                متوجه شدم
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* پاپ‌آپ در حال ورود */}
+        {registerLoading && (
+          <div className="auth-popup-overlay">
+            <div className="auth-popup-box">
+              <div className="auth-spinner" />
+              <p className="auth-popup-text" style={{ marginBottom: 0 }}>در حال ورود...</p>
+            </div>
+          </div>
+        )}
+
+        {/* پاپ‌آپ در حال ورود (فرم ورود با رمز) */}
+        {loginLoading && (
+          <div className="auth-popup-overlay">
+            <div className="auth-popup-box">
+              <div className="auth-spinner" />
+              <p className="auth-popup-text" style={{ marginBottom: 0 }}>در حال ورود...</p>
             </div>
           </div>
         )}
@@ -836,6 +920,78 @@ export default function AuthCard({
           .forgot-form :global(.input-box input:valid ~ .password-toggle-btn) {
             color: #4a9eff;
           }
+                    /* پاپ‌آپ خطا و لودینگ ثبت‌نام */
+          .auth-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+          }
+          .auth-popup-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #4a9eff;
+            box-shadow: 0 0 25px #4a9eff;
+            border-radius: 15px;
+            padding: 28px 24px;
+            width: 90%;
+            max-width: 320px;
+            direction: rtl;
+            color: #fff;
+            text-align: center;
+            animation: scaleIn 0.3s ease;
+          }
+          .auth-popup-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            border: 2px solid #ff8080;
+            color: #ff8080;
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .auth-popup-text {
+            font-size: 15px;
+            line-height: 1.9;
+            margin-bottom: 18px;
+            color: #fff !important;
+          }
+          .auth-popup-btn {
+            width: 100%;
+            height: 42px;
+            border-radius: 40px;
+            border: 2px solid #4a9eff;
+            background: transparent;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+          }
+          .auth-popup-btn:hover {
+            background: #4a9eff;
+          }
+          .auth-spinner {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            border: 4px solid rgba(74, 158, 255, 0.25);
+            border-top-color: #4a9eff;
+            animation: authSpin 0.8s linear infinite;
+          }
+          @keyframes authSpin {
+            to {
+              transform: rotate(360deg);
+            }
+          }  
         `}</style>
       </div>
     </>
