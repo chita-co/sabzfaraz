@@ -1,5 +1,5 @@
-const GEMINI_MODEL = "gemini-3.6-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODEL = "gemini-3.8-flash";
+const GEMINI_PROXY_URL = `https://ai-proxy.sabzfaraz.ir/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export interface GeneratedArticle {
   title: string;
@@ -50,7 +50,7 @@ async function callGeminiJSON<T>(prompt: string, temperature = 0.9): Promise<T> 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY تنظیم نشده است");
 
-  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const res = await fetch(`${GEMINI_PROXY_URL}?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

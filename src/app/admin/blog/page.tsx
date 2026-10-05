@@ -7,8 +7,9 @@ const statusLabel: Record<string, string> = { draft: "پیش‌نویس", pendin
 const statusBadge: Record<string, string> = { draft: "badge-info", pending_review: "badge-warning", published: "badge-success", rejected: "badge-danger" };
 const PAGE_SIZE = 20;
 
-export default async function AdminBlogPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
-  const { status, page: pageParam } = await searchParams;
+export default async function AdminBlogPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string; q?: string }> }) {
+  const { status, page: pageParam, q: qParam } = await searchParams;
+  const q = (qParam ?? "").trim().slice(0, 100);
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const admin = createAdminClient();
 
@@ -17,6 +18,14 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
     .select("id, title, slug, status, ai_generated, view_count, created_at", { count: "exact" })
     .order("created_at", { ascending: false });
   if (status) query = query.eq("status", status);
+
+  if (q) {
+    // هر کلمه‌ای که تایپ شده باید داخل عنوان باشد (فارسی/انگلیسی، بدون حساسیت به حروف بزرگ و کوچک)
+    for (const word of q.split(/\s+/).filter(Boolean)) {
+      const safe = word.replace(/[\\%_]/g, "\\$&");
+      query = query.ilike("title", `%${safe}%`);
+    }
+  }
 
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -34,6 +43,7 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
   function pageHref(p: number) {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
+    if (q) params.set("q", q);
     params.set("page", String(p));
     return `/admin/blog?${params.toString()}`;
   }
@@ -70,9 +80,27 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
         </Link>
       )}
 
+      <form method="GET" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        {status && <input type="hidden" name="status" value={status} />}
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="جست‌وجو در عنوان مقالات (فارسی یا انگلیسی)..."
+          className="admin-input"
+          style={{ flex: 1, minWidth: 220, maxWidth: 420 }}
+        />
+        <button type="submit" className="admin-btn admin-btn-primary">جست‌وجو</button>
+        {q && (
+          <Link href={status ? `/admin/blog?status=${status}` : "/admin/blog"} className="admin-btn">
+            پاک کردن
+          </Link>
+        )}
+      </form>
+
       <div className="admin-filters-bar">
         {["", "pending_review", "published", "draft", "rejected"].map((s) => (
-          <Link key={s || "all"} href={s ? `/admin/blog?status=${s}` : "/admin/blog"} className={`order-tab${(status ?? "") === s ? " active" : ""}`}>
+          <Link key={s || "all"} href={`/admin/blog${s || q ? "?" : ""}${[s ? `status=${s}` : "", q ? `q=${encodeURIComponent(q)}` : ""].filter(Boolean).join("&")}`} className={`order-tab${(status ?? "") === s ? " active" : ""}`}>
             {s ? statusLabel[s] : "همه"}
           </Link>
         ))}
