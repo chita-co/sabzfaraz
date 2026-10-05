@@ -11,7 +11,7 @@ const OLD_DOMAINS = new Set([
   "sabzfaraz.apps.teh11.abrhapaas.com",
 ]);
 
-const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/", "/badge-company", "/badge-personal", "/enamad-verify"]);
+const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/badge-company", "/badge-personal", "/enamad-verify"]);
 
 const SKIP_AUTH_CHECK_PATHS = new Set([
   "/badge-company",
