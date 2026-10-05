@@ -25,12 +25,10 @@ export async function middleware(request: NextRequest) {
   const isOldDomain = OLD_DOMAINS.has(host);
 
   // ریدایرکت از هر دامنه‌ی قدیمی به دامنه اصلی (به جز مسیرهای اینماد)
-  if (isOldDomain && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
-    const url = request.nextUrl.clone();
-    url.protocol = "https:";
-    url.host = NEW_DOMAIN;
-    return NextResponse.redirect(url, 301);
-  }
+if (isOldDomain && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
+  const redirectUrl = `https://${NEW_DOMAIN}${pathname}${request.nextUrl.search}`;
+  return NextResponse.redirect(redirectUrl, 301);
+}
 
   let response = NextResponse.next({ request });
 
