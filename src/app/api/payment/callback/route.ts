@@ -8,7 +8,8 @@ import { revalidatePath } from "next/cache";
 import { deleteUserCartAction } from "@/app/admin/carts/actions";
 
 export async function POST(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir";
   const orderId = searchParams.get("orderId");
   const formData = await request.formData();
   const refNum = formData.get("RefNum") as string | null;
