@@ -1,9 +1,7 @@
 // lib/sep.ts
-import { fetch as undiciFetch } from "undici";
 
 const SEP_GATEWAY_REDIRECT = "https://sep.shaparak.ir/OnlinePG/SendToken";
 
-// دیتابیس ما مبلغ رو به تومان نگه می‌داره، ولی سپ ریال می‌خواد
 const RIAL_PER_TOMAN = 10;
 
 interface SepTokenSuccess {
@@ -15,8 +13,6 @@ interface SepTokenError {
   errorCode: string;
   errorDesc: string;
 }
-
-type SepFetchOptions = Parameters<typeof undiciFetch>[1];
 
 export async function requestPayment({
   amount,
@@ -36,7 +32,7 @@ export async function requestPayment({
   }
 
   try {
-    const fetchOptions: SepFetchOptions = {
+    const fetchOptions: RequestInit = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -52,7 +48,7 @@ export async function requestPayment({
       }),
     };
 
-    const res = await undiciFetch(process.env.PROXY_URL, fetchOptions);
+    const res = await fetch(process.env.PROXY_URL, fetchOptions);
     data = (await res.json()) as SepTokenSuccess | SepTokenError;
     console.error("SEP token response:", data);
   } catch (e) {
@@ -103,7 +99,7 @@ export async function verifyPayment({
 
   const verifyUrl = `${process.env.PROXY_URL}?verify=1`;
 
-  const fetchOptions: SepFetchOptions = {
+  const fetchOptions: RequestInit = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -115,7 +111,7 @@ export async function verifyPayment({
     }),
   };
 
-  const res = await undiciFetch(verifyUrl, fetchOptions);
+  const res = await fetch(verifyUrl, fetchOptions);
   const data = (await res.json()) as SepVerifyResponse;
   const expectedRial = Math.round(amount * RIAL_PER_TOMAN);
 
