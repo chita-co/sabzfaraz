@@ -51,7 +51,7 @@ export async function GET() {
 
   // صفحات ثابت عمومی مهم
   const staticPaths = [
-    "/", "/products", "/deals", "/blog", "/price-ticker",
+    "/", "/products", "/deals", "/blog",
     "/about", "/contact", "/faq", "/newest", "/popular",
     "/stock", "/search", "/auctions", "/reverse-auctions",
     "/bulk-order", "/unboxing", "/support", "/terms", "/privacy",

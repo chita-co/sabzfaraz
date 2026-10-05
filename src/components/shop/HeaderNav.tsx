@@ -68,7 +68,7 @@ export default function HeaderNav({
     { type: "link", label: "آنباکس", href: "/unboxing" },
     { type: "link", label: "سفارش جمعی", href: "/bulk-order" },
     { type: "link", label: "بلاگ", href: "/blog" },
-     { type: "link", label: "قیمت لحظه‌ای", href: "/price-ticker" },
+    // { type: "link", label: "قیمت لحظه‌ای", href: "/price-ticker" }, // ⛔️ موقتاً غیرفعال
      { type: "link", label: "تقویم و رویدادها", href: "/calendar" },
     { type: "link", label: "درباره ما", href: "/about" },
     { type: "link", label: "تماس با ما", href: "/contact" },
@@ -188,9 +188,11 @@ export default function HeaderNav({
           <Link href="/blog" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
             بلاگ
           </Link>
+          {/* ⛔️ قیمت لحظه‌ای موقتاً غیرفعال
           <Link href="/price-ticker" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
             قیمت لحظه‌ای
           </Link>
+          */}
           <Link href="/calendar" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
             تقویم و رویدادها
           </Link>

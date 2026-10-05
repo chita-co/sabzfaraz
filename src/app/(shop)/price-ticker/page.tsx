@@ -8,6 +8,7 @@ import { getPriceSnapshot } from "@/lib/priceTicker/cache";
 import PriceTickerDashboard from "@/components/price-ticker/PriceTickerDashboard";
 import PriceTickerFaq from "@/components/price-ticker/PriceTickerFaq";
 import { PRICE_TICKER_FAQS } from "@/components/price-ticker/priceTickerFaqs";
+import { notFound } from "next/navigation";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PriceTickerPage() {
+  notFound(); // ⛔️ صفحه‌ی قیمت لحظه‌ای موقتاً غیرفعال — برای فعال‌سازی این خط را کامنت کن
   const snapshot = await getPriceSnapshot();
   const updatedAtFa = new Date(snapshot.updatedAt).toLocaleString("fa-IR", {
     hour: "2-digit",

@@ -1,8 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const OLD_DOMAIN = "sabzfaraz.vercel.app";
 const NEW_DOMAIN = "sabzfaraz.ir";
+
+// لیست تمام دامنه‌های قدیمی که باید به دامنه اصلی ریدایرکت بشن
+const OLD_DOMAINS = new Set([
+  "sabzfaraz.vercel.app",
+  "sabzfaraz-five.vercel.app",
+  "price.sabzfaraz.ir",
+  "sabzfaraz.apps.teh11.abrhapaas.com",
+]);
+
 const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/", "/badge-company", "/badge-personal", "/enamad-verify"]);
 
 const SKIP_AUTH_CHECK_PATHS = new Set([
@@ -14,9 +22,10 @@ const SKIP_AUTH_CHECK_PATHS = new Set([
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
+  const isOldDomain = OLD_DOMAINS.has(host);
 
-  // ریدایرکت از دامنه قدیمی به جدید (دست‌نخورده)
-  if (host === OLD_DOMAIN && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
+  // ریدایرکت از هر دامنه‌ی قدیمی به دامنه اصلی (به جز مسیرهای اینماد)
+  if (isOldDomain && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
     const url = request.nextUrl.clone();
     url.protocol = "https:";
     url.host = NEW_DOMAIN;
@@ -60,9 +69,8 @@ export async function middleware(request: NextRequest) {
       console.warn("[middleware] Supabase auth check failed (network)");
     }
   }
-
-  // X-Robots-Tag برای مسیرهای اینماد روی دامنه قدیمی (دست‌نخورده)
-  if (host === OLD_DOMAIN && ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
+// X-Robots-Tag برای مسیرهای اینماد روی دامنه‌های قدیمی
+  if (isOldDomain && ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
 
