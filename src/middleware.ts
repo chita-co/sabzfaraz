@@ -5,10 +5,17 @@ const OLD_DOMAIN = "sabzfaraz.vercel.app";
 const NEW_DOMAIN = "sabzfaraz.ir";
 const ALLOWED_OLD_DOMAIN_PATHS = new Set(["/", "/badge-company", "/badge-personal", "/enamad-verify"]);
 
+const SKIP_AUTH_CHECK_PATHS = new Set([
+  "/badge-company",
+  "/badge-personal",
+  "/enamad-verify",
+]);
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
 
+  // ریدایرکت از دامنه قدیمی به جدید (دست‌نخورده)
   if (host === OLD_DOMAIN && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
     const url = request.nextUrl.clone();
     url.protocol = "https:";
@@ -18,41 +25,48 @@ export async function middleware(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+  // فقط برای صفحات غیر-اینماد، چک session انجام بده
+  const needsAuthCheck = !SKIP_AUTH_CHECK_PATHS.has(pathname);
+  // فقط اگه کوکی session وجود داشته باشه، به Supabase fetch بزن
+  const hasSessionCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
 
-          response = NextResponse.next({ request });
-
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+  if (needsAuthCheck && hasSessionCookie) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value)
+            );
+            response = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            );
+          },
         },
-      },
+      }
+    );
+
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      console.warn("[middleware] Supabase auth check failed (network)");
     }
-  );
-
-  try {
-    await supabase.auth.getUser();
-  } catch (error) {
-    console.error("Auth error in middleware:", error);
   }
 
+  // X-Robots-Tag برای مسیرهای اینماد روی دامنه قدیمی (دست‌نخورده)
   if (host === OLD_DOMAIN && ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
 
-  // اگر کاربر از طریق ترب وارد سایت شده (torob_clid در URL)، آن را در کوکی ذخیره کن
-  // تا در زمان تسویه‌حساب به سفارش متصل شود. مدل اتریبیوشن ترب ۷ روزه (۱۶۸ ساعت) است.
+  // کوکی ترب (دست‌نخورده)
   const torobClid = request.nextUrl.searchParams.get("torob_clid");
   if (torobClid) {
     response.cookies.set("torob_clid", torobClid, {
@@ -61,7 +75,6 @@ export async function middleware(request: NextRequest) {
       sameSite: "lax",
     });
   }
-
 
   return response;
 }
