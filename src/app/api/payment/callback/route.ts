@@ -4,6 +4,8 @@ import { verifyPayment } from "@/lib/sep";
 import { sendOrderTrackingSms } from "@/lib/sms";
 import { logConversion } from "@/lib/analytics/logConversion";
 import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
+import { refundDiscountCode } from "@/lib/discountCode";
+import { refundWalletForOrder } from "@/lib/wallet/refundOrderWallet";
 import { revalidatePath } from "next/cache";
 import { deleteUserCartAction } from "@/app/admin/carts/actions";
 
@@ -35,12 +37,19 @@ export async function POST(request: NextRequest) {
     .eq("id", orderId)
     .single();
   if (!order) return NextResponse.redirect(`${origin}/checkout?error=notfound`);
+  // محافظ callback تکراری: سفارشی که قبلاً پرداخت شده دوباره پردازش نشود
+  // (وگرنه verify دوم شکست می‌خورد و سفارش پرداخت‌شده اشتباهاً لغو می‌شد)
+  if (order.payment_status === "PAID") {
+    return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
+  }
 
   if (state !== "OK" || status !== "2") {
     console.log("CALLBACK FAILED STATE", { state, status });
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
     await deleteUserCartAction(order.user_id);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
+    await refundDiscountCode(orderId);
+    await refundWalletForOrder(orderId);
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   }
 
@@ -113,6 +122,8 @@ export async function POST(request: NextRequest) {
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
     await deleteUserCartAction(order.user_id);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
+    await refundDiscountCode(orderId);
+    await refundWalletForOrder(orderId);
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   } catch {
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=error`);

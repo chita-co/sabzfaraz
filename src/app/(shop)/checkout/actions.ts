@@ -4,8 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { requestPayment } from "@/lib/sep";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { redeemPointsForOrder } from "@/lib/loyalty/ledger";
-import { consumeDiscountCode } from "@/lib/discountCode";
+import { redeemPointsForOrder, refundRedeemedPoints } from "@/lib/loyalty/ledger";
+import { consumeDiscountCode, refundDiscountCode } from "@/lib/discountCode";
+import { refundWalletForOrder } from "@/lib/wallet/refundOrderWallet";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
 import { cookies } from "next/headers";
 import { deleteUserCartAction } from "@/app/admin/carts/actions";
@@ -40,6 +41,14 @@ async function decrementStockForItems(supabase: Awaited<ReturnType<typeof create
       console.error("خطا در کسر موجودی محصول:", e);
     }
   }
+}
+
+// اگر بعد از مصرف امتیاز/کد تخفیف/کیف پول، ثبت سفارش در مراحل بعدی شکست بخورد،
+// هر سه را برمی‌گردانیم تا مشتری چیزی را از دست ندهد.
+async function rollbackOrderDiscounts(orderId: string) {
+  try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
+  await refundDiscountCode(orderId);
+  await refundWalletForOrder(orderId);
 }
 
 export async function createOrderAndPay(
@@ -134,7 +143,10 @@ export async function createOrderAndPay(
 
   if (discountCodeId) {
     const consumed = await consumeDiscountCode(supabase, user.id, discountCodeId, finalAmount, order.id);
-    if (consumed.error) return { error: consumed.error };
+    if (consumed.error) {
+      await rollbackOrderDiscounts(order.id);
+      return { error: consumed.error };
+    }
     finalAmount = finalAmount - consumed.discountAmount;
     if (finalAmount < 0) finalAmount = 0;
   }
@@ -155,9 +167,15 @@ export async function createOrderAndPay(
       p_amount_to_use: walletAmountToUse,
       p_order_total: finalAmount,
     });
-    if (walletError) return { error: "خطا در پرداخت از کیف پول: " + walletError.message };
+    if (walletError) {
+      await rollbackOrderDiscounts(order.id);
+      return { error: "خطا در پرداخت از کیف پول: " + walletError.message };
+    }
     const walletResult = walletData as { success?: boolean; error?: string; debited?: number; remainder?: number };
-    if (walletResult.error) return { error: walletResult.error };
+    if (walletResult.error) {
+      await rollbackOrderDiscounts(order.id);
+      return { error: walletResult.error };
+    }
     remainder = walletResult.remainder ?? finalAmount;
 
     // آپدیت فوری کش صفحه‌ی کیف پول تا موجودی جدید همیشه به‌روز نمایش داده شود
@@ -185,6 +203,7 @@ export async function createOrderAndPay(
       mobile: address.phone,
     });
   } catch {
+    await rollbackOrderDiscounts(order.id);
     return { error: "خطا در اتصال به درگاه پرداخت." };
   }
 
@@ -294,7 +313,10 @@ export async function createOfflineOrder(
 
   if (discountCodeId) {
     const consumed = await consumeDiscountCode(supabase, user.id, discountCodeId, finalAmount, order.id);
-    if (consumed.error) return { error: consumed.error };
+    if (consumed.error) {
+      await rollbackOrderDiscounts(order.id);
+      return { error: consumed.error };
+    }
     finalAmount = finalAmount - consumed.discountAmount;
     if (finalAmount < 0) finalAmount = 0;
   }
@@ -313,9 +335,15 @@ export async function createOfflineOrder(
       p_amount_to_use: walletAmountToUse,
       p_order_total: finalAmount,
     });
-    if (walletError) return { error: "خطا در پرداخت از کیف پول: " + walletError.message };
+    if (walletError) {
+      await rollbackOrderDiscounts(order.id);
+      return { error: "خطا در پرداخت از کیف پول: " + walletError.message };
+    }
     const walletResult = walletData as { success?: boolean; error?: string; debited?: number; remainder?: number };
-    if (walletResult.error) return { error: walletResult.error };
+    if (walletResult.error) {
+      await rollbackOrderDiscounts(order.id);
+      return { error: walletResult.error };
+    }
     remainder = walletResult.remainder ?? finalAmount;
 
     revalidatePath("/profile/wallet");

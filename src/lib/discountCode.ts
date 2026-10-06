@@ -30,3 +30,16 @@ export async function consumeDiscountCode(
 
   return { error: null, discountAmount };
 }
+
+
+// بازگرداندن کد تخفیف مصرف‌شده‌ی یک سفارش (هنگام پرداخت ناموفق/لغو سفارش).
+// ایدمپوتنت است و هیچ‌وقت خطا پرت نمی‌کند تا مسیر اصلی را خراب نکند.
+export async function refundDiscountCode(orderId: string): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.rpc("refund_discount_code_for_order", { p_order_id: orderId });
+    if (error) console.error("خطا در بازگشت کد تخفیف:", error.message);
+  } catch (e) {
+    console.error("خطا در بازگشت کد تخفیف:", e);
+  }
+}

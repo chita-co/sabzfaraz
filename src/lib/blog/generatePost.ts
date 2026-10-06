@@ -191,17 +191,31 @@ export async function runBlogBot(limit = 3, options: { force?: boolean } = {}) {
 
   await admin.from("blog_bot_settings").update({ is_running: true, last_run_started_at: new Date().toISOString(), last_error: null }).eq("id", 1);
 
+  // ۱. گرفتن همه‌ی product_id هایی که قبلاً مقاله دارن
   const { data: postedProductIds } = await admin.from("blog_posts").select("product_id").not("product_id", "is", null);
-  const excludeIds = (postedProductIds ?? []).map((r) => r.product_id).filter(Boolean) as string[];
+  const excludeIds = new Set((postedProductIds ?? []).map((r) => r.product_id).filter(Boolean) as string[]);
 
-  let query = admin.from("products").select("id").eq("is_active", true).order("created_at", { ascending: false }).limit(limit);
-  if (excludeIds.length > 0) query = query.not("id", "in", `(${excludeIds.join(",")})`);
-  const { data: candidateProducts } = await query;
+  // ۲. گرفتن محصولات فعال (بدون فیلتر exclude در کوئری، چون URL خیلی طولانی میشه)
+  const { data: candidateProducts, error: fetchError } = await admin
+    .from("products")
+    .select("id")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(limit * 20); // تعداد بیشتری می‌گیریم تا بعد از فیلتر، حداقل limit تا باقی بمونه
+
+  if (fetchError) {
+    console.error("Error fetching candidate products:", fetchError);
+    await admin.from("blog_bot_settings").update({ is_running: false, last_error: fetchError.message }).eq("id", 1);
+    return { ran: false, reason: "خطا در دریافت محصولات", results: [] as unknown[] };
+  }
+
+  // ۳. فیلتر کردن محصولاتی که قبلاً مقاله دارن (در حافظه)
+  const eligibleProducts = (candidateProducts ?? []).filter((p) => !excludeIds.has(p.id)).slice(0, limit);
 
   const results: unknown[] = [];
   let rateLimitHit = false;
 
-  for (const p of candidateProducts ?? []) {
+  for (const p of eligibleProducts) {
     if (rateLimitHit) break;
     try {
       results.push({ productId: p.id, ...(await generateBlogPostForProduct(p.id)) });

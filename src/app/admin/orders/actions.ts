@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { earnPointsForOrder, refundRedeemedPoints, reverseEarnedPoints } from "@/lib/loyalty/ledger";
+import { refundDiscountCode } from "@/lib/discountCode";
+import { refundWalletForOrder } from "@/lib/wallet/refundOrderWallet";
 import { createNotification } from "@/lib/notifications";
 import { sendPostalTrackingSms } from "@/lib/sms";
 import { deleteUserCartAction } from "@/app/admin/carts/actions";
@@ -59,6 +61,8 @@ export async function updateOrderStatus(orderId: string, status: string) {
     } catch (e) {
       console.error("خطا در بازگشت امتیاز وفاداری:", e);
     }
+    await refundDiscountCode(orderId);
+    await refundWalletForOrder(orderId);
     if (existingOrder?.user_id) {
       await deleteUserCartAction(existingOrder.user_id);
     }
