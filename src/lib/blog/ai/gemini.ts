@@ -1,4 +1,4 @@
-const GEMINI_MODEL = "gemini-3.8-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_PROXY_URL = `https://ai-proxy.sabzfaraz.ir/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export interface GeneratedArticle {

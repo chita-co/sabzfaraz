@@ -3,6 +3,7 @@ on:
   schedule:
     - cron: "0 3 1 * *"
     - cron: "0 2 * * *"
+    - cron: "30 2 * * *"
     - cron: "0 9 * * *"
     - cron: "0 3 * * *"
     - cron: "0 * * * *"
@@ -26,6 +27,7 @@ jobs:
           case "$SCHEDULE" in
             "0 3 1 * *") LIST="cleanup-analytics" ;;
             "0 2 * * *") LIST="expire-loyalty-points" ;;
+            "30 2 * * *") LIST="generate-blog-posts" ;;
             "0 9 * * *") LIST="loyalty-expiry-reminders" ;;
             "0 3 * * *") LIST="expire-bulk-orders" ;;
             "0 * * * *") LIST="run-auction-bots finalize-auctions expire-auction-winner-payments expire-reverse-auctions" ;;
