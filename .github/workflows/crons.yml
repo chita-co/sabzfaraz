@@ -36,9 +36,10 @@ jobs:
           test -n "$LIST" || exit 1
           FAIL=0
           for P in $LIST; do
-            curl --fail --silent --show-error --max-time 120 --retry 2 \
-              -o /dev/null -w "$P %{http_code}\n" \
+            curl --fail-with-body --silent --show-error --max-time 120 --retry 2 \
+              -o /tmp/out.txt -w "$P %{http_code}\n" \
               -H "Authorization: Bearer $CRON_SECRET" \
               "$SITE_URL/api/cron/$P" || FAIL=1
+            head -c 500 /tmp/out.txt 2>/dev/null; echo
           done
           exit $FAIL

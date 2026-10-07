@@ -1,5 +1,11 @@
-const GEMINI_MODEL = "gemini-3.6-flash";
-const GEMINI_PROXY_URL = `https://ai-proxy.sabzfaraz.ir/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// ترتیب مدل‌ها برای نوشتن مقاله؛ اگر اولی شلوغ/ناموجود بود سراغ بعدی می‌رود
+const BLOG_MODELS: { name: string; thinking?: "minimal" | "low" | "medium" | "high" }[] = [
+  { name: "gemini-3.6-flash", thinking: "low" },
+  { name: "gemini-3.8-flash", thinking: "low" },
+  { name: "gemini-3.5-flash", thinking: "low" },
+];
+const GEMINI_PROXY_BASE = "https://ai-proxy.sabzfaraz.ir/v1beta/models";
+const BLOG_CALL_TIMEOUT_MS = 150_000;
 
 export interface GeneratedArticle {
   title: string;
@@ -46,45 +52,89 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function parseRetryAfterSeconds(errText: string): number | undefined {
+  try {
+    const errJson = JSON.parse(errText);
+    const retryInfo = errJson?.error?.details?.find((d: { "@type"?: string }) => d["@type"]?.includes("RetryInfo"));
+    const delay = retryInfo?.retryDelay as string | undefined;
+    if (delay) return parseInt(delay, 10);
+  } catch { /* ignore */ }
+  return undefined;
+}
+
 async function callGeminiJSON<T>(prompt: string, temperature = 0.9): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY تنظیم نشده است");
 
-  const res = await fetch(`${GEMINI_PROXY_URL}?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature, responseMimeType: "application/json" },
-    }),
-  });
+  const send = (model: string, thinking?: string) =>
+    fetch(`${GEMINI_PROXY_BASE}/${model}:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature,
+          responseMimeType: "application/json",
+          ...(thinking ? { thinkingConfig: { thinkingLevel: thinking } } : {}),
+        },
+      }),
+      signal: AbortSignal.timeout(BLOG_CALL_TIMEOUT_MS),
+    });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
+  let lastError = "پاسخی از Gemini دریافت نشد";
+  let rateLimitError: RateLimitError | null = null;
+  let hadOtherFailure = false;
+
+  for (const model of BLOG_MODELS) {
+    let res: Response;
+    try {
+      res = await send(model.name, model.thinking);
+      if (res.status === 400 && model.thinking) {
+        const t = await res.clone().text().catch(() => "");
+        if (/think/i.test(t)) res = await send(model.name); // بدون thinking
+      }
+    } catch (e: unknown) {
+      hadOtherFailure = true;
+      lastError = `${model.name}: ${e instanceof Error ? `${e.name} ${e.message}` : "خطای شبکه"}`;
+      console.error("Gemini blog request failed:", lastError);
+      continue;
+    }
+
     if (res.status === 429) {
-      let retryAfterSeconds: number | undefined;
-      try {
-        const errJson = JSON.parse(errText);
-        const retryInfo = errJson?.error?.details?.find((d: { "@type"?: string }) => d["@type"]?.includes("RetryInfo"));
-        const delay = retryInfo?.retryDelay as string | undefined;
-        if (delay) retryAfterSeconds = parseInt(delay, 10);
-      } catch { /* ignore */ }
+      const errText = await res.text().catch(() => "");
       const err = new Error("سهمیه‌ی رایگان Gemini برای الان تمام شده است") as RateLimitError;
       err.isRateLimit = true;
-      err.retryAfterSeconds = retryAfterSeconds;
-      throw err;
+      err.retryAfterSeconds = parseRetryAfterSeconds(errText);
+      rateLimitError = err;
+      console.error(`Gemini blog 429 [${model.name}]`);
+      continue;
     }
-    throw new Error(`خطای Gemini API (${res.status}): ${errText.slice(0, 300)}`);
+
+    if (!res.ok) {
+      hadOtherFailure = true;
+      const errText = await res.text().catch(() => "");
+      lastError = `${model.name} (${res.status}): ${errText.slice(0, 300)}`;
+      console.error("Gemini blog error:", lastError);
+      continue;
+    }
+
+    const data = await res.json();
+    const parts: Array<{ text?: string; thought?: boolean }> = data?.candidates?.[0]?.content?.parts ?? [];
+    const text = parts.filter((p) => p.text && !p.thought).map((p) => p.text).join("");
+    if (!text) { hadOtherFailure = true; lastError = `${model.name}: پاسخ خالی`; continue; }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      hadOtherFailure = true;
+      lastError = `${model.name}: JSON نامعتبر`;
+      console.error("Gemini blog JSON parse failed:", lastError);
+      continue;
+    }
   }
 
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("پاسخ نامعتبر از Gemini");
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new Error("پارس‌کردن JSON خروجی Gemini ناموفق بود");
-  }
+  if (rateLimitError && !hadOtherFailure) throw rateLimitError;
+  throw new Error(`خطای Gemini API: ${lastError}`);
 }
 
 export async function generateArticleWithGemini(input: {

@@ -189,56 +189,74 @@ export async function runBlogBot(limit = 3, options: { force?: boolean } = {}) {
     return { ran: false, reason: `ربات به‌دلیل محدودیت سهمیه تا ${new Date(settings.rate_limited_until).toLocaleString("fa-IR")} متوقف است`, results: [] as unknown[] };
   }
 
-  await admin.from("blog_bot_settings").update({ is_running: true, last_run_started_at: new Date().toISOString(), last_error: null }).eq("id", 1);
+   await admin.from("blog_bot_settings").update({ is_running: true, last_run_started_at: new Date().toISOString(), last_error: null }).eq("id", 1);
 
-  // ۱. گرفتن همه‌ی product_id هایی که قبلاً مقاله دارن
-  const { data: postedProductIds } = await admin.from("blog_posts").select("product_id").not("product_id", "is", null);
-  const excludeIds = new Set((postedProductIds ?? []).map((r) => r.product_id).filter(Boolean) as string[]);
+  try {
+    // ۱. همه‌ی product_id هایی که قبلاً مقاله دارند
+    const { data: postedProductIds } = await admin.from("blog_posts").select("product_id").not("product_id", "is", null);
+    const excludeIds = new Set((postedProductIds ?? []).map((r) => r.product_id).filter(Boolean) as string[]);
 
-  // ۲. گرفتن محصولات فعال (بدون فیلتر exclude در کوئری، چون URL خیلی طولانی میشه)
-  const { data: candidateProducts, error: fetchError } = await admin
-    .from("products")
-    .select("id")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(limit * 20); // تعداد بیشتری می‌گیریم تا بعد از فیلتر، حداقل limit تا باقی بمونه
+    // ۲. محصولات فعال را صفحه‌به‌صفحه می‌خوانیم تا به اندازه‌ی limit محصولِ بدون مقاله پیدا شود
+    const eligibleProducts: { id: string }[] = [];
+    const PAGE = 200;
+    for (let offset = 0; offset < 5000 && eligibleProducts.length < limit; offset += PAGE) {
+      const { data: page, error: fetchError } = await admin
+        .from("products")
+        .select("id")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + PAGE - 1);
 
-  if (fetchError) {
-    console.error("Error fetching candidate products:", fetchError);
-    await admin.from("blog_bot_settings").update({ is_running: false, last_error: fetchError.message }).eq("id", 1);
-    return { ran: false, reason: "خطا در دریافت محصولات", results: [] as unknown[] };
-  }
+      if (fetchError) {
+        console.error("Error fetching candidate products:", fetchError);
+        await admin.from("blog_bot_settings").update({ last_error: fetchError.message }).eq("id", 1);
+        return { ran: false, reason: "خطا در دریافت محصولات", results: [] as unknown[] };
+      }
+      if (!page || page.length === 0) break;
 
-  // ۳. فیلتر کردن محصولاتی که قبلاً مقاله دارن (در حافظه)
-  const eligibleProducts = (candidateProducts ?? []).filter((p) => !excludeIds.has(p.id)).slice(0, limit);
+      for (const p of page) {
+        if (!excludeIds.has(p.id)) {
+          eligibleProducts.push(p);
+          if (eligibleProducts.length >= limit) break;
+        }
+      }
+      if (page.length < PAGE) break;
+    }
 
-  const results: unknown[] = [];
-  let rateLimitHit = false;
+    const results: unknown[] = [];
+    let rateLimitHit = false;
 
-  for (const p of eligibleProducts) {
-    if (rateLimitHit) break;
-    try {
-      results.push({ productId: p.id, ...(await generateBlogPostForProduct(p.id)) });
-    } catch (e: unknown) {
-      const err = e as Error & { isRateLimit?: boolean; retryAfterSeconds?: number };
-      if (err?.isRateLimit) {
-        rateLimitHit = true;
-        const until = new Date(Date.now() + (err.retryAfterSeconds ? err.retryAfterSeconds * 1000 : 60 * 60 * 1000)).toISOString();
-        await admin.from("blog_bot_settings").update({ rate_limited_until: until, last_error: err.message }).eq("id", 1);
-        results.push({ productId: p.id, skipped: true, reason: `محدودیت سهمیه؛ تا ${new Date(until).toLocaleString("fa-IR")} صبر می‌کند` });
-      } else {
-        results.push({ productId: p.id, skipped: true, reason: err.message });
-        await admin.from("blog_bot_settings").update({ last_error: err.message }).eq("id", 1);
+    for (const p of eligibleProducts) {
+      if (rateLimitHit) break;
+      try {
+        results.push({ productId: p.id, ...(await generateBlogPostForProduct(p.id)) });
+      } catch (e: unknown) {
+        const err = e as Error & { isRateLimit?: boolean; retryAfterSeconds?: number };
+        if (err?.isRateLimit) {
+          rateLimitHit = true;
+          const until = new Date(Date.now() + (err.retryAfterSeconds ? err.retryAfterSeconds * 1000 : 60 * 60 * 1000)).toISOString();
+          await admin.from("blog_bot_settings").update({ rate_limited_until: until, last_error: err.message }).eq("id", 1);
+          results.push({ productId: p.id, skipped: true, reason: `محدودیت سهمیه؛ تا ${new Date(until).toLocaleString("fa-IR")} صبر می‌کند` });
+        } else {
+          results.push({ productId: p.id, skipped: true, reason: err.message });
+          await admin.from("blog_bot_settings").update({ last_error: err.message }).eq("id", 1);
+        }
       }
     }
+
+    const successCount = results.filter((r) => !(r as { skipped?: boolean }).skipped).length;
+    await admin.from("blog_bot_settings").update({
+      last_run_finished_at: new Date().toISOString(),
+      last_run_summary: `${successCount} مقاله ساخته شد از ${results.length} بررسی‌شده`,
+    }).eq("id", 1);
+
+    return { ran: true, results };
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "خطای ناشناخته";
+    console.error("runBlogBot:", e);
+    await admin.from("blog_bot_settings").update({ last_error: message }).eq("id", 1);
+    return { ran: false, reason: message, results: [] as unknown[] };
+  } finally {
+    await admin.from("blog_bot_settings").update({ is_running: false }).eq("id", 1);
   }
-
-  const successCount = results.filter((r) => !(r as { skipped?: boolean }).skipped).length;
-  await admin.from("blog_bot_settings").update({
-    is_running: false,
-    last_run_finished_at: new Date().toISOString(),
-    last_run_summary: `${successCount} مقاله ساخته شد از ${results.length} بررسی‌شده`,
-  }).eq("id", 1);
-
-  return { ran: true, results };
 }

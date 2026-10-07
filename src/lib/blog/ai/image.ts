@@ -6,7 +6,7 @@ export async function generateAndUploadCoverImage(prompt: string, slug: string):
     const encoded = encodeURIComponent(`${prompt}, high quality, professional photography, 16:9, no text, no watermark`);
     const url = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true`;
 
-    const res = await fetch(url);
+     const res = await fetch(url, { signal: AbortSignal.timeout(25_000) });
     if (!res.ok) return null;
 
     const arrayBuffer = await res.arrayBuffer();
