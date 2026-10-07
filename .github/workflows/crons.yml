@@ -30,7 +30,7 @@ jobs:
             "30 2 * * *") LIST="generate-blog-posts" ;;
             "0 9 * * *") LIST="loyalty-expiry-reminders" ;;
             "0 3 * * *") LIST="expire-bulk-orders" ;;
-            "0 * * * *") LIST="run-auction-bots finalize-auctions expire-auction-winner-payments expire-reverse-auctions" ;;
+            "0 * * * *") LIST="run-auction-bots finalize-auctions expire-auction-winner-payments expire-reverse-auctions expire-abandoned-orders" ;;
             *) LIST="$MANUAL" ;;
           esac
           test -n "$LIST" || exit 1

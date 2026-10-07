@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     allFields: Object.fromEntries(formData.entries()),
   });
 
-  if (!orderId || !refNum) {
+  if (!orderId || !state || (state === "OK" && !refNum)) {
     return NextResponse.redirect(`${origin}/checkout?error=invalid`);
   }
 
@@ -50,6 +50,16 @@ export async function POST(request: NextRequest) {
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     await refundDiscountCode(orderId);
     await refundWalletForOrder(orderId);
+    return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
+  }
+
+  if (!refNum) {
+    return NextResponse.redirect(`${origin}/checkout?error=invalid`);
+  }
+
+  // سفارشی که قبلاً ناموفق/لغو شده (مثلاً توسط cron سفارش‌های رهاشده) دیگر Verify نمی‌شود:
+  // توکن درگاه منقضی شده و بانک تراکنش تأییدنشده را خودکار برمی‌گرداند.
+  if (order.payment_status === "FAILED" && order.status === "CANCELLED") {
     return NextResponse.redirect(`${origin}/order/${orderId}?payment=failed`);
   }
 
