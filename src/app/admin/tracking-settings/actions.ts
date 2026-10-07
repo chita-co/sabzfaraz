@@ -1,9 +1,11 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function updateTrackingSettings(formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")

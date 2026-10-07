@@ -1,11 +1,13 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { creditWallet } from "@/lib/wallet/creditWallet";
 import { createNotification } from "@/lib/notifications";
 
 export async function approveTopupRequest(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: reqRow } = await supabase.from("wallet_topup_requests").select("*").eq("id", id).single();
   if (!reqRow) return { error: "درخواست یافت نشد." };
@@ -20,6 +22,7 @@ export async function approveTopupRequest(id: string) {
 }
 
 export async function rejectTopupRequest(id: string, reason: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: reqRow } = await supabase.from("wallet_topup_requests").select("user_id, amount").eq("id", id).single();
   if (!reqRow) return { error: "درخواست یافت نشد." };

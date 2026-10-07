@@ -7,6 +7,8 @@ import { updateProfile, addAddress, updateAddress, deleteAddress } from "@/app/(
 import ProvinceCitySelect from "@/components/shared/ProvinceCitySelect";
 import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
 import UserBadgesShowcase from "@/components/blog/UserBadgesShowcase";
+import IdentityVerificationCard from "@/components/shop/IdentityVerificationCard";
+import PhoneChangeControl from "@/components/shop/PhoneChangeControl";
 
 interface AddressRow {
   id: string;
@@ -25,6 +27,8 @@ export default function ProfileClient({
   addresses,
   badges,
   earnedBadgeIds,
+  nationalId = null,
+  identityVerified = false,
 }: {
   email: string;
   fullName: string | null;
@@ -32,6 +36,8 @@ export default function ProfileClient({
   addresses: AddressRow[];
   badges: { id: string; code: string; title: string; description: string | null; icon: string; requirement_value: number }[];
   earnedBadgeIds: string[];
+  nationalId?: string | null;
+  identityVerified?: boolean;
 }) {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
@@ -141,15 +147,24 @@ export default function ProfileClient({
           <div>
             <label className="block text-sm text-gray-600 mb-1">شماره تلفن</label>
             <input
+              key={phone ?? ""}
               type="tel"
               name="phone"
               dir="ltr"
               defaultValue={phone ?? ""}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              readOnly
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500"
             />
+            <PhoneChangeControl />
           </div>
         </form>
       </div>
+
+      <IdentityVerificationCard
+        key={`${nationalId ?? ""}-${identityVerified ? 1 : 0}`}
+        initialNationalId={nationalId}
+        initialVerified={identityVerified}
+      />
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">

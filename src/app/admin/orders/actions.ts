@@ -1,6 +1,7 @@
 // src/app/admin/orders/actions.ts
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
@@ -21,6 +22,7 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
 };
 
 export async function updateOrderStatus(orderId: string, status: string) {
+  await requireAdmin();
   const supabase = await createClient();
 
   const { data: existingOrder } = await supabase
@@ -74,6 +76,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
 }
 
 export async function startOrderTracking(orderId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("orders")
@@ -85,6 +88,7 @@ export async function startOrderTracking(orderId: string) {
 }
 
 export async function savePostalTrackingCodeAction(orderId: string, trackingCode: string) {
+  await requireAdmin();
   const code = trackingCode.trim();
   if (!code) return { error: "کد رهگیری نمی‌تواند خالی باشد." };
 
@@ -119,6 +123,7 @@ export async function savePostalTrackingCodeAction(orderId: string, trackingCode
 }
 
 export async function markOrderViewedAction(orderId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   await supabase.from("orders").update({ admin_viewed_at: new Date().toISOString() }).eq("id", orderId);
   return { success: true };
@@ -127,6 +132,7 @@ export async function markOrderViewedAction(orderId: string) {
 // ---------- سطل زباله ----------
 
 export async function deleteOrder(id: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { error } = await admin.from("orders").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) return { error: "خطا در انتقال سفارش به سطل زباله: " + error.message };
@@ -136,6 +142,7 @@ export async function deleteOrder(id: string) {
 }
 
 export async function deleteStaleOrdersAction(daysOld: number) {
+  await requireAdmin();
   const admin = createAdminClient();
   const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000).toISOString();
 
@@ -154,6 +161,7 @@ export async function deleteStaleOrdersAction(daysOld: number) {
 }
 
 export async function restoreOrderAction(id: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { error } = await admin.from("orders").update({ deleted_at: null }).eq("id", id);
   if (error) return { error: "خطا در بازگردانی سفارش: " + error.message };
@@ -163,6 +171,7 @@ export async function restoreOrderAction(id: string) {
 }
 
 export async function permanentlyDeleteOrderAction(id: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("order_items").delete().eq("order_id", id);
   const { error } = await admin.from("orders").delete().eq("id", id);
@@ -172,6 +181,7 @@ export async function permanentlyDeleteOrderAction(id: string) {
 }
 
 export async function emptyOrdersTrashAction() {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: trashed } = await admin.from("orders").select("id").not("deleted_at", "is", null);
   const ids = (trashed ?? []).map((o) => o.id);

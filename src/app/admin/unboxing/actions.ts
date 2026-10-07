@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
@@ -20,6 +21,7 @@ interface CreateVideoInput {
 }
 
 export async function createUnboxingVideo(input: CreateVideoInput) {
+  await requireAdmin();
   const supabase = await createClient();
 
   const aparatId = input.aparatInput ? extractVideoId("aparat", input.aparatInput) : null;
@@ -67,6 +69,7 @@ export async function createUnboxingVideo(input: CreateVideoInput) {
 }
 
 export async function approveAndPublish(videoId: string, rewardMethod: "wallet" | "manual") {
+  await requireAdmin();
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -105,6 +108,7 @@ export async function approveAndPublish(videoId: string, rewardMethod: "wallet" 
 }
 
 export async function rejectVideo(videoId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("unboxing_videos").update({ status: "REJECTED" }).eq("id", videoId);
   if (error) return { error: error.message };
@@ -113,6 +117,7 @@ export async function rejectVideo(videoId: string) {
 }
 
 export async function toggleFeatured(videoId: string, featured: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("unboxing_videos").update({ is_featured: featured }).eq("id", videoId);
   if (error) return { error: error.message };
@@ -122,6 +127,7 @@ export async function toggleFeatured(videoId: string, featured: boolean) {
 }
 
 export async function deleteUnboxingVideo(videoId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("unboxing_videos").delete().eq("id", videoId);
   if (error) return { error: error.message };

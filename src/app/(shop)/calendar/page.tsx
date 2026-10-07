@@ -13,7 +13,7 @@ import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 
 // این صفحه به‌خاطر بررسی وضعیت ورود کاربر (cookies) همیشه پویا رندر می‌شود؛
 // خودِ داده‌های تقویم (رویدادها) هم جدا و سمت کلاینت از API خوانده می‌شوند.
-export const dynamic = "force-dynamic";
+export const revalidate = 43200;
 
 const description =
   "تقویم شمسی، میلادی و قمری همراه با تعطیلات رسمی ایران، مناسبت‌های بین‌المللی، امکان ثبت رویداد شخصی، یادآوری، و افزودن به گوگل‌کلندر — رایگان و بدون نیاز به نصب.";

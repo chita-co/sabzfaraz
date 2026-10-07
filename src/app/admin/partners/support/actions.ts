@@ -1,10 +1,12 @@
 // src/app/admin/partners/support/actions.ts
 "use server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
 
 export async function sendAdminPartnerMessageAction(ticketId: string, message: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: ticket } = await admin.from("partner_tickets").select("partner_id").eq("id", ticketId).single();
   if (!ticket) return { error: "گفتگو یافت نشد" };
@@ -17,12 +19,14 @@ export async function sendAdminPartnerMessageAction(ticketId: string, message: s
 }
 
 export async function getAdminPartnerTicketMessages(ticketId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data } = await admin.from("partner_ticket_messages").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true });
   return data ?? [];
 }
 
 export async function closePartnerTicketAction(ticketId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partner_tickets").update({ status: "CLOSED" }).eq("id", ticketId);
   revalidatePath(`/admin/partners/support/${ticketId}`);
@@ -30,6 +34,7 @@ export async function closePartnerTicketAction(ticketId: string) {
 }
 
 export async function editAdminPartnerMessage(messageId: string, newText: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { error } = await admin
     .from("partner_ticket_messages")
@@ -40,6 +45,7 @@ export async function editAdminPartnerMessage(messageId: string, newText: string
 }
 
 export async function deleteAdminPartnerMessage(messageId: string, ticketId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { error } = await admin
     .from("partner_ticket_messages")

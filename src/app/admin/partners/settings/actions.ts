@@ -1,10 +1,12 @@
 "use server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { uploadImage } from "@/lib/arvan";
 import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 
 export async function updatePartnerSettingsAction(formData: FormData) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partner_settings").update({
     min_profit_percent: Number(formData.get("min_profit_percent")) || 15,
@@ -22,6 +24,7 @@ export async function updatePartnerSettingsAction(formData: FormData) {
 }
 
 export async function uploadFrameTemplateAction(formData: FormData) {
+  await requireAdmin();
   const admin = createAdminClient();
   const file = formData.get("file") as File | null;
 
@@ -49,6 +52,7 @@ export async function uploadFrameTemplateAction(formData: FormData) {
 }
 
 export async function addAiKeyAction(formData: FormData) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partner_ai_keys").insert({
     label: String(formData.get("label") || ""),
@@ -59,12 +63,14 @@ export async function addAiKeyAction(formData: FormData) {
 }
 
 export async function deleteAiKeyAction(id: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partner_ai_keys").delete().eq("id", id);
   revalidatePath("/admin/partners/settings");
 }
 
 export async function triggerImageRegenerationAction() {
+  await requireAdmin();
   const { regenerateAllPartnerProductImages } = await import("@/lib/partners/regenerateImages");
   try {
      const result = await regenerateAllPartnerProductImages(50);
@@ -76,6 +82,7 @@ export async function triggerImageRegenerationAction() {
 }
 
 export async function uploadWatermarkAction(formData: FormData) {
+  await requireAdmin();
   const admin = createAdminClient();
   const file = formData.get("file") as File | null;
 
@@ -107,6 +114,7 @@ export async function updateHomepagePartnerFeatureAction(input: {
   description: string | null;
   showProducts: boolean;
 }) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { error } = await admin
     .from("homepage_partner_feature")

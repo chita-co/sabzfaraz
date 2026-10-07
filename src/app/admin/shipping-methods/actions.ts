@@ -1,8 +1,10 @@
 "use server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function createShippingMethod(name: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_methods").insert({ name });
   if (error) return { error: error.message };
@@ -11,6 +13,7 @@ export async function createShippingMethod(name: string) {
 }
 
 export async function toggleShippingMethodActive(id: string, isActive: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_methods").update({ is_active: isActive }).eq("id", id);
   if (error) return { error: error.message };
@@ -19,6 +22,7 @@ export async function toggleShippingMethodActive(id: string, isActive: boolean) 
 }
 
 export async function deleteShippingMethod(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_methods").delete().eq("id", id);
   if (error) return { error: "خطا در حذف: " + error.message };
@@ -27,6 +31,7 @@ export async function deleteShippingMethod(id: string) {
 }
 
 export async function updateShippingMethod(id: string, name: string, invoiceLabel: string | null) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("shipping_methods")
@@ -38,6 +43,7 @@ export async function updateShippingMethod(id: string, name: string, invoiceLabe
 }
 
 export async function addWeightTier(methodId: string, minGrams: number, maxGrams: number, cost: number) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_weight_tiers").insert({
     method_id: methodId, min_weight_grams: minGrams, max_weight_grams: maxGrams, cost,
@@ -48,6 +54,7 @@ export async function addWeightTier(methodId: string, minGrams: number, maxGrams
 }
 
 export async function updateWeightTier(id: string, minGrams: number, maxGrams: number, cost: number) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("shipping_weight_tiers")
@@ -59,6 +66,7 @@ export async function updateWeightTier(id: string, minGrams: number, maxGrams: n
 }
 
 export async function deleteWeightTier(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_weight_tiers").delete().eq("id", id);
   if (error) return { error: error.message };

@@ -7,7 +7,7 @@ import { refundRedeemedPoints } from "@/lib/loyalty/ledger";
 import { refundDiscountCode } from "@/lib/discountCode";
 import { refundWalletForOrder } from "@/lib/wallet/refundOrderWallet";
 import { revalidatePath } from "next/cache";
-import { deleteUserCartAction } from "@/app/admin/carts/actions";
+import { clearUserCart } from "@/lib/cart/clearUserCart";
 
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   if (state !== "OK" || status !== "2") {
     console.log("CALLBACK FAILED STATE", { state, status });
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
-    await deleteUserCartAction(order.user_id);
+    await clearUserCart(order.user_id);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     await refundDiscountCode(orderId);
     await refundWalletForOrder(orderId);
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         status: "PROCESSING",
         sep_ref_num: refNum,
       }).eq("id", orderId);
-      await deleteUserCartAction(order.user_id);
+      await clearUserCart(order.user_id);
       
       const { data: orderItemsForStock } = await supabase
         .from("order_items")
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
     }
     await supabase.from("orders").update({ payment_status: "FAILED", status: "CANCELLED" }).eq("id", orderId);
-    await deleteUserCartAction(order.user_id);
+    await clearUserCart(order.user_id);
     try { await refundRedeemedPoints(orderId); } catch (e) { console.error("خطا در بازگشت امتیاز:", e); }
     await refundDiscountCode(orderId);
     await refundWalletForOrder(orderId);

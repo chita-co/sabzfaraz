@@ -1,10 +1,12 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function updateLoyaltySettings(formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("loyalty_settings").update({
     toman_per_point: Number(formData.get("tomanPerPoint")),
@@ -20,6 +22,7 @@ export async function updateLoyaltySettings(formData: FormData) {
 }
 
 export async function createTier(formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("loyalty_tiers").insert({
     name: formData.get("name") as string,
@@ -36,6 +39,7 @@ export async function createTier(formData: FormData) {
 }
 
 export async function updateTier(id: string, formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("loyalty_tiers").update({
     name: formData.get("name") as string,
@@ -52,6 +56,7 @@ export async function updateTier(id: string, formData: FormData) {
 }
 
 export async function deleteTier(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("loyalty_tiers").delete().eq("id", id);
   if (error) return { error: "خطا در حذف — احتمالاً کاربری در این سطح قرار دارد." };
@@ -60,6 +65,7 @@ export async function deleteTier(id: string) {
 }
 
 export async function adjustUserPoints(userId: string, points: number, description: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: profile } = await admin.from("profiles").select("loyalty_points_balance").eq("id", userId).single();
   if (!profile) return { error: "کاربر یافت نشد." };

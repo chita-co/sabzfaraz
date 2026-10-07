@@ -1,9 +1,11 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function saveManualInvoice(requestId: string, invoiceHtml: string, invoiceNumber: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("bulk_order_requests").update({
     final_invoice_html: invoiceHtml, final_invoice_number: invoiceNumber, updated_at: new Date().toISOString(),

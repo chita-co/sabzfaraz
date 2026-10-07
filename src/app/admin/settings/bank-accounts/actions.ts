@@ -1,9 +1,11 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function createBankAccount(formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("bank_accounts").insert({
     bank_name: formData.get("bankName") as string,
@@ -19,6 +21,7 @@ export async function createBankAccount(formData: FormData) {
 }
 
 export async function updateBankAccount(id: string, formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("bank_accounts").update({
     bank_name: formData.get("bankName") as string,
@@ -34,6 +37,7 @@ export async function updateBankAccount(id: string, formData: FormData) {
 }
 
 export async function toggleBankAccountActive(id: string, isActive: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("bank_accounts").update({ is_active: isActive }).eq("id", id);
   if (error) return { error: error.message };
@@ -42,6 +46,7 @@ export async function toggleBankAccountActive(id: string, isActive: boolean) {
 }
 
 export async function deleteBankAccount(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("bank_accounts").delete().eq("id", id);
   if (error) return { error: "خطا در حذف — احتمالاً سفارشی به این حساب متصل است." };
@@ -50,6 +55,7 @@ export async function deleteBankAccount(id: string) {
 }
 
 export async function updateBulkOrderSettings(formData: FormData) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("site_settings").update({
     bulk_order_enabled: formData.get("bulkOrderEnabled") === "on",

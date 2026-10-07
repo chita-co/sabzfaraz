@@ -1,4 +1,5 @@
 "use server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
@@ -10,6 +11,7 @@ export async function createPromoAd(input: {
   linkUrl: string;
   sortOrder: number;
 }) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("promo_ads").insert({
     image_url: input.imageUrl,
@@ -25,6 +27,7 @@ export async function createPromoAd(input: {
 }
 
 export async function updatePromoAd(id: string, input: { title: string; description: string; linkUrl: string; sortOrder: number }) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("promo_ads").update({
     title: input.title || null,
@@ -39,6 +42,7 @@ export async function updatePromoAd(id: string, input: { title: string; descript
 }
 
 export async function togglePromoAdActive(id: string, isActive: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("promo_ads").update({ is_active: isActive }).eq("id", id);
   if (error) return { error: error.message };
@@ -48,6 +52,7 @@ export async function togglePromoAdActive(id: string, isActive: boolean) {
 }
 
 export async function deletePromoAd(id: string, imageUrl: string) {
+  await requireAdmin();
   const supabase = await createClient();
   await deleteImageByUrl(imageUrl);
   const { error } = await supabase.from("promo_ads").delete().eq("id", id);

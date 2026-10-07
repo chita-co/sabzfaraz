@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import UserRoleControl from "@/components/admin/UserRoleControl";
+import SendIdentitySmsButton from "@/components/admin/SendIdentitySmsButton";
 
 export default async function AdminUserDetailPage({
   params,
@@ -37,9 +38,17 @@ export default async function AdminUserDetailPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-5">
-        اطلاعات کاربر: {profile.full_name}
-      </h1>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-xl font-bold text-gray-900">
+          اطلاعات کاربر: {profile.full_name}
+        </h1>
+        {!profile.identity_verified && (
+          <SendIdentitySmsButton
+            userId={profile.id}
+            lastSentAt={profile.identity_sms_sent_at ?? null}
+          />
+        )}
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="admin-card">
@@ -52,10 +61,18 @@ export default async function AdminUserDetailPage({
           <p className="text-sm text-gray-700 mb-1">
             نوع ثبت‌نام:{" "}
             {profile.signup_method === "QUICK"
-              ? "سریع (بدون احراز هویت)"
+              ? "سریع"
               : profile.signup_method === "IMAGE"
-                ? "با تصویر مدرک (بدون احراز هویت)"
-                : "کامل (احراز شده)"}
+                ? "با تصویر مدرک"
+                : "عادی"}
+          </p>
+          <p className="text-sm mb-1">
+            وضعیت احراز هویت:{" "}
+            {profile.identity_verified ? (
+              <span className="font-bold text-green-700">✅ احراز شده</span>
+            ) : (
+              <span className="font-bold text-red-600">⚠️ احراز نشده</span>
+            )}
           </p>
           <p className="text-sm text-gray-700 mb-3">
             تاریخ عضویت: {new Date(profile.created_at).toLocaleDateString("fa-IR")}

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { getPostalTrackingStatus } from "@/lib/postTracking";
 
@@ -11,6 +12,7 @@ import { getPostalTrackingStatus } from "@/lib/postTracking";
  * یک پروکسی مجانی و بدون کنترل برای سرویس رهگیری سوءاستفاده نشود.
  */
 export async function checkParcelTrackingAdmin(code: string, courierHint?: string | null) {
+  await requireAdmin();
   const trimmed = code.trim();
   if (!trimmed) return { status: "not_found" as const };
 

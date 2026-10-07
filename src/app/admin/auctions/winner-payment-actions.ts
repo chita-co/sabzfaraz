@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
@@ -8,6 +9,7 @@ import { sendSms } from "@/lib/sms";
 import { issueWinnerDiscountCode } from "@/lib/auction/discountCode";
 
 export async function confirmAuctionWinnerOfflinePayment(orderId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: order } = await supabase.from("orders").select("*, address:addresses(phone)").eq("id", orderId).single();
   if (!order) return { error: "سفارش یافت نشد." };
@@ -53,6 +55,7 @@ export async function confirmAuctionWinnerOfflinePayment(orderId: string) {
 }
 
 export async function rejectAuctionWinnerOfflinePayment(orderId: string, reason: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: order } = await supabase.from("orders").select("user_id, order_number, related_auction_id, payment_status").eq("id", orderId).single();
   if (!order) return { error: "سفارش یافت نشد." };

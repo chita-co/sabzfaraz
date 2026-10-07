@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -12,6 +13,7 @@ interface ReverseAuctionInput {
 }
 
 export async function createReverseAuction(input: ReverseAuctionInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("reverse_auctions").insert({
     title: input.title, description: input.description, images: input.images,
@@ -29,6 +31,7 @@ export async function createReverseAuction(input: ReverseAuctionInput) {
 }
 
 export async function updateReverseAuction(id: string, input: ReverseAuctionInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("reverse_auctions").update({
     title: input.title, description: input.description, images: input.images,
@@ -45,6 +48,7 @@ export async function updateReverseAuction(id: string, input: ReverseAuctionInpu
 }
 
 export async function cancelReverseAuction(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: auction } = await supabase.from("reverse_auctions").select("status, winner_user_id, title").eq("id", id).single();
   if (!auction) return { error: "یافت نشد." };

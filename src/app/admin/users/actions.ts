@@ -1,11 +1,13 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function updateUserRole(userId: string, role: "USER" | "ADMIN") {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
   if (error) return { error: "خطا: " + error.message };
@@ -15,6 +17,7 @@ export async function updateUserRole(userId: string, role: "USER" | "ADMIN") {
 }
 
 export async function createUserByAdmin(formData: FormData) {
+  await requireAdmin();
   const fullName = formData.get("fullName") as string;
   const phone = formData.get("phone") as string;
   const email = ((formData.get("email") as string) || "").trim();

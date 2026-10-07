@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
@@ -25,6 +26,7 @@ export async function updateBulkOrderItems(
   storeItems: StoreItemInput[],
   marketItems: MarketItemInput[]
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("bulk_order_requests")
@@ -40,6 +42,7 @@ export async function updateBulkOrderItems(
 }
 
 export async function updateInternalNote(requestId: string, note: string) {
+  await requireAdmin();
   const supabase = await createClient();
   await supabase
     .from("bulk_order_requests")
@@ -54,6 +57,7 @@ export async function markSupplyPossible(
   depositAmount: number,
   bankAccountId: string
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
@@ -104,6 +108,7 @@ export async function markSupplyNotPossible(
   requestId: string,
   reason: string
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
@@ -134,6 +139,7 @@ export async function markSupplyNotPossible(
 }
 
 export async function confirmDepositPayment(requestId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
@@ -164,6 +170,7 @@ export async function confirmDepositPayment(requestId: string) {
 }
 
 export async function rejectDepositPayment(requestId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
@@ -204,6 +211,7 @@ export async function setBulkOrderStatusManually(
   requestId: string,
   status: string
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: request } = await supabase
     .from("bulk_order_requests")
@@ -239,6 +247,7 @@ export async function sendAdminBulkMessage(
   requestId: string,
   message: string
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const {
     data: { user },
@@ -276,6 +285,7 @@ export async function sendAdminBulkMessage(
 }
 
 export async function getAdminBulkMessages(requestId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data } = await supabase
     .from("bulk_order_messages")

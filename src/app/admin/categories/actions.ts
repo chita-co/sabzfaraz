@@ -1,6 +1,7 @@
 // src/app/admin/categories/actions.ts
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
@@ -16,6 +17,7 @@ function slugify(input: string) {
 }
 
 export async function createCategory(formData: FormData) {
+  await requireAdmin();
   const name = formData.get("name") as string;
   const rawSlug = formData.get("slug") as string;
   const description = formData.get("description") as string;
@@ -52,6 +54,7 @@ await submitUrlToIndexNow(`${baseUrl}/category/${slug}`);
 }
 
 export async function updateCategory(id: string, formData: FormData) {
+  await requireAdmin();
   const name = formData.get("name") as string;
   const rawSlug = formData.get("slug") as string;
   const description = formData.get("description") as string;
@@ -97,6 +100,7 @@ await submitUrlToIndexNow(`${baseUrl}/category/${slug}`);
 }
 
 export async function deleteCategory(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
 
   const { data: current } = await supabase

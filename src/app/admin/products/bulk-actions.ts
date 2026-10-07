@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
 
@@ -14,6 +15,7 @@ interface BulkChanges {
 interface BulkTier { minQty: number; maxQty: number; unitPrice: number; }
 
 export async function bulkUpdateProducts(ids: string[], changes: BulkChanges, quantityTiers?: BulkTier[]) {
+  await requireAdmin();
   const supabase = await createClient();
 
   const updatePayload: Record<string, unknown> = {};

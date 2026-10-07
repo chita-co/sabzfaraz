@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendSms } from "@/lib/sms";
@@ -12,6 +13,7 @@ interface OrderWithAddress {
 }
 
 export async function confirmOfflinePayment(orderId: string) {
+  await requireAdmin();
   const supabase = await createClient();
 
   const { data: existingOrder } = await supabase
@@ -68,6 +70,7 @@ if (order?.user_id) {
 }
 
 export async function rejectOfflinePayment(orderId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("orders").update({ payment_status: "FAILED" }).eq("id", orderId);
   if (error) return { error: error.message };

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "crypto";
@@ -20,6 +21,7 @@ export async function issueGiftDiscountCode(
   percent: number,
   validDays: number
 ) {
+  await requireAdmin();
   if (!Number.isFinite(percent) || percent <= 0 || percent > 100) {
     return { error: "درصد تخفیف باید بین ۱ تا ۱۰۰ باشد." };
   }

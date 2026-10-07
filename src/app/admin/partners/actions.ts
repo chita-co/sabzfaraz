@@ -1,10 +1,12 @@
 "use server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
 import { sendSms } from "@/lib/sms";
 import { revalidatePath, updateTag } from "next/cache";
 
 export async function approvePartnerAction(partnerId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: partner } = await admin.from("partners").select("phone, business_name").eq("id", partnerId).single();
   await admin.from("partners").update({ status: "ACTIVE", approved_at: new Date().toISOString() }).eq("id", partnerId);
@@ -18,6 +20,7 @@ export async function approvePartnerAction(partnerId: string) {
 }
 
 export async function rejectPartnerAction(partnerId: string, reason: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partners").update({ status: "REJECTED", rejection_reason: reason }).eq("id", partnerId);
   revalidatePath("/admin/partners");
@@ -25,6 +28,7 @@ export async function rejectPartnerAction(partnerId: string, reason: string) {
 }
 
 export async function suspendPartnerAction(partnerId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partners").update({ status: "SUSPENDED" }).eq("id", partnerId);
   // محصولات این همکار غیرفعال می‌شن، پس کش صفحه‌ش هم باید پاک بشه.
@@ -39,6 +43,7 @@ export async function suspendPartnerAction(partnerId: string) {
 }
 
 export async function applyPenaltyAction(partnerId: string, amount: number, reason: string, orderId?: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: partner } = await admin.from("partners").select("wallet_available_balance").eq("id", partnerId).single();
   if (!partner) return { error: "همکار یافت نشد" };
@@ -56,6 +61,7 @@ export async function applyPenaltyAction(partnerId: string, amount: number, reas
 }
 
 export async function activatePartnerAction(partnerId: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   await admin.from("partners").update({ status: "ACTIVE" }).eq("id", partnerId);
   await createNotification(partnerId, "حساب شما فعال شد ✅", "حساب همکاری شما مجدداً فعال شد.");
@@ -65,6 +71,7 @@ export async function activatePartnerAction(partnerId: string) {
 }
 
 export async function overrideRatingAction(partnerId: string, rating: number) {
+  await requireAdmin();
   const admin = createAdminClient();
   const clamped = Math.max(1, Math.min(5, rating));
   await admin.from("partners").update({ rating_avg: clamped }).eq("id", partnerId);

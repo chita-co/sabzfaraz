@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { randomBytes } from "crypto";
 import { sendGroupDiscountSms } from "@/lib/sms";
@@ -29,6 +30,7 @@ export async function issueBulkDiscountCodes(
   percent: number,
   validDays: number
 ): Promise<{ error?: string; results?: BulkDiscountResult[] }> {
+  await requireAdmin();
   if (!Array.isArray(userIds) || userIds.length === 0) {
     return { error: "هیچ کاربری انتخاب نشده است." };
   }

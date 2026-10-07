@@ -9,7 +9,7 @@ import { consumeDiscountCode, refundDiscountCode } from "@/lib/discountCode";
 import { refundWalletForOrder } from "@/lib/wallet/refundOrderWallet";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
 import { cookies } from "next/headers";
-import { deleteUserCartAction } from "@/app/admin/carts/actions";
+import { clearUserCart } from "@/lib/cart/clearUserCart";
 import { priceCheckoutItems } from "@/lib/checkout/serverPricing";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -188,7 +188,7 @@ export async function createOrderAndPay(
     const admin = createAdminClient();
     await admin.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
-    await deleteUserCartAction(user.id);
+    await clearUserCart(user.id);
     redirect(`/order/${order.id}?payment=success`);
   }
 
@@ -355,7 +355,7 @@ export async function createOfflineOrder(
     const admin = createAdminClient();
     await admin.from("orders").update({ payment_status: "PAID", status: "PROCESSING" }).eq("id", order.id);
     await decrementStockForItems(supabase, items);
-    await deleteUserCartAction(user.id);
+    await clearUserCart(user.id);
     redirect(`/order/${order.id}?payment=success`);
   }
 

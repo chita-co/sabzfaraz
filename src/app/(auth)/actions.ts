@@ -8,6 +8,7 @@ import { sendSms, sendTemplateSms, sendSignupOtpSms } from "@/lib/sms";
 import { isValidIranianNationalId } from "@/lib/nationalId";
 import { verifyShahkarMatch } from "@/lib/shahkar";
 import { isShahkarVerified, saveShahkarVerification } from "@/lib/shahkarCache";
+import { findNationalIdHolder, releaseUnverifiedNationalId } from "@/lib/identity";
 
 function isValidIranianMobile(phone: string) {
   return /^09\d{9}$/.test(phone);
@@ -40,12 +41,10 @@ export async function requestSignupOtp(formData: FormData) {
     return { error: "این شماره موبایل قبلاً ثبت‌نام کرده است." };
   }
 
-  const { data: existingNationalId } = await adminClient
-    .from("profiles")
-    .select("id")
-    .eq("national_id", nationalId)
-    .maybeSingle();
-  if (existingNationalId) {
+  // فقط کد ملیِ «احراز شده» مانع ثبت‌نام است؛ اگر مالک فعلی احراز نشده باشد (ثبت‌نام سریع/تصویری)
+  // و مالکیت با استعلام زوهال (پایین‌تر) ثابت شود، در مرحله‌ی ۲ آزاد می‌شود.
+  const nationalIdHolder = await findNationalIdHolder(nationalId);
+  if (nationalIdHolder?.identity_verified) {
     return { error: "این کد ملی قبلاً برای یک حساب دیگر ثبت شده است." };
   }
 
@@ -126,13 +125,21 @@ export async function verifySignupOtpAndCreateAccount(formData: FormData) {
   if (existingPhone) {
     return { error: "این شماره موبایل قبلاً ثبت‌نام کرده است." };
   }
-  const { data: existingNationalId } = await adminClient
-    .from("profiles")
-    .select("id")
-    .eq("national_id", nationalId)
-    .maybeSingle();
-  if (existingNationalId) {
+  const nationalIdHolder = await findNationalIdHolder(nationalId);
+  if (nationalIdHolder?.identity_verified) {
     return { error: "این کد ملی قبلاً برای یک حساب دیگر ثبت شده است." };
+  }
+
+  // مرحله‌ی ۱ جفت (موبایل + کد ملی) را با زوهال تایید و کش کرده است؛ اینجا باید همان جفت باشد.
+  // (کد پیامکی فقط مالکیت موبایل را ثابت می‌کند، نه کد ملی؛ پس بدون این چک می‌شد کد ملی را عوض کرد.)
+  const pairVerified = await isShahkarVerified(phone, nationalId);
+  if (!pairVerified) {
+    return { error: "اطلاعات ثبت‌نام تغییر کرده است. لطفاً فرآیند ثبت‌نام را از ابتدا انجام دهید." };
+  }
+
+  // مالکیت کد ملی اثبات شده؛ اگر حساب احرازنشده‌ی دیگری آن را داشت، قبل از ساخت حساب آزاد می‌شود
+  if (nationalIdHolder) {
+    await releaseUnverifiedNationalId(nationalIdHolder.id, nationalId);
   }
 
   const email = emailInput || `${phone}@sabzfaraz-users.ir`;
@@ -159,7 +166,14 @@ export async function verifySignupOtpAndCreateAccount(formData: FormData) {
   }
 
   if (data.user) {
-    await adminClient.from("profiles").update({ national_id: nationalId }).eq("id", data.user.id);
+    await adminClient
+      .from("profiles")
+      .update({
+        national_id: nationalId,
+        identity_verified: true,
+        identity_verified_at: new Date().toISOString(),
+      })
+      .eq("id", data.user.id);
   }
 
   await adminClient.from("signup_otps").delete().eq("id", otpRow.id);

@@ -192,7 +192,7 @@ export async function requestPasswordResetAction(phone: string) {
   });
 
   try {
-    const templateId = Number(process.env.SMSIR_PARTNER_PASSWORD_RESET_TEMPLATE_ID);
+    const templateId = Number(process.env.SMSIR_PASSWORD_RESET_TEMPLATE_ID);
     if (!templateId) {
       // fallback: اگه قالب تنظیم نشده بود، از روش قبلی استفاده کن
       await sendSms(phone.trim(), `سبزفراز\nکد بازیابی رمز عبور شما: ${code}\nاعتبار: ۱۰ دقیقه`);

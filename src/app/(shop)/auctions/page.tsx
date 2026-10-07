@@ -3,8 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Gavel, Clock, Users, TrendingDown } from "lucide-react";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
+import type { Metadata } from "next";
 
-export const metadata = { title: "مزایده‌های سبزفراز" };
+export const metadata: Metadata = {
+  title: "مزایده‌های سبزفراز",
+  description: "شرکت در مزایده‌های آنلاین کالاهای الکترونیک سبزفراز — قیمت پایه مناسب، رقابت شفاف",
+  alternates: { canonical: "/auctions" },
+};
 
 export default async function AuctionsListPage() {
   const supabase = await createClient();

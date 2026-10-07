@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
@@ -154,6 +155,7 @@ async function saveProductAttributes(
 }
 
 export async function createProduct(input: ProductInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const slug = await generateUniqueSlug(supabase, input.slug || input.name);
 
@@ -242,6 +244,7 @@ await submitUrlToIndexNow(`${baseUrl}/products/${created.slug}`);
 }
 
 export async function updateProduct(id: string, input: ProductInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const slug = await generateUniqueSlug(supabase, input.slug || input.name, id);
 
@@ -335,6 +338,7 @@ await submitUrlToIndexNow(`${baseUrl}/products/${slug}`);
 }
 
 export async function deleteProduct(id: string, images: string[]) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: current } = await supabase
     .from("products")
@@ -412,6 +416,7 @@ export async function createProductsBulk(
   base: BulkProductInput,
   variants: BulkVariantInput[]
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: category } = await supabase
     .from("categories")
@@ -523,6 +528,7 @@ for (const slug of createdSlugs) {
 }
 
 export async function copyProduct(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: original } = await supabase
     .from("products")
@@ -644,6 +650,7 @@ export async function quickUpdateProduct(
     isActive?: boolean;
   }
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const payload: Record<string, unknown> = {};
   if (changes.price !== undefined) payload.price = changes.price;
@@ -678,6 +685,7 @@ export async function quickUpdateProduct(
 }
 
 export async function getProductPriceHistory(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data } = await supabase
     .from("product_price_history")
@@ -697,6 +705,7 @@ export async function bulkAdjustProductPrices(input: {
   roundingStep: number; // 0 یعنی فقط گرد به عدد صحیح تومان، بدون گام خاص
   roundingMode: "up" | "down" | "nearest";
 }) {
+  await requireAdmin();
   const supabase = await createClient();
 
   // قبل از اجرای RPC، اسلاگ محصولاتی که قراره تحت تاثیر قرار بگیرن رو می‌گیریم

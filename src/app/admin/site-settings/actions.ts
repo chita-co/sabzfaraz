@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
 
@@ -12,6 +13,7 @@ interface SiteAssetsInput {
 }
 
 export async function updateSiteAssets(input: SiteAssetsInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")

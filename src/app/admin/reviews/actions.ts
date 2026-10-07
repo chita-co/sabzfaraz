@@ -1,10 +1,12 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath, updateTag } from "next/cache";
 
 export async function deleteReview(reviewId: string, productId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("product_reviews").delete().eq("id", reviewId);
   if (error) return { error: error.message };
@@ -30,6 +32,7 @@ export async function deleteReview(reviewId: string, productId: string) {
 }
 
 export async function replyToReview(reviewId: string, productId: string, replyText: string) {
+  await requireAdmin();
   const adminClient = createAdminClient();
   const trimmed = replyText.trim();
 

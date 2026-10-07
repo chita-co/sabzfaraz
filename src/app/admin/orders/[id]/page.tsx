@@ -33,7 +33,7 @@ export default async function AdminOrderDetailPage({
   const { data: order } = await supabase
     .from("orders")
     .select(
-  "*, profile:profiles(full_name, phone), address:addresses(*), items:order_items(*), bank_account:bank_accounts(bank_name, card_number, sheba_number, logo_slug), shipping_method:shipping_methods(name, invoice_label)"
+  "*, profile:profiles(full_name, phone, national_id, identity_verified), address:addresses(*), items:order_items(*), bank_account:bank_accounts(bank_name, card_number, sheba_number, logo_slug), shipping_method:shipping_methods(name, invoice_label)"
 )
     .eq("id", id)
     .single();
@@ -171,6 +171,24 @@ export default async function AdminOrderDetailPage({
             <p className="text-sm text-gray-700">
               تلفن: {order.profile?.phone ?? order.address?.phone ?? "—"}
             </p>
+            <p className="text-sm text-gray-700 mt-1">
+              کد ملی: {order.profile?.national_id ?? "—"}
+            </p>
+            {order.profile?.identity_verified ? (
+              <p className="text-sm font-bold text-green-700 mt-2">✅ کاربر احراز هویت شده است</p>
+            ) : (
+              <div className="mt-2 p-2 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-sm font-bold text-red-700">⚠️ کاربر احراز هویت نشده است</p>
+                {order.user_id && (
+                  <Link
+                    href={`/admin/users/${order.user_id}`}
+                    className="text-xs text-red-700 underline"
+                  >
+                    رفتن به جزئیات کاربر و ارسال پیامک احراز هویت
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
 
            <GiftDiscountForm orderId={order.id} />

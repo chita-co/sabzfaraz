@@ -1,9 +1,11 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function addShippingRate(province: string, city: string | null, cost: number) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_rates").insert({ province, city, cost });
   if (error) {
@@ -15,6 +17,7 @@ export async function addShippingRate(province: string, city: string | null, cos
 }
 
 export async function updateShippingRate(id: string, cost: number) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_rates").update({ cost }).eq("id", id);
   if (error) return { error: error.message };
@@ -23,6 +26,7 @@ export async function updateShippingRate(id: string, cost: number) {
 }
 
 export async function deleteShippingRate(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("shipping_rates").delete().eq("id", id);
   if (error) return { error: error.message };
@@ -31,6 +35,7 @@ export async function deleteShippingRate(id: string) {
 }
 
 export async function updateDefaultShippingCost(cost: number) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")

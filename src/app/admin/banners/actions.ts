@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
@@ -10,6 +11,7 @@ export async function createBanner(
   linkUrl: string,
   sortOrder: number
 ) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("banners").insert({
     position,
@@ -25,6 +27,7 @@ export async function createBanner(
 }
 
 export async function toggleBannerActive(id: string, isActive: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("banners")
@@ -38,6 +41,7 @@ export async function toggleBannerActive(id: string, isActive: boolean) {
 }
 
 export async function deleteBanner(id: string, imageUrl: string) {
+  await requireAdmin();
   const supabase = await createClient();
   await deleteImageByUrl(imageUrl);
   const { error } = await supabase.from("banners").delete().eq("id", id);

@@ -10,7 +10,7 @@ const ABANDONED_AFTER_MINUTES = Math.max(60, Number(process.env.ABANDONED_ORDER_
 const BATCH_SIZE = 50;
 
 export async function GET(request: NextRequest) {
-  if (request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "دسترسی غیرمجاز" }, { status: 401 });
   }
 

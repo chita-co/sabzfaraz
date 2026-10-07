@@ -1,8 +1,10 @@
 "use server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
 
 export async function toggleStockEnabled(enabled: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("site_settings").update({ stock_enabled: enabled }).eq("id", 1);
   if (error) return { error: error.message };
@@ -13,6 +15,7 @@ export async function toggleStockEnabled(enabled: boolean) {
 }
 
 export async function toggleProductStock(productId: string, isStock: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("products").update({ is_stock: isStock }).eq("id", productId);
   if (error) return { error: error.message };

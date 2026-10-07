@@ -13,7 +13,7 @@ export default async function ProfilePage() {
   if (!user) redirect("/login");
 
   const [{ data: profile }, { data: addresses }, allBadges, earnedBadgeIds] = await Promise.all([
-    supabase.from("profiles").select("full_name, phone").eq("id", user.id).single(),
+    supabase.from("profiles").select("full_name, phone, national_id, identity_verified").eq("id", user.id).single(),
     supabase
       .from("addresses")
       .select("*")
@@ -30,6 +30,8 @@ export default async function ProfilePage() {
         email={user.email ?? ""}
         fullName={profile?.full_name ?? null}
         phone={profile?.phone ?? null}
+        nationalId={profile?.national_id ?? null}
+        identityVerified={profile?.identity_verified ?? false}
         addresses={addresses ?? []}
         badges={allBadges}
         earnedBadgeIds={Array.from(earnedBadgeIds)}

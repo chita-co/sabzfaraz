@@ -8,6 +8,7 @@ import "./blog.css";
 export const metadata: Metadata = {
   title: "مجله سبزفراز | راهنمای خرید، آموزش و اخبار لوازم الکترونیک",
   description: "مجله سبزفراز؛ راهنمای خرید، بررسی تخصصی، آموزش و اخبار لوازم الکترونیک با تولید محتوای هوشمند و به‌روز.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ page?: string; q?: string }> }) {

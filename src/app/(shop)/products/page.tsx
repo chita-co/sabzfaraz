@@ -5,6 +5,13 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
 import type { Product } from "@/types";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "همه محصولات | سبزفراز",
+  description: "خرید آنلاین انواع محصولات الکترونیک، قطعات و لوازم جانبی از فروشگاه سبزفراز",
+  alternates: { canonical: "/products" },
+};
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 

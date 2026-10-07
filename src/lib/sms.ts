@@ -129,3 +129,10 @@ export async function sendGroupDiscountSms(
     { name: "DAYS", value: String(validDays) },
   ]);
 }
+
+export async function sendIdentityRequestSms(mobile: string, name: string) {
+  const templateId = Number(process.env.SMSIR_IDENTITY_TEMPLATE_ID);
+  if (!templateId) throw new Error("SMSIR_IDENTITY_TEMPLATE_ID تنظیم نشده است.");
+  const safeName = (name || "").trim().slice(0, 25) || "کاربر";
+  return sendTemplateSms(mobile, templateId, [{ name: "NAME", value: safeName }]);
+}

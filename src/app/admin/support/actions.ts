@@ -1,11 +1,13 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
 
 export async function sendAdminMessage(ticketId: string, message: string, imageUrl: string | null) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };
@@ -27,6 +29,7 @@ export async function sendAdminMessage(ticketId: string, message: string, imageU
 }
 
 export async function closeTicket(ticketId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };
@@ -39,6 +42,7 @@ export async function closeTicket(ticketId: string) {
 }
 
 export async function deleteTicket(ticketId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };
@@ -50,6 +54,7 @@ export async function deleteTicket(ticketId: string) {
 }
 
 export async function getAdminTicketMessages(ticketId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data } = await supabase
     .from("support_messages").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true });
@@ -57,12 +62,14 @@ export async function getAdminTicketMessages(ticketId: string) {
 }
 
 export async function markTicketSeenByAdminAction(ticketId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   await supabase.from("support_tickets").update({ admin_last_seen_at: new Date().toISOString() }).eq("id", ticketId);
   return { success: true };
 }
 
 export async function startAdminTicket(userId: string, subject: string, message: string, imageUrl: string | null = null) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };
@@ -127,6 +134,7 @@ export async function startAdminTicket(userId: string, subject: string, message:
 }
 
 export async function editAdminMessage(messageId: string, newText: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };
@@ -141,6 +149,7 @@ export async function editAdminMessage(messageId: string, newText: string) {
 }
 
 export async function deleteAdminMessage(messageId: string, ticketId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };

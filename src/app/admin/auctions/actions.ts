@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -16,6 +17,7 @@ interface AuctionInput {
 }
 
 export async function createAuction(input: AuctionInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("auctions").insert({
     title: input.title, description: input.description, images: input.images,
@@ -37,6 +39,7 @@ export async function createAuction(input: AuctionInput) {
 }
 
 export async function updateAuction(id: string, input: AuctionInput) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase.from("auctions").update({
     title: input.title, description: input.description, images: input.images,
@@ -57,6 +60,7 @@ export async function updateAuction(id: string, input: AuctionInput) {
 }
 
 export async function extendAuctionManually(id: string, minutes: number) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: auction } = await supabase.from("auctions").select("ends_at").eq("id", id).single();
   if (!auction) return { error: "مزایده یافت نشد." };
@@ -68,6 +72,7 @@ export async function extendAuctionManually(id: string, minutes: number) {
 }
 
 export async function cancelAuction(id: string, reason: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: participants } = await supabase.from("auction_participants").select("user_id").eq("auction_id", id).eq("entry_fee_paid", true);
   const { data: auction } = await supabase.from("auctions").select("title").eq("id", id).single();
@@ -85,6 +90,7 @@ export async function cancelAuction(id: string, reason: string) {
 }
 
 export async function deleteAuction(id: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: participants } = await supabase.from("auction_participants").select("user_id").eq("auction_id", id).eq("entry_fee_paid", true);
   for (const p of participants ?? []) {
@@ -98,6 +104,7 @@ export async function deleteAuction(id: string) {
 }
 
 export async function deleteAuctionBid(bidId: string) {
+  await requireAdmin();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "ابتدا وارد شوید." };

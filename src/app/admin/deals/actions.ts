@@ -1,9 +1,11 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function toggleDealsEnabled(enabled: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")
@@ -16,6 +18,7 @@ export async function toggleDealsEnabled(enabled: boolean) {
 }
 
 export async function toggleProductDeal(productId: string, isDeal: boolean) {
+  await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("products")

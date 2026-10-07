@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { extractVideoId } from "@/lib/unboxing/videoHelpers";
@@ -7,6 +8,7 @@ import { buildInstagramEmbedUrl } from "@/lib/gallery/galleryHelpers";
 import { deleteImageByUrl } from "@/lib/arvan";
 
 export async function getGalleryVideos() {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data } = await admin
     .from("gallery_videos")
@@ -22,6 +24,7 @@ export async function createGalleryVideo(input: {
   caption: string;
   coverImageUrl: string;
 }) {
+  await requireAdmin();
   const admin = createAdminClient();
   const link = input.link.trim();
   if (!link) return { error: "لینک ویدیو الزامی است." };
@@ -52,6 +55,7 @@ export async function createGalleryVideo(input: {
 }
 
 export async function deleteGalleryVideo(id: string) {
+  await requireAdmin();
   const admin = createAdminClient();
   const { data: row } = await admin.from("gallery_videos").select("cover_image_url").eq("id", id).single();
   await admin.from("gallery_videos").delete().eq("id", id);
