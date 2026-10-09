@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { requestPayment } from "@/lib/sep";
 import { uploadImage } from "@/lib/arvan";
-import { createNotification } from "@/lib/notifications";
+import { notifyAllAdmins } from "@/lib/notifications";
 
 async function resolveSafeProductId(supabase: Awaited<ReturnType<typeof createClient>>, productId: string | null) {
   if (!productId) return null;
@@ -25,9 +25,8 @@ async function validateBuyerContext(reverseAuctionId: string, userId: string) {
   return { auction } as const;
 }
 
-async function notifyAdmins(supabase: Awaited<ReturnType<typeof createClient>>, title: string, body: string) {
-  const { data: admins } = await supabase.from("profiles").select("id").eq("role", "ADMIN");
-  for (const a of admins ?? []) await createNotification(a.id, title, body);
+async function notifyAdmins(_supabase: Awaited<ReturnType<typeof createClient>>, title: string, body: string) {
+  await notifyAllAdmins(title, body);
 }
 
 export async function createReverseAuctionOrderOnline(reverseAuctionId: string, addressId: string) {

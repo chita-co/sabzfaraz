@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requestPayment } from "@/lib/sep";
-import { createNotification } from "@/lib/notifications";
+import { notifyAllAdmins } from "@/lib/notifications";
 
 async function validateTopupAmount(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -82,20 +82,16 @@ export async function topUpWalletOnline(amount: number) {
 
 
 async function notifyAdminsOfTopupRequest(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  _supabase: Awaited<ReturnType<typeof createClient>>,
   userName: string,
   amount: number,
   method: "CARD_TO_CARD" | "SHEBA"
 ) {
-  const { data: admins } = await supabase.from("profiles").select("id").eq("role", "ADMIN");
   const methodLabel = method === "CARD_TO_CARD" ? "کارت به کارت" : "شبا";
-  for (const a of admins ?? []) {
-    await createNotification(
-      a.id,
-      "درخواست شارژ کیف پول جدید 💳",
-      `${userName} درخواست شارژ ${amount.toLocaleString("fa-IR")} تومانی از طریق ${methodLabel} ثبت کرد و منتظر تأیید شماست.`
-    );
-  }
+  await notifyAllAdmins(
+    "درخواست شارژ کیف پول جدید 💳",
+    `${userName} درخواست شارژ ${amount.toLocaleString("fa-IR")} تومانی از طریق ${methodLabel} ثبت کرد و منتظر تأیید شماست.`
+  );
 }
 
 export async function submitManualTopupRequest(amount: number, method: "CARD_TO_CARD" | "SHEBA", bankAccountId: string) {

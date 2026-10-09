@@ -2,7 +2,7 @@
 
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function updateGeneralSettings(formData: FormData) {
   await requireAdmin();
@@ -34,5 +34,28 @@ export async function updateGeneralSettings(formData: FormData) {
   revalidatePath("/", "layout");
   revalidatePath("/contact");
   revalidatePath("/about");
+  return { success: true };
+}
+
+
+export async function updateAnnouncementSettings(formData: FormData) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const text1 = String(formData.get("text1") ?? "").trim().slice(0, 200);
+  const text2 = String(formData.get("text2") ?? "").trim().slice(0, 200);
+
+  const { error } = await supabase
+    .from("site_settings")
+    .update({
+      announcement_enabled: formData.get("enabled") === "on",
+      announcement_text_1: text1,
+      announcement_text_2: text2,
+    })
+    .eq("id", 1);
+
+  if (error) return { error: error.message };
+  updateTag("settings"); // کش هدر فوراً تازه شود (وگرنه تا یک ساعت قدیمی می‌ماند)
+  revalidatePath("/", "layout");
   return { success: true };
 }

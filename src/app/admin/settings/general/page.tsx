@@ -1,12 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import GeneralSettingsForm from "@/components/admin/GeneralSettingsForm";
 import PublicDiscountCodeForm from "@/components/admin/PublicDiscountCodeForm";
+import AnnouncementSettingsForm from "@/components/admin/AnnouncementSettingsForm";
 
 export default async function AdminGeneralSettingsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("site_settings")
     .select("store_name, support_phone, support_phone_2, support_email, store_address, about_content, min_order_amount, store_postal_code, unboxing_whatsapp_number, unboxing_telegram_id, unboxing_instagram_handle, extra_phones, extra_emails")
+    .eq("id", 1)
+    .single();
+
+    
+  const { data: ann } = await supabase
+    .from("site_settings")
+    .select("announcement_enabled, announcement_text_1, announcement_text_2")
     .eq("id", 1)
     .single();
 
@@ -33,6 +41,13 @@ export default async function AdminGeneralSettingsPage() {
             }
       }
     />
+    <AnnouncementSettingsForm
+        initial={{
+          enabled: ann?.announcement_enabled ?? true,
+          text1: ann?.announcement_text_1 ?? "",
+          text2: ann?.announcement_text_2 ?? "",
+        }}
+      />
       <PublicDiscountCodeForm />
     </div>
   );

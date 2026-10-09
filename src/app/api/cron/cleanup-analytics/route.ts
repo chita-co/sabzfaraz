@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "دسترسی غیرمجاز" }, { status: 401 });
   }
   const admin = createAdminClient();

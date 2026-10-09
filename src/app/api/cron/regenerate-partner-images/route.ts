@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
-  if (secret !== process.env.PARTNER_IMAGE_CRON_SECRET) {
+  if (!process.env.PARTNER_IMAGE_CRON_SECRET || secret !== process.env.PARTNER_IMAGE_CRON_SECRET) {
     return NextResponse.json({ error: "دسترسی غیرمجاز" }, { status: 401 });
   }
 

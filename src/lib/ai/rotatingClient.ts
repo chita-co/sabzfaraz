@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { extractFirstJsonObject } from "@/lib/ai/extractJson";
 
 interface AiKeyRow {
   id: string; api_key: string; provider: string; priority: number;
@@ -156,7 +157,11 @@ async function callGeminiWithKey(
   const parts: Array<{ text?: string; thought?: boolean }> = data?.candidates?.[0]?.content?.parts ?? [];
   const text = parts.filter((p) => p.text && !p.thought).map((p) => p.text).join("");
   if (!text) throw new GeminiHttpError(204, "پاسخ خالی");
-  return text;
+
+  // فقط اولین JSON کامل را برگردان (متن اضافه یا JSON تکراری حذف می‌شود)
+  const clean = extractFirstJsonObject(text);
+  if (!clean) throw new GeminiHttpError(422, `JSON نامعتبر: ${text.slice(0, 120)}`);
+  return clean;
 }
 
 const TOO_SLOW = "پاسخ هوش مصنوعی بیش از حد طول کشید. لطفاً دوباره تلاش کنید.";

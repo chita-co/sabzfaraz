@@ -72,3 +72,15 @@ export const getHeaderData = unstable_cache(async () => {
   if (c.error || a.error || s.error) throw new Error("header data failed");
   return { categories: c.data, allCategories: a.data, settings: s.data };
 }, ["header-data"], { revalidate: 3600, tags: ["categories", "settings"] });
+
+
+// اطلاعیه‌های بالای سایت (جدا از getHeaderData تا اگر ستون‌ها نبودند، منوی هدر خراب نشود)
+export const getAnnouncementSettings = unstable_cache(async () => {
+  const { data, error } = await createPublicClient()
+    .from("site_settings")
+    .select("announcement_enabled, announcement_text_1, announcement_text_2")
+    .eq("id", 1)
+    .single();
+  if (error) throw error;
+  return data;
+}, ["announcement-settings"], { revalidate: 3600, tags: ["settings"] });
