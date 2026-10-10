@@ -7,6 +7,7 @@ const statusLabels: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
   PROCESSING: "در حال پردازش",
   PACKING: "آماده‌سازی و بسته‌بندی",
+  SENDING_TO_CARRIER: "در حال ارسال به واحد حمل",
   SHIPPED: "ارسال شده",
   DELIVERED: "تحویل داده شده",
   CANCELLED: "لغو شده",

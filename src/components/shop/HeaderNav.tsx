@@ -5,10 +5,9 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import toast from "react-hot-toast";
 import {
   Search, ShoppingCart, Heart, User, UserPlus, X,
-  LayoutDashboard, LogOut, Package, Gift, Clapperboard, Wallet,
+  LayoutDashboard, LogOut, Package, Gift, Clapperboard, Images, Wallet,
   Handshake, PackageSearch, Scale, Home, LayoutGrid, Percent, Trash2, Minus, Plus, ShoppingBag,
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
@@ -66,6 +65,7 @@ export default function HeaderNav({
     },
     ...(auctionEnabled ? [{ type: "link" as const, label: auctionLabel, href: "/auctions" }] : []),
     { type: "link", label: "آنباکس", href: "/unboxing" },
+    { type: "link", label: "گالری", href: "/gallery" },
     { type: "link", label: "سفارش جمعی", href: "/bulk-order" },
     { type: "link", label: "بلاگ", href: "/blog" },
     // { type: "link", label: "قیمت لحظه‌ای", href: "/price-ticker" }, // ⛔️ موقتاً غیرفعال
@@ -181,6 +181,9 @@ export default function HeaderNav({
           )}
           <Link href="/unboxing" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
             <Clapperboard size={14} /> آنباکس
+          </Link>
+          <Link href="/gallery" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
+            <Images size={14} /> گالری
           </Link>
           <Link href="/bulk-order" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
             سفارش جمعی
@@ -339,16 +342,9 @@ export default function HeaderNav({
           <Link href="/partner/login" className="mobile-drawer-extra-link" onClick={() => setProfileDrawerOpen(false)}>
             <Handshake size={15} /> ورود همکاران
           </Link>
-          <button
-            type="button"
-            className="mobile-drawer-extra-link"
-            onClick={() => {
-              setProfileDrawerOpen(false);
-              toast("این قابلیت به‌زودی اضافه می‌شود.");
-            }}
-          >
+          <Link href="/compare" className="mobile-drawer-extra-link" onClick={() => setProfileDrawerOpen(false)}>
             <Scale size={15} /> لیست مقایسه
-          </button>
+          </Link>
 
           <form action={signOut} className="mobile-drawer-logout-form">
             <button type="submit" className="mobile-drawer-logout-btn">
@@ -403,13 +399,9 @@ export default function HeaderNav({
             <Link href="/profile/orders" className="topbar-btn">
               <PackageSearch size={14} /> پیگیری سفارشتان
             </Link>
-            <button
-              type="button"
-              className="topbar-btn"
-              onClick={() => toast("این قابلیت به‌زودی اضافه می‌شود.")}
-            >
+            <Link href="/compare" className="topbar-btn">
               <Scale size={14} /> لیست مقایسه
-            </button>
+            </Link>
           </div>
         </div>
 

@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import UnboxingChannelButtons from "@/components/shop/UnboxingChannelButtons";
 import UnboxingSearchGrid from "@/components/shop/UnboxingSearchGrid";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
-import GalleryVideoGrid from "@/components/shop/GalleryVideoGrid";
+import PageImageBlock from "@/components/shop/PageImageBlock";
+import { groupRowImages, normalizePageImages } from "@/lib/pageImages";
 
 export const metadata = {
   title: "آنباکس مشتریان سبزفراز | ویدیوتو بفرست، جایزه بگیر",
@@ -12,7 +14,7 @@ export const metadata = {
 
 export default async function UnboxingPage() {
   const supabase = await createClient();
-  const [{ data: videos }, { data: settings }, { data: galleryVideos }] = await Promise.all([
+  const [{ data: videos }, { data: settings }] = await Promise.all([
     supabase
       .from("unboxing_videos")
       .select("*")
@@ -20,8 +22,12 @@ export default async function UnboxingPage() {
       .order("is_featured", { ascending: false })
       .order("published_at", { ascending: false }),
     supabase.from("site_settings").select("unboxing_whatsapp_number, unboxing_telegram_id, unboxing_instagram_handle").eq("id", 1).single(),
-    supabase.from("gallery_videos").select("*").order("platform", { ascending: true }).order("created_at", { ascending: false }),
   ]);
+
+  // کوئری جدا: اگر ستون تصاویر هنوز ساخته نشده باشد، بقیه‌ی صفحه سالم می‌ماند
+  const { data: imgRow } = await supabase.from("site_settings").select("unboxing_images").eq("id", 1).single();
+  const images = normalizePageImages(imgRow?.unboxing_images, "unboxing");
+  const at = (pos: string) => groupRowImages(images.filter((i) => i.position === pos));
 
   const list = videos ?? [];
 
@@ -52,6 +58,10 @@ export default async function UnboxingPage() {
           <p>ما به بهترین ویدیوهای آنباکس، بسته به کیفیت و خلاقیت، جایزه‌ی نقدی می‌دیم — همینجا صدها ویدیوی واقعی از مشتریای سبزفراز رو ببین.</p>
         </div>
 
+        {at("after_hero").map((img) => (
+          <PageImageBlock key={img.id} image={img} />
+        ))}
+
         <div className="unboxing-rules-box">
           <h2>چطور شرکت کنم؟</h2>
           <p>
@@ -65,15 +75,30 @@ export default async function UnboxingPage() {
           </p>
         </div>
 
+        {at("after_rules").map((img) => (
+          <PageImageBlock key={img.id} image={img} />
+        ))}
+
         <UnboxingChannelButtons
           whatsapp={settings?.unboxing_whatsapp_number ?? null}
           telegram={settings?.unboxing_telegram_id ?? null}
           instagram={settings?.unboxing_instagram_handle ?? null}
         />
 
+        {at("after_channels").map((img) => (
+          <PageImageBlock key={img.id} image={img} />
+        ))}
+
         <h2 className="section-title" style={{ marginTop: 36 }}>گالری ویدیوهای مشتریان</h2>
         <UnboxingSearchGrid videos={list} />
-        <GalleryVideoGrid videos={galleryVideos ?? []} />
+
+        <p style={{ textAlign: "center", marginTop: 24 }}>
+          <Link href="/gallery">ویدیوهای بیشتر سبزفراز در اینستاگرام، یوتیوب و آپارات ←</Link>
+        </p>
+
+        {at("end").map((img) => (
+          <PageImageBlock key={img.id} image={img} />
+        ))}
       </div>
 
       <div className="unboxing-mobile-sticky">

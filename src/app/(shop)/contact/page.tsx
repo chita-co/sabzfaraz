@@ -2,7 +2,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PrismaticBurstBackground from "@/components/backgrounds/PrismaticBurstBackground";
 import PageImageBlock from "@/components/shop/PageImageBlock";
-import { normalizePageImages } from "@/lib/pageImages";
+import { groupRowImages, normalizePageImages } from "@/lib/pageImages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -26,7 +26,7 @@ export default async function ContactPage() {
     .eq("id", 1)
     .single();
   const images = normalizePageImages(imgRow?.contact_images, "contact");
-  const at = (pos: string) => images.filter((i) => i.position === pos);
+  const at = (pos: string) => groupRowImages(images.filter((i) => i.position === pos));
   const leftImages = at("beside_left");
   const rightImages = at("beside_right");
   const hasSide = leftImages.length + rightImages.length > 0;

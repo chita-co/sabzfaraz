@@ -32,13 +32,14 @@ const statusLabels: Record<string, string> = {
   PENDING: "در انتظار پرداخت",
   PROCESSING: "در حال پردازش",
   PACKING: "آماده‌سازی و بسته‌بندی",
+  SENDING_TO_CARRIER: "در حال ارسال به واحد حمل",
   SHIPPED: "ارسال شده",
   DELIVERED: "تحویل داده شده",
   CANCELLED: "لغو شده",
 };
 
 // سفارش‌هایی با این وضعیت‌ها هنوز «باز» محسوب می‌شوند و هنوز به مشتری تحویل نشده‌اند
-const OPEN_STATUSES = new Set(["PENDING", "PROCESSING", "PACKING", "SHIPPED"]);
+const OPEN_STATUSES = new Set(["PENDING", "PROCESSING", "PACKING", "SENDING_TO_CARRIER", "SHIPPED"]);
 
 export default function OrdersListClient({
   orders,

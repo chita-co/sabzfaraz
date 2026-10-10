@@ -106,10 +106,12 @@ export default async function Footer() {
             <Link href="/">صفحه اصلی</Link>
             <Link href="/deals">جشنواره تخفیف</Link>
             <Link href="/unboxing">آنباکس مشتریان</Link>
+            <Link href="/gallery">گالری ویدیوها</Link>
             <Link href="/blog">مقالات</Link>
             {/* <Link href="/price-ticker">قیمت لحظه‌ای طلا و ارز</Link> */}
             <Link href="/cart">سبد خرید</Link>
             <Link href="/wishlist">علاقه‌مندی‌ها</Link>
+            <Link href="/compare">مقایسه محصولات</Link>
             <Link href="/calendar">تقویم و رویدادها</Link>
           </div>
 

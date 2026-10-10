@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Share2, ShoppingCart, Check, ChevronDown, ChevronLeft, ChevronRight, Ship, Clock, AlertTriangle, Store } from "lucide-react";
+import { Share2, ShoppingCart, Check, ChevronDown, ChevronLeft, ChevronRight, Ship, Clock, AlertTriangle, Store, Scale } from "lucide-react";
 import { Product, ProductQuantityTier, ProductAttribute } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import WishlistButton from "./WishlistButton";
+import Link from "next/link";
 import { StarRatingDisplay } from "./StarRating";
 import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
 import RelatedArticlesForProduct from "@/components/blog/RelatedArticlesForProduct";
@@ -343,6 +344,12 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
                 </p>
               )}
               <span className="product-badge-new">جدید</span>
+              <Link
+                href={`/compare?p=${encodeURIComponent(product.slug)}`}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, fontSize: 12, fontWeight: 700, color: "#15803d", textDecoration: "none" }}
+              >
+                <Scale size={14} /> مقایسه این محصول با محصولات دیگر
+              </Link>
             </div>
             <p className="product-sku">کد محصول: <span dir="ltr">{product.sku}</span></p>
             {reviewCount > 0 && (

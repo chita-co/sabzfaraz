@@ -7,16 +7,31 @@ import {
   MAX_IMAGE_WIDTH,
   MAX_IMAGES_PER_PAGE,
   MIN_IMAGE_WIDTH,
+  defaultPositionFor,
   type PageImage,
   type PageImageAlign,
   type PageImageKind,
 } from "@/lib/pageImages";
 
-const CONTACT_POSITION_LABELS: Record<string, string> = {
-  before_box: "قبل از باکس اطلاعات تماس",
-  after_box: "زیر باکس اطلاعات تماس",
-  beside_right: "کنار باکس (سمت راست)",
-  beside_left: "کنار باکس (سمت چپ)",
+const POSITION_LABELS: Record<Exclude<PageImageKind, "about">, Record<string, string>> = {
+  contact: {
+    before_box: "قبل از باکس اطلاعات تماس",
+    after_box: "زیر باکس اطلاعات تماس",
+    beside_right: "کنار باکس (سمت راست)",
+    beside_left: "کنار باکس (سمت چپ)",
+  },
+  unboxing: {
+    after_hero: "بعد از عنوان و توضیح اصلی صفحه",
+    after_rules: "بعد از باکس «چطور شرکت کنم؟»",
+    after_channels: "بعد از دکمه‌های واتساپ / تلگرام / اینستاگرام",
+    end: "انتهای صفحه (بعد از ویدیوهای مشتریان)",
+  },
+  gallery: {
+    after_hero: "بعد از عنوان و توضیح صفحه",
+    after_instagram: "بعد از بخش گالری اینستاگرام",
+    after_youtube: "بعد از بخش گالری یوتیوب",
+    end: "انتهای صفحه (بعد از بخش آپارات)",
+  },
 };
 
 const ALIGN_LABELS: Record<PageImageAlign, string> = { right: "راست", center: "وسط", left: "چپ" };
@@ -65,7 +80,7 @@ function ImageList({
             alt: "",
             width: 400,
             align: "center",
-            position: kind === "about" ? "end" : "after_box",
+            position: defaultPositionFor(kind),
           },
         ]);
       } else {
@@ -177,7 +192,7 @@ function ImageList({
                   </div>
                 ) : (
                   <select value={img.position} onChange={(e) => patch(img.id, { position: e.target.value })}>
-                    {Object.entries(CONTACT_POSITION_LABELS).map(([value, label]) => (
+                    {Object.entries(POSITION_LABELS[kind]).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
                       </option>
@@ -203,6 +218,17 @@ function ImageList({
                 </div>
               </div>
             </div>
+
+            <div className="admin-form-group">
+                <label>چیدمان (چند تصویر پشت‌سرهم با جایگاه یکسان)</label>
+                <select
+                  value={img.layout ?? "stack"}
+                  onChange={(e) => patch(img.id, { layout: e.target.value as "stack" | "row" })}
+                >
+                  <option value="stack">مستقل (زیر هم)</option>
+                  <option value="row">کنار هم در یک ردیف</option>
+                </select>
+              </div>
 
             <div className="admin-form-group">
               <label>
@@ -256,19 +282,25 @@ function ImageList({
 export default function PageImagesManager({
   initialAbout,
   initialContact,
+  initialUnboxing = [],
+  initialGallery = [],
 }: {
   initialAbout: PageImage[];
   initialContact: PageImage[];
+  initialUnboxing?: PageImage[];
+  initialGallery?: PageImage[];
 }) {
   const [about, setAbout] = useState<PageImage[]>(initialAbout);
   const [contact, setContact] = useState<PageImage[]>(initialContact);
+  const [unboxing, setUnboxing] = useState<PageImage[]>(initialUnboxing);
+  const [gallery, setGallery] = useState<PageImage[]>(initialGallery);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   async function handleSave() {
     setSaving(true);
     setMessage(null);
-    const res = await updatePageImages({ about, contact });
+    const res = await updatePageImages({ about, contact, unboxing, gallery });
     setSaving(false);
     if (res?.error) setMessage({ type: "err", text: res.error });
     else setMessage({ type: "ok", text: "تصاویر ذخیره شد." });
@@ -287,6 +319,16 @@ export default function PageImagesManager({
       <div className="admin-card">
         <h2 className="font-bold text-gray-800 mb-3">تصاویر صفحه «تماس با ما»</h2>
         <ImageList kind="contact" images={contact} onChange={setContact} />
+      </div>
+
+      <div className="admin-card">
+        <h2 className="font-bold text-gray-800 mb-3">تصاویر صفحه «انباکس»</h2>
+        <ImageList kind="unboxing" images={unboxing} onChange={setUnboxing} />
+      </div>
+
+      <div className="admin-card">
+        <h2 className="font-bold text-gray-800 mb-3">تصاویر صفحه «گالری»</h2>
+        <ImageList kind="gallery" images={gallery} onChange={setGallery} />
       </div>
 
       {message && (

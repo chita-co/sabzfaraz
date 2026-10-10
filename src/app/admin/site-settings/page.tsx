@@ -11,10 +11,16 @@ export default async function AdminSiteSettingsPage() {
     .eq("id", 1)
     .single();
 
-  // کوئری جدا: اگر ستون‌های تصاویر هنوز ساخته نشده باشند، بقیه‌ی تنظیمات سایت از کار نمی‌افتند
+  // کوئری‌های جدا: اگر ستون‌های تصاویر هنوز ساخته نشده باشند، بقیه‌ی تنظیمات سایت از کار نمی‌افتند
   const { data: pageImgs } = await supabase
     .from("site_settings")
     .select("about_images, contact_images")
+    .eq("id", 1)
+    .single();
+
+  const { data: extraImgs } = await supabase
+    .from("site_settings")
+    .select("unboxing_images, gallery_images")
     .eq("id", 1)
     .single();
 
@@ -30,6 +36,8 @@ export default async function AdminSiteSettingsPage() {
       <PageImagesManager
         initialAbout={normalizePageImages(pageImgs?.about_images, "about")}
         initialContact={normalizePageImages(pageImgs?.contact_images, "contact")}
+        initialUnboxing={normalizePageImages(extraImgs?.unboxing_images, "unboxing")}
+        initialGallery={normalizePageImages(extraImgs?.gallery_images, "gallery")}
       />
     </div>
   );

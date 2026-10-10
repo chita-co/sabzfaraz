@@ -8,6 +8,7 @@ const options = [
   { value: "PENDING", label: "در انتظار پرداخت" },
   { value: "PROCESSING", label: "در حال پردازش" },
   { value: "PACKING", label: "آماده‌سازی و بسته‌بندی" },
+  { value: "SENDING_TO_CARRIER", label: "در حال ارسال به واحد حمل" },
   { value: "SHIPPED", label: "ارسال شده" },
   { value: "DELIVERED", label: "تحویل داده شده" },
   { value: "CANCELLED", label: "لغو شده" },

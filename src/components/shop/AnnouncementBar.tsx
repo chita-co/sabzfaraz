@@ -11,26 +11,17 @@ export interface AnnouncementItem {
   color: string;
 }
 
-const COOKIE_DAYS = 30;
 
 
-// نوشتن کوکی بیرون از کامپوننت (قانون react-hooks/immutability تغییر مقدار سراسری را داخل کامپوننت نمی‌پذیرد)
-function saveDismissed(key: string, hash: string) {
-  document.cookie = `ann_${key}=${hash}; path=/; max-age=${COOKIE_DAYS * 86400}; samesite=lax`;
-}
 
 export default function AnnouncementBar({ items }: { items: AnnouncementItem[] }) {
-  const [closed, setClosed] = useState<string[]>([]);
+  const [closed] = useState<string[]>([]);
   const pathname = usePathname();
   if (pathname !== "/") return null; // ← فقط صفحه‌ی اصلی
 
   const visible = items.filter((i) => !closed.includes(i.key));
   if (visible.length === 0) return null;
 
-  function close(item: AnnouncementItem) {
-    saveDismissed(item.key, item.hash);
-    setClosed((prev) => [...prev, item.key]);
-  }
 
   return (
     // marginBottom منفی، margin-top یک‌سانتی‌متری هدر را خنثی می‌کند؛ پس هدر دقیقاً همان‌جای قبلی می‌ماند
@@ -69,29 +60,6 @@ export default function AnnouncementBar({ items }: { items: AnnouncementItem[] }
             }}
           >
             {item.text}
-            <button
-              type="button"
-              onClick={() => close(item)}
-              aria-label="بستن اطلاعیه"
-              style={{
-                position: "absolute",
-                left: 6,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 22,
-                height: 22,
-                lineHeight: "20px",
-                border: "none",
-                borderRadius: "50%",
-                background: "rgba(0,0,0,0.15)",
-                color: item.color,
-                fontSize: 14,
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              ✕
-            </button>
           </div>
         ))}
       </div>

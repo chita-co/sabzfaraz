@@ -2,7 +2,7 @@ import { Fragment, Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import AntigravityBackground from "@/components/backgrounds/AntigravityBackground";
 import PageImageBlock from "@/components/shop/PageImageBlock";
-import { normalizePageImages } from "@/lib/pageImages";
+import { groupRowImages, normalizePageImages } from "@/lib/pageImages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,9 +36,11 @@ async function AboutContent() {
     ? String(content).split(/\n\s*\n/).map((p: string) => p.trim()).filter(Boolean)
     : [defaultText];
   const atPos = (pos: string) => images.filter((i) => i.position === pos);
-  const endImages = images.filter(
-    (i) => i.position === "end" || (i.position.startsWith("after_p_") && Number(i.position.slice(8)) > paragraphs.length)
-  );
+  const endImages = groupRowImages(
+      images.filter(
+        (i) => i.position === "end" || (i.position.startsWith("after_p_") && Number(i.position.slice(8)) > paragraphs.length)
+      )
+    );
 
   return (
     <>

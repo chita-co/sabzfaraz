@@ -58,6 +58,7 @@ export async function GET() {
     { loc: `${baseUrl}/about`, changefreq: "monthly", priority: "0.5" },
     { loc: `${baseUrl}/contact`, changefreq: "monthly", priority: "0.5" },
     { loc: `${baseUrl}/faq`, changefreq: "monthly", priority: "0.4" },
+    { loc: `${baseUrl}/compare`, changefreq: "monthly", priority: "0.6" },
     // new public shop routes
     { loc: `${baseUrl}/newest`, changefreq: "daily", priority: "0.8" },
     { loc: `${baseUrl}/popular`, changefreq: "daily", priority: "0.8" },
@@ -67,6 +68,7 @@ export async function GET() {
     { loc: `${baseUrl}/reverse-auctions`, changefreq: "daily", priority: "0.7" },
     { loc: `${baseUrl}/bulk-order`, changefreq: "weekly", priority: "0.6" },
     { loc: `${baseUrl}/unboxing`, changefreq: "weekly", priority: "0.6" },
+    { loc: `${baseUrl}/gallery`, changefreq: "weekly", priority: "0.6" },
     { loc: `${baseUrl}/support`, changefreq: "weekly", priority: "0.5" },
     { loc: `${baseUrl}/terms`, changefreq: "monthly", priority: "0.4" },
     { loc: `${baseUrl}/privacy`, changefreq: "monthly", priority: "0.4" },

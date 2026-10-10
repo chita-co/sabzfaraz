@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getHeaderData, getAnnouncementSettings } from "@/lib/cache/siteData";
 import HeaderNav from "./HeaderNav";
-import { cookies } from "next/headers";
 import AnnouncementBar from "./AnnouncementBar";
 
 // اثر انگشت کوتاه متن؛ برای «بسته‌شدن تا زمانی که ادمین متن را عوض نکرده»
@@ -39,7 +38,6 @@ export default async function Header() {
   }));
 
   // اطلاعیه‌های بالای سایت (باکس‌هایی که کاربر بسته و متنشان عوض نشده، نمایش داده نمی‌شوند)
-  const jar = await cookies();
   const announcementItems = announcement?.announcement_enabled
     ? [
         { key: "1", text: announcement.announcement_text_1, bg: "#15803d", color: "#ffffff" },
@@ -48,7 +46,6 @@ export default async function Header() {
         .map((i) => ({ ...i, text: (i.text ?? "").trim() }))
         .filter((i) => i.text.length > 0)
         .map((i) => ({ ...i, hash: textHash(i.text) }))
-        .filter((i) => jar.get(`ann_${i.key}`)?.value !== i.hash)
     : [];
 
   return (
