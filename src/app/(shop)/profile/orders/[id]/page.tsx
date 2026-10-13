@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import InvoiceDownloadButton from "@/components/shop/InvoiceDownloadButton";
+import BulkMoneyPanel from "@/components/shared/BulkMoneyPanel";
 import { getTrackingMessage, getTrackingStageNumber } from "@/lib/tracking";
 
 const statusLabels: Record<string, string> = {
@@ -64,6 +65,9 @@ export default async function MyOrderDetailPage({
         سفارش <span dir="ltr">{order.order_number}</span>
       </h1>
       <p className="text-sm text-gray-500 mb-6">{statusLabels[order.status]}</p>
+      {order.order_type === "BULK_ORDER" && order.bulk_request_id && (
+        <BulkMoneyPanel requestId={order.bulk_request_id} role="CUSTOMER" />
+      )}
 
       {trackingMessage && (
         <div className="rounded-xl bg-green-50 border border-green-200 p-4 mb-6">
@@ -74,9 +78,10 @@ export default async function MyOrderDetailPage({
         </div>
       )}
 
+    {order.order_type !== "BULK_ORDER" && (
       <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
         <h2 className="font-bold text-gray-800 mb-3">اقلام سفارش</h2>
-        {order.items.map((item: OrderItem) => (
+        {(order.order_type === "BULK_ORDER" ? [] : order.items).map((item: OrderItem) => (
           <div
             key={item.id}
             className="flex justify-between text-sm py-2 border-b last:border-0"
@@ -98,8 +103,9 @@ export default async function MyOrderDetailPage({
           <span>{order.total_amount.toLocaleString("fa-IR")} تومان</span>
         </div>
       </div>
+    )}
 
-      {order.payment_status === "PAID" && (
+      {order.payment_status === "PAID" && order.order_type !== "BULK_ORDER" && (
         <div className="text-center">
           <InvoiceDownloadButton
             orderNumber={order.order_number}

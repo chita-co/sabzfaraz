@@ -74,6 +74,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/products/new", label: "افزودن محصول" },
       { href: "/admin/products/bulk-price-update", label: "به‌روزرسانی گروهی قیمت‌ها" },
       { href: "/admin/categories", label: "دسته‌بندی‌ها" },
+      { href: "/admin/bubble-deals", label: "حباب ارزانی" },
       { href: "/admin/deals", label: "جشنواره تخفیف" },
       { href: "/admin/banners", label: "بنرهای اسلایدی" },
       { href: "/admin/promo-ads", label: "باکس‌های تبلیغاتی صفحه اصلی" },
@@ -187,7 +188,7 @@ export default function AdminSidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const activeGroupId = navConfig.find(
-    (item) => isGroup(item) && item.children.some((c) => c.href === pathname)
+    (item) => isGroup(item) && item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"))
   ) as NavGroup | undefined;
 
   const [openGroups, setOpenGroups] = useState<string[]>(

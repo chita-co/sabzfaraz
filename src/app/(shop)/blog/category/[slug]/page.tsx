@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const category = await getBlogCategoryBySlug(slug);
   if (!category) return {};
-  return { title: `${category.name} | مجله سبزفراز`, description: category.description ?? `مقالات دسته‌بندی ${category.name} در مجله سبزفراز` };
+  return { title: `${category.name} | مجله سبزفراز`, description: category.description ?? `مقالات دسته‌بندی ${category.name} در مجله سبزفراز`, alternates: { canonical: `/blog/category/${encodeURIComponent(slug)}` } };
 }
 
 export default async function BlogCategoryPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string }> }) {

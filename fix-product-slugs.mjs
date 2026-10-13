@@ -12,7 +12,7 @@
 //  دیگه روی سایت زنده میشه؛ نیازی به ری‌استارت یا دیپلوی نیست.)
 
 import { config } from "dotenv";
-config({ path: ".env.local" });
+config({ path: ".env" });
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -36,6 +36,7 @@ function slugify(input) {
     .trim()
     .toLowerCase()
     .replace(/[\u200C\u200F\u200E]/g, "")
+    .replace(/([0-9\u06F0-\u06F9])[.\u066B,]([0-9\u06F0-\u06F9])/g, "$1-$2")
     .replace(/[^a-z0-9\u0600-\u06FF\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
@@ -45,7 +46,7 @@ function slugify(input) {
 // اسلاگ‌های "خراب" که باید اصلاح بشن:
 // - فقط عدد و خط‌تیره (مثل 100-250، 030-100)
 // - الگوی fallback تصادفی قدیمی (مثل p-a8f2k3)
-const BROKEN_SLUG_PATTERNS = [/^[0-9]+(-[0-9]+)*$/, /^p-[a-z0-9]{6}$/];
+const BROKEN_SLUG_PATTERNS = [/^[0-9]+(-[0-9]+)*$/, /^p-[a-z0-9]{6}$/, /^-/, /-$/];
 
 function isBrokenSlug(slug) {
   return BROKEN_SLUG_PATTERNS.some((re) => re.test(slug));
@@ -95,10 +96,18 @@ async function run() {
   const limit = limitArg ? Math.max(1, parseInt(limitArg.split("=")[1], 10) || 0) : 0;
   console.log(limit > 0 ? `⚠️ حالت تست: فقط ${limit} محصول اول اصلاح می‌شود.` : "حالت کامل: همه‌ی محصولات خراب اصلاح می‌شوند.");
   console.log("در حال خواندن همه‌ی محصولات...");
-  const { data: products, error } = await supabase
-    .from("products")
-    .select("id, name, slug, previous_slugs")
-    .limit(20000);
+  const products = [];
+  let error = null;
+  for (let from = 0; ; from += 1000) {
+    const { data, error: e } = await supabase
+      .from("products")
+      .select("id, name, slug, previous_slugs")
+      .order("id")
+      .range(from, from + 999);
+    if (e) { error = e; break; }
+    products.push(...(data ?? []));
+    if (!data || data.length < 1000) break;
+  }
 
   if (error) {
     console.error("❌ خطا در خواندن محصولات:", error.message);
@@ -141,7 +150,7 @@ async function run() {
     }
 
     console.log(`  ✅ ${p.slug}  →  ${newSlug}   ("${p.name}")`);
-    await submitUrlToIndexNow(`${SITE_URL}/products/${newSlug}`);
+    await submitUrlToIndexNow(`${SITE_URL}/products/${encodeURIComponent(newSlug)}`);
     fixed++;
   }
 

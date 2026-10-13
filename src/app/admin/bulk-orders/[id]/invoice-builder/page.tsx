@@ -2,6 +2,19 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ManualInvoiceBuilder from "@/components/admin/ManualInvoiceBuilder";
 
+type StoreItem = { productName: string; quantity: number; unitPrice: number };
+type MarketItem = { name: string; quantity: number; finalUnitPrice?: number | null };
+
+// اقلام سفارش جمعی را به ردیف‌های فاکتور تبدیل می‌کند
+function buildInitialRows(request: { store_items?: unknown; market_items?: unknown }) {
+  const store = (request.store_items ?? []) as StoreItem[];
+  const market = (request.market_items ?? []) as MarketItem[];
+  return [
+    ...store.map((i) => ({ name: i.productName, qty: i.quantity, unitPrice: i.unitPrice })),
+    ...market.map((i) => ({ name: i.name, qty: i.quantity, unitPrice: i.finalUnitPrice ?? 0 })),
+  ];
+}
+
 export default async function BulkOrderInvoiceBuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -37,6 +50,8 @@ export default async function BulkOrderInvoiceBuilderPage({ params }: { params: 
       storeEmail={settings?.support_email ?? null}
       initialHtml={request.final_invoice_html}
       initialNumber={request.final_invoice_number}
+      initialRows={buildInitialRows(request)}
+      expectedTotal={request.final_total_amount ?? null}
     />
   );
 }

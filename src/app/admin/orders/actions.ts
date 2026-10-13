@@ -28,7 +28,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
   const { data: existingOrder } = await supabase
     .from("orders")
-    .select("status, user_id, order_number")
+    .select("status, user_id, order_number, order_type")
     .eq("id", orderId)
     .single();
 
@@ -49,7 +49,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
     }
   }
 
-  if (status === "DELIVERED") {
+  if (status === "DELIVERED" && existingOrder?.order_type !== "BULK_ORDER") {
     try {
       await earnPointsForOrder(orderId);
     } catch (e) {
@@ -57,7 +57,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
     }
   }
 
-  if (status === "CANCELLED") {
+  if (status === "CANCELLED" && existingOrder?.order_type !== "BULK_ORDER") {
     try {
       await refundRedeemedPoints(orderId);
       await reverseEarnedPoints(orderId);

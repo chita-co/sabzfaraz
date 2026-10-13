@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "@/components/shop/CheckoutClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import LightfallBackground from "@/components/backgrounds/LightfallBackground";
+import BubbleCartWatcher from "@/components/bubble/BubbleCartWatcher";
 
 export default async function CheckoutPage() {
   const supabase = await createClient();
@@ -33,6 +34,7 @@ export default async function CheckoutPage() {
       <div className="mx-auto max-w-3xl px-4 pt-8">
         <Breadcrumb theme="dark" items={[{ label: "سبد خرید", href: "/cart" }, { label: "تکمیل خرید" }]} />
       </div>
+      <BubbleCartWatcher />
       <CheckoutClient
         addresses={addresses ?? []}
         shippingMethods={methods ?? []}

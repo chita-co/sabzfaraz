@@ -3,17 +3,29 @@
 import { useState } from "react";
 import { CreditCard, Landmark } from "lucide-react";
 import { confirmOfflineDepositPayment } from "@/app/(shop)/bulk-order/deposit-actions";
+import { confirmOfflineBalancePayment } from "@/app/(shop)/bulk-order/balance-actions";
 
 interface Bank { id: string; bank_name: string; account_holder_name: string; card_number: string | null; sheba_number: string | null; logo_slug: string; }
 
-export default function BulkDepositBankList({ requestId, banks }: { requestId: string; banks: Bank[] }) {
+export default function BulkDepositBankList({
+  requestId,
+  banks,
+  mode = "DEPOSIT",
+}: {
+  requestId: string;
+  banks: Bank[];
+  mode?: "DEPOSIT" | "BALANCE";
+}) {
   const [confirmType, setConfirmType] = useState<"CARD_TO_CARD" | "SHEBA" | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleConfirm() {
     if (!confirmType) return;
     setSubmitting(true);
-    const result = await confirmOfflineDepositPayment(requestId, confirmType);
+    const result =
+      mode === "BALANCE"
+        ? await confirmOfflineBalancePayment(requestId, confirmType)
+        : await confirmOfflineDepositPayment(requestId, confirmType);
     setSubmitting(false);
     if (result?.error) alert(result.error);
     else window.location.reload();

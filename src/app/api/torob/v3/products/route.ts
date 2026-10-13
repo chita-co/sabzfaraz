@@ -10,17 +10,23 @@ const PRODUCT_SELECT = `id, sku, slug, name, name_en, price, discount_price, sto
 const PAGE_SIZE = 100;
 
 function parseSlugFromUrl(url: string): string | null {
+  let raw: string | null = null;
   try {
     const u = new URL(url);
     const parts = u.pathname.split("/").filter(Boolean);
     const idx = parts.indexOf("products");
-    if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+    if (idx !== -1 && parts[idx + 1]) raw = parts[idx + 1];
   } catch {
     // اگر URL نسبی بود، به‌صورت دستی اسلاگ را جدا کن
-    const match = url.match(/\/products\/([^/]+)/);
-    if (match) return match[1];
+    const match = url.match(/\/products\/([^/?#]+)/);
+    if (match) raw = match[1];
   }
-  return null;
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -44,11 +50,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "invalid page_urls" }, { status: 400 });
     }
 
-    const { data: products } = await supabase
+    const { data: bySlug } = await supabase
       .from("products")
       .select(PRODUCT_SELECT)
       .eq("is_active", true)
       .in("slug", slugs);
+
+    const { data: byOldSlug } = await supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("is_active", true)
+      .overlaps("previous_slugs", slugs);
+
+    const merged = new Map<string, NonNullable<typeof bySlug>[number]>();
+    for (const p of [...(bySlug ?? []), ...(byOldSlug ?? [])]) merged.set(p.id, p);
+    const products = Array.from(merged.values());
 
     return buildTorobResponse(products ?? [], 1, products?.length ?? 0, 1);
   }

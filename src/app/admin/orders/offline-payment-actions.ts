@@ -16,6 +16,13 @@ export async function confirmOfflinePayment(orderId: string) {
   await requireAdmin();
   const supabase = await createClient();
 
+  {
+    const { data: guard } = await supabase.from("orders").select("order_type").eq("id", orderId).single();
+    if (guard?.order_type === "BULK_ORDER") {
+      return { error: "سفارش جمعی از بخش «سفارش‌های جمعی» تأیید می‌شود." };
+    }
+  }
+
   const { data: existingOrder } = await supabase
     .from("orders")
     .select("payment_status, order_type, user_id")
@@ -72,6 +79,12 @@ if (order?.user_id) {
 export async function rejectOfflinePayment(orderId: string) {
   await requireAdmin();
   const supabase = await createClient();
+  {
+    const { data: guard } = await supabase.from("orders").select("order_type").eq("id", orderId).single();
+    if (guard?.order_type === "BULK_ORDER") {
+      return { error: "سفارش جمعی از بخش «سفارش‌های جمعی» تأیید می‌شود." };
+    }
+  }
   const { error } = await supabase.from("orders").update({ payment_status: "FAILED" }).eq("id", orderId);
   if (error) return { error: error.message };
 

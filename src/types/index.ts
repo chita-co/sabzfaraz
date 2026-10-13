@@ -40,6 +40,8 @@ export interface Product {
   brand: string | null;
   is_active: boolean;
   is_deal: boolean;
+  flash_ends_at?: string | null;
+  flash_applied?: boolean;
   show_in_newest: boolean;
   is_popular: boolean;
   sku: string;

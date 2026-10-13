@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import BulkOrderDetailClient from "@/components/shop/BulkOrderDetailClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
+import BulkMoneyPanel from "@/components/shared/BulkMoneyPanel";
 
 export default async function BulkOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +23,9 @@ export default async function BulkOrderDetailPage({ params }: { params: Promise<
       <GalaxyBackground />
       <div className="mx-auto max-w-3xl px-4 pt-8">
         <Breadcrumb theme="dark" items={[{ label: "سفارش‌های جمعی من", href: "/bulk-order" }, { label: request.request_number }]} />
+      </div>
+      <div className="mx-auto max-w-3xl px-4 pt-6">
+        <BulkMoneyPanel requestId={id} role="CUSTOMER" />
       </div>
       <BulkOrderDetailClient
         requestId={id}

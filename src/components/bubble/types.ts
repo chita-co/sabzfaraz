@@ -1,0 +1,17 @@
+export type BubbleItem = {
+  id: string;
+  name: string;
+  slug: string;
+  images: string[] | null;
+  price: number;
+  discount_price: number | null;
+  stock: number | null;
+  flash_ends_at: string;
+  colors: { name: string; hex: string }[] | null;
+  sizes: string[] | null;
+  weight_grams: number | null;
+  is_sold_by_unit: boolean | null;
+  unit_label: string | null;
+  has_min_order_quantity: boolean | null;
+  min_order_quantity: number | null;
+};

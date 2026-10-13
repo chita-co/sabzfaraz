@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/notifications";
 import { sendBulkOrderDepositSms } from "@/lib/sms";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { settleBulkPayment } from "@/lib/bulkOrder/orderMirror";
 
 interface StoreItemInput {
   productId: string;
@@ -141,11 +143,7 @@ export async function markSupplyNotPossible(
 export async function confirmDepositPayment(requestId: string) {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: request } = await supabase
-    .from("bulk_order_requests")
-    .select("user_id, request_number")
-    .eq("id", requestId)
-    .single();
+  const { data: request } = await supabase.from("bulk_order_requests").select("*").eq("id", requestId).single();
   if (!request) return { error: "درخواست یافت نشد." };
 
   const { error } = await supabase
@@ -158,6 +156,14 @@ export async function confirmDepositPayment(requestId: string) {
     .eq("id", requestId);
   if (error) return { error: error.message };
 
+  const settled = await settleBulkPayment(createAdminClient(), requestId, {
+    kind: "DEPOSIT",
+    from: ["AWAITING_CONFIRMATION"],
+    to: "PAID",
+    error: null,
+  });
+  if (settled.error) return { error: "خطا در ثبت پرداخت: " + settled.error };
+
   await createNotification(
     request.user_id,
     "پرداخت بیعانه تأیید شد ✅",
@@ -166,17 +172,14 @@ export async function confirmDepositPayment(requestId: string) {
 
   revalidatePath("/admin/bulk-orders");
   revalidatePath(`/admin/bulk-orders/${requestId}`);
+  revalidatePath("/admin/orders");
   return { success: true };
 }
 
 export async function rejectDepositPayment(requestId: string) {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: request } = await supabase
-    .from("bulk_order_requests")
-    .select("user_id, request_number")
-    .eq("id", requestId)
-    .single();
+  const { data: request } = await supabase.from("bulk_order_requests").select("*").eq("id", requestId).single();
   if (!request) return { error: "درخواست یافت نشد." };
 
   const { error } = await supabase
@@ -188,6 +191,14 @@ export async function rejectDepositPayment(requestId: string) {
     })
     .eq("id", requestId);
   if (error) return { error: error.message };
+
+  const settled = await settleBulkPayment(createAdminClient(), requestId, {
+    kind: "DEPOSIT",
+    from: ["AWAITING_CONFIRMATION"],
+    to: "FAILED",
+    error: "پرداخت توسط ادمین تأیید نشد",
+  });
+  if (settled.error) return { error: "خطا در ثبت نتیجه: " + settled.error };
 
   await supabase.from("bulk_order_messages").insert({
     request_id: requestId,
@@ -204,6 +215,7 @@ export async function rejectDepositPayment(requestId: string) {
 
   revalidatePath("/admin/bulk-orders");
   revalidatePath(`/admin/bulk-orders/${requestId}`);
+  revalidatePath("/admin/orders");
   return { success: true };
 }
 

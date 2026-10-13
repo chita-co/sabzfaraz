@@ -25,6 +25,8 @@ export async function priceCheckoutItems<T extends InputItem>(
   if (!shippingMethodId) return { error: "لطفاً یک روش ارسال انتخاب کنید." };
 
   const admin = createAdminClient();
+  // حباب‌های منقضی‌شده قبل از محاسبه‌ی قیمت برگردانده می‌شوند (قیمت پایان‌یافته هیچ‌وقت شارژ نمی‌شود)
+  await admin.rpc("refresh_bubble_deals");
   const ids = [...new Set(items.map((i) => String(i.productId)))];
 
   const [productsRes, tiersRes, methodRes, shipTiersRes] = await Promise.all([

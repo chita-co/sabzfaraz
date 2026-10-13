@@ -10,6 +10,7 @@ import Link from "next/link";
 import { StarRatingDisplay } from "./StarRating";
 import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
 import RelatedArticlesForProduct from "@/components/blog/RelatedArticlesForProduct";
+import BubbleTimer from "@/components/bubble/BubbleTimer";
 import type { BlogPost } from "@/types/blog";
 
 const unitLabelFa: Record<string, string> = { day: "روز", week: "هفته", month: "ماه" };
@@ -283,7 +284,7 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
                   onClick={() => setActiveImage(i)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt="" />
+                  <img src={img} alt={`${product.name} - تصویر ${i + 1}`} />
                 </button>
               ))}
             </div>
@@ -419,6 +420,11 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
                 {lowestTier ? (
                   <>
                     <div className="price-lowest">
+                      {product.flash_ends_at && (
+                      <span className="mb-1 inline-flex w-fit items-center gap-1 rounded-md bg-linear-to-l from-cyan-500 to-pink-500 px-2 py-0.5 text-xs font-bold text-white">
+                        ⚡ حباب ارزانی
+                      </span>
+                    )}
                       <div className="price-lowest-value">{lowestTier.unit_price.toLocaleString("fa-IR")} <span>تومان</span></div>
                     </div>
                     <p className="price-lowest-note">برای سفارش بالای {lowestTier.min_qty.toLocaleString("fa-IR")} عدد</p>
@@ -445,6 +451,7 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
                   <div className="price-lowest">
                     {hasDiscount && <span className="price-reference" style={{ marginLeft: 8 }}>{product.price.toLocaleString("fa-IR")}</span>}
                     <div className="price-lowest-value">{finalPrice.toLocaleString("fa-IR")} <span>تومان</span></div>
+                    <BubbleTimer endsAt={product.flash_ends_at} />
                   </div>
                 )}
               </div>
@@ -646,7 +653,7 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
               <div className="description-images-grid">
                 {product.description_images.map((img, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={img} alt="" onClick={() => window.open(img, "_blank")} />
+                  <img key={i} src={img} alt={`${product.name} - توضیحات ${i + 1}`} onClick={() => window.open(img, "_blank")} />
                 ))}
               </div>
             )}

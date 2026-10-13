@@ -11,6 +11,7 @@ import MarkOrderViewed from "@/components/admin/MarkOrderViewed";
 import ConfirmOfflinePaymentButton from "@/components/admin/ConfirmOfflinePaymentButton";
 import RejectOfflinePaymentButton from "@/components/admin/RejectOfflinePaymentButton";
 import GiftDiscountForm from "@/components/admin/GiftDiscountForm";
+import BulkMoneyPanel from "@/components/shared/BulkMoneyPanel";
 
 type OrderItem = {
   id: string;
@@ -52,6 +53,10 @@ export default async function AdminOrderDetailPage({
         return order.sep_token ? "پرداخت‌شده (درگاه پرداخت)" : "پرداخت‌شده (کیف پول)";
       case "AWAITING_CONFIRMATION":
         return "در انتظار تأیید (پرداخت آفلاین)";
+      case "PARTIAL":
+        return "پرداخت ناقص (مانده دارد)";
+      case "REFUNDED":
+        return "بازپرداخت شده";
       case "FAILED":
         return "پرداخت نشده";
       case "PENDING":
@@ -70,13 +75,20 @@ export default async function AdminOrderDetailPage({
   return (
     <div>
       <MarkOrderViewed orderId={id} />
+      {order.order_type === "BULK_ORDER" && order.bulk_request_id && (
+        <BulkMoneyPanel requestId={order.bulk_request_id} role="ADMIN" />
+      )}
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-bold text-gray-900">
           سفارش {order.order_number}
         </h1>
         <div className="flex gap-2">
           <Link
-            href={`/admin/orders/${id}/invoice`}
+            href={
+              order.order_type === "BULK_ORDER" && order.bulk_request_id
+                ? `/admin/bulk-orders/${order.bulk_request_id}/invoice-builder`
+                : `/admin/orders/${id}/invoice`
+            }
             target="_blank"
             className="admin-btn admin-btn-primary flex items-center gap-2"
           >
@@ -123,7 +135,7 @@ export default async function AdminOrderDetailPage({
               </tr>
             </thead>
             <tbody>
-              {order.items.map((item: OrderItem) => (
+              {(order.order_type === "BULK_ORDER" ? [] : order.items).map((item: OrderItem) => (
                 <tr key={item.id}>
                   <td className="flex items-center gap-2">
                     {item.product_image && (
@@ -241,11 +253,18 @@ export default async function AdminOrderDetailPage({
                   )}
               </div>
             )}
-            {isOfflinePayment && order.payment_status === "AWAITING_CONFIRMATION" && (
-              <div className="flex gap-2 mt-3">
-                <ConfirmOfflinePaymentButton orderId={order.id} />
-                <RejectOfflinePaymentButton orderId={order.id} />
-              </div>
+            {isOfflinePayment &&
+              order.payment_status === "AWAITING_CONFIRMATION" &&
+              order.order_type !== "BULK_ORDER" && (
+                <div className="flex gap-2 mt-3">
+                  <ConfirmOfflinePaymentButton orderId={order.id} />
+                  <RejectOfflinePaymentButton orderId={order.id} />
+                </div>
+              )}
+            {order.order_type === "BULK_ORDER" && (
+              <p className="text-sm text-amber-700 mt-3">
+                این سفارش جمعی است. تأیید یا رد واریزها از بخش «خلاصه‌ی مالی سفارش جمعی» در همین صفحه انجام می‌شود.
+              </p>
             )}
             {!isOfflinePayment && (
               <p className="text-sm text-gray-600 mt-2">

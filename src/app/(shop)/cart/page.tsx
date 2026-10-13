@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import CartClient from "@/components/shop/CartClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import AuroraBackground from "@/components/backgrounds/AuroraBackground";
+import BubbleCartWatcher from "@/components/bubble/BubbleCartWatcher";
 
 export default async function CartPage() {
   const supabase = await createClient();
@@ -19,6 +20,7 @@ export default async function CartPage() {
         <div className="mx-auto max-w-4xl px-4 pt-8">
           <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
         </div>
+        <BubbleCartWatcher />
         <CartClient isLoggedIn={!!user} minOrderAmount={settings?.min_order_amount ?? 500000} />
       </div>
     </>

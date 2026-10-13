@@ -1,9 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requestPayment } from "@/lib/sep";
 import { redirect } from "next/navigation";
 import { notifyAllAdmins } from "@/lib/notifications";
+import { addBulkPayment } from "@/lib/bulkOrder/orderMirror";
 
 export async function payDepositOnline(requestId: string) {
   const supabase = await createClient();
@@ -32,6 +34,16 @@ export async function payDepositOnline(requestId: string) {
   }
 
   await supabase.from("bulk_order_requests").update({ sep_token: payment.token }).eq("id", requestId);
+
+  const ledgerError = await addBulkPayment(createAdminClient(), request, {
+    kind: "DEPOSIT",
+    method: "ONLINE",
+    amount: request.deposit_amount,
+    status: "PENDING",
+    sep_token: payment.token,
+  });
+  if (ledgerError) return { error: "خطا در ثبت پرداخت: " + ledgerError };
+
   redirect(payment.url);
 }
 
@@ -40,16 +52,33 @@ export async function confirmOfflineDepositPayment(requestId: string, method: "C
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "دسترسی غیرمجاز" };
 
-  const { data: request } = await supabase.from("bulk_order_requests").select("request_number, status").eq("id", requestId).eq("user_id", user.id).single();
+  const { data: request } = await supabase.from("bulk_order_requests").select("*").eq("id", requestId).eq("user_id", user.id).single();
   if (!request) return { error: "درخواست یافت نشد." };
   if (request.status !== "SUPPLY_POSSIBLE") return { error: "این درخواست در وضعیت قابل پرداخت نیست." };
+  if (!request.deposit_amount) return { error: "مبلغ بیعانه هنوز تعیین نشده است." };
 
-  const { error } = await supabase.from("bulk_order_requests").update({
-    status: "AWAITING_PAYMENT_CONFIRMATION", deposit_payment_method: method, updated_at: new Date().toISOString(),
-  }).eq("id", requestId);
+  const ledgerError = await addBulkPayment(createAdminClient(), request, {
+    kind: "DEPOSIT",
+    method,
+    amount: request.deposit_amount,
+    status: "AWAITING_CONFIRMATION",
+  });
+  if (ledgerError) return { error: "خطا در ثبت پرداخت: " + ledgerError };
+
+  const { error } = await supabase
+    .from("bulk_order_requests")
+    .update({
+      status: "AWAITING_PAYMENT_CONFIRMATION",
+      deposit_payment_method: method,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", requestId);
   if (error) return { error: error.message };
 
-  await notifyAllAdmins("پرداخت بیعانه اعلام شد", `کاربر پرداخت بیعانه‌ی سفارش جمعی ${request.request_number} را از طریق ${method === "CARD_TO_CARD" ? "کارت به کارت" : "شبا"} اعلام کرد.`);
+  await notifyAllAdmins(
+    "پرداخت بیعانه اعلام شد",
+    `کاربر پرداخت بیعانه‌ی سفارش جمعی ${request.request_number} را از طریق ${method === "CARD_TO_CARD" ? "کارت به کارت" : "شبا"} اعلام کرد.`
+  );
 
   return { success: true };
 }

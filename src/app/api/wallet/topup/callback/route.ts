@@ -4,7 +4,8 @@ import { verifyPayment } from "@/lib/sep";
 import { creditWallet } from "@/lib/wallet/creditWallet";
 
 export async function POST(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir").replace(/\/$/, "");
   const requestId = searchParams.get("requestId");
   const formData = await request.formData();
   const refNum = formData.get("RefNum") as string | null;

@@ -9,8 +9,37 @@ import { LayoutGrid } from "lucide-react";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import DescriptionModal from "@/components/shop/DescriptionModal";
 import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
+import { createPublicClient } from "@/lib/supabase/public";
+import type { Metadata } from "next";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const { page } = await searchParams;
+  const { data: category } = await createPublicClient()
+    .from("categories")
+    .select("name, description")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!category) return {};
+  const base = `/category/${encodeURIComponent(slug)}`;
+  const pageNum = Math.max(1, Number(page) || 1);
+  return {
+    title: `خرید ${category.name} | سبزفراز`,
+    description:
+      category.description?.slice(0, 160) ||
+      `خرید آنلاین ${category.name} با بهترین قیمت و ارسال سریع از فروشگاه سبزفراز`,
+    alternates: { canonical: pageNum > 1 ? `${base}?page=${pageNum}` : base },
+  };
+}
 
 export default async function CategoryPage({
   params,

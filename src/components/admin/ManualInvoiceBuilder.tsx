@@ -21,6 +21,8 @@ export default function ManualInvoiceBuilder({
   logoUrl,
   initialNumber,
   storeEmail,
+  initialRows,
+  expectedTotal,
 }: {
   requestId: string;
   requestNumber: string;
@@ -34,10 +36,14 @@ export default function ManualInvoiceBuilder({
   initialHtml: string | null;
   initialNumber: string | null;
   storeEmail?: string | null;
+  initialRows?: { name: string; qty: number; unitPrice: number }[];
+  expectedTotal?: number | null;
 }) {
-  const [rows, setRows] = useState<Row[]>([
-    { id: crypto.randomUUID(), name: "", qty: 1, unitPrice: 0 },
-  ]);
+  const [rows, setRows] = useState<Row[]>(
+    initialRows && initialRows.length > 0
+      ? initialRows.map((r) => ({ id: crypto.randomUUID(), ...r }))
+      : [{ id: crypto.randomUUID(), name: "", qty: 1, unitPrice: 0 }]
+  );
   const [discountPercent, setDiscountPercent] = useState("0");
   const [note, setNote] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState(
@@ -148,9 +154,6 @@ export default function ManualInvoiceBuilder({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-5">
-        ساخت فاکتور دستی — سفارش جمعی {requestNumber}
-      </h1>
 
       <div className="admin-card mb-5 no-print">
         <div className="admin-form-group">
@@ -221,6 +224,12 @@ export default function ManualInvoiceBuilder({
             <input value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         </div>
+
+        {expectedTotal != null && expectedTotal !== subtotal - discountAmount && (
+          <p className="text-xs text-red-600 mt-3">
+            مبلغ کل نهایی ثبت‌شده برای این سفارش {expectedTotal.toLocaleString("fa-IR")} تومان است، ولی جمع این فاکتور {(subtotal - discountAmount).toLocaleString("fa-IR")} تومان است. قبل از ذخیره، اقلام و قیمت‌ها را کنترل کنید.
+          </p>
+        )}
 
         <p className="text-sm font-bold text-gray-800 mt-3">
           جمع نهایی: {(subtotal - discountAmount).toLocaleString("fa-IR")} تومان

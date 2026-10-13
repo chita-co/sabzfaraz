@@ -83,9 +83,16 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
                     <Plus size={14} />
                   </button>
                 </div>
-                <span className="font-bold text-gray-900 text-sm">
-                  {((item.discountPrice ?? item.price) * item.quantity).toLocaleString("fa-IR")} تومان
-                </span>
+                 <div className="flex flex-col items-end gap-0.5">
+                  {item.flashEndsAt && (
+                    <span className="inline-flex w-fit items-center gap-1 rounded-md bg-linear-to-l from-cyan-500 to-pink-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      ⚡ حباب ارزانی
+                    </span>
+                  )}
+                  <span className="font-bold text-gray-900 text-sm">
+                    {((item.discountPrice ?? item.price) * item.quantity).toLocaleString("fa-IR")} تومان
+                  </span>
+                </div>
               </div>
             </div>
             <button

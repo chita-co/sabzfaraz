@@ -27,6 +27,8 @@ interface BulkOrderRequest {
   bank_account_id?: string | null;
   rejection_reason?: string | null;
   deposit_payment_method?: string | null;
+  shipping_name?: string | null;
+  shipping_cost?: number | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -47,6 +49,10 @@ export default function BulkOrderAdminDetail({
   const [depositAmount, setDepositAmount] = useState(request.deposit_amount?.toString() ?? "");
   const [bankAccountId, setBankAccountId] = useState(request.bank_account_id ?? bankAccounts[0]?.id ?? "");
   const [rejectionReason, setRejectionReason] = useState(request.rejection_reason ?? "");
+  const itemsTotal =
+    storeItems.reduce((s, it) => s + it.unitPrice * it.quantity, 0) +
+    marketItems.reduce((s, it) => s + (it.finalUnitPrice ?? 0) * it.quantity, 0);
+  const shippingCost = request.shipping_cost ?? 0;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
@@ -143,6 +149,26 @@ export default function BulkOrderAdminDetail({
           </div>
         ))}
         <button onClick={handleSaveItems} disabled={saving} className="admin-btn admin-btn-primary flex items-center gap-2 mt-3"><Save size={14} /> ذخیره اقلام</button>
+      </div>
+
+      <div className="admin-card mb-5">
+        <h2 className="font-bold text-gray-800 mb-3">نحوه‌ی ارسال و مبلغ پیشنهادی</h2>
+        <p className="text-sm mb-2">
+          نحوه‌ی ارسال انتخابی مشتری: <b>{request.shipping_name ?? "—"}</b> — هزینه: <b>{shippingCost.toLocaleString("fa-IR")} تومان</b>
+        </p>
+        <p className="text-sm mb-3">
+          جمع اقلام (بر اساس قیمت‌های ثبت‌شده): <b>{itemsTotal.toLocaleString("fa-IR")} تومان</b>
+        </p>
+        <p className="text-xs text-gray-500 mb-3">
+          قیمت نهایی اقلام بازار را در جدول بالا وارد کنید. هزینه‌ی بسته‌بندی را خودتان به مبلغ اضافه کنید.
+        </p>
+        <button
+          type="button"
+          onClick={() => setDepositAmount(String(itemsTotal + shippingCost))}
+          className="admin-btn admin-btn-secondary"
+        >
+          پر کردن بیعانه با جمع اقلام + ارسال
+        </button>
       </div>
 
       <div className="admin-card mb-5">

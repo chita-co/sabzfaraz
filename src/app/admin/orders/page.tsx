@@ -45,6 +45,7 @@ type OrderRow = {
   total_amount: number;
   status: string;
   payment_status: string;
+  order_type?: string | null;
   payment_method: string | null;
   sep_token: string | null;
   created_at: string;
@@ -146,6 +147,10 @@ export default async function AdminOrdersPage({
                 <td>
                   {o.payment_status === "PAID" ? (
                     <span className="text-green-600 text-xs font-medium">{getPaidMethodLabel(o)}</span>
+                  ) : o.payment_status === "PARTIAL" ? (
+                    <span className="text-orange-600 text-xs font-medium">پرداخت ناقص (مانده دارد)</span>
+                  ) : o.payment_status === "REFUNDED" ? (
+                    <span className="text-blue-600 text-xs font-medium">بازپرداخت شده</span>
                   ) : o.payment_status === "FAILED" ? (
                     <span className="text-red-600 text-xs font-medium">پرداخت نشده</span>
                   ) : o.payment_status === "AWAITING_CONFIRMATION" ? (

@@ -6,8 +6,11 @@ export async function getLatestPrices(productIds: string[]) {
   if (productIds.length === 0) return [];
   const admin = createAdminClient();
 
+  // حباب‌های منقضی‌شده قبل از خواندن قیمت‌ها برگردانده می‌شوند
+  await admin.rpc("refresh_bubble_deals");
+
   const [productsRes, tiersRes] = await Promise.all([
-    admin.from("products").select("id, price, discount_price, stock").in("id", productIds),
+    admin.from("products").select("id, price, discount_price, stock, flash_ends_at").in("id", productIds),
     admin
       .from("product_quantity_tiers")
       .select("product_id, min_qty, max_qty, unit_price")
@@ -23,6 +26,7 @@ export async function getLatestPrices(productIds: string[]) {
     price: p.price,
     discountPrice: p.discount_price,
     stock: p.stock,
+    flashEndsAt: (p.flash_ends_at as string | null) ?? null,
     // اگر خواندن قیمت پلکانی خطا داد undefined می‌فرستیم تا قیمت‌های پلکانی قبلی سبد پاک نشوند
     quantityTiers: tiersOk
       ? tiers

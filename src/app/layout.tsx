@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   ),
   title: "سبزفراز | فروشگاه اینترنتی",
   description: "خرید آنلاین انواع کالا از سبزفراز",
-  alternates: { canonical: "/" },
   manifest: "/site.webmanifest",
   icons: {
     icon: [

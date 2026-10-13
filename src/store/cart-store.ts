@@ -30,6 +30,7 @@ export interface CartItem {
   cartItemId?: string | null;
   quantityTiers?: CartQuantityTier[];
   baseDiscountPrice?: number | null;
+  flashEndsAt?: string | null;
 }
 
 interface CartState {
@@ -41,7 +42,7 @@ interface CartState {
   restoreItems: (items: CartItem[]) => void;
   orderNote: string;
   setOrderNote: (note: string) => void;
-  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null; quantityTiers?: CartQuantityTier[] }[]) => void;
+  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null; quantityTiers?: CartQuantityTier[]; flashEndsAt?: string | null }[]) => void;
   setCartItemIds: (mapping: { productId: string; color: string | null; size: string | null; id: string }[]) => void;
   removeItemById: (id: string) => void;
 }
@@ -112,6 +113,7 @@ export const useCartStore = create<CartState>()(
             price: u.price,
             discountPrice: u.discountPrice,
             baseDiscountPrice: u.discountPrice,
+            flashEndsAt: u.flashEndsAt !== undefined ? u.flashEndsAt : i.flashEndsAt,
             quantityTiers: u.quantityTiers !== undefined ? u.quantityTiers : i.quantityTiers,
             stock: newStock,
             quantity: newStock !== null ? Math.min(i.quantity, Math.max(newStock, 0)) : i.quantity,
@@ -120,6 +122,7 @@ export const useCartStore = create<CartState>()(
             updated.price === i.price &&
             updated.discountPrice === i.discountPrice &&
             updated.baseDiscountPrice === i.baseDiscountPrice &&
+            updated.flashEndsAt === i.flashEndsAt &&
             updated.stock === i.stock &&
             updated.quantity === i.quantity &&
             JSON.stringify(updated.quantityTiers ?? null) === JSON.stringify(i.quantityTiers ?? null);

@@ -18,6 +18,7 @@ export default function ProductCard({
     ? Math.round(100 - (product.discount_price! / product.price) * 100)
     : 0;
   const isOutOfStock = product.stock !== null && product.stock <= 0;
+ const isBubble = !!product.flash_ends_at;
 
   return (
     <Link
@@ -80,14 +81,21 @@ export default function ProductCard({
             {product.name_en}
           </p>
         )}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {hasDiscount && (
-              <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
+         <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col items-start gap-0.5">
+            {isBubble && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-linear-to-l from-cyan-500 to-pink-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                ⚡ حباب ارزانی
+              </span>
             )}
-            <span className={hasDiscount ? "text-[15px] font-extrabold text-red-600" : "font-bold text-gray-900"}>
-              {finalPrice.toLocaleString("fa-IR")} تومان
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {hasDiscount && (
+                <span className="text-xs text-gray-400 line-through">{product.price.toLocaleString("fa-IR")}</span>
+              )}
+              <span className={hasDiscount ? "text-[15px] font-extrabold text-red-600" : "font-bold text-gray-900"}>
+                {finalPrice.toLocaleString("fa-IR")} تومان
+              </span>
+            </div>
           </div>
           <QuickAddButton product={product} />
         </div>

@@ -63,6 +63,7 @@ export default function HeaderNav({
         children: c.children.map((sub) => ({ label: sub.name, href: `/category/${sub.slug}` })),
       })),
     },
+    { type: "link", label: "حباب ارزانی", href: "/bubble-deals" },
     ...(auctionEnabled ? [{ type: "link" as const, label: auctionLabel, href: "/auctions" }] : []),
     { type: "link", label: "آنباکس", href: "/unboxing" },
     { type: "link", label: "گالری", href: "/gallery" },
@@ -179,6 +180,9 @@ export default function HeaderNav({
               {auctionLabel}
             </Link>
           )}
+          <Link href="/bubble-deals" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
+            ⚡ حباب ارزانی
+          </Link>
           <Link href="/unboxing" className="mobile-drawer-extra-link" onClick={() => setCategoryDrawerOpen(false)}>
             <Clapperboard size={14} /> آنباکس
           </Link>

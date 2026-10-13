@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import BulkOrderAdminDetail from "@/components/admin/BulkOrderAdminDetail";
+import BulkMoneyPanel from "@/components/shared/BulkMoneyPanel";
 
 export default async function AdminBulkOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,5 +13,10 @@ export default async function AdminBulkOrderDetailPage({ params }: { params: Pro
   ]);
   if (!request) notFound();
 
-  return <BulkOrderAdminDetail request={request} bankAccounts={bankAccounts ?? []} />;
+  return (
+    <>
+      <BulkOrderAdminDetail request={request} bankAccounts={bankAccounts ?? []} />
+      <BulkMoneyPanel requestId={id} role="ADMIN" />
+    </>
+  );
 }

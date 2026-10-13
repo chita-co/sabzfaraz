@@ -43,14 +43,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       .contains("previous_slugs", [decodedSlug])
       .eq("is_active", true)
       .maybeSingle();
-    if (moved?.slug && moved.slug !== decodedSlug) permanentRedirect(`/products/${moved.slug}`);
+    if (moved?.slug && moved.slug !== decodedSlug) permanentRedirect(`/products/${encodeURIComponent(moved.slug)}`);
     notFound();
   }
   return {
-    title: product.meta_title || `${product.name} | سبزفراز`,
+    title: product.meta_title || `${product.name.length > 55 ? product.name.slice(0, 55).trim() + "…" : product.name} | سبزفراز`,
     description: (product.meta_description || product.description)?.slice(0, 160),
     openGraph: { images: product.images?.[0] ? [product.images[0]] : [] },
-    ...(product.canonical_url ? { alternates: { canonical: product.canonical_url } } : {}),
+    alternates: {
+      canonical: product.canonical_url || `/products/${encodeURIComponent(product.slug)}`,
+    },
   };
 }
 
@@ -96,7 +98,7 @@ export default async function ProductPage({
     .contains("previous_slugs", [decodedSlug])
     .eq("is_active", true)
     .maybeSingle();
-    if (moved?.slug && moved.slug !== decodedSlug) permanentRedirect(`/products/${moved.slug}`);
+    if (moved?.slug && moved.slug !== decodedSlug) permanentRedirect(`/products/${encodeURIComponent(moved.slug)}`);
     notFound();
   }
 
@@ -182,7 +184,7 @@ export default async function ProductPage({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <meta property="product_title" content={product.name} />
-      <meta property="product_price" content={String(product.price)} />
+      <meta property="product_price" content={String(product.discount_price && product.discount_price < product.price ? product.discount_price : product.price)} />
       <meta property="product_id" content={String(product.sku || product.id)} />
       <meta property="product_available" content={imAvailable} />
       <meta property="product_off" content={String(imOff)} />

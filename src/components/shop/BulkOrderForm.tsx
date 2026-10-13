@@ -4,17 +4,32 @@ import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Search, ShoppingBag, PackageSearch } from "lucide-react";
 import DescriptionModal from "./DescriptionModal";
 import { BULK_ORDER_GUIDE_TITLE, BULK_ORDER_GUIDE_TEXT } from "@/lib/bulkOrderGuide";
-import { searchStoreProducts, submitBulkOrderRequest, type StoreItemInput, type MarketItemInput } from "@/app/(shop)/bulk-order/actions";
+import {
+  searchStoreProducts,
+  submitBulkOrderRequest,
+  listBulkShippingMethods,
+  quoteBulkShipping,
+  type StoreItemInput,
+  type MarketItemInput,
+  type ShippingQuote,
+} from "@/app/(shop)/bulk-order/actions";
 
 interface StoreRow extends StoreItemInput { id: string; }
 interface MarketRow extends MarketItemInput { id: string; }
 interface SearchResult { id: string; name: string; unitPrice: number; }
 interface AddressRow { id: string; full_name: string; phone: string; province: string; city: string; address_line: string; }
+interface ShippingMethod { id: string; name: string; }
 
 export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }) {
   const [storeItems, setStoreItems] = useState<StoreRow[]>([]);
-  const [marketItems, setMarketItems] = useState<MarketRow[]>([{ id: crypto.randomUUID(), name: "", quantity: 1, minPrice: null, maxPrice: null }]);
+  const [marketItems, setMarketItems] = useState<MarketRow[]>([
+    { id: crypto.randomUUID(), name: "", quantity: 1, minPrice: null, maxPrice: null, weightGrams: null },
+  ]);
   const [addressId, setAddressId] = useState(addresses[0]?.id ?? "");
+
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [shippingMethodId, setShippingMethodId] = useState("");
+  const [quote, setQuote] = useState<ShippingQuote | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -26,12 +41,29 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  // به‌روزرسانی ref با آخرین مقدار searchQuery در هر رندر
+  useEffect(() => {
+    listBulkShippingMethods().then((methods) => {
+      setShippingMethods(methods);
+      setShippingMethodId((prev) => prev || methods[0]?.id || "");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!shippingMethodId) return;
+    let cancelled = false;
+    quoteBulkShipping(shippingMethodId, {
+      storeItems: storeItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      marketItems: marketItems.map((i) => ({ quantity: i.quantity, weightGrams: i.weightGrams })),
+    }).then((q) => {
+      if (!cancelled) setQuote(q);
+    });
+    return () => { cancelled = true; };
+  }, [shippingMethodId, storeItems, marketItems]);
+
   useEffect(() => {
     latestQueryRef.current = searchQuery;
   });
 
-  // اثر جستجوی debounced با استفاده از setTimeout که setState را فقط در callback انجام می‌دهد
   useEffect(() => {
     const handler = setTimeout(() => {
       const query = latestQueryRef.current;
@@ -41,7 +73,6 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
         searchStoreProducts(query).then((results) => setSearchResults(results));
       }
     }, 350);
-
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
@@ -56,20 +87,27 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
   }
   function removeStoreItem(id: string) { setStoreItems((prev) => prev.filter((r) => r.id !== id)); }
 
-  function addMarketRow() { setMarketItems((prev) => [...prev, { id: crypto.randomUUID(), name: "", quantity: 1, minPrice: null, maxPrice: null }]); }
+  function addMarketRow() {
+    setMarketItems((prev) => [...prev, { id: crypto.randomUUID(), name: "", quantity: 1, minPrice: null, maxPrice: null, weightGrams: null }]);
+  }
   function removeMarketRow(id: string) { setMarketItems((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev)); }
   function updateMarketRow(id: string, field: keyof MarketItemInput, value: string | number | null) {
     setMarketItems((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   }
 
+  const canSubmit = !!quote && !quote.error && !quote.missingWeight && !!shippingMethodId;
+
   async function handleSubmit() {
     setError(null);
     if (!addressId) { setError("لطفاً یک آدرس تحویل انتخاب کنید."); return; }
+    if (!shippingMethodId) { setError("لطفاً نحوه‌ی ارسال را انتخاب کنید."); return; }
+    if (!canSubmit) { setError("وزن تقریبی همه‌ی کالاهای بازار را وارد کنید تا هزینه‌ی ارسال محاسبه شود."); return; }
     setSubmitting(true);
     const result = await submitBulkOrderRequest(
       storeItems.map(({ productId, productName, quantity, unitPrice }) => ({ productId, productName, quantity, unitPrice })),
-      marketItems.map(({ name, quantity, minPrice, maxPrice }) => ({ name, quantity, minPrice, maxPrice })),
-      addressId
+      marketItems.map(({ name, quantity, minPrice, maxPrice, weightGrams }) => ({ name, quantity, minPrice, maxPrice, weightGrams })),
+      addressId,
+      shippingMethodId
     );
     if (result?.error) { setError(result.error); setSubmitting(false); }
     else setSubmitted(true);
@@ -136,21 +174,10 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
             {storeItems.map((it) => (
               <div key={it.id} className="bulk-item-row">
                 <div className="bulk-item-name">{it.productName}</div>
-                <div className="bulk-item-field">
-                  <span>تعداد</span>
-                  <b>{it.quantity.toLocaleString("fa-IR")}</b>
-                </div>
-                <div className="bulk-item-field">
-                  <span>قیمت واحد</span>
-                  <b>{it.unitPrice.toLocaleString("fa-IR")} تومان</b>
-                </div>
-                <div className="bulk-item-field">
-                  <span>جمع</span>
-                  <b>{(it.quantity * it.unitPrice).toLocaleString("fa-IR")} تومان</b>
-                </div>
-                <button onClick={() => removeStoreItem(it.id)} className="admin-btn admin-btn-danger" type="button">
-                  <Trash2 size={13} />
-                </button>
+                <div className="bulk-item-field"><span>تعداد</span><b>{it.quantity.toLocaleString("fa-IR")}</b></div>
+                <div className="bulk-item-field"><span>قیمت واحد</span><b>{it.unitPrice.toLocaleString("fa-IR")} تومان</b></div>
+                <div className="bulk-item-field"><span>جمع</span><b>{(it.quantity * it.unitPrice).toLocaleString("fa-IR")} تومان</b></div>
+                <button onClick={() => removeStoreItem(it.id)} className="admin-btn admin-btn-danger" type="button"><Trash2 size={13} /></button>
               </div>
             ))}
           </div>
@@ -165,10 +192,11 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
         <div className="space-y-3">
           {marketItems.map((item) => (
             <div key={item.id} className="grid grid-cols-12 gap-2 items-start border-b border-gray-100 pb-3">
-              <input type="text" placeholder="نام کالا *" value={item.name} onChange={(e) => updateMarketRow(item.id, "name", e.target.value)} className="col-span-4 admin-input" />
+              <input type="text" placeholder="نام کالا *" value={item.name} onChange={(e) => updateMarketRow(item.id, "name", e.target.value)} className="col-span-3 admin-input" />
               <input type="number" placeholder="تعداد *" min={1} value={item.quantity} onChange={(e) => updateMarketRow(item.id, "quantity", Number(e.target.value))} className="col-span-2 admin-input" />
+              <input type="number" placeholder="وزن هر عدد (گرم) *" min={1} value={item.weightGrams ?? ""} onChange={(e) => updateMarketRow(item.id, "weightGrams", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />
               <input type="number" placeholder="از قیمت (اختیاری)" value={item.minPrice ?? ""} onChange={(e) => updateMarketRow(item.id, "minPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />
-              <input type="number" placeholder="تا قیمت (اختیاری)" value={item.maxPrice ?? ""} onChange={(e) => updateMarketRow(item.id, "maxPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-3 admin-input" />
+              <input type="number" placeholder="تا قیمت (اختیاری)" value={item.maxPrice ?? ""} onChange={(e) => updateMarketRow(item.id, "maxPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />
               <button onClick={() => removeMarketRow(item.id)} className="col-span-1 admin-btn admin-btn-danger" type="button"><Trash2 size={13} /></button>
             </div>
           ))}
@@ -191,6 +219,35 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+        <h2 className="font-bold text-gray-800 mb-4">نحوه‌ی ارسال</h2>
+        {shippingMethods.length === 0 ? (
+          <p className="text-sm text-gray-500">در حال حاضر نحوه‌ی ارسالی فعال نیست.</p>
+        ) : (
+          <div className="space-y-2">
+            {shippingMethods.map((m) => (
+              <label key={m.id} className={`flex items-center justify-between gap-3 rounded-lg border p-3 cursor-pointer ${shippingMethodId === m.id ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+                <span className="flex items-center gap-3 text-sm text-gray-800">
+                  <input type="radio" checked={shippingMethodId === m.id} onChange={() => setShippingMethodId(m.id)} />
+                  {m.name}
+                </span>
+                {shippingMethodId === m.id && quote && !quote.error && !quote.missingWeight && (
+                  <span className="text-sm font-bold text-gray-800">{quote.cost.toLocaleString("fa-IR")} تومان</span>
+                )}
+              </label>
+            ))}
+          </div>
+        )}
+        {quote && quote.error && <p className="text-red-500 text-xs mt-3">{quote.error}</p>}
+        {quote && !quote.error && quote.missingWeight && (
+          <p className="text-amber-600 text-xs mt-3">وزن تقریبی همه‌ی کالاهای بازار را وارد کنید تا هزینه‌ی ارسال محاسبه شود.</p>
+        )}
+        {quote && !quote.error && !quote.missingWeight && (
+          <p className="text-xs text-gray-500 mt-3">وزن کل محاسبه‌شده: {Math.round(quote.weight).toLocaleString("fa-IR")} گرم</p>
+        )}
+        <p className="text-xs text-gray-500 mt-2">هزینه‌ی بسته‌بندی همراه قیمت نهایی توسط کارشناسان اعلام می‌شود.</p>
       </div>
 
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}

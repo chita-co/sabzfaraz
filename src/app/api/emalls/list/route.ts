@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 const ALLOWED_ITEM_PER_PAGE = [10, 20, 50, 100];
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://sabzfaraz.ir").replace(/\/$/, "");
 
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const rawItemPerPage = Number(searchParams.get("item_per_page")) || 50;
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
       category: categoryName,
       image: p.images?.[0] ?? "",
       is_available: p.stock === null || p.stock > 0,
-      url: `${origin}/products/${p.slug}`,
+      url: `${origin}/products/${encodeURIComponent(p.slug)}`,
       color,
       guarantee: null,
     };
