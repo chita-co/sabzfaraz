@@ -3,6 +3,7 @@
 import Aurora from "@/components/Aurora";
 
 export default function AuroraBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: -1 }}>
       <Aurora

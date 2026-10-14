@@ -3,15 +3,20 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { applyBubbleDeal, endBubbleDeal } from "@/app/admin/bubble-deals/actions";
+import { applyBubbleDeal, endBubbleDeal, updateBubbleDeal } from "@/app/admin/bubble-deals/actions";
 import { formatBubbleRemaining, toEnDigits } from "@/lib/bubble/format";
 
 export type AdminProduct = {
   id: string;
   name: string;
+  name_en: string | null;
+  slug: string;
   images: string[] | null;
   price: number;
+  stock: number | null;
+  flash_stock: number | null;
   category_id: string | null;
+  is_active: boolean;
   discount_price: number | null;
   flash_price: number | null;
   flash_ends_at: string | null;
@@ -64,6 +69,15 @@ function collectDescendants(cats: AdminCategory[], rootId: string) {
   return set;
 }
 
+function normalizeSearch(s: string) {
+  return toEnDigits(s)
+    .toLowerCase()
+    .replace(/[\u200c\u200d\u200e\u200f\u00a0\u064b-\u065f]/g, "")
+    .replace(/\u064A/g, "\u06CC")
+    .replace(/\u0643/g, "\u06A9")
+    .replace(/[\s\-_.\/\\()\[\]+&،,]+/g, "");
+}
+
 const digitsOnly = (s: string) => Number(toEnDigits(s).replace(/\D/g, "")) || 0;
 
 export default function BubbleDealsAdmin({
@@ -82,6 +96,7 @@ export default function BubbleDealsAdmin({
   const [presetMinutes, setPresetMinutes] = useState(60);
   const [manualHours, setManualHours] = useState("");
   const [manualMinutes, setManualMinutes] = useState("");
+  const [qtyText, setQtyText] = useState("");
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [now, setNow] = useState<number | null>(null);
 
@@ -97,7 +112,7 @@ export default function BubbleDealsAdmin({
     [categories, categoryId]
   );
 
-  const q = search.trim().toLowerCase();
+  const q = normalizeSearch(search);
 
   const candidates = useMemo(
     () =>
@@ -105,28 +120,37 @@ export default function BubbleDealsAdmin({
         (p) =>
           !p.flash_applied &&
           (!scope || (p.category_id !== null && scope.has(p.category_id))) &&
-          (!q || p.name.toLowerCase().includes(q))
+          (!q ||
+            normalizeSearch(p.name).includes(q) ||
+            normalizeSearch(p.name_en ?? "").includes(q) ||
+            normalizeSearch(p.slug).includes(q))
       ),
     [products, scope, q]
   );
 
-  const shown = candidates.slice(0, 80);
+  const shown = candidates.slice(0, 300);
   const active = products.filter((p) => p.flash_applied);
   const selected = products.find((p) => p.id === selectedId) ?? null;
 
   const price = digitsOnly(priceText);
+  const qty = digitsOnly(qtyText);
   const manualTotal = digitsOnly(manualHours) * 60 + digitsOnly(manualMinutes);
   const minutes = manualTotal > 0 ? manualTotal : presetMinutes;
 
   function submit() {
     setMessage(null);
+    if (selected?.flash_applied) return saveEdit();
     if (!selected) return setMessage({ type: "err", text: "ابتدا یک محصول انتخاب کنید." });
     if (price <= 0) return setMessage({ type: "err", text: "قیمت حبابی را وارد کنید." });
     if (price >= selected.price) return setMessage({ type: "err", text: "قیمت حبابی باید کمتر از قیمت اصلی باشد." });
+    if (qty <= 0) return setMessage({ type: "err", text: "تعداد حباب را وارد کنید." });
+    if (selected.stock !== null && qty > selected.stock) {
+      return setMessage({ type: "err", text: `تعداد حباب بیشتر از موجودی کل (${selected.stock}) است.` });
+    }
     if (minutes < 5) return setMessage({ type: "err", text: "حداقل مدت تایمر ۵ دقیقه است." });
 
     startTransition(async () => {
-      const res = await applyBubbleDeal(selected.id, price, minutes);
+      const res = await applyBubbleDeal(selected.id, price, minutes, qty);
       if ("error" in res) {
         setMessage({ type: "err", text: res.error });
         return;
@@ -134,6 +158,7 @@ export default function BubbleDealsAdmin({
       setMessage({ type: "ok", text: "حباب ارزانی ثبت شد و محصول به صفحه حباب ارزانی اضافه شد." });
       setSelectedId(null);
       setPriceText("");
+      setQtyText("");
       setManualHours("");
       setManualMinutes("");
       router.refresh();
@@ -144,6 +169,35 @@ export default function BubbleDealsAdmin({
     if (!window.confirm("حباب ارزانی این محصول زودتر پایان یابد؟ قیمت اصلی برمی‌گردد.")) return;
     startTransition(async () => {
       await endBubbleDeal(id);
+      router.refresh();
+    });
+  }
+
+  function startEdit(p: AdminProduct) {
+    setMessage(null);
+    setSelectedId(p.id);
+    setPriceText((p.flash_price ?? 0).toLocaleString("en-US"));
+    setQtyText(String(p.flash_stock ?? ""));
+  }
+
+  function saveEdit() {
+    if (!selected) return;
+    if (price <= 0) return setMessage({ type: "err", text: "قیمت حبابی را وارد کنید." });
+    if (price >= selected.price) return setMessage({ type: "err", text: "قیمت حبابی باید کمتر از قیمت اصلی باشد." });
+    if (qty <= 0) return setMessage({ type: "err", text: "تعداد باقی‌مانده را وارد کنید." });
+    if (selected.stock !== null && qty > selected.stock) {
+      return setMessage({ type: "err", text: `تعداد بیشتر از موجودی کل (${selected.stock}) است.` });
+    }
+    startTransition(async () => {
+      const res = await updateBubbleDeal(selected.id, price, qty);
+      if ("error" in res) {
+        setMessage({ type: "err", text: res.error });
+        return;
+      }
+      setMessage({ type: "ok", text: "ویرایش ذخیره شد. تایمر بدون تغییر ادامه دارد." });
+      setSelectedId(null);
+      setPriceText("");
+      setQtyText("");
       router.refresh();
     });
   }
@@ -179,7 +233,7 @@ export default function BubbleDealsAdmin({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="جستجوی نام محصول..."
+            placeholder="جستجوی نام محصول (فارسی یا انگلیسی)..."
             className="w-full rounded-lg border px-3 py-2"
           />
 
@@ -214,8 +268,9 @@ export default function BubbleDealsAdmin({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className={`truncate ${big ? "text-base font-semibold" : "text-sm"}`}>{p.name}</p>
+                    {!p.is_active && <span className="text-[10px] text-red-600">غیرفعال</span>}
                     <p className="text-xs text-gray-500">
-                      {p.category_id ? categoryNames.get(p.category_id) : ""} · {p.price.toLocaleString("fa-IR")} تومان
+                      {p.category_id ? categoryNames.get(p.category_id) : ""} · {p.price.toLocaleString("fa-IR")} تومان · موجودی: {p.stock === null ? "نامحدود" : p.stock.toLocaleString("fa-IR")}
                     </p>
                   </div>
                 </button>
@@ -238,6 +293,20 @@ export default function BubbleDealsAdmin({
                 </div>
               </div>
 
+              <p className="text-sm">
+                موجودی کل محصول: <b>{selected.stock === null ? "نامحدود" : selected.stock.toLocaleString("fa-IR")}</b>
+              </p>
+              <label className="block text-sm">
+                {selected.flash_applied ? "تعداد باقی‌مانده‌ی حباب" : "تعداد برای حباب ارزانی"}
+                <input
+                  inputMode="numeric"
+                  value={qtyText}
+                  onChange={(e) => setQtyText(toEnDigits(e.target.value).replace(/\D/g, ""))}
+                  placeholder="مثلاً ۵"
+                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                />
+              </label>
+
               <label className="block text-sm">
                 قیمت حبابی (تومان)
                 <input
@@ -255,6 +324,7 @@ export default function BubbleDealsAdmin({
                 />
               </label>
 
+              {!selected.flash_applied && (
               <div className="space-y-2 text-sm">
                 <p className="font-semibold">مدت تایمر</p>
                 <select
@@ -298,6 +368,7 @@ export default function BubbleDealsAdmin({
                   {manualTotal > 0 ? " (زمان دستی فعال است)" : ""}
                 </p>
               </div>
+              )}
 
               <button
                 type="button"
@@ -305,7 +376,7 @@ export default function BubbleDealsAdmin({
                 onClick={submit}
                 className="w-full rounded-xl bg-linear-to-l from-cyan-500 to-pink-500 py-2.5 font-bold text-white disabled:opacity-50"
               >
-                {isPending ? "در حال ثبت..." : "ثبت حباب ارزانی"}
+                {isPending ? "در حال ثبت..." : selected.flash_applied ? "ذخیره ویرایش" : "ثبت حباب ارزانی"}
               </button>
             </div>
           )}
@@ -342,7 +413,18 @@ export default function BubbleDealsAdmin({
                       ? formatBubbleRemaining(remaining)
                       : "تمام شد (با رفرش پاک می‌شود)"}
                   </p>
+                   <p className="text-xs">
+                    باقی‌مانده‌ی حباب: <b>{(p.flash_stock ?? 0).toLocaleString("fa-IR")}</b> عدد
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => startEdit(p)}
+                  className="rounded-lg bg-cyan-50 px-3 py-1.5 text-xs text-cyan-700"
+                >
+                  ویرایش
+                </button>
                 <button
                   type="button"
                   disabled={isPending}

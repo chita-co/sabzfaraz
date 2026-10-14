@@ -8,6 +8,7 @@ import { fetchImageAsDataUriServer } from "@/lib/fetchImageAsDataUri.server";
 type InvoiceItem = {
   id: string;
   product_name: string;
+  is_bubble_deal?: boolean;
   selected_color: string | null;
   selected_size: string | null;
   quantity: number;
@@ -68,7 +69,7 @@ export default async function InvoicePage({
     buyerAddress: `${order.address?.province ?? ""}، ${order.address?.city ?? ""}، ${order.address?.address_line ?? ""}`,
     buyerPostalCode: order.address?.postal_code ?? undefined,
     items: (order.items as InvoiceItem[]).map((i) => ({
-      name: i.product_name,
+      name: i.product_name + (i.is_bubble_deal ? " (حباب ارزانی)" : ""),
       variant: [i.selected_color, i.selected_size].filter(Boolean).join(" / ") || undefined,
       quantity: i.quantity,
       unitPrice: i.price,

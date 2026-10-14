@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
 
 export interface CartQuantityTier {
   min_qty: number;
@@ -31,6 +32,10 @@ export interface CartItem {
   quantityTiers?: CartQuantityTier[];
   baseDiscountPrice?: number | null;
   flashEndsAt?: string | null;
+  isBubble?: boolean;
+  flashPrice?: number | null;
+  flashStock?: number | null;
+  regularDiscount?: number | null;
 }
 
 interface CartState {
@@ -42,7 +47,7 @@ interface CartState {
   restoreItems: (items: CartItem[]) => void;
   orderNote: string;
   setOrderNote: (note: string) => void;
-  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null; quantityTiers?: CartQuantityTier[]; flashEndsAt?: string | null }[]) => void;
+  syncPrices: (updates: { productId: string; price: number; discountPrice: number | null; stock: number | null; quantityTiers?: CartQuantityTier[]; flashEndsAt?: string | null; flashPrice?: number | null; flashStock?: number | null; regularDiscount?: number | null }[]) => void;
   setCartItemIds: (mapping: { productId: string; color: string | null; size: string | null; id: string }[]) => void;
   removeItemById: (id: string) => void;
 }
@@ -77,6 +82,9 @@ export const useCartStore = create<CartState>()(
                     quantity: Math.min(i.quantity + item.quantity, i.stock ?? Infinity),
                     quantityTiers: item.quantityTiers ?? i.quantityTiers,
                     baseDiscountPrice: item.baseDiscountPrice !== undefined ? item.baseDiscountPrice : i.baseDiscountPrice,
+                    flashPrice: item.flashPrice !== undefined ? item.flashPrice : i.flashPrice,
+                    flashStock: item.flashStock !== undefined ? item.flashStock : i.flashStock,
+                    regularDiscount: item.regularDiscount !== undefined ? item.regularDiscount : i.regularDiscount,
                   })
                 : i
             ),
@@ -112,7 +120,10 @@ export const useCartStore = create<CartState>()(
             ...i,
             price: u.price,
             discountPrice: u.discountPrice,
-            baseDiscountPrice: u.discountPrice,
+            baseDiscountPrice: u.regularDiscount !== undefined ? u.regularDiscount : u.discountPrice,
+            flashPrice: u.flashPrice !== undefined ? u.flashPrice : i.flashPrice,
+            flashStock: u.flashStock !== undefined ? u.flashStock : i.flashStock,
+            regularDiscount: u.regularDiscount !== undefined ? u.regularDiscount : i.regularDiscount,
             flashEndsAt: u.flashEndsAt !== undefined ? u.flashEndsAt : i.flashEndsAt,
             quantityTiers: u.quantityTiers !== undefined ? u.quantityTiers : i.quantityTiers,
             stock: newStock,
@@ -123,6 +134,9 @@ export const useCartStore = create<CartState>()(
             updated.discountPrice === i.discountPrice &&
             updated.baseDiscountPrice === i.baseDiscountPrice &&
             updated.flashEndsAt === i.flashEndsAt &&
+            updated.flashPrice === i.flashPrice &&
+            updated.flashStock === i.flashStock &&
+            updated.regularDiscount === i.regularDiscount &&
             updated.stock === i.stock &&
             updated.quantity === i.quantity &&
             JSON.stringify(updated.quantityTiers ?? null) === JSON.stringify(i.quantityTiers ?? null);
@@ -155,7 +169,7 @@ export const useCartStore = create<CartState>()(
 export function useCartTotals() {
   const items = useCartStore((s) => s.items);
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-  const totalPrice = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => sum + cartItemTotal(i), 0);
   return { totalItems, totalPrice };
 }
 

@@ -29,6 +29,8 @@ import PartnerAdsGrid from "@/components/shop/PartnerAdsGrid"; // آیتم ۵ - 
 import PromoAdsGrid from "@/components/shop/PromoAdsGrid";
 import PartnerProductRows from "@/components/shop/PartnerProductRows";
 import PartnerBioAccordion from "@/components/shop/PartnerBioAccordion";
+import BubbleHomeRow from "@/components/bubble/BubbleHomeRow";
+import { getHomeBubbleItems } from "@/lib/cache/bubbleData";
 
 const PRODUCT_CARD_FIELDS = "id, name, slug, price, discount_price, stock, images, is_stock, name_en, rating_avg, rating_count";
 
@@ -102,6 +104,9 @@ export default async function HomePage() {
     supabase.from("homepage_partner_feature").select("*").eq("id", 1).single(),
     supabase.from("promo_ads").select("*").order("sort_order"),
   ]);
+
+  const bubbleItems = await getHomeBubbleItems().catch(() => []);
+  const { data: bubbleBanners } = await getHomeBanners("bubble").catch(() => ({ data: null }));
 
 
   let featuredPartnerProducts: Product[] = [];
@@ -177,6 +182,11 @@ if (partnerFeature?.enabled && partnerFeature?.partner_id && partnerFeature?.sho
           wishlistIds={wishlistIds}
         />
       )}
+
+      <div className="mx-auto max-w-7xl px-4 mt-6">
+        <BannerCarousel banners={(bubbleBanners as Banner[]) ?? []} height={280} altPrefix="حباب ارزانی" />
+      </div>
+      {bubbleItems.length > 0 && <BubbleHomeRow items={bubbleItems} />}
 
       <div className="mx-auto max-w-7xl px-4">
         <BannerCarousel banners={(newestBanners as Banner[]) ?? []} height={280} altPrefix="محصولات جدید" />

@@ -6,6 +6,7 @@ import { CartItem } from "@/store/cart-store";
 import { buildInvoiceHtml } from "@/lib/buildInvoiceHtml";
 import { renderInvoiceToPdf } from "@/lib/generateInvoicePdf";
 import { imageUrlToDataUri } from "@/lib/invoiceImage";
+import { splitQuantity } from "@/lib/pricing/bubbleSplit";
 
 interface StoreInfo { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null; }
 interface BuyerInfo { fullName: string; phone: string; province: string; city: string; addressLine: string; postalCode?: string; }
@@ -40,7 +41,24 @@ export default function ProformaInvoiceButton({
         buyerPhone: buyer.phone,
         buyerAddress: `${buyer.province}، ${buyer.city}، ${buyer.addressLine}`,
         buyerPostalCode: buyer.postalCode,
-        items: items.map((i) => ({ name: i.name, quantity: i.quantity, unitPrice: i.discountPrice ?? i.price })),
+        items: items.flatMap((i) => {
+          if (i.flashPrice == null) {
+            return [{ name: i.name, quantity: i.quantity, unitPrice: i.discountPrice ?? i.price }];
+          }
+          return splitQuantity({
+            quantity: i.quantity,
+            price: i.price,
+            regularDiscount: i.regularDiscount ?? null,
+            tiers: i.quantityTiers ?? [],
+            flashActive: true,
+            flashPrice: i.flashPrice,
+            flashStock: i.flashStock ?? 0,
+          }).map((p) => ({
+            name: p.isBubble ? `${i.name} (حباب ارزانی)` : i.name,
+            quantity: p.qty,
+            unitPrice: p.unit,
+          }));
+        }),
         subtotal,
         shippingCost,
       });

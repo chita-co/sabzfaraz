@@ -12,6 +12,7 @@ import { calculatePointsToEarn } from "@/lib/loyalty/points-utils";
 import RelatedArticlesForProduct from "@/components/blog/RelatedArticlesForProduct";
 import BubbleTimer from "@/components/bubble/BubbleTimer";
 import type { BlogPost } from "@/types/blog";
+import { splitQuantity } from "@/lib/pricing/bubbleSplit";
 
 const unitLabelFa: Record<string, string> = { day: "روز", week: "هفته", month: "ماه" };
 
@@ -52,6 +53,21 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const matchedTier = quantityTiers.find((t) => quantity >= t.min_qty && quantity <= t.max_qty);
   const finalPrice = matchedTier ? matchedTier.unit_price : (product.discount_price ?? product.price);
+  // حباب + پلکانی: جمع دقیق بر اساس تقسیم تعداد
+  const bubbleParts = product.flash_applied
+    ? splitQuantity({
+        quantity,
+        price: product.price,
+        regularDiscount: product.flash_base_discount_price ?? null,
+        tiers: quantityTiers,
+        flashActive: true,
+        flashPrice: product.discount_price ?? null,
+        flashStock: product.flash_stock ?? 0,
+      })
+    : null;
+  const displayTotal = bubbleParts
+    ? bubbleParts.reduce((sum, p) => sum + p.qty * p.unit, 0)
+    : finalPrice * quantity;
   const hasDiscount = !!product.discount_price && product.discount_price < product.price && !matchedTier;
   const discountPercent = hasDiscount
     ? Math.round(100 - (product.discount_price! / product.price) * 100)
@@ -86,7 +102,10 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
       price: product.price,
       discountPrice: matchedTier ? matchedTier.unit_price : product.discount_price,
       quantityTiers: quantityTiers.map((t) => ({ min_qty: t.min_qty, max_qty: t.max_qty, unit_price: t.unit_price })),
-      baseDiscountPrice: product.discount_price,
+      baseDiscountPrice: product.flash_applied ? (product.flash_base_discount_price ?? null) : product.discount_price,
+      flashPrice: product.flash_applied ? (product.discount_price ?? null) : null,
+      flashStock: product.flash_applied ? (product.flash_stock ?? null) : null,
+      regularDiscount: product.flash_applied ? (product.flash_base_discount_price ?? null) : (product.discount_price ?? null),
       selectedColor,
       selectedSize,
       quantity,
@@ -344,13 +363,16 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
                   {product.name_en}
                 </p>
               )}
+              <div className="product-title-actions">
               <span className="product-badge-new">جدید</span>
-              <Link
-                href={`/compare?p=${encodeURIComponent(product.slug)}`}
-                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, fontSize: 12, fontWeight: 700, color: "#15803d", textDecoration: "none" }}
-              >
-                <Scale size={14} /> مقایسه این محصول با محصولات دیگر
-              </Link>
+              <Link href={`/compare?p=${encodeURIComponent(product.slug)}`} className="compare-cta-btn">
+  <Scale size={20} />
+  <span className="compare-cta-text">
+    <b>مقایسه محصول</b>
+    <small>با محصولات دیگر</small>
+  </span>
+</Link>
+</div>
             </div>
             <p className="product-sku">کد محصول: <span dir="ltr">{product.sku}</span></p>
             {reviewCount > 0 && (
@@ -514,7 +536,12 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
               )}
 
               <p className="qty-total-preview">
-                جمع کل: <b>{(finalPrice * quantity).toLocaleString("fa-IR")} تومان</b>
+                جمع کل: <b>{displayTotal.toLocaleString("fa-IR")} تومان</b>
+                {bubbleParts && bubbleParts.length > 1 && (
+                <p className="text-xs text-gray-500">
+                  {bubbleParts.find((p) => p.isBubble)?.qty.toLocaleString("fa-IR")} عدد با قیمت حباب ارزانی و مابقی با قیمت عادی محاسبه می‌شود
+                </p>
+              )}
                 <span className="qty-total-preview-detail">
                   ({quantity.toLocaleString("fa-IR")} {unitLabel} × {finalPrice.toLocaleString("fa-IR")} تومان)
                 </span>

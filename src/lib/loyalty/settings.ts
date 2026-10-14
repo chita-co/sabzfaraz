@@ -8,6 +8,7 @@ export interface LoyaltySettings {
   maxRedemptionPercent: number;
   expiryMonths: number;
   reminderDaysBeforeExpiry: number;
+  autoWalletConversion: boolean;
 }
 
 export async function getLoyaltySettings(): Promise<LoyaltySettings> {
@@ -20,6 +21,7 @@ export async function getLoyaltySettings(): Promise<LoyaltySettings> {
     maxRedemptionPercent: data?.max_redemption_percent ?? 20,
     expiryMonths: data?.expiry_months ?? 6,
     reminderDaysBeforeExpiry: data?.reminder_days_before_expiry ?? 7,
+    autoWalletConversion: data?.auto_wallet_conversion ?? false,
   };
 }
 

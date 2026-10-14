@@ -6,13 +6,30 @@ type StoreItem = { productName: string; quantity: number; unitPrice: number };
 type MarketItem = { name: string; quantity: number; finalUnitPrice?: number | null };
 
 // اقلام سفارش جمعی را به ردیف‌های فاکتور تبدیل می‌کند
-function buildInitialRows(request: { store_items?: unknown; market_items?: unknown }) {
+function buildInitialRows(request: {
+  store_items?: unknown;
+  market_items?: unknown;
+  collection_fee?: number | null;
+  shipping_name?: string | null;
+  shipping_cost?: number | null;
+}) {
   const store = (request.store_items ?? []) as StoreItem[];
   const market = (request.market_items ?? []) as MarketItem[];
-  return [
+  const rows: { name: string; qty: number; unitPrice: number }[] = [
     ...store.map((i) => ({ name: i.productName, qty: i.quantity, unitPrice: i.unitPrice })),
     ...market.map((i) => ({ name: i.name, qty: i.quantity, unitPrice: i.finalUnitPrice ?? 0 })),
   ];
+  if ((request.collection_fee ?? 0) > 0) {
+    rows.push({ name: "هزینه‌ی جمع‌آوری کالاهای بازار", qty: 1, unitPrice: request.collection_fee as number });
+  }
+  if ((request.shipping_cost ?? 0) > 0) {
+    rows.push({
+      name: `هزینه‌ی ارسال (${request.shipping_name ?? "ارسال"})`,
+      qty: 1,
+      unitPrice: request.shipping_cost as number,
+    });
+  }
+  return rows;
 }
 
 export default async function BulkOrderInvoiceBuilderPage({ params }: { params: Promise<{ id: string }> }) {

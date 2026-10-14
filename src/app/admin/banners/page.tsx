@@ -20,6 +20,7 @@ export default async function AdminBannersPage() {
       <BannerManager banners={byPos("newest")} position="newest" title="بنر اسلایدی جدیدترین محصولات" />
       <BannerManager banners={byPos("popular")} position="popular" title="بنر اسلایدی محصولات پرطرفدار" />
       <BannerManager banners={byPos("stock")} position="stock" title="بنر اسلایدی محصولات استوک" />
+      <BannerManager banners={byPos("bubble")} position="bubble" title="بنر اسلایدی حباب ارزانی" />
     </div>
   );
 }

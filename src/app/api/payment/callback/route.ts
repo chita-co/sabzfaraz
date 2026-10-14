@@ -82,11 +82,18 @@ export async function POST(request: NextRequest) {
       
       const { data: orderItemsForStock } = await supabase
         .from("order_items")
-        .select("product_id, quantity")
+        .select("product_id, quantity, is_bubble_deal")
         .eq("order_id", orderId);
 
       if (orderItemsForStock) {
         for (const item of orderItemsForStock) {
+          if (item.is_bubble_deal) {
+            try {
+              await supabase.rpc("decrement_bubble_stock", { p_product_id: item.product_id, p_qty: item.quantity });
+            } catch (e) {
+              console.error("خطا در کسر موجودی حباب:", e);
+            }
+          }
           try {
             // دریافت موجودی فعلی محصول
             const { data: productRow } = await supabase

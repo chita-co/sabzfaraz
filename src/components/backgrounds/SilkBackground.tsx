@@ -3,6 +3,7 @@
 import Silk from "@/components/Silk";
 
 export default function SilkBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: -1 }}>
       <Silk

@@ -142,6 +142,17 @@ html, body {
   }
 }
 
+/* بک‌گراند موقت سراسری سایت */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url("/bg-site.webp") center / cover no-repeat;
+  /* اگه متن‌ها خوانا نبودن این خط رو جایگزین کن:
+  background: linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.25)), url("/bg-site.webp") center / cover no-repeat; */
+}
+
 /* هدر باید بالای بک‌گراند باشد */
 .site-header {
   z-index: 50; /* از قبل هست، فقط مطمئن شو */

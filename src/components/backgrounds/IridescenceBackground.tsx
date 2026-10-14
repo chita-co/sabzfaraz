@@ -3,6 +3,7 @@
 import Iridescence from "@/components/Iridescence";
 
 export default function IridescenceBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: -1 }}>
       <Iridescence

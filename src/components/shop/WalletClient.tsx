@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Wallet, CreditCard, Landmark, Loader2 } from "lucide-react";
-import { submitManualTopupRequest, topUpWalletOnline } from "@/app/(shop)/profile/wallet/actions";;
+import { submitManualTopupRequest, topUpWalletOnline } from "@/app/(shop)/profile/wallet/actions";
 
 const typeLabels: Record<string, string> = { credit: "شارژ", debit: "برداشت", refund: "بازگشت وجه" };
 const statusLabels: Record<string, string> = { PENDING: "در انتظار", APPROVED: "تأیید شده", REJECTED: "رد شده" };
@@ -15,7 +15,7 @@ export default function WalletClient({
   balance, transactions, pendingRequests, minTopup, maxTopup, manualTopupEnabled, bankAccounts,
 }: {
   balance: number; transactions: Tx[]; pendingRequests: TopupReq[]; minTopup: number; maxTopup: number | null;
-  manualTopupEnabled: boolean; bankAccounts: Bank[];
+    manualTopupEnabled: boolean; bankAccounts: Bank[];
 }) {
   const [amount, setAmount] = useState(minTopup.toString());
   const [method, setMethod] = useState<"CARD_TO_CARD" | "SHEBA">("CARD_TO_CARD");

@@ -16,7 +16,8 @@ async function bumpCaches(productId: string) {
 export async function applyBubbleDeal(
   productId: string,
   price: number,
-  durationMinutes: number
+  durationMinutes: number,
+  quantity: number
 ): Promise<{ success: true } | { error: string }> {
   await requireAdmin();
   const admin = createAdminClient();
@@ -24,6 +25,7 @@ export async function applyBubbleDeal(
     p_product_id: productId,
     p_price: Math.round(Number(price)),
     p_minutes: Math.round(Number(durationMinutes)),
+    p_qty: Math.round(Number(quantity)),
   });
   if (error) return { error: "خطا در ثبت: " + error.message };
   const result = data as { ok?: boolean; error?: string } | null;
@@ -37,6 +39,25 @@ export async function endBubbleDeal(productId: string): Promise<{ success: true 
   const admin = createAdminClient();
   const { error } = await admin.rpc("end_bubble_deal", { p_product_id: productId });
   if (error) return { error: error.message };
+  await bumpCaches(productId);
+  return { success: true };
+}
+
+export async function updateBubbleDeal(
+  productId: string,
+  price: number,
+  remainingQty: number
+): Promise<{ success: true } | { error: string }> {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("update_bubble_deal", {
+    p_product_id: productId,
+    p_price: Math.round(Number(price)),
+    p_qty: Math.round(Number(remainingQty)),
+  });
+  if (error) return { error: "خطا در ویرایش: " + error.message };
+  const result = data as { ok?: boolean; error?: string } | null;
+  if (!result?.ok) return { error: result?.error ?? "ویرایش انجام نشد." };
   await bumpCaches(productId);
   return { success: true };
 }

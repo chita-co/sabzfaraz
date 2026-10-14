@@ -105,6 +105,7 @@ const navConfig: NavItem[] = [
       { href: "/admin/finance/wallet-transactions", label: "تراکنش‌های کیف پول" },
       { href: "/admin/finance/wallet-withdrawals", label: "برداشت کیف پول (تسویه)" },
       { href: "/admin/finance/wallet-income", label: "کیف پول ادمین (درآمد دریافتی)" },
+      { href: "/admin/finance/wallets", label: "لیست کیف پول‌ها (افزودن/کسر + تاریخچه)" },
       { href: "/admin/finance/wallet-topups-history", label: "تاریخچه شارژهای تأییدشده" },
       { href: "/admin/analytics", label: "گزارش فروش" },
       { href: "/admin/analytics-visitors", label: "آمار بازدیدکنندگان" },

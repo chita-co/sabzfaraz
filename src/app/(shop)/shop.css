@@ -834,7 +834,7 @@
 .back-to-top-btn {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  right: 24px;
   width: 46px;
   height: 46px;
   border-radius: 50%;
@@ -849,6 +849,12 @@
   z-index: 40;
 }
 .back-to-top-btn:hover { background: #15803d; }
+@media (max-width: 640px) {
+  .back-to-top-btn {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+    right: 12px;
+  }
+}
 
 .custom-select { position: relative; width: 100%; }
 .custom-select-trigger {

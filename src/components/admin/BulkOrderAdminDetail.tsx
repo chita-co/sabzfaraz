@@ -29,6 +29,7 @@ interface BulkOrderRequest {
   deposit_payment_method?: string | null;
   shipping_name?: string | null;
   shipping_cost?: number | null;
+  collection_fee?: number | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -47,6 +48,7 @@ export default function BulkOrderAdminDetail({
     request.status === "NOT_POSSIBLE" ? "NOT_POSSIBLE" : request.status === "PENDING_REVIEW" ? "REVIEWING" : "POSSIBLE"
   );
   const [depositAmount, setDepositAmount] = useState(request.deposit_amount?.toString() ?? "");
+  const [collectionFee, setCollectionFee] = useState(request.collection_fee?.toString() ?? "");
   const [bankAccountId, setBankAccountId] = useState(request.bank_account_id ?? bankAccounts[0]?.id ?? "");
   const [rejectionReason, setRejectionReason] = useState(request.rejection_reason ?? "");
   const itemsTotal =
@@ -85,7 +87,7 @@ export default function BulkOrderAdminDetail({
   async function handleSaveSupplyStatus() {
     if (supplyChoice === "POSSIBLE") {
       if (!depositAmount || !bankAccountId) { alert("مبلغ بیعانه و حساب بانکی الزامی است."); return; }
-      const result = await markSupplyPossible(request.id, Number(depositAmount), bankAccountId);
+      const result = await markSupplyPossible(request.id, Number(depositAmount), bankAccountId, Number(collectionFee || 0));
       if (result?.error) alert(result.error); else window.location.reload();
     } else if (supplyChoice === "NOT_POSSIBLE") {
       if (!rejectionReason.trim()) { alert("دلیل رد درخواست را وارد کنید."); return; }
@@ -182,6 +184,10 @@ export default function BulkOrderAdminDetail({
         {supplyChoice === "POSSIBLE" && (
           <div className="grid sm:grid-cols-2 gap-3 mb-3">
             <div className="admin-form-group"><label>مبلغ بیعانه (تومان)</label><input type="number" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} /></div>
+            <div className="admin-form-group">
+              <label>هزینه‌ی جمع‌آوری کالاهای بازار (تومان)</label>
+              <input type="number" value={collectionFee} onChange={(e) => setCollectionFee(e.target.value)} />
+            </div>
             <div className="admin-form-group">
               <label>حساب بانکی دریافت‌کننده</label>
               <select value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}>

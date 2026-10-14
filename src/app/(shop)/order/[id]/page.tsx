@@ -11,6 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 type OrderItem = {
   id: string;
   product_name: string;
+  is_bubble_deal?: boolean;
   quantity: number;
   price: number;
   selected_color?: string | null;
@@ -122,7 +123,7 @@ export default async function OrderResultPage({
                   className="flex justify-between text-sm py-2 border-b last:border-0"
                 >
                   <span>
-                    {item.product_name} × {item.quantity}
+                    {item.product_name}{item.is_bubble_deal ? " (حباب ارزانی)" : ""} × {item.quantity}
                   </span>
                   <span>
                     {(item.price * item.quantity).toLocaleString("fa-IR")} تومان
@@ -148,7 +149,7 @@ export default async function OrderResultPage({
                 phone={order.address?.phone ?? ""}
                 postalCode={order.address?.postal_code ?? ""}
                 items={order.items.map((i: OrderItem) => ({
-                  name: i.product_name,
+                  name: i.product_name + (i.is_bubble_deal ? " (حباب ارزانی)" : ""),
                   variant: [i.selected_color, i.selected_size]
                     .filter(Boolean)
                     .join(" / "),

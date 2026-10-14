@@ -14,4 +14,8 @@ export type BubbleItem = {
   unit_label: string | null;
   has_min_order_quantity: boolean | null;
   min_order_quantity: number | null;
+  flash_applied?: boolean;
+  flash_price?: number | null;
+  flash_stock?: number | null;
+  flash_base_discount_price?: number | null;
 };

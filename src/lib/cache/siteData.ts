@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const PRODUCT_CARD_FIELDS = "id, name, slug, price, discount_price, stock, images, is_stock, name_en, rating_avg, rating_count, flash_ends_at";
+const PRODUCT_CARD_FIELDS = "id, name, slug, price, discount_price, stock, images, is_stock, name_en, rating_avg, rating_count, flash_ends_at, flash_applied, flash_price, flash_stock, flash_base_discount_price";
 const VISIBLE = "partner_id.is.null,partner_approval_status.eq.APPROVED";
 
 export const getHomeCategories = unstable_cache(async () => {

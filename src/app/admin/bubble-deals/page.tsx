@@ -3,26 +3,33 @@ import BubbleDealsAdmin, { type AdminProduct, type AdminCategory } from "@/compo
 
 export const dynamic = "force-dynamic";
 
+const PAGE = 1000;
+
 export default async function AdminBubbleDealsPage() {
   const admin = createAdminClient();
   await admin.rpc("refresh_bubble_deals");
 
-  const [productsRes, categoriesRes] = await Promise.all([
-    admin
+  // Supabase در هر درخواست حداکثر ۱۰۰۰ ردیف می‌دهد؛ همه‌ی محصولات صفحه‌بندی می‌شوند
+  const products: AdminProduct[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await admin
       .from("products")
-      .select("id, name, images, price, discount_price, category_id, flash_price, flash_ends_at, flash_applied")
-      .eq("is_active", true)
-      .order("name"),
-    admin.from("categories").select("id, name, parent_id").eq("is_active", true).order("name"),
-  ]);
+      .select(
+        "id, name, name_en, slug, images, price, discount_price, stock, flash_stock, category_id, is_active, flash_price, flash_ends_at, flash_applied"
+      )
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
 
-  if (productsRes.error) throw new Error(productsRes.error.message);
-  if (categoriesRes.error) throw new Error(categoriesRes.error.message);
+    if (error) throw new Error(error.message);
+    products.push(...((data ?? []) as AdminProduct[]));
+    if (!data || data.length < PAGE) break;
+  }
 
-  return (
-    <BubbleDealsAdmin
-      products={(productsRes.data ?? []) as AdminProduct[]}
-      categories={(categoriesRes.data ?? []) as AdminCategory[]}
-    />
-  );
+  const { data: cats, error: catErr } = await admin
+    .from("categories")
+    .select("id, name, parent_id")
+    .order("name");
+  if (catErr) throw new Error(catErr.message);
+
+  return <BubbleDealsAdmin products={products} categories={(cats ?? []) as AdminCategory[]} />;
 }

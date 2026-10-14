@@ -19,7 +19,7 @@
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.04) 0 18px, transparent 18px 46px);
-  animation: caustic 14s linear infinite;
+  animation: none;
   pointer-events: none;
 }
 
@@ -315,4 +315,171 @@
   .bubble-tilt {
     transition: none;
   }
+}
+
+/* ===== افزودنه‌ها: آتش دور قیمت، کادر آب و آتش، قیمت اصلی پررنگ، ردیف صفحه اصلی ===== */
+/* قیمت حبابی: شعله‌های کوچک نامتقارن زیر قیمت */
+.bubble-prices .bubble-price-fire {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  margin-right: 18px;
+  padding: 2px 4px 28px;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: #ea710e;
+  -webkit-text-fill-color: #f63a0bfd;
+  font-weight: 900;
+  text-shadow: 0 0 2px #000, 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(251, 146, 60, 0.45);
+}
+
+.bubble-price-fire::before,
+.bubble-price-fire::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  height: 72px;
+  z-index: -1;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+/* شعله‌ی بیرونی نارنجی با نوک‌های نامتقارن */
+.bubble-price-fire::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  height: 72px;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  background-color: #fa9a25;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40L0 30Q6 14 12 26Q18 4 26 22Q32 12 40 28Q46 8 56 24Q62 14 70 26Q76 2 86 20Q94 10 100 26Q106 6 116 22Q122 12 130 28Q138 4 148 20Q156 12 162 26Q170 8 180 24Q188 14 200 30L200 40Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40L0 30Q6 14 12 26Q18 4 26 22Q32 12 40 28Q46 8 56 24Q62 14 70 26Q76 2 86 20Q94 10 100 26Q106 6 116 22Q122 12 130 28Q138 4 148 20Q156 12 162 26Q170 8 180 24Q188 14 200 30L200 40Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  opacity: 0.8;
+  animation: flame-a 1.3s ease-in-out infinite alternate;
+}
+
+/* شعله‌ی درونی زرد، کوتاه‌تر و با نوک‌های متفاوت */
+.bubble-price-fire::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 6px;
+  height: 36px;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  background-color: #ffee2d;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40L0 32Q8 20 16 30Q22 16 32 28Q40 14 50 30Q58 18 68 30Q76 12 88 26Q96 16 104 30Q112 14 124 28Q132 18 142 30Q152 12 164 28Q174 20 182 30Q190 22 200 32L200 40Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40L0 32Q8 20 16 30Q22 16 32 28Q40 14 50 30Q58 18 68 30Q76 12 88 26Q96 16 104 30Q112 14 124 28Q132 18 142 30Q152 12 164 28Q174 20 182 30Q190 22 200 32L200 40Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  opacity: 0.95;
+  animation: flame-b 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes flame-a {
+  0% { transform: scaleY(0.82) scaleX(0.98); }
+  100% { transform: scaleY(1.12) scaleX(1.02) translateX(1px); }
+}
+
+@keyframes flame-b {
+  0% { transform: scaleY(1.05) translateX(-1px); }
+  100% { transform: scaleY(0.78) translateX(1px); }
+}
+/* قیمت اصلی بولد و پررنگ */
+.bubble-prices s {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  opacity: 1;
+  text-decoration-thickness: 2px;
+}
+
+/* کادر آب و آتش */
+.bubble-hype {
+  margin-top: 8px;
+  padding: 7px 8px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.7;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(90deg, #f97316 0%, #ef4444 42%, #0ea5e9 58%, #2563eb 100%);
+  background-size: 200% 100%;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.25);
+  animation: water-fire 5s ease-in-out infinite;
+}
+
+@keyframes water-fire {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ردیف صفحه اصلی: افقی در همه‌ی اندازه‌ها */
+.bubble-home-section {
+  position: relative;
+}
+
+.bubble-home-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.bubble-section-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  background: linear-gradient(90deg, #67e8f9, #f9a8d4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.aquarium-row {
+  height: auto;
+  min-height: 0;
+}
+
+.aquarium-row .aquarium-scroll {
+  position: relative;
+  inset: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 26px 16px 30px;
+  scroll-snap-type: x proximity;
+}
+
+.aquarium-row .aquarium-grid {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: clamp(190px, 26vw, 260px);
+  gap: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble-price-fire::before,
+  .bubble-price-fire::after,
+  .bubble-hype {
+    animation: none !important;
+  }
+}
+
+/* موجودی باقیمانده حباب */
+.bubble-left {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fde68a;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
 }

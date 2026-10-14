@@ -42,6 +42,9 @@ export interface Product {
   is_deal: boolean;
   flash_ends_at?: string | null;
   flash_applied?: boolean;
+  flash_price?: number | null;
+  flash_stock?: number | null;
+  flash_base_discount_price?: number | null;
   show_in_newest: boolean;
   is_popular: boolean;
   sku: string;

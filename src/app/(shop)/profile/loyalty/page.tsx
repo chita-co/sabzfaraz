@@ -5,6 +5,7 @@ import { getMyLoyaltyData } from "./actions";
 const typeLabels: Record<string, string> = {
   EARNED: "کسب‌شده", REDEEMED: "مصرف‌شده", REFUNDED: "بازگشتی",
   EXPIRED: "منقضی‌شده", BONUS: "پاداش", ADJUSTMENT: "اصلاح",
+  CONVERTED: "تبدیل به موجودی کیف پول",
 };
 
 export default async function LoyaltyPage() {

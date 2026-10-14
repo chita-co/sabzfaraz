@@ -16,6 +16,7 @@ import BulkMoneyPanel from "@/components/shared/BulkMoneyPanel";
 type OrderItem = {
   id: string;
   product_name: string;
+  is_bubble_deal?: boolean;
   product_image: string | null;
   selected_color: string | null;
   selected_size: string | null;
@@ -148,7 +149,7 @@ export default async function AdminOrderDetailPage({
                         unoptimized
                       />
                     )}
-                    <span>{item.product_name}</span>
+                    <span>{item.product_name}{item.is_bubble_deal ? " (حباب ارزانی)" : ""}</span>
                   </td>
                   <td className="text-xs text-gray-500">
                     {[item.selected_color, item.selected_size]

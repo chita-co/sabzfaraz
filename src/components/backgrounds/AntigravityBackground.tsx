@@ -3,6 +3,7 @@
 import Antigravity from "@/components/Antigravity";
 
 export default function AntigravityBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#000" }}>
       <Antigravity

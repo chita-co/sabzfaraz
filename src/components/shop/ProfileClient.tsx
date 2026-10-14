@@ -106,9 +106,9 @@ export default function ProfileClient({
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       {/* Breadcrumb یکپارچه شده */}
-      <Breadcrumb theme="light" items={[{ label: "پروفایل من" }]} />
+      <Breadcrumb theme="dark" items={[{ label: "پروفایل من" }]} />
 
-      <h1 className="text-xl font-bold text-gray-900">پروفایل من</h1>
+      <h1 className="text-xl font-bold text-white">پروفایل من</h1>
 
       <Link href="/profile/orders" className="profile-orders-banner">
         <div className="profile-orders-icon">

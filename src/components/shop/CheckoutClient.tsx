@@ -12,6 +12,7 @@ import PaymentMethodSelector, { type PaymentMethod } from "./PaymentMethodSelect
 import type { BankAccountInfo } from "./BankAccountDisplay";
 import PriceSyncEffect from "./PriceSyncEffect";
 import ProductPriceRealtimeSync from "@/components/shop/ProductPriceRealtimeSync";
+import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
@@ -55,7 +56,7 @@ export default function CheckoutClient({
   const hasChina = displayItems.some((i) => i.isChinaOrder);
   const mixedCart = hasStandard && hasChina;
 
-  const subtotal = displayItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
+  const subtotal = displayItems.reduce((sum, i) => sum + cartItemTotal(i), 0);
 
   const shippingCost = useMemo(() => {
     const methodTiers = shippingTiers.filter((t) => t.method_id === selectedMethodId).sort((a, b) => a.min_weight_grams - b.min_weight_grams);
@@ -210,7 +211,7 @@ export default function CheckoutClient({
         {displayItems.map((item) => (
           <div key={`${item.productId}-${item.selectedColor}-${item.selectedSize}`} className="flex justify-between text-sm py-2 border-b last:border-0">
             <span>{item.name} × {item.quantity}</span>
-            <span>{((item.discountPrice ?? item.price) * item.quantity).toLocaleString("fa-IR")} تومان</span>
+            <span>{cartItemTotal(item).toLocaleString("fa-IR")} تومان</span>
           </div>
         ))}
         <div className="flex justify-between text-sm py-2 border-b"><span>جمع کالاها</span><span>{subtotal.toLocaleString("fa-IR")} تومان</span></div>

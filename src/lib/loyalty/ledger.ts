@@ -30,8 +30,6 @@ export async function getUserTierMultiplier(userId: string | null): Promise<numb
   const tier = profile?.loyalty_tier as unknown as { points_multiplier: number } | null;
   return tier?.points_multiplier ?? 1;
 }
-
-// امتیاز بابت سفارش را ثبت می‌کند — فقط هنگام تغییر وضعیت به «تحویل‌شده»
 export async function earnPointsForOrder(orderId: string) {
   const admin = createAdminClient();
   const settings = await getLoyaltySettings();
@@ -53,34 +51,91 @@ export async function earnPointsForOrder(orderId: string) {
     return;
   }
 
-  const { data: profile } = await admin
-    .from("profiles").select("loyalty_points_balance, loyalty_points_lifetime").eq("id", order.user_id).single();
+  const rewardAmount = points * settings.pointValueToman;
 
-  const newBalance = (profile?.loyalty_points_balance ?? 0) + points;
+  // ۱) تبدیل خودکار به موجودی کیف پول (اتمیک و فقط یک‌بار برای هر سفارش)
+  let convertedToWallet = false;
+  if (settings.autoWalletConversion) {
+    const { data: rewardRes, error: rewardErr } = await admin.rpc("credit_loyalty_reward_to_wallet", {
+      p_order_id: orderId,
+      p_user_id: order.user_id,
+      p_points: points,
+      p_amount: rewardAmount,
+    });
+    const reward = rewardRes as { success?: boolean; error?: string; duplicate?: boolean } | null;
+
+    if (!rewardErr && reward?.success) {
+      if (reward.duplicate) {
+        // این سفارش قبلاً تبدیل شده است؛ فقط پرچم را ببند و خارج شو
+        await admin.from("orders").update({ loyalty_earned_processed: true }).eq("id", orderId);
+        return;
+      }
+      convertedToWallet = true;
+    } else {
+      console.error("خطا در تبدیل خودکار امتیاز به کیف پول؛ ثبت امتیاز عادی:", rewardErr?.message ?? reward?.error);
+    }
+  }
+
+  // ۲) ثبت امتیاز و تاریخچه
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("loyalty_points_balance, loyalty_points_lifetime")
+    .eq("id", order.user_id)
+    .single();
+
+  const currentBalance = profile?.loyalty_points_balance ?? 0;
+  // اگر تبدیل شد، موجودی امتیاز تغییری نمی‌کند (امتیاز به پول تبدیل شده)
+  const newBalance = convertedToWallet ? currentBalance : currentBalance + points;
   const newLifetime = (profile?.loyalty_points_lifetime ?? 0) + points;
-  const expiresAt = new Date();
-  expiresAt.setMonth(expiresAt.getMonth() + settings.expiryMonths);
 
   await admin.from("profiles").update({
     loyalty_points_balance: newBalance,
     loyalty_points_lifetime: newLifetime,
   }).eq("id", order.user_id);
 
-  await admin.from("loyalty_transactions").insert({
-    user_id: order.user_id, order_id: orderId, type: "EARNED",
-    points, points_remaining: points, balance_after: newBalance,
-    description: `بابت سفارش ${orderId.slice(0, 8)}`, expires_at: expiresAt.toISOString(),
-  });
+  if (convertedToWallet) {
+    await admin.from("loyalty_transactions").insert({
+      user_id: order.user_id,
+      order_id: orderId,
+      type: "CONVERTED",
+      points,
+      points_remaining: 0,
+      balance_after: newBalance,
+      description: `بابت سفارش ${orderId.slice(0, 8)}: ${points.toLocaleString("fa-IR")} امتیاز معادل ${rewardAmount.toLocaleString("fa-IR")} تومان به موجودی کیف پولت اضافه شد`,
+      expires_at: null,
+    });
+  } else {
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + settings.expiryMonths);
+    await admin.from("loyalty_transactions").insert({
+      user_id: order.user_id,
+      order_id: orderId,
+      type: "EARNED",
+      points,
+      points_remaining: points,
+      balance_after: newBalance,
+      description: `بابت سفارش ${orderId.slice(0, 8)}`,
+      expires_at: expiresAt.toISOString(),
+    });
+  }
 
-  await admin.from("orders").update({ loyalty_points_earned: points, loyalty_earned_processed: true }).eq("id", orderId);
+  await admin.from("orders").update({
+    loyalty_points_earned: points,
+    loyalty_earned_processed: true,
+  }).eq("id", orderId);
+
   await recalculateTier(admin, order.user_id);
 
-   await createNotification(
+  // ۳) اعلان داخل سایت
+  await createNotification(
     order.user_id,
-    "امتیاز جدید دریافت کردی! 🎉",
-    `${points.toLocaleString("fa-IR")} امتیاز بابت خرید اخیرت به حسابت اضافه شد. الان می‌تونی ${(points * settings.pointValueToman).toLocaleString("fa-IR")} تومان از این امتیاز رو در خرید بعدی استفاده کنی.`
+    convertedToWallet ? "پاداش خرید به کیف پولت اضافه شد 🎉" : "امتیاز جدید دریافت کردی! 🎉",
+    convertedToWallet
+      ? `${points.toLocaleString("fa-IR")} امتیاز بابت خرید اخیرت معادل ${rewardAmount.toLocaleString("fa-IR")} تومان شد و به موجودی کیف پولت اضافه شد.`
+      : `${points.toLocaleString("fa-IR")} امتیاز بابت خرید اخیرت به حسابت اضافه شد. الان می‌تونی ${rewardAmount.toLocaleString("fa-IR")} تومان از این امتیاز رو در خرید بعدی استفاده کنی.`
   );
 
+  // ۴) پیامک امتیاز (همان روند قبلی، در هر دو حالت ارسال می‌شود)
   const orderProfile = order.profile as unknown as { full_name?: string; phone?: string } | null;
   const address = order.address as unknown as { phone?: string } | null;
   const phone = orderProfile?.phone ?? address?.phone;
@@ -137,6 +192,8 @@ export async function refundRedeemedPoints(orderId: string) {
 // اگر سفارشی که قبلاً امتیازش واریز شده لغو/مرجوع شد، امتیاز مصرف‌نشده‌اش را باطل می‌کند
 export async function reverseEarnedPoints(orderId: string) {
   const admin = createAdminClient();
+  const { error: rewardReverseErr } = await admin.rpc("reverse_loyalty_reward_from_wallet", { p_order_id: orderId });
+  if (rewardReverseErr) console.error("خطا در برگشت پاداش کیف پول:", rewardReverseErr.message);
   const { data: earnedTx } = await admin
     .from("loyalty_transactions").select("id, user_id, points_remaining")
     .eq("order_id", orderId).eq("type", "EARNED").maybeSingle();

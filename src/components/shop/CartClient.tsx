@@ -10,6 +10,7 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import OrderNoteBox from "@/components/shop/OrderNoteBox";
 import PriceSyncEffect from "@/components/shop/PriceSyncEffect";
 import ProductPriceRealtimeSync from "@/components/shop/ProductPriceRealtimeSync";
+import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
 
 export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
   const items = useCartStore((s) => s.items);
@@ -17,7 +18,7 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const router = useRouter();
 
-  const totalPrice = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => sum + cartItemTotal(i), 0);
   const isBelowMinimum = totalPrice < minOrderAmount;
   const remainingAmount = minOrderAmount - totalPrice;
 
@@ -90,7 +91,7 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
                     </span>
                   )}
                   <span className="font-bold text-gray-900 text-sm">
-                    {((item.discountPrice ?? item.price) * item.quantity).toLocaleString("fa-IR")} تومان
+                    {cartItemTotal(item).toLocaleString("fa-IR")} تومان
                   </span>
                 </div>
               </div>

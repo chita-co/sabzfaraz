@@ -103,6 +103,7 @@ export async function createOrderFromPendingCheckout(
       product_name: i.name,
       product_image: i.image,
       price: i.discountPrice ?? i.price,
+      is_bubble_deal: !!i.isBubble,
       quantity: i.quantity,
       selected_color: i.selectedColor,
       selected_size: i.selectedSize,

@@ -94,9 +94,13 @@ export default function BubbleDealsGrid({ items }: { items: BubbleItem[] }) {
 
                       <div className="bubble-prices">
                         <s>{item.price.toLocaleString("fa-IR")}</s>
-                        <strong>
+                        <strong className="bubble-price-fire">
                           {bubblePrice.toLocaleString("fa-IR")} <small>تومان</small>
                         </strong>
+                      </div>
+
+                      <div className="bubble-hype">
+                        🔥 فرصت داری این محصول را خیلی ارزون‌تر بخری؛ فرصت را از دست نده!
                       </div>
 
                       <div className="bubble-timer">
@@ -104,6 +108,10 @@ export default function BubbleDealsGrid({ items }: { items: BubbleItem[] }) {
                         <small>باقی‌مانده</small>
                       </div>
                     </Link>
+
+                    {item.flash_stock !== null && item.flash_stock !== undefined && item.flash_stock > 0 && (
+                    <div className="bubble-left">فقط {item.flash_stock.toLocaleString("fa-IR")} عدد با این قیمت</div>
+                  )}
 
                     <BubbleAddToCart item={item} />
                   </div>

@@ -36,6 +36,7 @@ export interface BulkRequestRow {
   final_total_amount: number | null;
   shipping_name?: string | null;
   shipping_cost?: number | null;
+  collection_fee?: number | null;
   shipping_weight_grams?: number | null;
   balance_note?: string | null;
   status: string;

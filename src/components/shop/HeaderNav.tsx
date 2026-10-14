@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
 import {
   Search, ShoppingCart, Heart, User, UserPlus, X,
   LayoutDashboard, LogOut, Package, Gift, Clapperboard, Images, Wallet,
@@ -122,7 +123,7 @@ export default function HeaderNav({
     router.push(isLoggedIn ? "/checkout" : "/login?redirect=/checkout");
   }
 
-  const cartTotalPrice = cartItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
+  const cartTotalPrice = cartItems.reduce((sum, i) => sum + cartItemTotal(i), 0);
 
   /* ===== سایدبار دسته‌بندی (راست) ===== */
   const categoryDrawer = (
@@ -278,7 +279,7 @@ export default function HeaderNav({
                         </button>
                       </div>
                       <span className="mobile-cart-item-price">
-                        {((item.discountPrice ?? item.price) * item.quantity).toLocaleString("fa-IR")} تومان
+                        {cartItemTotal(item).toLocaleString("fa-IR")} تومان
                       </span>
                     </div>
                   </div>
@@ -407,6 +408,15 @@ export default function HeaderNav({
               <Scale size={14} /> لیست مقایسه
             </Link>
           </div>
+          {isLoggedIn && (
+            <Link href="/profile/wallet" className="header-wallet-chip" aria-label="کیف پول من">
+              <span className="header-wallet-icon"><Wallet size={17} /></span>
+              <span className="header-wallet-text">
+                <small>کیف پول</small>
+                <b>{walletBalance.toLocaleString("fa-IR")} <i>تومان</i></b>
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* ردیف دوم: لوگو + سرچ + آیکون‌ها */}
@@ -575,6 +585,65 @@ export default function HeaderNav({
           .topbar-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(234, 179, 8, 0.5);
+          }
+          :global(.header-wallet-chip) {
+            position: relative;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 5px 16px 5px 6px !important;
+            height: 42px !important;
+            border-radius: 999px !important;
+            text-decoration: none !important;
+            overflow: hidden !important;
+            background: linear-gradient(135deg, #fff4b8 0%, #ffd700 45%, #eab308 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.65) !important;
+            box-shadow: 0 4px 14px rgba(234, 179, 8, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+            color: #14532d !important;
+            transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+          }
+          :global(.header-wallet-chip:hover) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(234, 179, 8, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+          }
+          :global(.header-wallet-chip::after) {
+            content: "";
+            position: absolute;
+            top: 0; bottom: 0; left: -60%;
+            width: 40%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+            transform: skewX(-20deg);
+            animation: header-wallet-shine 4.5s ease-in-out infinite;
+            pointer-events: none;
+          }
+          @keyframes header-wallet-shine {
+            0%, 70% { left: -60%; }
+            100% { left: 130%; }
+          }
+          :global(.header-wallet-icon) {
+            width: 30px; height: 30px;
+            flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #166534, #14532d);
+            color: #fde047;
+            box-shadow: 0 2px 6px rgba(20, 83, 45, 0.45);
+          }
+          :global(.header-wallet-text) {
+            display: flex; flex-direction: column; align-items: flex-start;
+            line-height: 1.15;
+            white-space: nowrap;
+          }
+          :global(.header-wallet-text small) { font-size: 10px; font-weight: 700; opacity: 0.8; }
+          :global(.header-wallet-text b) { font-size: 13.5px; font-weight: 900; letter-spacing: 0.2px; }
+          :global(.header-wallet-text i) { font-style: normal; font-size: 10px; font-weight: 700; opacity: 0.8; }
+          @media (prefers-reduced-motion: reduce) {
+            :global(.header-wallet-chip::after) { animation: none; display: none; }
+          }
+          @media (max-width: 640px) {
+            :global(.header-wallet-chip) { height: 36px !important; gap: 8px !important; }
+            :global(.header-wallet-icon) { width: 26px; height: 26px; }
+            :global(.header-wallet-text b) { font-size: 12px; }
           }
           :global(.topbar-deals) {
             display: flex;

@@ -154,6 +154,23 @@ export default async function BulkMoneyPanel({
         <p className="text-sm text-amber-700">پرداخت مانده‌ی شما ثبت شده و در انتظار تأیید است.</p>
       )}
 
+      <div>
+        <h3 className="font-semibold mb-2">ریز هزینه‌ها</h3>
+        <table className="w-full text-right text-xs">
+          <tbody>
+            <tr className="border-b">
+              <td className="py-2">هزینه‌ی جمع‌آوری کالاهای بازار</td>
+              <td>{fa(request.collection_fee ?? 0)}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="py-2">نحوه‌ی ارسال: {request.shipping_name ?? "—"}</td>
+              <td>{fa(request.shipping_cost ?? 0)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="text-xs text-gray-500 mt-2">این هزینه‌ها همراه بیعانه پرداخت می‌شوند.</p>
+      </div>
+
       {storeItems.length > 0 && (
         <div>
           <h3 className="font-semibold mb-2">اقلام فروشگاه</h3>

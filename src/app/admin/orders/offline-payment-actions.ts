@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { sendSms } from "@/lib/sms";
 import { deleteUserCartAction } from "@/app/admin/carts/actions";
@@ -38,13 +39,16 @@ export async function confirmOfflinePayment(orderId: string) {
   if (existingOrder?.payment_status !== "PAID" && existingOrder?.order_type !== "CHINA_ORDER") {
     const { data: orderItems } = await supabase
       .from("order_items")
-      .select("product_id, quantity")
+      .select("product_id, quantity, is_bubble_deal")
       .eq("order_id", orderId);
 
     for (const item of orderItems ?? []) {
       if (!item.product_id) continue;
       try {
         await supabase.rpc("decrement_product_stock", { p_product_id: item.product_id, p_qty: item.quantity });
+        if (item.is_bubble_deal) {
+          await createAdminClient().rpc("decrement_bubble_stock", { p_product_id: item.product_id, p_qty: item.quantity });
+        }
         const { data: slugRow } = await supabase.from("products").select("slug").eq("id", item.product_id).single();
         if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
       } catch (e) {

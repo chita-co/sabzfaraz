@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createPublicClient } from "@/lib/supabase/public";
+import type { BubbleStockRow } from "@/lib/bubble/stock";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import GalaxyBackground from "@/components/backgrounds/GalaxyBackground";
 import BubbleDealsGrid from "@/components/bubble/BubbleDealsGrid";
@@ -22,7 +23,7 @@ const getBubbleDeals = unstable_cache(
     const { data, error } = await createPublicClient()
       .from("products")
       .select(
-        "id, name, slug, images, price, discount_price, stock, flash_ends_at, colors, sizes, weight_grams, is_sold_by_unit, unit_label, has_min_order_quantity, min_order_quantity"
+        "id, name, slug, images, price, discount_price, stock, flash_stock, flash_ends_at, colors, sizes, weight_grams, is_sold_by_unit, unit_label, has_min_order_quantity, min_order_quantity, flash_applied, flash_price, flash_stock, flash_base_discount_price"
       )
       .eq("is_active", true)
       .eq("flash_applied", true)
@@ -32,7 +33,8 @@ const getBubbleDeals = unstable_cache(
       .limit(60);
 
     if (error) throw error;
-    return (data ?? []) as unknown as BubbleItem[];
+    const rows = (data ?? []) as unknown as Array<BubbleItem & BubbleStockRow>;
+      return rows;
   },
   ["bubble-deals"],
   { revalidate: 30, tags: ["products"] }

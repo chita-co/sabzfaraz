@@ -3,6 +3,7 @@
 import Galaxy from "@/components/Galaxy";
 
 export default function GalaxyBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ 
       position: "fixed", 

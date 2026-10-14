@@ -57,7 +57,8 @@ export async function updateInternalNote(requestId: string, note: string) {
 export async function markSupplyPossible(
   requestId: string,
   depositAmount: number,
-  bankAccountId: string
+  bankAccountId: string,
+  collectionFee: number = 0
 ) {
   await requireAdmin();
   const supabase = await createClient();
@@ -78,6 +79,7 @@ export async function markSupplyPossible(
       status: "SUPPLY_POSSIBLE",
       deposit_amount: depositAmount,
       bank_account_id: bankAccountId,
+      collection_fee: collectionFee,
       deposit_expires_at: expiresAt,
       updated_at: new Date().toISOString(),
     })

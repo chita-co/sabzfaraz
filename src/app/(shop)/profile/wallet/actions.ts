@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requestPayment } from "@/lib/sep";
 import { notifyAllAdmins } from "@/lib/notifications";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getLoyaltySettings } from "@/lib/loyalty/settings";
 
 async function validateTopupAmount(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -35,7 +37,22 @@ export async function getMyWalletData() {
     supabase.from("bank_accounts").select("*").eq("is_active", true).order("sort_order"),
   ]);
 
+  const adminDb = createAdminClient();
+  const [{ data: rewards }, { data: loyaltyProfile }, loyaltySettings] = await Promise.all([
+    adminDb.from("wallet_loyalty_rewards").select("points, amount, status").eq("user_id", user.id),
+    adminDb.from("profiles").select("loyalty_points_balance").eq("id", user.id).single(),
+    getLoyaltySettings(),
+  ]);
+  const creditedRewards = (rewards ?? []).filter((r) => r.status === "CREDITED");
+  const pointsBalance = loyaltyProfile?.loyalty_points_balance ?? 0;
+
   return {
+    loyalty: {
+      rewardTotal: creditedRewards.reduce((s, r) => s + Number(r.amount ?? 0), 0),
+      rewardPoints: creditedRewards.reduce((s, r) => s + Number(r.points ?? 0), 0),
+      pointsBalance,
+      pointsBalanceValue: pointsBalance * loyaltySettings.pointValueToman,
+    },
     balance: profile?.wallet_balance ?? 0,
     transactions: transactions ?? [],
     pendingRequests: pendingRequests ?? [],

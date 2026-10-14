@@ -3,6 +3,7 @@
 import Ferrofluid from "@/components/Ferrofluid";
 
 export default function FerrofluidBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#000" }}>
       <Ferrofluid

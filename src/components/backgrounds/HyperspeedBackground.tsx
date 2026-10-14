@@ -4,6 +4,7 @@ import Hyperspeed from "@/components/Hyperspeed";
 import { hyperspeedPresets } from "@/components/HyperSpeedPresets";
 
 export default function HyperspeedBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#000" }}>
       <Hyperspeed effectOptions={hyperspeedPresets.one} />

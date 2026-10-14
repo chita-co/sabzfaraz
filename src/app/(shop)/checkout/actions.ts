@@ -19,6 +19,7 @@ interface CheckoutItem {
   image: string;
   price: number;
   discountPrice: number | null;
+  isBubble?: boolean;
   selectedColor: string | null;
   selectedSize: string | null;
   quantity: number;
@@ -33,8 +34,10 @@ async function decrementStockForItems(supabase: Awaited<ReturnType<typeof create
     if (item.isChinaOrder) continue;
     try {
       await supabase.rpc("decrement_product_stock", { p_product_id: item.productId, p_qty: item.quantity });
-      // موجودی محصول تغییر کرد، کش صفحه‌ی همین محصول (ISR) هم فوراً پاک بشه
-      // تا موجودی جدید بلافاصله روی سایت درست نمایش داده بشه.
+      // کسر موجودی حباب فقط برای بخش حبابی، با کلاینت admin (decrement_bubble_stock فقط برای service_role است)
+      if (item.isBubble) {
+        await createAdminClient().rpc("decrement_bubble_stock", { p_product_id: item.productId, p_qty: item.quantity });
+      }
       const { data: slugRow } = await supabase.from("products").select("slug").eq("id", item.productId).single();
       if (slugRow?.slug) revalidatePath(`/products/${slugRow.slug}`);
     } catch (e) {
@@ -123,6 +126,7 @@ export async function createOrderAndPay(
       product_name: i.name,
       product_image: i.image,
       price: i.discountPrice ?? i.price,
+      is_bubble_deal: !!i.isBubble,
       quantity: i.quantity,
       selected_color: i.selectedColor,
       selected_size: i.selectedSize,
@@ -293,6 +297,7 @@ export async function createOfflineOrder(
       product_name: i.name,
       product_image: i.image,
       price: i.discountPrice ?? i.price,
+      is_bubble_deal: !!i.isBubble,
       quantity: i.quantity,
       selected_color: i.selectedColor,
       selected_size: i.selectedSize,

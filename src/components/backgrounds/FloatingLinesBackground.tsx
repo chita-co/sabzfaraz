@@ -4,6 +4,7 @@
 import FloatingLines from "@/components/FloatingLines";
 
 export default function FloatingLinesBackground() {
+    return null; // TEMP: بک‌گراند سراسری bg-site.png
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
       <FloatingLines
