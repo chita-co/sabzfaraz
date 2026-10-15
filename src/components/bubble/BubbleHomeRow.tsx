@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { formatBubbleRemaining } from "@/lib/bubble/format";
 import BubbleAddToCart from "./BubbleAddToCart";
 import type { BubbleItem } from "./types";
-
+import DragScrollRow from "@/components/shared/DragScrollRow";
 
 export default function BubbleHomeRow({ items }: { items: BubbleItem[] }) {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function BubbleHomeRow({ items }: { items: BubbleItem[] }) {
 
       <div className="aquarium-row">
 
-        <div className="aquarium-scroll">
+        <DragScrollRow className="aquarium-scroll">
           <div className="aquarium-grid">
             {visible.map((item, index) => {
               const bubblePrice = item.discount_price ?? item.price;
@@ -106,7 +106,7 @@ export default function BubbleHomeRow({ items }: { items: BubbleItem[] }) {
               );
             })}
           </div>
-        </div>
+        </DragScrollRow>
       </div>
     </section>
   );

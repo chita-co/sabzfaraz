@@ -4,8 +4,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  height: 80vh;
-  min-height: 520px;
+  min-height: 320px;
   border-radius: 28px;
   background:
     radial-gradient(ellipse at 20% 0%, rgba(34, 211, 238, 0.35), transparent 55%),
@@ -46,37 +45,24 @@
   to { transform: translateY(-115vh) scale(1.05); opacity: 0; }
 }
 
-/* لایه‌ی اسکرول: هم افقی هم عمودی */
+/* باکس حباب‌ها با تعداد محصولات بزرگ می‌شود؛ اسکرول داخلی ندارد */
 .aquarium-scroll {
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 1;
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow: visible;
   padding: 28px 18px 40px;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }
 
-/* موبایل: یک ردیف افقی که با انگشت اسکرول می‌شود */
+/* موبایل: دو ستون، بدون اسکرول افقی */
 .aquarium-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 60%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   align-items: start;
-  min-height: 100%;
 }
 
-/* دسکتاپ و تبلت: شبکه‌ی چندستونه با اسکرول عمودی */
 @media (min-width: 768px) {
-  .aquarium-scroll {
-    overflow-x: hidden;
-  }
   .aquarium-grid {
-    grid-auto-flow: row;
-    grid-auto-columns: auto;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
   }
@@ -324,7 +310,7 @@
   isolation: isolate;
   display: inline-block;
   margin-right: 18px;
-  padding: 2px 4px 28px;
+  padding: 2px 4px 24px;
   background: none;
   -webkit-background-clip: border-box;
   background-clip: border-box;
@@ -341,7 +327,7 @@
   left: 0;
   right: 0;
   bottom: 6px;
-  height: 72px;
+  height: 44px;
   z-index: -1;
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -356,7 +342,7 @@
   left: 0;
   right: 0;
   bottom: 6px;
-  height: 72px;
+  height: 44px;
   z-index: -1;
   pointer-events: none;
   transform-origin: 50% 100%;
@@ -374,7 +360,7 @@
   left: 8%;
   right: 8%;
   bottom: 6px;
-  height: 36px;
+  height: 28px;
   z-index: -1;
   pointer-events: none;
   transform-origin: 50% 100%;
@@ -413,10 +399,14 @@
   line-height: 1.7;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(90deg, #f97316 0%, #ef4444 42%, #0ea5e9 58%, #2563eb 100%);
-  background-size: 200% 100%;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.25);
-  animation: water-fire 5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(251, 146, 60, 0.78) 0%,
+    rgba(248, 113, 113, 0.72) 45%,
+    rgba(56, 189, 248, 0.72) 58%,
+    rgba(59, 130, 246, 0.78) 100%
+  );
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.18);
 }
 
 @keyframes water-fire {

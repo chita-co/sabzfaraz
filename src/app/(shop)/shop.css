@@ -651,6 +651,99 @@
   border-radius: 999px;
 }
 
+/* ===== نوار اسکرول افقی ردیف‌ها ===== */
+
+/* موبایل: نوار مخفی است و اسکرول با لمس انجام می‌شود */
+.deals-scroll,
+.category-scroll,
+.aquarium-row .aquarium-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.deals-scroll::-webkit-scrollbar,
+.category-scroll::-webkit-scrollbar,
+.aquarium-row .aquarium-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* دسکتاپ (ماوس): نوار باریک و نیمه‌شفاف */
+@media (hover: hover) and (pointer: fine) {
+  .deals-scroll,
+  .category-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(22, 163, 74, 0.45) transparent;
+  }
+
+  .deals-scroll::-webkit-scrollbar,
+  .category-scroll::-webkit-scrollbar {
+    display: block;
+    width: auto;
+    height: 6px;
+  }
+
+  .deals-scroll::-webkit-scrollbar-track,
+  .category-scroll::-webkit-scrollbar-track {
+    background: rgba(22, 163, 74, 0.08);
+    border-radius: 999px;
+    margin: 0 24px;
+  }
+
+  .deals-scroll::-webkit-scrollbar-thumb,
+  .category-scroll::-webkit-scrollbar-thumb {
+    background: rgba(22, 163, 74, 0.45);
+    border-radius: 999px;
+    transition: background 0.2s;
+  }
+
+  .deals-scroll::-webkit-scrollbar-thumb:hover,
+  .category-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(22, 163, 74, 0.7);
+  }
+
+  .aquarium-row .aquarium-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  }
+
+  .aquarium-row .aquarium-scroll::-webkit-scrollbar {
+    display: block;
+    width: auto;
+    height: 6px;
+  }
+
+  .aquarium-row .aquarium-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    margin: 0 24px;
+  }
+
+  .aquarium-row .aquarium-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    transition: background 0.2s;
+  }
+
+  .aquarium-row .aquarium-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.65);
+  }
+}
+
+/* کشیدن با ماوس و جلوگیری از انتخاب متن و درگ عکس */
+.deals-scroll.is-dragging,
+.aquarium-row .aquarium-scroll.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.deals-scroll img,
+.aquarium-row .aquarium-scroll img {
+  -webkit-user-drag: none;
+  -user-drag: none;
+}
+
 .site-icon-btn {
   position: relative;
 }

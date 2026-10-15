@@ -6,7 +6,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { deleteImageByUrl } from "@/lib/arvan";
 import { buildProductCode } from "@/lib/sku";
-import { generateUniqueSlug } from "@/lib/slug";
+import { generateUniqueSlug, generateUniqueProductSlug  } from "@/lib/slug";
 import { submitUrlToIndexNow } from "@/lib/indexNow";
 
 interface QuantityTierInput {
@@ -157,7 +157,7 @@ async function saveProductAttributes(
 export async function createProduct(input: ProductInput) {
   await requireAdmin();
   const supabase = await createClient();
-  const slug = await generateUniqueSlug(supabase, input.slug || input.name);
+  const slug = await generateUniqueProductSlug(supabase, input.slug ? null : input.nameEn, input.slug || input.name);
 
   const { data: category } = await supabase
     .from("categories")
@@ -431,7 +431,7 @@ export async function createProductsBulk(
   for (const variant of variants) {
     if (!variant.name.trim()) continue;
     try {
-      const slug = await generateUniqueSlug(supabase, variant.name);
+      const slug = await generateUniqueProductSlug(supabase, variant.nameEn, variant.name);
       const sku = await generateUniqueSku(
         supabase,
         category?.slug ?? "x",

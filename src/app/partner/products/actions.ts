@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireActivePartner } from "@/lib/partners/auth";
 import { getPartnerSettings } from "@/lib/partners/settings";
 import { callAiWithRotation } from "@/lib/ai/rotatingClient";
-import { generateUniqueSlug } from "@/lib/slug";
+import { generateUniqueProductSlug } from "@/lib/slug";
 import { uploadImage } from "@/lib/arvan";
 import { notifyAllAdmins } from "@/lib/notifications";
 import { revalidatePath, updateTag } from "next/cache";
@@ -327,7 +327,7 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
     }
 
 
-    const slug = await generateUniqueSlug(admin, input.title);
+    const slug = await generateUniqueProductSlug(admin, input.nameEn, input.title);
 
     const { data: product, error } = await admin.from("products").insert({
       name: input.title.trim(), name_en: input.nameEn, slug,
@@ -426,7 +426,7 @@ export async function createPartnerBulkProductsAction(common: PartnerProductInpu
 
     for (const variant of validVariants) {
       try {
-        const slug = await generateUniqueSlug(admin, variant.name);
+        const slug = await generateUniqueProductSlug(admin, variant.nameEn, variant.name);
         const { data: product, error } = await admin.from("products").insert({
           name: variant.name.trim(), name_en: variant.nameEn, slug,
           description: common.description, short_description: common.shortDescription,

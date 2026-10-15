@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Product } from "@/types";
 import ProductCard from "./ProductCard";
+import DragScrollRow from "@/components/shared/DragScrollRow";
 
 export default function DealsSection({
   products,
@@ -23,13 +24,13 @@ export default function DealsSection({
         <Link href="/deals" className="deal-see-all">مشاهده همه</Link>
       </div>
       {rows.map((row, rowIndex) => (
-        <div className="deals-scroll" key={rowIndex}>
+        <DragScrollRow className="deals-scroll" key={rowIndex}>
           {row.map((p) => (
             <div className="deals-scroll-item" key={p.id}>
               <ProductCard product={p} isWishlisted={wishlistIds.has(p.id)} />
             </div>
           ))}
-        </div>
+        </DragScrollRow>
       ))}
     </div>
   );

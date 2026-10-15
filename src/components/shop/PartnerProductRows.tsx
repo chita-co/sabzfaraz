@@ -1,5 +1,6 @@
 import ProductCard from "./ProductCard";
 import { Product } from "@/types";
+import DragScrollRow from "@/components/shared/DragScrollRow";
 
 export default function PartnerProductRows({
   products,
@@ -17,9 +18,9 @@ export default function PartnerProductRows({
       {rows.map((row, rowIndex) => (
         <div className="deals-scroll" key={rowIndex}>
           {row.map((p) => (
-            <div className="deals-scroll-item" key={p.id}>
+            <DragScrollRow className="deals-scroll-item" key={p.id}>
               <ProductCard product={p} isWishlisted={wishlistIds.has(p.id)} />
-            </div>
+            </DragScrollRow>
           ))}
         </div>
       ))}
