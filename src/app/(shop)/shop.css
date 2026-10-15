@@ -705,7 +705,7 @@
 
   .aquarium-row .aquarium-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+        scrollbar-color: rgba(22, 163, 74, 0.45) transparent;
   }
 
   .aquarium-row .aquarium-scroll::-webkit-scrollbar {
