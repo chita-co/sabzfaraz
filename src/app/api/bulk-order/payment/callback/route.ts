@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const refNum = formData.get("RefNum") as string | null;
   const state = formData.get("State") as string | null;
-  if (!requestId || !refNum) return NextResponse.redirect(`${origin}/bulk-order`);
+  if (!requestId || !refNum) return NextResponse.redirect(`${origin}/bulk-order`, 303);
 
   const admin = createAdminClient();
   const { data: bulkRequest } = await admin
@@ -20,11 +20,11 @@ export async function POST(request: NextRequest) {
     .select("*, profile:profiles(phone)")
     .eq("id", requestId)
     .single();
-  if (!bulkRequest) return NextResponse.redirect(`${origin}/bulk-order`);
+  if (!bulkRequest) return NextResponse.redirect(`${origin}/bulk-order`, 303);
 
   const backBase = kind === "BALANCE" ? `${origin}/profile/orders` : `${origin}/bulk-order/${requestId}`;
   const param = kind === "BALANCE" ? "balance" : "deposit";
-  const go = (status: string) => NextResponse.redirect(`${backBase}?${param}=${status}`);
+  const go = (status: string) => NextResponse.redirect(`${backBase}?${param}=${status}`, 303);
 
   if (state !== "OK") {
     await settleBulkPayment(admin, requestId, {

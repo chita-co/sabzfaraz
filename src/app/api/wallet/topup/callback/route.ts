@@ -10,15 +10,15 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const refNum = formData.get("RefNum") as string | null;
   const state = formData.get("State") as string | null;
-  if (!requestId || !refNum) return NextResponse.redirect(`${origin}/profile/wallet?topup=invalid`);
+  if (!requestId || !refNum) return NextResponse.redirect(`${origin}/profile/wallet?topup=invalid`, 303);
 
   const admin = createAdminClient();
   const { data: reqRow } = await admin.from("wallet_topup_requests").select("*").eq("id", requestId).single();
-  if (!reqRow) return NextResponse.redirect(`${origin}/profile/wallet?topup=notfound`);
+  if (!reqRow) return NextResponse.redirect(`${origin}/profile/wallet?topup=notfound`, 303);
 
   if (state !== "OK" || reqRow.status !== "PENDING") {
     await admin.from("wallet_topup_requests").update({ status: "REJECTED", admin_note: "پرداخت ناموفق" }).eq("id", requestId);
-    return NextResponse.redirect(`${origin}/profile/wallet?topup=failed`);
+    return NextResponse.redirect(`${origin}/profile/wallet?topup=failed`, 303);
   }
 
   try {
@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
     if (result.ok) {
       await creditWallet(reqRow.user_id, reqRow.amount, "شارژ آنلاین کیف پول");
       await admin.from("wallet_topup_requests").update({ status: "APPROVED", reviewed_at: new Date().toISOString(), method: "ONLINE", sep_ref_num: refNum }).eq("id", requestId);
-      return NextResponse.redirect(`${origin}/profile/wallet?topup=success`);
+      return NextResponse.redirect(`${origin}/profile/wallet?topup=success`, 303);
     }
     await admin.from("wallet_topup_requests").update({ status: "REJECTED", admin_note: "تأیید پرداخت ناموفق" }).eq("id", requestId);
-    return NextResponse.redirect(`${origin}/profile/wallet?topup=failed`);
+    return NextResponse.redirect(`${origin}/profile/wallet?topup=failed`, 303);
   } catch {
-    return NextResponse.redirect(`${origin}/profile/wallet?topup=error`);
+    return NextResponse.redirect(`${origin}/profile/wallet?topup=error`, 303);
   }
 }

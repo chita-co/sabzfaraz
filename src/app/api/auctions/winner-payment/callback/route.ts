@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const refNum = formData.get("RefNum") as string | null;
   const state = formData.get("State") as string | null;
-  if (!orderId || !refNum) return NextResponse.redirect(`${origin}/profile/auctions?payment=invalid`);
+  if (!orderId || !refNum) return NextResponse.redirect(`${origin}/profile/auctions?payment=invalid`, 303);
 
   const admin = createAdminClient();
   const { data: order } = await admin
@@ -18,11 +18,11 @@ export async function POST(request: NextRequest) {
     .select("*, address:addresses(phone)")
     .eq("id", orderId)
     .single();
-  if (!order || !order.related_auction_id) return NextResponse.redirect(`${origin}/profile/auctions?payment=notfound`);
+  if (!order || !order.related_auction_id) return NextResponse.redirect(`${origin}/profile/auctions?payment=notfound`, 303);
 
   if (state !== "OK") {
     await admin.from("orders").update({ payment_status: "FAILED" }).eq("id", orderId);
-    return NextResponse.redirect(`${origin}/auctions/${order.related_auction_id}/pay?payment=failed`);
+    return NextResponse.redirect(`${origin}/auctions/${order.related_auction_id}/pay?payment=failed`, 303);
   }
 
   try {
@@ -58,11 +58,11 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`);
+      return NextResponse.redirect(`${origin}/order/${orderId}?payment=success`, 303);
     }
     await admin.from("orders").update({ payment_status: "FAILED" }).eq("id", orderId);
-    return NextResponse.redirect(`${origin}/auctions/${order.related_auction_id}/pay?payment=failed`);
+    return NextResponse.redirect(`${origin}/auctions/${order.related_auction_id}/pay?payment=failed`, 303);
   } catch {
-    return NextResponse.redirect(`${origin}/auctions/${order.related_auction_id}/pay?payment=error`);
+    return NextResponse.redirect(`${origin}/auctions/${order.related_auction_id}/pay?payment=error`, 303);
   }
 }
