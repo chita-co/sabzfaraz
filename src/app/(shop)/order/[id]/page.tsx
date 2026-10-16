@@ -40,7 +40,7 @@ export default async function OrderResultPage({
   let settings: any = null;
 
   if (user) {
-    const [{ data: userOrder }, { data: siteSettings }] = await Promise.all([
+    const [{ data: userOrder, error: orderError }, { data: siteSettings }] = await Promise.all([
       supabase
         .from("orders")
         .select("*, items:order_items(*), address:addresses(*), profile:profiles(full_name)")
@@ -51,6 +51,9 @@ export default async function OrderResultPage({
     ]);
     order = userOrder;
     settings = siteSettings;
+    if (!userOrder) {
+      console.error("ORDER NOT FOUND (user)", { id, userId: user.id, error: orderError });
+    }
   } else if (payment) {
     const admin = createAdminClient();
     const [{ data: guestOrder }, { data: siteSettings }] = await Promise.all([
