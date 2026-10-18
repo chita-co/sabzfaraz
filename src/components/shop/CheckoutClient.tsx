@@ -13,23 +13,26 @@ import type { BankAccountInfo } from "./BankAccountDisplay";
 import PriceSyncEffect from "./PriceSyncEffect";
 import ProductPriceRealtimeSync from "@/components/shop/ProductPriceRealtimeSync";
 import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/checkout/freeShippingConfig";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
   province: string; city: string; postal_code: string; address_line: string;
 }
-interface ShippingMethod { id: string; name: string; }
+interface ShippingMethod { id: string; name: string; is_free_shipping: boolean; }
 interface ShippingTier { id: string; method_id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
 
 export default function CheckoutClient({
   addresses, shippingMethods, shippingTiers, storeInfo,
   bankAccounts,
   walletBalance = 0,
+  freeShipping = { enabled: false, text: "" },
 }: {
   addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
   storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null };
   bankAccounts: BankAccountInfo[];
   walletBalance?: number;
+  freeShipping?: { enabled: boolean; text: string };
 }) {
   const items = useCartStore((s) => s.items);
   const orderNote = useCartStore((s) => s.orderNote);
@@ -38,7 +41,7 @@ export default function CheckoutClient({
   const [pendingOfflineMethod, setPendingOfflineMethod] = useState<PaymentMethod | null>(null);
 
   const [selectedAddress, setSelectedAddress] = useState(addresses[0]?.id ?? "");
-  const [selectedMethodId, setSelectedMethodId] = useState(shippingMethods[0]?.id ?? "");
+  const [rawMethodId, setSelectedMethodId] = useState(shippingMethods[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
@@ -58,6 +61,18 @@ export default function CheckoutClient({
 
   const subtotal = displayItems.reduce((sum, i) => sum + cartItemTotal(i), 0);
 
+  // ارسال رایگان: جمع کالاها بعد از کد تخفیف (امتیاز و کیف پول حساب نمی‌شوند)
+  const goodsAfterCode = Math.max(subtotal - discountAmount, 0);
+  const freeEligible = freeShipping.enabled && goodsAfterCode >= FREE_SHIPPING_THRESHOLD;
+  const freeMethodId = shippingMethods.find((m) => m.is_free_shipping)?.id ?? null;
+
+  // روش انتخاب‌شده، از روی شرایط محاسبه می‌شود (بدون setState داخل effect)
+  const selectedMethodId = freeEligible
+    ? (freeMethodId ?? "")
+    : rawMethodId === freeMethodId
+      ? ""
+      : rawMethodId;
+
   const shippingCost = useMemo(() => {
     const methodTiers = shippingTiers.filter((t) => t.method_id === selectedMethodId).sort((a, b) => a.min_weight_grams - b.min_weight_grams);
     if (methodTiers.length === 0) return 0;
@@ -70,6 +85,7 @@ export default function CheckoutClient({
   const walletUseAmount = useWallet ? Math.min(walletBalance, totalBeforeWallet) : 0;
   const remainderAmount = Math.max(totalBeforeWallet - walletUseAmount, 0);
   const fullyCoveredByWallet = useWallet && remainderAmount === 0 && totalBeforeWallet > 0;
+
 
   async function handlePay(methodOverride?: PaymentMethod) {
     if (mixedCart) {
@@ -196,12 +212,38 @@ export default function CheckoutClient({
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h2 className="font-bold text-gray-800 mb-4">روش ارسال</h2>
           <div className="space-y-2">
-            {shippingMethods.map((m) => (
-              <label key={m.id} className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer ${selectedMethodId === m.id ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
-                <input type="radio" name="method" checked={selectedMethodId === m.id} onChange={() => setSelectedMethodId(m.id)} />
-                <span className="text-sm font-medium text-gray-800">{m.name}</span>
-              </label>
-            ))}
+            {shippingMethods.map((m) => {
+              const disabled = m.is_free_shipping ? !freeEligible : freeEligible;
+              return (
+                <label
+                  key={m.id}
+                  className={`flex items-center gap-3 rounded-lg border p-3 ${
+                    disabled
+                      ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
+                      : selectedMethodId === m.id
+                        ? "cursor-pointer border-green-500 bg-green-50"
+                        : "cursor-pointer border-gray-200"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="method"
+                    disabled={disabled}
+                    checked={selectedMethodId === m.id}
+                    onChange={() => setSelectedMethodId(m.id)}
+                  />
+                  <span className="text-sm font-medium text-gray-800">{m.name}</span>
+                  {m.is_free_shipping && !freeEligible && (
+                    <span className="mr-auto text-xs text-red-500">
+                      مبلغ زیر {FREE_SHIPPING_THRESHOLD.toLocaleString("fa-IR")} تومان است
+                    </span>
+                  )}
+                  {!m.is_free_shipping && freeEligible && (
+                    <span className="mr-auto text-xs text-gray-500">با ارسال رایگان غیرفعال است</span>
+                  )}
+                </label>
+              );
+            })}
           </div>
         </div>
       )}

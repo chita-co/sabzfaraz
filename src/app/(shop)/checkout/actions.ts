@@ -12,6 +12,8 @@ import { cookies } from "next/headers";
 import { clearUserCart } from "@/lib/cart/clearUserCart";
 import { priceCheckoutItems } from "@/lib/checkout/serverPricing";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getFreeShippingSettings } from "@/lib/checkout/freeShipping";
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/checkout/freeShippingConfig";
 
 interface CheckoutItem {
   productId: string;
@@ -82,6 +84,7 @@ export async function createOrderAndPay(
   if ("error" in priced) return { error: priced.error };
   items = priced.items;
   shippingCost = priced.shippingCost;
+  const chosenFree = priced.isFreeShipping;
 
   const cookieStore = await cookies();
   const torobClid = cookieStore.get("torob_clid")?.value ?? null;
@@ -137,6 +140,7 @@ export async function createOrderAndPay(
   if (itemsError) return { error: "خطا در ثبت اقلام سفارش: " + itemsError.message };
 
   let finalAmount = totalAmount;
+  let codeDiscount = 0;
 
   if (loyaltyPointsToRedeem > 0) {
     const redemption = await redeemPointsForOrder(user.id, order.id, loyaltyPointsToRedeem);
@@ -152,7 +156,23 @@ export async function createOrderAndPay(
       return { error: consumed.error };
     }
     finalAmount = finalAmount - consumed.discountAmount;
+    codeDiscount = consumed.discountAmount;
     if (finalAmount < 0) finalAmount = 0;
+  }
+
+  // کنترل ارسال رایگان بعد از کد تخفیف (امتیاز و کیف پول در این محاسبه نمی‌آیند)
+  {
+    const fs = await getFreeShippingSettings();
+    const goodsAfterCode = Math.max(subtotal - codeDiscount, 0);
+    const freeAllowed = fs.enabled && goodsAfterCode >= FREE_SHIPPING_THRESHOLD;
+    if (chosenFree !== freeAllowed) {
+      await rollbackOrderDiscounts(order.id);
+      return {
+        error: chosenFree
+          ? `ارسال رایگان فقط برای جمع کالاهای ${FREE_SHIPPING_THRESHOLD.toLocaleString("fa-IR")} تومان و بالاتر فعال است. لطفاً یکی از روش‌های ارسال دیگر را انتخاب کنید.`
+          : "با این مبلغ ارسال رایگان فعال است. لطفاً روش ارسال را دوباره انتخاب کنید.",
+      };
+    }
   }
 
 // ثبت ارزش واقعی و نهایی سفارش (پس از تخفیف‌ها)
@@ -247,6 +267,7 @@ export async function createOfflineOrder(
   if ("error" in priced) return { error: priced.error };
   items = priced.items;
   shippingCost = priced.shippingCost;
+  const chosenFree = priced.isFreeShipping;
 
   const { data: bankAccount } = await supabase
     .from("bank_accounts").select("id").eq("id", bankAccountId).eq("is_active", true).single();
@@ -308,6 +329,7 @@ export async function createOfflineOrder(
   if (itemsError) return { error: "خطا در ثبت اقلام سفارش: " + itemsError.message };
 
   let finalAmount = totalAmount;
+  let codeDiscount = 0;
 
   if (loyaltyPointsToRedeem > 0) {
     const redemption = await redeemPointsForOrder(user.id, order.id, loyaltyPointsToRedeem);
@@ -323,12 +345,28 @@ export async function createOfflineOrder(
       return { error: consumed.error };
     }
     finalAmount = finalAmount - consumed.discountAmount;
+    codeDiscount = consumed.discountAmount;
     if (finalAmount < 0) finalAmount = 0;
   }
 
   if (finalAmount !== totalAmount) {
     const admin = createAdminClient();
     await admin.from("orders").update({ total_amount: finalAmount }).eq("id", order.id);
+  }
+
+  // کنترل ارسال رایگان بعد از کد تخفیف (امتیاز و کیف پول در این محاسبه نمی‌آیند)
+  {
+    const fs = await getFreeShippingSettings();
+    const goodsAfterCode = Math.max(subtotal - codeDiscount, 0);
+    const freeAllowed = fs.enabled && goodsAfterCode >= FREE_SHIPPING_THRESHOLD;
+    if (chosenFree !== freeAllowed) {
+      await rollbackOrderDiscounts(order.id);
+      return {
+        error: chosenFree
+          ? `ارسال رایگان فقط برای جمع کالاهای ${FREE_SHIPPING_THRESHOLD.toLocaleString("fa-IR")} تومان و بالاتر فعال است. لطفاً یکی از روش‌های ارسال دیگر را انتخاب کنید.`
+          : "با این مبلغ ارسال رایگان فعال است. لطفاً روش ارسال را دوباره انتخاب کنید.",
+      };
+    }
   }
 
   let remainder = finalAmount;

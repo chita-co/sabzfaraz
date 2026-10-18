@@ -4,6 +4,8 @@
 // (قیمت پلکانی ← قیمت با تخفیف ← قیمت اصلی / قیمت سفارش چین / ارسال بر اساس وزن).
 import { createAdminClient } from "@/lib/supabase/admin";
 import { splitQuantity, type TierLike } from "@/lib/pricing/bubbleSplit";
+import { getFreeShippingSettings } from "@/lib/checkout/freeShipping";
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/checkout/freeShippingConfig";
 
 type InputItem = {
   productId: string;
@@ -21,7 +23,7 @@ type Tier = { product_id: string; min_qty: number; max_qty: number; unit_price: 
 export async function priceCheckoutItems<T extends InputItem>(
   items: T[],
   shippingMethodId: string | null
-): Promise<{ error: string } | { items: T[]; shippingCost: number }> {
+): Promise<{ error: string } | { items: T[]; shippingCost: number; isFreeShipping: boolean }> {
   if (!Array.isArray(items) || items.length === 0) return { error: "سبد خرید شما خالی است." };
   if (items.length > 100) return { error: "تعداد اقلام سبد خرید بیش از حد مجاز است." };
   if (!shippingMethodId) return { error: "لطفاً یک روش ارسال انتخاب کنید." };
@@ -37,7 +39,7 @@ export async function priceCheckoutItems<T extends InputItem>(
       .select("id, name, images, price, discount_price, china_price, fulfillment_type, weight_grams, is_sold_by_unit, stock, flash_applied, flash_stock, flash_price, flash_base_discount_price")
       .in("id", ids),
     admin.from("product_quantity_tiers").select("product_id, min_qty, max_qty, unit_price").in("product_id", ids),
-    admin.from("shipping_methods").select("id").eq("id", shippingMethodId).eq("is_active", true).maybeSingle(),
+    admin.from("shipping_methods").select("id, is_free_shipping").eq("id", shippingMethodId).eq("is_active", true).maybeSingle(),
     admin
       .from("shipping_weight_tiers")
       .select("min_weight_grams, max_weight_grams, cost")
@@ -129,6 +131,18 @@ export async function priceCheckoutItems<T extends InputItem>(
     }
   }
 
+  // روش «ارسال رایگان»: فقط وقتی اطلاعیه روشن است و جمع کالاها به آستانه رسیده
+  const isFreeShipping = !!methodRes.data.is_free_shipping;
+  if (isFreeShipping) {
+    const goodsTotal = safeItems.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
+    const fs = await getFreeShippingSettings();
+    if (!fs.enabled || goodsTotal < FREE_SHIPPING_THRESHOLD) {
+      return {
+        error: `ارسال رایگان برای این سبد فعال نیست. حداقل جمع کالاها ${FREE_SHIPPING_THRESHOLD.toLocaleString("fa-IR")} تومان است.`,
+      };
+    }
+  }
+
   const shipTiers = shipTiersRes.data ?? [];
   let shippingCost = 0;
   if (shipTiers.length > 0) {
@@ -138,5 +152,5 @@ export async function priceCheckoutItems<T extends InputItem>(
     shippingCost = Number((matched ?? shipTiers[shipTiers.length - 1]).cost);
   }
 
-  return { items: safeItems, shippingCost };
+  return { items: safeItems, shippingCost: isFreeShipping ? 0 : shippingCost, isFreeShipping };
 }

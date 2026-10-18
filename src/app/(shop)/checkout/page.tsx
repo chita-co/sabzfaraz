@@ -14,7 +14,7 @@ export default async function CheckoutPage() {
     supabase.from("addresses").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("shipping_methods").select("*").eq("is_active", true).order("sort_order"),
     supabase.from("shipping_weight_tiers").select("*"),
-    supabase.from("site_settings").select("store_name, support_phone, support_phone_2, store_address, logo_url, support_email").eq("id", 1).single(),
+    supabase.from("site_settings").select("store_name, support_phone, support_phone_2, store_address, logo_url, support_email, announcement_free_shipping_enabled, announcement_free_shipping_text").eq("id", 1).single(),
     supabase.from("bank_accounts").select("id, bank_name, account_holder_name, card_number, sheba_number, logo_slug").eq("is_active", true).order("sort_order"),
     supabase.from("profiles").select("wallet_balance").eq("id", user.id).single(),
   ]);
@@ -28,6 +28,9 @@ export default async function CheckoutPage() {
     )
   ) as string[];
 
+  const freeShippingEnabled = !!settings?.announcement_free_shipping_enabled;
+  const visibleMethods = (methods ?? []).filter((m) => !m.is_free_shipping || freeShippingEnabled);
+
   return (
     <>
       <LightfallBackground />
@@ -37,7 +40,7 @@ export default async function CheckoutPage() {
       <BubbleCartWatcher />
       <CheckoutClient
         addresses={addresses ?? []}
-        shippingMethods={methods ?? []}
+        shippingMethods={visibleMethods}
         shippingTiers={tiers ?? []}
         storeInfo={{
           name: settings?.store_name ?? "سبزفراز",
@@ -48,6 +51,7 @@ export default async function CheckoutPage() {
         }}
         bankAccounts={bankAccounts ?? []}
         walletBalance={profile?.wallet_balance ?? 0}
+        freeShipping={{ enabled: freeShippingEnabled, text: settings?.announcement_free_shipping_text ?? "" }}
       />
     </>
   );

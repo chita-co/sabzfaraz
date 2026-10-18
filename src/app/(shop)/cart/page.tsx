@@ -10,7 +10,7 @@ export default async function CartPage() {
   // پس به‌جای پشت‌سرهم منتظر ماندن، هم‌زمان اجرا می‌شن؛ خروجی و نتیجه دقیقاً همان قبلی‌ست.
   const [{ data: { user } }, { data: settings }] = await Promise.all([
     supabase.auth.getUser(),
-    supabase.from("site_settings").select("min_order_amount").eq("id", 1).single(),
+    supabase.from("site_settings").select("min_order_amount, announcement_free_shipping_enabled").eq("id", 1).single(),
   ]);
 
   return (
@@ -21,7 +21,11 @@ export default async function CartPage() {
           <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
         </div>
         <BubbleCartWatcher />
-        <CartClient isLoggedIn={!!user} minOrderAmount={settings?.min_order_amount ?? 500000} />
+        <CartClient
+          isLoggedIn={!!user}
+          minOrderAmount={settings?.min_order_amount ?? 500000}
+          freeShippingEnabled={!!settings?.announcement_free_shipping_enabled}
+        />
       </div>
     </>
   );

@@ -11,8 +11,17 @@ import OrderNoteBox from "@/components/shop/OrderNoteBox";
 import PriceSyncEffect from "@/components/shop/PriceSyncEffect";
 import ProductPriceRealtimeSync from "@/components/shop/ProductPriceRealtimeSync";
 import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
+import FreeShippingProgress from "@/components/shop/FreeShippingProgress";
 
-export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn: boolean; minOrderAmount: number }) {
+export default function CartClient({
+  isLoggedIn,
+  minOrderAmount,
+  freeShippingEnabled = false,
+}: {
+  isLoggedIn: boolean;
+  minOrderAmount: number;
+  freeShippingEnabled?: boolean;
+}) {
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -45,6 +54,8 @@ export default function CartClient({ isLoggedIn, minOrderAmount }: { isLoggedIn:
       <Breadcrumb theme="dark" items={[{ label: "سبد خرید" }]} />
 
       <h1 className="text-xl font-bold text-white mb-6">سبد خرید</h1>
+
+      <FreeShippingProgress total={totalPrice} enabled={freeShippingEnabled} />
 
       <div className="space-y-4 mb-8">
         {items.map((item) => (

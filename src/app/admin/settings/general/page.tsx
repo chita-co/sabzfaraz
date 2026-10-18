@@ -14,7 +14,7 @@ export default async function AdminGeneralSettingsPage() {
     
   const { data: ann } = await supabase
     .from("site_settings")
-    .select("announcement_enabled, announcement_text_1, announcement_text_2")
+    .select("announcement_enabled, announcement_text_1, announcement_text_2, announcement_free_shipping_enabled, announcement_free_shipping_text")
     .eq("id", 1)
     .single();
 
@@ -46,6 +46,8 @@ export default async function AdminGeneralSettingsPage() {
           enabled: ann?.announcement_enabled ?? true,
           text1: ann?.announcement_text_1 ?? "",
           text2: ann?.announcement_text_2 ?? "",
+          freeEnabled: ann?.announcement_free_shipping_enabled ?? false,
+          freeText: ann?.announcement_free_shipping_text ?? "",
         }}
       />
       <PublicDiscountCodeForm />

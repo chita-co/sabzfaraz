@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { CartItem } from "@/store/cart-store";
 import { attachPartnerInfoToItems } from "@/lib/partners/orderIntegration";
 import { priceCheckoutItems } from "@/lib/checkout/serverPricing";
+import { getFreeShippingSettings } from "@/lib/checkout/freeShipping";
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/checkout/freeShippingConfig";
 
 export async function createPendingCheckout(items: CartItem[], shippingMethodId: string | null, shippingCost: number) {
   const supabase = await createClient();
@@ -73,6 +75,19 @@ export async function createOrderFromPendingCheckout(
   if ("error" in priced) return { error: priced.error };
   items = priced.items;
   shippingCost = priced.shippingCost;
+
+  {
+    const fs = await getFreeShippingSettings();
+    const goods = items.reduce((s, i) => s + (i.discountPrice ?? i.price) * i.quantity, 0);
+    const freeAllowed = fs.enabled && goods >= FREE_SHIPPING_THRESHOLD;
+    if (priced.isFreeShipping !== freeAllowed) {
+      return {
+        error: freeAllowed
+          ? "با این مبلغ ارسال رایگان فعال است. لطفاً روش ارسال را دوباره انتخاب کنید."
+          : `ارسال رایگان فقط برای جمع کالاهای ${FREE_SHIPPING_THRESHOLD.toLocaleString("fa-IR")} تومان و بالاتر فعال است.`,
+      };
+    }
+  }
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
   const totalAmount = subtotal + shippingCost;

@@ -50,6 +50,7 @@ export async function listBulkShippingMethods() {
     .from("shipping_methods")
     .select("id, name")
     .eq("is_active", true)
+    .eq("is_free_shipping", false)
     .order("sort_order", { ascending: true });
   const list = methods ?? [];
   if (list.length === 0) return [];
@@ -99,6 +100,7 @@ export async function submitBulkOrderRequest(
     .select("id, name")
     .eq("id", shippingMethodId)
     .eq("is_active", true)
+    .eq("is_free_shipping", false)
     .maybeSingle();
   if (!method) return { error: "نحوه‌ی ارسال انتخابی معتبر نیست." };
 

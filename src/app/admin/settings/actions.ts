@@ -44,6 +44,7 @@ export async function updateAnnouncementSettings(formData: FormData) {
 
   const text1 = String(formData.get("text1") ?? "").trim().slice(0, 200);
   const text2 = String(formData.get("text2") ?? "").trim().slice(0, 200);
+  const freeText = String(formData.get("free_text") ?? "").trim().slice(0, 200);
 
   const { error } = await supabase
     .from("site_settings")
@@ -51,6 +52,8 @@ export async function updateAnnouncementSettings(formData: FormData) {
       announcement_enabled: formData.get("enabled") === "on",
       announcement_text_1: text1,
       announcement_text_2: text2,
+      announcement_free_shipping_enabled: formData.get("free_enabled") === "on",
+      announcement_free_shipping_text: freeText,
     })
     .eq("id", 1);
 

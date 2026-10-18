@@ -6,7 +6,7 @@ import { updateAnnouncementSettings } from "@/app/admin/settings/actions";
 export default function AnnouncementSettingsForm({
   initial,
 }: {
-  initial: { enabled: boolean; text1: string; text2: string };
+  initial: { enabled: boolean; text1: string; text2: string; freeEnabled: boolean; freeText: string };
 }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -46,6 +46,18 @@ export default function AnnouncementSettingsForm({
           متن اطلاعیه‌ی دوم (خالی بگذارید تا این باکس نمایش داده نشود)
         </label>
         <input type="text" name="text2" maxLength={200} defaultValue={initial.text2} placeholder="مثلاً: ارسال پستی در روز های فرد انجام می شود" />
+      </div>
+
+       <div className="admin-form-group">
+        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+          <input type="checkbox" name="free_enabled" defaultChecked={initial.freeEnabled} style={{ width: 18, height: 18 }} />
+          اطلاعیه ارسال رایگان در تکمیل خرید (با خاموش‌کردن، گزینه‌ی ارسال رایگان هم پنهان می‌شود)
+        </label>
+      </div>
+
+      <div className="admin-form-group">
+        <label>متن اطلاعیه‌ی ارسال رایگان</label>
+        <input type="text" name="free_text" maxLength={200} defaultValue={initial.freeText} />
       </div>
 
       {message && (
