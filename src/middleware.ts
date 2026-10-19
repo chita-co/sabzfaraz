@@ -30,6 +30,20 @@ if (isOldDomain && !ALLOWED_OLD_DOMAIN_PATHS.has(pathname)) {
   return NextResponse.redirect(redirectUrl, 301);
 }
 
+  // صفحات خصوصی: اگر کوکی نشست نباشد، ریدایرکت واقعی (302) به ورود
+  const PROTECTED_PREFIXES = ["/support", "/bulk-order", "/wishlist"];
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  if (isProtected) {
+    const hasSession = request.cookies
+      .getAll()
+      .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+    if (!hasSession) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl, 302);
+    }
+  }
+
   let response = NextResponse.next({ request });
 
   // فقط برای صفحات غیر-اینماد، چک session انجام بده

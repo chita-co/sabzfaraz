@@ -16,6 +16,7 @@ import { useCartStore, useCartTotals } from "@/store/cart-store";
 import GooeyNav, { type GooeyNavItem } from "@/components/GooeyNav";
 import NotificationBell from "@/components/shop/NotificationBell";
 import ShinyText from "@/components/ShinyText";
+import MobileFreeShippingBar from "@/components/shop/MobileFreeShippingBar";
 import { useShallow } from "zustand/react/shallow";
 
 const subscribeToCartHydration = (callback: () => void) =>
@@ -30,9 +31,10 @@ interface CategoryLite { id: string; name: string; slug: string; }
 interface CategoryTreeItem extends CategoryLite { children: CategoryLite[]; }
 
 export default function HeaderNav({
-  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",
+  isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",freeShippingEnabled = false,
 }: {
   isLoggedIn: boolean;
+  freeShippingEnabled?: boolean;
   userName: string | null;
   isAdmin: boolean;
   categories: CategoryLite[];
@@ -225,6 +227,10 @@ export default function HeaderNav({
             <X size={20} />
           </button>
         </div>
+
+        {freeShippingEnabled && cartHydrated && cartItems.length > 0 && (
+          <MobileFreeShippingBar total={cartTotalPrice} />
+        )}
 
         {!cartHydrated ? (
   <div className="mobile-cart-empty">

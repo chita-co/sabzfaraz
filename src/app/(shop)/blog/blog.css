@@ -141,3 +141,96 @@
 .login-prompt-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; color: #111827; }
 .login-prompt-card p { font-size: 13px; color: #6b7280; margin-bottom: 18px; line-height: 1.8; }
 .login-prompt-btn { display: block; background: #16a34a; color: #fff; text-decoration: none; padding: 10px; border-radius: 10px; font-size: 13.5px; font-weight: 700; }
+
+/* ===== باکس شیشه‌ای برای متن مقاله روی بک‌گراند تیره ===== */
+.blog-article-layout .blog-article-body-wrap.blog-glass {
+  background: rgba(15, 23, 42, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  padding: 30px 26px 40px;
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+  color: #e2e8f0;
+}
+
+/* متن اصلی مقاله: روشن و خوانا */
+.blog-glass .blog-article-content :is(p, li, span, strong, em, div):not(blockquote *):not(.blog-product-cta *) {
+  color: #e2e8f0;
+}
+.blog-glass .blog-article-content :is(h2, h3, h4):not(blockquote *):not(.blog-product-cta *) {
+  color: #ffffff;
+}
+.blog-glass .blog-article-content a:not(.blog-product-cta-btn) {
+  color: #86efac;
+}
+.blog-glass .blog-article-content img {
+  border-radius: 14px;
+}
+
+/* بخش مقالات مرتبط (عنوان) */
+.blog-glass .blog-related h2 {
+  color: #ffffff;
+}
+
+/* دکمه‌های لایک و ذخیره */
+.blog-glass .blog-reaction-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+.blog-glass .blog-reaction-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.blog-glass .blog-reaction-btn.active {
+  background: rgba(34, 197, 94, 0.25);
+  color: #bbf7d0;
+}
+
+/* بخش نظرات */
+.blog-glass .blog-comments {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+.blog-glass .blog-comments h2 {
+  color: #ffffff;
+}
+.blog-glass .blog-comment-meta strong {
+  color: #ffffff;
+}
+.blog-glass .blog-comment-meta span {
+  color: #94a3b8;
+}
+.blog-glass .blog-comment-item p {
+  color: #cbd5e1;
+}
+.blog-glass .blog-comment-form textarea {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.blog-glass .blog-comment-form textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* فهرست مطالب: یک باکس شیشه‌ای جداگانه کنار مقاله */
+.blog-article-layout .blog-toc {
+  top: 100px;
+  padding: 22px 16px;
+  background: rgba(15, 23, 42, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+}
+.blog-article-layout .blog-toc-title {
+  color: #e2e8f0;
+}
+.blog-article-layout .blog-toc-link {
+  color: #cbd5e1;
+}
+.blog-article-layout .blog-toc-link:hover {
+  color: #4ade80;
+}
+.blog-article-layout .blog-toc-link.active {
+  color: #4ade80;
+  border-right-color: #4ade80;
+}

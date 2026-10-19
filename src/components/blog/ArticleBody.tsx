@@ -1,7 +1,9 @@
 import { ReactNode } from "react";
+import { ensureImageAlt } from "@/lib/blog/ensureImageAlt";
 
-export default function ArticleBody({ content, ctaComponent }: { content: string; ctaComponent: ReactNode }) {
+export default function ArticleBody({ content, ctaComponent, imageAlt = "تصویر مقاله" }: { content: string; ctaComponent: ReactNode; imageAlt?: string }) {
   const marker = /<div data-product-cta="[^"]*"><\/div>/;
+  content = ensureImageAlt(content, imageAlt);
   const parts = content.split(marker);
 
   if (parts.length === 1) {

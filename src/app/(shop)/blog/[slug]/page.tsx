@@ -85,8 +85,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       <div className="blog-article-layout">
         <TableOfContents />
-        <div className="blog-article-body-wrap">
-          <ArticleBody content={post.content} ctaComponent={<ProductCtaBox product={post.product ?? null} />} />
+        <div className="blog-article-body-wrap blog-glass">
+          <ArticleBody content={post.content} imageAlt={post.title} ctaComponent={<ProductCtaBox product={post.product ?? null} />} />
           <ArticleImageLightbox />
           <ArticleReactions postId={post.id} initialLikes={post.like_count} initialBookmarks={post.bookmark_count} isLoggedIn={isLoggedIn} />
           <UserBadgesWidget postId={post.id} />

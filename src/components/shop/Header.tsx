@@ -26,6 +26,12 @@ export default async function Header() {
     getAnnouncementSettings().catch(() => null),
   ]);
 
+  const { data: fsSettings } = await supabase
+    .from("site_settings")
+    .select("announcement_free_shipping_enabled")
+    .eq("id", 1)
+    .single();
+
   const walletBalance = fullProfile?.wallet_balance ?? 0;
 
   const categoryTree = (categories ?? []).map((top) => ({
@@ -61,6 +67,7 @@ export default async function Header() {
       walletBalance={walletBalance}
       auctionEnabled={settings?.auction_header_enabled ?? true}
       auctionLabel={settings?.auction_header_label ?? "جمعه بازار"}
+      freeShippingEnabled={!!fsSettings?.announcement_free_shipping_enabled}
       />
     </div>
   );

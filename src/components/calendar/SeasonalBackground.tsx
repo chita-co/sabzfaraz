@@ -67,7 +67,7 @@ export default function SeasonalBackground({ date }: { date: Date }) {
       <div className="seasonal-gradient" style={{ background: meta.gradient }} />
       {imageOk && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={meta.image} alt="" className="seasonal-image" onError={() => setImageOk(false)} />
+        <img src={meta.image} alt="تصویر فصلی تقویم سبزفراز" className="seasonal-image" onError={() => setImageOk(false)} />
       )}
       <div className="seasonal-particles">
         {particles.map((p) => (

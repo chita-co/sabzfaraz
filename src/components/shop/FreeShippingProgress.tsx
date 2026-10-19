@@ -33,7 +33,7 @@ export default function FreeShippingProgress({ total, enabled }: { total: number
             {reached ? <CheckCircle size={20} /> : <Truck size={20} />}
           </span>
           <div>
-            <p className="text-sm font-bold text-white">ارسال رایگان</p>
+            <p className="text-sm font-bold text-white">تا ارسال رایگان</p>
             <p className="text-xs text-zinc-300">
               {reached
                 ? "تبریک! ارسال رایگان برای سفارش شما فعال شد"
