@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
   const deviceFilter = searchParams.get("device") || "";
   const convertedFilter = searchParams.get("converted") || "";
   const includeAdmin = searchParams.get("includeAdmin") === "true";
+  const wantedSections = new Set((searchParams.get("sections") || "").split(",").filter(Boolean));
   const sessionsPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const SESSIONS_PAGE_SIZE = 50;
   const SESSIONS_QUERY_LIMIT = 10000;
@@ -272,12 +273,12 @@ export async function GET(request: NextRequest) {
       adminVisits: adminVisitsInRange.count ?? 0,
     },
     chart,
-    landingPages,
-    referrers: bucketize("traffic_source"),
-    browsers: bucketize("browser"),
-    os: bucketize("os"),
-    devices: bucketize("device_type"),
-    countries: bucketizeCountries(),
+    landingPages: wantedSections.has("landingPages") ? landingPages : [],
+    referrers: wantedSections.has("referrers") ? bucketize("traffic_source") : [],
+    browsers: wantedSections.has("browsers") ? bucketize("browser") : [],
+    os: wantedSections.has("os") ? bucketize("os") : [],
+    devices: wantedSections.has("devices") ? bucketize("device_type") : [],
+    countries: wantedSections.has("countries") ? bucketizeCountries() : [],
     recentSessions,
     totalSessions: rows.length,
     sessionsPage,

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { Download, X, Radio, Eye, History, CalendarDays, CalendarRange, UserCheck, LogOut, Clock, Target, ShieldAlert } from "lucide-react";
+import { Download, X, Radio, Eye, History, CalendarDays, CalendarRange, UserCheck, LogOut, Clock, Target, ShieldAlert, ChevronDown } from "lucide-react";
 import { countryCodeToFlagEmoji } from "@/lib/analytics/geoLookup";
 
 interface ReportData {
@@ -113,6 +113,75 @@ export default function VisitorAnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
   const [drilldownId, setDrilldownId] = useState<string | null>(null);
+
+  const [extraShown, setExtraShown] = useState<{ key: string; count: number }>({ key: "", count: 0 });
+  const filterKey = [from, to, source, device, converted, includeAdmin, sessionsPage].join("|");
+  const visibleCount = extraShown.key === filterKey ? 20 + extraShown.count : 20;
+  const setVisibleCount = (updater: (c: number) => number) =>
+    setExtraShown((prev) => {
+      const current = prev.key === filterKey ? 20 + prev.count : 20;
+      const next = updater(current);
+      return { key: filterKey, count: next - 20 };
+    });
+  const [openSections, setOpenSections] = useState<string[]>([]);
+  const [sectionCache, setSectionCache] = useState<Record<string, Record<string, unknown>[]>>({});
+
+
+  useEffect(() => {
+    openSections.forEach((name) => {
+      const cacheKey = `${filterKey}::${name}`;
+      if (sectionCache[cacheKey]) return;
+      const params = new URLSearchParams();
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      if (source) params.set("source", source);
+      if (device) params.set("device", device);
+      if (converted) params.set("converted", converted);
+      if (includeAdmin) params.set("includeAdmin", "true");
+      params.set("sections", name);
+      fetch(`/api/admin/analytics/report?${params.toString()}`)
+        .then((r) => r.json())
+        .then((json) => setSectionCache((prev) => ({ ...prev, [cacheKey]: json[name] ?? [] })))
+        .catch(() => {});
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSections, filterKey]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getSection = (name: string): Record<string, any>[] => sectionCache[`${filterKey}::${name}`] ?? [];
+
+  const toggleSection = (name: string) =>
+    setOpenSections((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
+
+  const renderBreakdown = (
+    name: string,
+    title: string,
+    csvFields: string[],
+    headers: string[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cells: (r: Record<string, any>) => ReactNode[],
+  ) => {
+    if (!openSections.includes(name)) return null;
+    const rows = getSection(name);
+    return (
+      <div className="admin-card mb-5" key={name}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-gray-800">{title}</h2>
+          <button className="admin-btn admin-btn-secondary flex items-center gap-1" onClick={() => downloadCsv(toCsv(rows, csvFields), `${name}.csv`)}>
+            <Download size={13} /> CSV
+          </button>
+        </div>
+        <table className="admin-table">
+          <thead><tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>{cells(r).map((c, j) => <td key={j}>{c}</td>)}</tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(true), 0);
@@ -284,62 +353,39 @@ export default function VisitorAnalyticsDashboard() {
           </div>
 
           <div className="admin-card mb-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-800">برترین صفحات ورودی</h2>
-              <button className="admin-btn admin-btn-secondary flex items-center gap-1" onClick={() => downloadCsv(toCsv(data.landingPages, ["page", "visits", "exitRate"]), "landing-pages.csv")}>
-                <Download size={13} /> CSV
-              </button>
+            <h2 className="font-bold text-gray-800 mb-3">گزارش‌های تفصیلی</h2>
+            <div className="flex flex-wrap gap-2">
+              {[
+                ["landingPages", "برترین صفحات ورودی"],
+                ["referrers", "منابع ترافیک"],
+                ["browsers", "مرورگرها"],
+                ["os", "سیستم‌عامل‌ها"],
+                ["devices", "دستگاه‌ها"],
+                ["countries", "توزیع کشورها"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => toggleSection(key)}
+                  className={`admin-btn ${openSections.includes(key) ? "admin-btn-primary" : "admin-btn-secondary"}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-            <table className="admin-table">
-              <thead><tr><th>صفحه</th><th>تعداد ورود</th><th>نرخ خروج از همین صفحه</th></tr></thead>
-              <tbody>
-                {data.landingPages.map((p, i) => (
-                  <tr key={i}><td className="text-xs">{p.page}</td><td>{p.visits.toLocaleString("fa-IR")}</td><td>{p.exitRate.toLocaleString("fa-IR")}٪</td></tr>
-                ))}
-              </tbody>
-            </table>
           </div>
 
-          <div className="admin-card mb-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-800">منابع ترافیک</h2>
-              <button className="admin-btn admin-btn-secondary flex items-center gap-1" onClick={() => downloadCsv(toCsv(data.referrers, ["name", "count", "percent"]), "referrers.csv")}>
-                <Download size={13} /> CSV
-              </button>
-            </div>
-            <table className="admin-table">
-              <thead><tr><th>منبع</th><th>تعداد</th><th>درصد</th></tr></thead>
-              <tbody>
-                {data.referrers.map((r, i) => (
-                  <tr key={i}><td>{r.name}</td><td>{r.count.toLocaleString("fa-IR")}</td><td>{r.percent.toLocaleString("fa-IR")}٪</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="grid md:grid-cols-4 gap-4 mb-5">
-            <div className="admin-card">
-              <h2 className="font-bold text-gray-800 mb-3">مرورگرها</h2>
-              <table className="admin-table"><tbody>{data.browsers.map((b, i) => (<tr key={i}><td>{b.name}</td><td>{b.percent.toLocaleString("fa-IR")}٪</td></tr>))}</tbody></table>
-            </div>
-            <div className="admin-card">
-              <h2 className="font-bold text-gray-800 mb-3">سیستم‌عامل‌ها</h2>
-              <table className="admin-table"><tbody>{data.os.map((o, i) => (<tr key={i}><td>{o.name}</td><td>{o.percent.toLocaleString("fa-IR")}٪</td></tr>))}</tbody></table>
-            </div>
-            <div className="admin-card">
-              <h2 className="font-bold text-gray-800 mb-3">دستگاه‌ها</h2>
-              <table className="admin-table"><tbody>{data.devices.map((d, i) => (<tr key={i}><td>{deviceLabel(d.name)}</td><td>{d.percent.toLocaleString("fa-IR")}٪</td></tr>))}</tbody></table>
-            </div>
-            <div className="admin-card">
-              <h2 className="font-bold text-gray-800 mb-3">توزیع کشورها</h2>
-              <table className="admin-table"><tbody>
-                {data.countries.map((c, i) => (
-                  <tr key={i}><td>{countryCodeToFlagEmoji(c.countryCode)} {c.name}</td><td>{c.percent.toLocaleString("fa-IR")}٪</td></tr>
-                ))}
-              </tbody></table>
-              {data.countries.length === 0 && <p className="text-gray-400 text-xs text-center py-4">داده‌ای موجود نیست.</p>}
-            </div>
-          </div>
+          {renderBreakdown("landingPages", "برترین صفحات ورودی", ["page", "visits", "exitRate"], ["صفحه", "تعداد ورود", "نرخ خروج از همین صفحه"],
+            (p) => [<span className="text-xs" key="p">{p.page}</span>, p.visits.toLocaleString("fa-IR"), `${p.exitRate.toLocaleString("fa-IR")}٪`])}
+          {renderBreakdown("referrers", "منابع ترافیک", ["name", "count", "percent"], ["منبع", "تعداد", "درصد"],
+            (r) => [r.name, r.count.toLocaleString("fa-IR"), `${r.percent.toLocaleString("fa-IR")}٪`])}
+          {renderBreakdown("browsers", "مرورگرها", ["name", "count", "percent"], ["مرورگر", "درصد"],
+            (b) => [b.name, `${b.percent.toLocaleString("fa-IR")}٪`])}
+          {renderBreakdown("os", "سیستم‌عامل‌ها", ["name", "count", "percent"], ["سیستم‌عامل", "درصد"],
+            (o) => [o.name, `${o.percent.toLocaleString("fa-IR")}٪`])}
+          {renderBreakdown("devices", "دستگاه‌ها", ["name", "count", "percent"], ["دستگاه", "درصد"],
+            (d) => [deviceLabel(d.name), `${d.percent.toLocaleString("fa-IR")}٪`])}
+          {renderBreakdown("countries", "توزیع کشورها", ["name", "count", "percent"], ["کشور", "درصد"],
+            (c) => [`${countryCodeToFlagEmoji(c.countryCode)} ${c.name}`, `${c.percent.toLocaleString("fa-IR")}٪`])}
 
           <div className="admin-card">
             <div className="flex items-center justify-between mb-4">
@@ -361,7 +407,7 @@ export default function VisitorAnalyticsDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.recentSessions.map((s) => (
+                  {data.recentSessions.slice(0, visibleCount).map((s) => (
                     <tr key={s.id} onClick={() => setDrilldownId(s.id)} className="inline-edit-cell">
                       <td>
                         <div className="flex items-center gap-1 flex-wrap">
@@ -402,6 +448,17 @@ export default function VisitorAnalyticsDashboard() {
                 </tbody>
               </table>
             </div>
+
+            {visibleCount < data.recentSessions.length && (
+              <div className="flex justify-center mt-3">
+                <button
+                  onClick={() => setVisibleCount((c) => Math.min(c + 30, data.recentSessions.length))}
+                  className="admin-btn admin-btn-secondary flex items-center gap-1"
+                >
+                  <ChevronDown size={14} /> نمایش بیشتر
+                </button>
+              </div>
+            )}
 
             {data.sessionsTotalPages > 1 && (
               <div className="admin-pagination-bar">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
+import { productScopeFilter } from "@/lib/categories/productScope";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -20,7 +21,10 @@ export async function GET(request: NextRequest) {
 
   if (mode === "newest") query = query.eq("show_in_newest", true);
   else if (mode === "popular") query = query.eq("is_popular", true);
-  else if (mode === "category" && categoryId) query = query.eq("category_id", categoryId);
+  else if (mode === "category" && categoryId) {
+    const ids = categoryId.split(",").filter(Boolean);
+    query = query.or(await productScopeFilter(ids));
+  }
 
   if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
   else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });

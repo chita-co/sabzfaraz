@@ -3123,3 +3123,56 @@
 .mobile-drawer-logout-btn:active {
   background: #fef2f2;
 }
+
+/* ===== پاپ‌آپ توضیحات (نسخه‌ی اصلاح‌شده) ===== */
+.description-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100000 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+}
+.description-modal {
+  position: relative !important;
+  width: min(640px, 100%) !important;
+  max-height: calc(100vh - 32px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 20px 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.description-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.description-modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.description-modal-close {
+  position: static !important;
+  flex-shrink: 0;
+}
+.description-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 13.5px;
+  color: #4b5563;
+  line-height: 2;
+  padding-left: 4px;
+}

@@ -40,7 +40,14 @@ export default async function Header() {
     slug: top.slug,
     children: (allCategories ?? [])
       .filter((c) => c.parent_id === top.id)
-      .map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        children: (allCategories ?? [])
+          .filter((g) => g.parent_id === c.id)
+          .map((g) => ({ id: g.id, name: g.name, slug: g.slug })),
+      })),
   }));
 
   // اطلاعیه‌های بالای سایت (باکس‌هایی که کاربر بسته و متنشان عوض نشده، نمایش داده نمی‌شوند)

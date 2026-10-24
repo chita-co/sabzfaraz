@@ -21,6 +21,53 @@ export interface GooeyNavItem {
   shiny?: boolean;
 }
 
+function MegaSubItem({ item, onNavigate }: { item: GooeyNavChildItem; onNavigate: () => void }) {
+  const [open, setOpen] = useState(false);
+  const kids = item.children ?? [];
+
+  if (kids.length === 0) {
+    return (
+      <Link href={item.href} onClick={onNavigate}>
+        {item.label}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="gooey-mega-subwrap">
+      <div className="gooey-mega-subrow">
+        <Link href={item.href} onClick={onNavigate}>
+          {item.label}
+        </Link>
+        <button
+          type="button"
+          className="gooey-mega-arrow"
+          aria-label="نمایش زیردسته‌های نوه"
+          aria-expanded={open}
+          onClick={(e) => {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }}
+        >
+          <ChevronDown size={12} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+        </button>
+      </div>
+      {open && (
+        <div className="gooey-mega-grandlist">
+          {kids.map((gc) => (
+            <Link key={gc.href} href={gc.href} onClick={onNavigate}>
+              {gc.label}
+            </Link>
+          ))}
+          <Link href={item.href} onClick={onNavigate} className="gooey-mega-viewall">
+            مشاهده همه
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GooeyNav({
   items,
   animationTime = 600,
@@ -288,9 +335,7 @@ export default function GooeyNav({
               {group.children && group.children.length > 0 && (
                 <div className="gooey-mega-sublist">
                   {group.children.map((sub) => (
-                    <Link key={sub.href} href={sub.href} onClick={closeDropdownNow}>
-                      {sub.label}
-                    </Link>
+                    <MegaSubItem key={sub.href} item={sub} onNavigate={closeDropdownNow} />
                   ))}
                 </div>
               )}

@@ -42,7 +42,8 @@ export default function ImageSignupForm({
   hidden?: boolean;
   onGoLogin: () => void;
 }) {
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [nationalId, setNationalId] = useState("");
   const [password, setPassword] = useState("");
@@ -82,7 +83,10 @@ export default function ImageSignupForm({
     e.preventDefault();
     setError(null);
 
-    const name = fullName.trim();
+    if (!firstName.trim() || !lastName.trim()) {
+  return setError("نام و نام خانوادگی هر دو اجباری هستند.");
+}
+const name = `${firstName.trim()} ${lastName.trim()}`.trim();
     const mail = email.trim();
     if (!name) return setError("نام و نام خانوادگی را وارد کنید.");
     if (!/^09\d{9}$/.test(phone)) return setError("شماره موبایل معتبر نیست. مثال: 09123456789");
@@ -113,10 +117,16 @@ export default function ImageSignupForm({
     <>
       <form onSubmit={handleSubmit} noValidate style={hidden ? { display: "none" } : undefined}>
         <div className="input-box animation" style={{ "--li": 18, "--S": 1 } as AnimationStyle}>
-          <input type="text" required placeholder=" " value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          <label>نام و نام خانوادگی</label>
-          <User size={18} />
-        </div>
+  <input type="text" required placeholder=" " value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+  <label>نام</label>
+  <User size={18} />
+</div>
+
+<div className="input-box animation" style={{ "--li": 18.5, "--S": 1.5 } as AnimationStyle}>
+  <input type="text" required placeholder=" " value={lastName} onChange={(e) => setLastName(e.target.value)} />
+  <label>نام خانوادگی</label>
+  <User size={18} />
+</div>
 
         <div className="input-box animation" style={{ "--li": 18.5, "--S": 1.5 } as AnimationStyle}>
           <input
@@ -191,7 +201,7 @@ export default function ImageSignupForm({
         </div>
       </form>
 
-      {loading && <LoadingPopup text="در حال ورود..." />}
+      {loading && <LoadingPopup text="در حال ثبت‌نام..." />}
       {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
     </>
   );

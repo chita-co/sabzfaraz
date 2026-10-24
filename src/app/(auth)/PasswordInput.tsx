@@ -38,30 +38,15 @@ export default function PasswordInput({
 
       {/* دکمه‌ی نمایش/پنهان با span و استایل inline برای قطعیت */}
       <span
-        onClick={toggleVisibility}
-        onMouseDown={(e) => e.preventDefault()} // جلوگیری از گرفتن فوکوس توسط input
-        role="button"
-        tabIndex={-1}
-        aria-label={visible ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "0",               // سمت چپ (با توجه به RTL، دکمه در سمت راست بصری قرار می‌گیرد)
-          transform: "translateY(-50%)",
-          zIndex: 10,
-          cursor: "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 24,
-          height: 24,
-          color: "inherit",        // رنگ را از auth.css به ارث می‌برد
-          transition: "color 0.3s",
-          pointerEvents: "auto",
-        }}
-      >
-        {visible ? <EyeOff size={18} /> : <Eye size={18} />}
-      </span>
+  className="password-toggle-btn"
+  onClick={toggleVisibility}
+  onMouseDown={(e) => e.preventDefault()}
+  role="button"
+  tabIndex={-1}
+  aria-label={visible ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
+>
+  {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+</span>
 
       <label>{label}</label>
     </div>

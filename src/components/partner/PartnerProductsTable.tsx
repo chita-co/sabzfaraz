@@ -53,10 +53,21 @@ function matchesQuery(name: string, query: string): boolean {
   return words.length > 0 && words.every((w) => n.includes(w));
 }
 
-export default function PartnerProductsTable({ products }: { products: ProductRow[] }) {
+export default function PartnerProductsTable({
+  products,
+  selectedIds,
+  onToggleSelect,
+  onToggleAll,
+}: {
+  products: ProductRow[];
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleAll?: (ids: string[]) => void;
+}) {
   const [search, setSearch] = useState("");
   const [hideImages, setHideImages] = useState(false);
   const showImages = !hideImages;
+  const selectable = !!onToggleSelect;
   const [rows, setRows] = useState(products);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
@@ -145,6 +156,16 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
       <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "right", color: "#6b7280", borderBottom: "2px solid #f3f4f6" }}>
+            {selectable && (
+              <th style={{ padding: 8, width: 32 }}>
+                <input
+                  type="checkbox"
+                  checked={filtered.length > 0 && filtered.every((p) => selectedIds?.has(p.id))}
+                  onChange={() => onToggleAll?.(filtered.map((p) => p.id))}
+                  aria-label="انتخاب همه"
+                />
+              </th>
+            )}
             {showImages && <th style={{ padding: 8 }}>تصویر</th>}
             <th style={{ padding: 8 }}>نام</th>
             <th style={{ padding: 8 }}>قیمت فروش</th>
@@ -158,6 +179,16 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
           {filtered.map((p) => (
             <>
               <tr key={p.id} style={{ borderBottom: editingId === p.id ? "none" : "1px solid #f3f4f6" }}>
+                {selectable && (
+                  <td style={{ padding: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!selectedIds?.has(p.id)}
+                      onChange={() => onToggleSelect?.(p.id)}
+                      aria-label="انتخاب محصول"
+                    />
+                  </td>
+                )}
                 {showImages && (
                   <td style={{ padding: 8 }}>
                     {p.images?.[0] ? (
@@ -214,7 +245,7 @@ export default function PartnerProductsTable({ products }: { products: ProductRo
               </tr>
               {editingId === p.id && (
                 <tr style={{ borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
-                  <td colSpan={showImages ? 7 : 6} style={{ padding: 12 }}>
+                  <td colSpan={(showImages ? 7 : 6) + (selectable ? 1 : 0)} style={{ padding: 12 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
                       <div>
                         <label style={{ fontSize: 11.5, color: "#6b7280" }}>قیمت فروش به مشتری</label>

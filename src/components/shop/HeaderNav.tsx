@@ -18,6 +18,7 @@ import NotificationBell from "@/components/shop/NotificationBell";
 import ShinyText from "@/components/ShinyText";
 import MobileFreeShippingBar from "@/components/shop/MobileFreeShippingBar";
 import { useShallow } from "zustand/react/shallow";
+import MobileSubItem from "@/components/shop/MobileSubItem";
 
 const subscribeToCartHydration = (callback: () => void) =>
   useCartStore.persist.onFinishHydration(callback);
@@ -28,7 +29,7 @@ const getCartHydratedSnapshot = () =>
 const getCartHydratedServerSnapshot = () => false;
 
 interface CategoryLite { id: string; name: string; slug: string; }
-interface CategoryTreeItem extends CategoryLite { children: CategoryLite[]; }
+interface CategoryTreeItem extends CategoryLite { children: (CategoryLite & { children?: CategoryLite[] })[]; }
 
 export default function HeaderNav({
   isLoggedIn, userName, isAdmin, categories, categoryTree, logoUrl, walletBalance = 0, auctionEnabled = true, auctionLabel = "جمعه بازار",freeShippingEnabled = false,
@@ -63,7 +64,11 @@ export default function HeaderNav({
       children: (categoryTree ?? categories.map((c) => ({ ...c, children: [] }))).map((c) => ({
         label: c.name,
         href: `/category/${c.slug}`,
-        children: c.children.map((sub) => ({ label: sub.name, href: `/category/${sub.slug}` })),
+        children: c.children.map((sub) => ({
+          label: sub.name,
+          href: `/category/${sub.slug}`,
+          children: (sub.children ?? []).map((gc) => ({ label: gc.name, href: `/category/${gc.slug}` })),
+        })),
       })),
     },
     { type: "link", label: "حباب ارزانی", href: "/bubble-deals" },
@@ -161,17 +166,14 @@ export default function HeaderNav({
               </div>
               {cat.children.length > 0 && expandedCats[cat.id] && (
                 <div className="mobile-subcat-list">
-                  {cat.children.map((sub) => (
-                    <Link
-                      key={sub.id}
-                      href={`/category/${sub.slug}`}
-                      className="mobile-subcat-link"
-                      onClick={() => setCategoryDrawerOpen(false)}
-                    >
-                      {sub.name}
-                    </Link>
-                  ))}
-                </div>
+                    {cat.children.map((sub) => (
+                      <MobileSubItem
+                        key={sub.id}
+                        sub={sub}
+                        onNavigate={() => setCategoryDrawerOpen(false)}
+                      />
+                    ))}
+                  </div>
               )}
             </div>
           ))}

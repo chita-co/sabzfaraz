@@ -7,6 +7,23 @@ import { revalidatePath, updateTag } from "next/cache";
 import { deleteImageByUrl } from "@/lib/arvan";
 import { submitUrlToIndexNow } from "@/lib/indexNow";
 
+function readSeoFields(formData: FormData) {
+  const s = (k: string, max: number) =>
+    ((formData.get(k) as string) ?? "").trim().slice(0, max) || null;
+  const tags = ((formData.get("tags") as string) ?? "")
+    .split(/[،,]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  return {
+    short_description: s("shortDescription", 500),
+    tags,
+    meta_title: s("metaTitle", 60),
+    meta_description: s("metaDescription", 160),
+    focus_keyword: s("focusKeyword", 100),
+  };
+}
+
+
 function slugify(input: string) {
   return input
     .trim()
@@ -36,6 +53,7 @@ export async function createCategory(formData: FormData) {
     parent_id: parentId || null,
     image: image || null,
     partner_allowed: partnerAllowed,
+    ...readSeoFields(formData),
   });
 
   if (error) {
@@ -86,6 +104,7 @@ export async function updateCategory(id: string, formData: FormData) {
       is_active: isActive,
       image: image || null,
       partner_allowed: partnerAllowed,
+      ...readSeoFields(formData),
     })
     .eq("id", id);
 

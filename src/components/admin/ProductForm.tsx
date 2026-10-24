@@ -9,6 +9,7 @@ import { createProduct, updateProduct, createProductsBulk } from "@/app/admin/pr
 import { Category, Product, ProductColor, ProductQuantityTier } from "@/types";
 import CategoryMultiSelect from "./CategoryMultiSelect";
 import ProductAttributesEditor, { type AttributeRow } from "./ProductAttributesEditor";
+import { autofillProductSeoAction } from "@/app/admin/products/ai-seo-actions";
 
 const NAMED_COLORS: ProductColor[] = [
   { name: "مشکی", hex: "#111827" },
@@ -116,6 +117,30 @@ export default function ProductForm({
   const [metaTitle, setMetaTitle] = useState(product?.meta_title ?? "");
   const [metaDescription, setMetaDescription] = useState(product?.meta_description ?? "");
   const [focusKeyword, setFocusKeyword] = useState(product?.focus_keyword ?? "");
+  const [seoBusy, setSeoBusy] = useState(false);
+  const [seoMsg, setSeoMsg] = useState<string | null>(null);
+
+  async function handleAutoSeoProduct() {
+    if (name.trim().length < 3) {
+      setSeoMsg("ابتدا نام محصول را کامل وارد کنید.");
+      return;
+    }
+    setSeoBusy(true);
+    setSeoMsg(null);
+    const res = await autofillProductSeoAction({ name, description, categoryId: categoryId || null });
+    setSeoBusy(false);
+    if (res.error || !res.data) {
+      setSeoMsg(res.error ?? "خطا در تولید متن سئو");
+      return;
+    }
+    const d = res.data;
+    setShortDescription(d.shortDescription);
+    setTagsInput(d.tags.join("، "));
+    setMetaTitle(d.metaTitle);
+    setMetaDescription(d.metaDescription);
+    setFocusKeyword(d.focusKeyword);
+    setSeoMsg("پر شد. قبل از ذخیره بررسی کنید.");
+  }
   const [imageAltTexts, setImageAltTexts] = useState<string[]>(product?.image_alt_texts ?? []);
   const [extraCategoryIds, setExtraCategoryIds] = useState<string[]>(initialExtraCategoryIds);
   const [attributes, setAttributes] = useState<AttributeRow[]>(initialAttributes);
@@ -701,6 +726,12 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
 
           <section className="product-form-section product-form-section--green">
   <h2 className="product-form-section-title">توضیح کوتاه و برچسب‌ها</h2>
+  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
+            <button type="button" className="admin-btn admin-btn-secondary" onClick={handleAutoSeoProduct} disabled={seoBusy}>
+              {seoBusy ? "لطفاً منتظر بمانید…" : "پر کردن خودکار توضیح کوتاه، برچسب‌ها و سئو با هوش مصنوعی"}
+            </button>
+            {seoMsg && <span className="text-xs text-gray-500">{seoMsg}</span>}
+          </div>
 
           <div className="admin-form-group">
             <label>توضیح کوتاه (برای نمایش در لیست محصولات و خلاصه گوگل)</label>
