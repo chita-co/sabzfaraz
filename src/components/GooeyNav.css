@@ -181,12 +181,15 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  padding: 4px;
-  border-radius: 10px;
-  transition: background 0.15s ease;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .gooey-mega-group:hover {
-  background: #fafafa;
+  border-color: #16a34a;
 }
 .gooey-mega-group-title {
   font-size: 13.5px;
@@ -241,11 +244,11 @@
 .gooey-mega-subrow { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .gooey-mega-subrow > a {
   flex: 1; padding: 6px 10px;
-  color: #166534; font-weight: 700;
-  border-right: 3px solid #22c55e; border-radius: 6px;
-  background: #f0fdf4;
+  color: #111827; font-weight: 700;
+  border-right: 3px solid #e5e7eb; border-radius: 6px;
+  background: #ffffff;
 }
-.gooey-mega-subrow > a:hover { background: #dcfce7; }
+.gooey-mega-subrow > a:hover { background: #f9fafb; }
 
 /* فلش */
 .gooey-mega-arrow {

@@ -1,9 +1,30 @@
-/* ===== کارت‌های زیرفرعی/زیرفرعی در صفحه‌ی دسته: تصویر بالا، نام زیرش ===== */
+/* ===== باکس شیشه‌ای زیردسته‌ها (جدا از لیست محصولات) ===== */
+.subcat-glass {
+  margin-bottom: 22px;
+  padding: 16px 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.subcat-glass-title {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* ===== کارت‌های زیردسته: تصویر ۳در۴ عمودی ===== */
 .subcat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 14px;
-  margin-bottom: 18px;
 }
 .subcat-wrap { display: flex; flex-direction: column; min-width: 0; }
 .subcat-row { position: relative; display: flex; align-items: stretch; }
@@ -15,7 +36,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 10px 10px 12px;
+  padding: 10px;
   border-radius: 14px;
   background: #ecfdf5;
   border: 1.5px solid #86efac;
@@ -28,16 +49,21 @@
 
 .subcat-img {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #166534;
 }
-.subcat-img img { width: 100%; height: 100%; object-fit: cover; }
+.subcat-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
 
 .subcat-name {
   font-size: 14px;
@@ -59,7 +85,7 @@
   justify-content: center;
   border-radius: 999px;
   border: 1px solid #22c55e;
-  background: #fff;
+  background: #ffffff;
   color: #166534;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
@@ -82,7 +108,7 @@
   gap: 6px;
   padding: 5px 8px;
   border-radius: 6px;
-  background: #fff;
+  background: #ffffff;
   color: #92400e;
   font-size: 13px;
   font-weight: 700;
@@ -91,9 +117,10 @@
 .subcat-kids a::before { content: "•"; color: #f59e0b; font-size: 15px; line-height: 1; }
 .subcat-kids a:hover { background: #fef3c7; }
 
-/* موبایل: دو ستون، کارت‌ها هنوز تصویر بالا و نام زیر */
+/* موبایل: دو ستون، هنوز تصویر عمودی ۳در۴ */
 @media (max-width: 640px) {
+  .subcat-glass { padding: 12px; border-radius: 16px; }
   .subcat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .subcat-card { padding: 8px 8px 10px; gap: 6px; }
+  .subcat-card { padding: 8px; gap: 6px; }
   .subcat-name { font-size: 13px; }
 }

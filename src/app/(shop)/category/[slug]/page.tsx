@@ -11,8 +11,8 @@ import Breadcrumb from "@/components/shop/Breadcrumb";
 import DescriptionModal from "@/components/shop/DescriptionModal";
 import SubcatCards, { type SubcatItem } from "@/components/shop/SubcatCards";
 import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
-import { buildForest, subtreeIds, findBySlug, type CatRow } from "@/lib/categoryTree";
-import { productScopeFilter } from "@/lib/categories/productScope";
+import { buildForest, subtreeIds, findBySlug, ancestorChain, type CatRow } from "@/lib/categoryTree";
+import { getCategoryProducts } from "@/lib/categories/categoryProducts";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -80,31 +80,20 @@ export default async function CategoryPage({
     children: c.children.map((g) => ({ name: g.name, slug: g.slug })),
   }));
 
-  let parentCategory: { name: string; slug: string } | null = null;
-  if (category.parent_id) {
-    const { data: parent } = await supabase
-      .from("categories")
-      .select("name, slug")
-      .eq("id", category.parent_id)
-      .single();
-    parentCategory = parent;
-  }
+  // مسیر کامل از ریشه تا دسته‌ی فعلی (یا زیرشاخه‌ی انتخاب‌شده)
+  const targetNode = resolved ?? root;
+  const chain = targetNode ? ancestorChain(byId, targetNode.id) : [];
+  const crumbs = chain.map((n) => ({ label: n.name, href: `/category/${n.slug}` }));
 
-  let query = supabase
-    .from("products")
-    .select(PRODUCT_LIST_FIELDS, { count: "exact" })
-    .or(await productScopeFilter(scopeIds))
-    .eq("is_active", true);
-  if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
-  else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
-  else if (sort === "popular") query = query.order("rating_avg", { ascending: false });
-  else query = query.order("created_at", { ascending: false });
-
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  const { data, count: c } = await query.range(from, to);
-  const products = (data ?? []) as unknown as Product[];
-  const count = c ?? 0;
+  // همان منبع داده‌ای که API هم استفاده می‌کند (تعداد و لیست هماهنگ‌اند)
+  const { products: rawProducts, count } = await getCategoryProducts(supabase, {
+    categoryIds: scopeIds,
+    sort,
+    page,
+    pageSize,
+    fields: PRODUCT_LIST_FIELDS,
+  });
+  const products = rawProducts as unknown as Product[];
 
   let wishlistIds: string[] = [];
   if (user && products.length > 0) {
@@ -124,12 +113,7 @@ export default async function CategoryPage({
       <div className="mx-auto max-w-7xl px-4 py-8">
         <Breadcrumb
           theme="dark"
-          items={[
-            ...(parentCategory ? [{ label: parentCategory.name, href: `/category/${parentCategory.slug}` }] : []),
-            ...(isSub
-              ? [{ label: category.name, href: basePath }, { label: scopeName }]
-              : [{ label: category.name }]),
-          ]}
+          items={crumbs.map((c, i, arr) => (i === arr.length - 1 ? { label: c.label } : c))}
         />
 
         <div className="flex items-center gap-3 mb-2">
@@ -151,6 +135,7 @@ export default async function CategoryPage({
           <ProductSortSelect />
         </div>
         <ProductListClient
+          key={`${slug}|${sub ?? ""}|${sort}|${page}|${pageSize}`}
           mode="category"
           categoryId={scopeIds.join(",")}
           sort={sort}

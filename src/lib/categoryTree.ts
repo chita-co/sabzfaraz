@@ -59,3 +59,16 @@ export function pathOf(byId: Map<string, CatNode>, id: string): string {
   }
   return parts.join(" › ");
 }
+
+// مسیر کامل از ریشه تا گره (شامل خود گره)
+export function ancestorChain(byId: Map<string, CatNode>, id: string): CatNode[] {
+  const chain: CatNode[] = [];
+  const seen = new Set<string>();
+  let cur = byId.get(id);
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    chain.unshift(cur);
+    cur = cur.parent_id ? byId.get(cur.parent_id) : undefined;
+  }
+  return chain;
+}

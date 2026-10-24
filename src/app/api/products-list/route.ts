@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PRODUCT_LIST_FIELDS } from "@/lib/productFields";
-import { productScopeFilter } from "@/lib/categories/productScope";
+import { getCategoryProducts } from "@/lib/categories/categoryProducts";
 
 const ALLOWED_PAGE_SIZES = [20, 50, 100];
 
@@ -17,31 +17,56 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase.from("products").select(PRODUCT_LIST_FIELDS, { count: "exact" }).eq("is_active", true);
+  const catIds = mode === "category" && categoryId ? categoryId.split(",").filter(Boolean) : [];
 
-  if (mode === "newest") query = query.eq("show_in_newest", true);
-  else if (mode === "popular") query = query.eq("is_popular", true);
-  else if (mode === "category" && categoryId) {
-    const ids = categoryId.split(",").filter(Boolean);
-    query = query.or(await productScopeFilter(ids));
+  let products: Record<string, unknown>[] = [];
+  let count = 0;
+
+  if (catIds.length > 0) {
+    const r = await getCategoryProducts(supabase, {
+      categoryIds: catIds,
+      sort,
+      page,
+      pageSize,
+      fields: PRODUCT_LIST_FIELDS,
+    });
+    products = r.products;
+    count = r.count;
+  } else {
+    const col =
+      sort === "price_asc" || sort === "price_desc"
+        ? "effective_price"
+        : sort === "popular"
+        ? "rating_avg"
+        : "created_at";
+    const asc = sort === "price_asc";
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const base = supabase
+      .from("products")
+      .select(PRODUCT_LIST_FIELDS, { count: "exact" })
+      .eq("is_active", true);
+    const filtered =
+      mode === "newest"
+        ? base.eq("show_in_newest", true)
+        : mode === "popular"
+        ? base.eq("is_popular", true)
+        : base;
+    const r = await filtered.order(col, { ascending: asc }).range(from, to);
+    products = (r.data ?? []) as unknown as Record<string, unknown>[];
+    count = r.count ?? 0;
   }
 
-  if (sort === "price_asc") query = query.order("effective_price", { ascending: true });
-  else if (sort === "price_desc") query = query.order("effective_price", { ascending: false });
-  else if (sort === "popular") query = query.order("rating_avg", { ascending: false });
-  else query = query.order("created_at", { ascending: false });
-
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  const { data: products, count } = await query.range(from, to);
-
   let wishlistIds: string[] = [];
-  if (user && products && products.length > 0) {
+  if (user && products.length > 0) {
     const { data: wishRows } = await supabase
-      .from("wishlists").select("product_id").eq("user_id", user.id)
-      .in("product_id", products.map((p) => p.id));
+      .from("wishlists")
+      .select("product_id")
+      .eq("user_id", user.id)
+      .in("product_id", products.map((p) => p.id as string));
     wishlistIds = (wishRows ?? []).map((w) => w.product_id);
   }
 
-  return NextResponse.json({ products: products ?? [], count: count ?? 0, wishlistIds });
+  return NextResponse.json({ products, count, wishlistIds });
 }
