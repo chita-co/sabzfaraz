@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { restockProduct } from "@/app/admin/out-of-stock/actions";
+import { cleanIntInput } from "@/lib/intQuantity";
 
 interface Row { id: string; name: string; sku: string; images: string[]; }
 
@@ -13,7 +14,7 @@ export default function OutOfStockManager({ products }: { products: Row[] }) {
   const [saving, setSaving] = useState(false);
 
   async function handleConfirm(id: string) {
-    const n = Number(qty);
+    const n = Math.trunc(Number(qty));
     if (!n || n <= 0) { alert("تعداد معتبر وارد کنید."); return; }
     setSaving(true);
     const result = await restockProduct(id, n);
@@ -45,7 +46,7 @@ export default function OutOfStockManager({ products }: { products: Row[] }) {
                         min={1}
                         placeholder="تعداد جدید"
                         value={qty}
-                        onChange={(e) => setQty(e.target.value)}
+                        onChange={(e) => setQty(cleanIntInput(e.target.value))}
                         className="admin-input"
                         style={{ width: 100 }}
                         autoFocus

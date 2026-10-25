@@ -37,7 +37,7 @@ export default function BulkExcelUpload() {
         categoryName: String(r["نام دسته‌بندی"] || ""),
         sellPrice: Number(r["قیمت فروش"]) || 0,
         partnerCostPrice: Number(r["قیمت همکار"]) || 0,
-        stock: Number(r["موجودی"]) || 0,
+        stock: Math.trunc(Number(r["موجودی"])) || 0,
         stockUnlimited: String(r["نامحدود (بله/خیر)"] || "").trim() === "بله",
       }));
       setRows(parsed);

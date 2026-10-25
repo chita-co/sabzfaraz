@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ShoppingCart, Check } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { Product } from "@/types";
+import { minOrderQty } from "@/lib/intQuantity";
 
 export default function QuickAddButton({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem);
@@ -25,13 +26,11 @@ export default function QuickAddButton({ product }: { product: Product }) {
       regularDiscount: product.flash_applied ? (product.flash_base_discount_price ?? null) : (product.discount_price ?? null),
       selectedColor: product.colors?.[0]?.name ?? null,
       selectedSize: product.sizes?.[0] ?? null,
-      quantity: product.has_min_order_quantity && product.min_order_quantity ? product.min_order_quantity : 1,
+      quantity: minOrderQty(product),
       stock: product.stock,
       weightGrams: product.weight_grams,
       unitLabel: product.is_sold_by_unit ? product.unit_label : null,
-      minQuantity: product.has_min_order_quantity && product.min_order_quantity
-    ? product.min_order_quantity
-    : (product.is_sold_by_unit ? 0.1 : 1),
+      minQuantity: minOrderQty(product),
     });
 
     setAdded(true);

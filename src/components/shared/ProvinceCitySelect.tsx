@@ -11,6 +11,7 @@ export default function ProvinceCitySelect({
   cityOptional = false,
   provinceName = "province",
   cityName = "city",
+  showLabels = false,
 }: {
   province: string;
   city: string;
@@ -19,29 +20,36 @@ export default function ProvinceCitySelect({
   cityOptional?: boolean;
   provinceName?: string;
   cityName?: string;
+  showLabels?: boolean;
 }) {
   const selectedProvince = IRAN_PROVINCES.find((p) => p.name === province);
 
   return (
     <div className="grid grid-cols-2 gap-2">
-      <CustomSelect
-        name={provinceName}
-        value={province}
-        onChange={(v) => {
-          onProvinceChange(v);
-          onCityChange("");
-        }}
-        options={IRAN_PROVINCES.map((p) => ({ value: p.name, label: p.name }))}
-        placeholder="انتخاب استان"
-      />
-      <CustomSelect
-        name={cityName}
-        value={city}
-        onChange={onCityChange}
-        options={(selectedProvince?.cities ?? []).map((c) => ({ value: c, label: c }))}
-        placeholder={cityOptional ? "همه‌ی شهرهای استان" : "انتخاب شهر"}
-        disabled={!province}
-      />
+      <div>
+        {showLabels && <span className="addr-select-title">استان</span>}
+        <CustomSelect
+          name={provinceName}
+          value={province}
+          onChange={(v) => {
+            onProvinceChange(v);
+            onCityChange("");
+          }}
+          options={IRAN_PROVINCES.map((p) => ({ value: p.name, label: p.name }))}
+          placeholder="انتخاب استان"
+        />
+      </div>
+      <div>
+        {showLabels && <span className="addr-select-title">شهر</span>}
+        <CustomSelect
+          name={cityName}
+          value={city}
+          onChange={onCityChange}
+          options={(selectedProvince?.cities ?? []).map((c) => ({ value: c, label: c }))}
+          placeholder={cityOptional ? "همه‌ی شهرهای استان" : "انتخاب شهر"}
+          disabled={!province}
+        />
+      </div>
     </div>
   );
 }

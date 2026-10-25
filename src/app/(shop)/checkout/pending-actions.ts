@@ -75,6 +75,7 @@ export async function createOrderFromPendingCheckout(
   if ("error" in priced) return { error: priced.error };
   items = priced.items;
   shippingCost = priced.shippingCost;
+  const packagingCost = priced.packagingCost;
 
   {
     const fs = await getFreeShippingSettings();
@@ -90,7 +91,7 @@ export async function createOrderFromPendingCheckout(
   }
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
-  const totalAmount = subtotal + shippingCost;
+  const totalAmount = subtotal + shippingCost + packagingCost;
   const orderNumber = `SF${Date.now()}`;
 
   const { data: order, error: orderError } = await supabase
@@ -102,6 +103,7 @@ export async function createOrderFromPendingCheckout(
       total_amount: totalAmount,
       shipping_cost: shippingCost,
       shipping_method_id: pendingCheckout?.shipping_method_id ?? null,
+      packaging_cost: packagingCost,
       status: "PENDING",
       payment_status: "PENDING",
     })

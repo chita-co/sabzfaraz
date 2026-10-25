@@ -8,6 +8,7 @@ import { uploadImage } from "@/lib/arvan";
 import { notifyAllAdmins } from "@/lib/notifications";
 import { revalidatePath, updateTag } from "next/cache";
 import sharp from "sharp";
+import { toIntOrNull } from "@/lib/intQuantity";
 
 export async function uploadPartnerLogoAction(formData: FormData) {
   try {
@@ -334,15 +335,15 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
       description: input.description, short_description: input.shortDescription,
       category_id: categoryId, price: input.sellPrice, discount_price: input.discountSellPrice,
       images: input.images, image_alt_texts: input.imageAltTexts, tags: input.tags,
-      stock: input.stockUnlimited ? 999999 : input.stock, is_active: false,
+      stock: input.stockUnlimited ? 999999 : Math.trunc(input.stock), is_active: false,
       brand: input.brand, weight_grams: input.weightGrams,
       is_sold_by_unit: input.isSoldByUnit, unit_label: input.unitLabel,
-      has_min_order_quantity: input.hasMinOrderQty, min_order_quantity: input.minOrderQuantity,
+      has_min_order_quantity: input.hasMinOrderQty, min_order_quantity: toIntOrNull(input.minOrderQuantity),
       meta_title: input.metaTitle, meta_description: input.metaDescription, focus_keyword: input.focusKeyword,
       colors: input.colors, sizes: input.sizes,
       show_in_newest: input.showInNewest, is_popular: input.isPopular, is_stock: input.isStock,
       show_in_feed: input.showInFeed, reviews_enabled: input.reviewsEnabled,
-      display_priority: input.displayPriority, max_purchase_qty: input.maxPurchaseQty,
+      display_priority: input.displayPriority, max_purchase_qty: toIntOrNull(input.maxPurchaseQty),
       package_length_cm: input.packageLengthCm, package_width_cm: input.packageWidthCm, package_height_cm: input.packageHeightCm,
       gtin: input.gtin, model_version: input.modelVersion,
       fulfillment_type: input.fulfillmentType, china_price: input.chinaPrice,
@@ -358,7 +359,7 @@ export async function createPartnerProductAction(input: PartnerProductInput) {
     await savePartnerProductCategories(admin, product.id, categoryId, input.extraCategoryIds);
 
     if (input.quantityTiers.length > 0) {
-      await admin.from("product_quantity_tiers").insert(input.quantityTiers.map((t) => ({ product_id: product.id, min_qty: t.minQty, max_qty: t.maxQty, unit_price: t.unitPrice })));
+      await admin.from("product_quantity_tiers").insert(input.quantityTiers.map((t) => ({ product_id: product.id, min_qty: Math.trunc(t.minQty), max_qty: Math.trunc(t.maxQty), unit_price: t.unitPrice })));
     }
     if (input.attributes.length > 0) {
       await admin.from("product_attributes").insert(input.attributes.map((a, i) => ({ product_id: product.id, attr_key: a.key, attr_value: a.value, sort_order: i })));
@@ -432,15 +433,15 @@ export async function createPartnerBulkProductsAction(common: PartnerProductInpu
           description: common.description, short_description: common.shortDescription,
           category_id: categoryId, price: common.sellPrice, discount_price: common.discountSellPrice,
           images: common.images, image_alt_texts: common.imageAltTexts, tags: common.tags,
-          stock: variant.stockUnlimited ? 999999 : variant.stock, is_active: false,
+          stock: variant.stockUnlimited ? 999999 : Math.trunc(variant.stock), is_active: false,
           brand: common.brand, weight_grams: common.weightGrams,
           is_sold_by_unit: common.isSoldByUnit, unit_label: common.unitLabel,
-          has_min_order_quantity: common.hasMinOrderQty, min_order_quantity: common.minOrderQuantity,
+          has_min_order_quantity: common.hasMinOrderQty, min_order_quantity: toIntOrNull(common.minOrderQuantity),
           meta_title: common.metaTitle, meta_description: common.metaDescription, focus_keyword: common.focusKeyword,
           colors: common.colors, sizes: common.sizes,
           show_in_newest: common.showInNewest, is_popular: common.isPopular, is_stock: common.isStock,
           show_in_feed: common.showInFeed, reviews_enabled: common.reviewsEnabled,
-          display_priority: common.displayPriority, max_purchase_qty: common.maxPurchaseQty,
+          display_priority: common.displayPriority, max_purchase_qty: toIntOrNull(common.maxPurchaseQty),
           package_length_cm: common.packageLengthCm, package_width_cm: common.packageWidthCm, package_height_cm: common.packageHeightCm,
           gtin: common.gtin, model_version: common.modelVersion,
           fulfillment_type: common.fulfillmentType, china_price: common.chinaPrice,
@@ -455,7 +456,7 @@ export async function createPartnerBulkProductsAction(common: PartnerProductInpu
 
         await savePartnerProductCategories(admin, product.id, categoryId, common.extraCategoryIds);
         if (common.quantityTiers.length > 0) {
-          await admin.from("product_quantity_tiers").insert(common.quantityTiers.map((t) => ({ product_id: product.id, min_qty: t.minQty, max_qty: t.maxQty, unit_price: t.unitPrice })));
+          await admin.from("product_quantity_tiers").insert(common.quantityTiers.map((t) => ({ product_id: product.id, min_qty: Math.trunc(t.minQty), max_qty: Math.trunc(t.maxQty), unit_price: t.unitPrice })));
         }
         if (common.attributes.length > 0) {
           await admin.from("product_attributes").insert(common.attributes.map((a, i) => ({ product_id: product.id, attr_key: a.key, attr_value: a.value, sort_order: i })));
@@ -523,14 +524,14 @@ export async function updatePartnerProductAction(productId: string, input: Partn
       name: input.title.trim(), name_en: input.nameEn, description: input.description, short_description: input.shortDescription,
       category_id: input.categoryId, price: input.sellPrice, discount_price: input.discountSellPrice,
       images: input.images, image_alt_texts: input.imageAltTexts, tags: input.tags,
-      stock: input.stockUnlimited ? 999999 : input.stock, brand: input.brand, weight_grams: input.weightGrams,
+      stock: input.stockUnlimited ? 999999 : Math.trunc(input.stock), brand: input.brand, weight_grams: input.weightGrams,
       is_sold_by_unit: input.isSoldByUnit, unit_label: input.unitLabel,
-      has_min_order_quantity: input.hasMinOrderQty, min_order_quantity: input.minOrderQuantity,
+      has_min_order_quantity: input.hasMinOrderQty, min_order_quantity: toIntOrNull(input.minOrderQuantity),
       meta_title: input.metaTitle, meta_description: input.metaDescription, focus_keyword: input.focusKeyword,
       colors: input.colors, sizes: input.sizes,
       show_in_newest: input.showInNewest, is_popular: input.isPopular, is_stock: input.isStock,
       show_in_feed: input.showInFeed, reviews_enabled: input.reviewsEnabled,
-      display_priority: input.displayPriority, max_purchase_qty: input.maxPurchaseQty,
+      display_priority: input.displayPriority, max_purchase_qty: toIntOrNull(input.maxPurchaseQty),
       package_length_cm: input.packageLengthCm, package_width_cm: input.packageWidthCm, package_height_cm: input.packageHeightCm,
       gtin: input.gtin, model_version: input.modelVersion,
       fulfillment_type: input.fulfillmentType, china_price: input.chinaPrice,

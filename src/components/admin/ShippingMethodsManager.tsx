@@ -4,12 +4,12 @@ import { useState } from "react";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import {
   createShippingMethod, toggleShippingMethodActive, deleteShippingMethod, updateShippingMethod,
-  addWeightTier, deleteWeightTier, updateWeightTier,
+  addWeightTier, deleteWeightTier, updateWeightTier, setShippingMethodPackaging,
 } from "@/app/admin/shipping-methods/actions";
 import AdminSwitch from "./AdminSwitch";
 
 interface Tier { id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
-interface Method { id: string; name: string; is_active: boolean; invoice_label: string | null; tiers: Tier[]; }
+interface Method { id: string; name: string; is_active: boolean; invoice_label: string | null; charge_packaging: boolean; tiers: Tier[]; }
 
 export default function ShippingMethodsManager({ methods }: { methods: Method[] }) {
   const [list, setList] = useState(methods);
@@ -19,7 +19,7 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
     if (!newMethodName.trim()) return;
     const result = await createShippingMethod(newMethodName.trim());
     if (!result?.error) {
-      setList((prev) => [...prev, { id: crypto.randomUUID(), name: newMethodName.trim(), is_active: true, invoice_label: null, tiers: [] }]);
+      setList((prev) => [...prev, { id: crypto.randomUUID(), name: newMethodName.trim(), is_active: true, invoice_label: null, charge_packaging: true, tiers: [] }]);
       setNewMethodName("");
     }
   }
@@ -27,6 +27,11 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
   async function handleToggle(id: string, value: boolean) {
     setList((prev) => prev.map((m) => (m.id === id ? { ...m, is_active: value } : m)));
     await toggleShippingMethodActive(id, value);
+  }
+
+  async function handleTogglePackaging(id: string, value: boolean) {
+    setList((prev) => prev.map((m) => (m.id === id ? { ...m, charge_packaging: value } : m)));
+    await setShippingMethodPackaging(id, value);
   }
 
   async function handleDeleteMethod(id: string) {
@@ -53,7 +58,7 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
       </div>
 
       <div className="space-y-5">
-        {list.map((m) => <MethodCard key={m.id} method={m} onToggle={handleToggle} onDelete={handleDeleteMethod} onUpdate={handleUpdateMethod} />)}
+        {list.map((m) => <MethodCard key={m.id} method={m} onToggle={handleToggle} onTogglePackaging={handleTogglePackaging} onDelete={handleDeleteMethod} onUpdate={handleUpdateMethod} />)}
         {list.length === 0 && <p className="text-gray-500 text-sm">هنوز روش ارسالی ثبت نشده.</p>}
       </div>
     </div>
@@ -61,10 +66,11 @@ export default function ShippingMethodsManager({ methods }: { methods: Method[] 
 }
 
 function MethodCard({
-  method, onToggle, onDelete, onUpdate,
+  method, onToggle, onTogglePackaging, onDelete, onUpdate,
 }: {
   method: Method;
   onToggle: (id: string, value: boolean) => void;
+  onTogglePackaging: (id: string, value: boolean) => void;
   onDelete: (id: string) => void;
   onUpdate: (id: string, name: string, invoiceLabel: string) => void;
 }) {
@@ -157,6 +163,15 @@ function MethodCard({
           )}
         </div>
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-gray-700 mb-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={method.charge_packaging}
+          onChange={(e) => onTogglePackaging(method.id, e.target.checked)}
+        />
+        <span>هزینه بسته‌بندی برای این روش ارسال حساب شود</span>
+      </label>
 
       <table className="admin-table mb-3">
         <thead><tr><th>از (کیلوگرم)</th><th>تا (کیلوگرم)</th><th>هزینه (تومان)</th><th></th></tr></thead>

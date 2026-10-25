@@ -31,6 +31,7 @@ export interface InvoiceParams {
   subtotal: number;
   shippingCost: number;
   shippingLabel?: string;
+  packagingCost?: number;
   discountAmount?: number;
   note?: string;
 }
@@ -52,8 +53,9 @@ const ICONS: Record<string, string> = {
 
 export function buildInvoiceHtml(p: InvoiceParams): string {
   const discount = p.discountAmount ?? 0;
-  const total = p.subtotal - discount + p.shippingCost;
- const isChina = p.type === "china";
+  const packaging = p.packagingCost ?? 0;
+  const total = p.subtotal - discount + p.shippingCost + packaging;
+  const isChina = p.type === "china";
   const headerLabel = p.type === "proforma" ? "پیش‌فاکتور" : isChina ? "فاکتور سفارش از چین" : "فاکتور فروش";
   const invoiceNumberLabel = p.type === "proforma" ? "شماره پیش‌فاکتور" : isChina ? "شماره فاکتور سفارش از چین" : "شماره فاکتور";
 
@@ -158,6 +160,7 @@ export function buildInvoiceHtml(p: InvoiceParams): string {
           <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">جمع کل (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(p.subtotal)}</td></tr>
           <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">تخفیف (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(discount)}</td></tr>
           <tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">${p.shippingLabel ?? "هزینه ارسال"} (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(p.shippingCost)}</td></tr>
+          ${packaging > 0 ? `<tr><td style="padding:6px; border:1px solid #d1d5db; background:#f9fafb;">هزینه آماده‌سازی و بسته‌بندی (ریال)</td><td style="padding:6px; border:1px solid #d1d5db; text-align:left;">${toRial(packaging)}</td></tr>` : ""}
           <tr><td style="padding:6px; border:1px solid #111827; background:#111827; color:#fff; font-weight:800;">مبلغ قابل پرداخت (ریال)</td><td style="padding:6px; border:1px solid #111827; background:#f3f4f6; text-align:left; font-weight:800;">${toRial(total)}</td></tr>
         </table>
 

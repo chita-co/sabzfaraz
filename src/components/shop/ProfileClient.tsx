@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trash2, Plus, Pencil, Package, X } from "lucide-react";
 import { updateProfile, addAddress, updateAddress, deleteAddress } from "@/app/(shop)/profile/actions";
 import ProvinceCitySelect from "@/components/shared/ProvinceCitySelect";
+import "./profile-address.css";
 import Breadcrumb from "@/components/shop/Breadcrumb"; // ← اضافه شد
 import UserBadgesShowcase from "@/components/blog/UserBadgesShowcase";
 import IdentityVerificationCard from "@/components/shop/IdentityVerificationCard";
@@ -207,21 +208,27 @@ export default function ProfileClient({
               </button>
             </div>
 
-            <input
-              name="fullName"
-              placeholder="نام گیرنده"
-              defaultValue={editingAddress?.full_name}
-              required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
-            <input
-              name="phone"
-              placeholder="تلفن گیرنده"
-              dir="ltr"
-              defaultValue={editingAddress?.phone}
-              required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
+            <div className="addr-field">
+              <input
+                name="fullName"
+                placeholder=" "
+                defaultValue={editingAddress?.full_name}
+                required
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              <label>نام گیرنده</label>
+            </div>
+            <div className="addr-field">
+              <input
+                name="phone"
+                placeholder=" "
+                dir="ltr"
+                defaultValue={editingAddress?.phone}
+                required
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              <label>تلفن گیرنده</label>
+            </div>
 
             <div className="sm:col-span-2">
               <ProvinceCitySelect
@@ -229,24 +236,31 @@ export default function ProfileClient({
                 city={formCity}
                 onProvinceChange={setFormProvince}
                 onCityChange={setFormCity}
+                showLabels
               />
             </div>
 
-            <input
-              name="postalCode"
-              placeholder="کد پستی"
-              dir="ltr"
-              defaultValue={editingAddress?.postal_code}
-              required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
-            <input
-              name="addressLine"
-              placeholder="آدرس کامل"
-              defaultValue={editingAddress?.address_line}
-              required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:col-span-2"
-            />
+            <div className="addr-field">
+              <input
+                name="postalCode"
+                placeholder=" "
+                dir="ltr"
+                defaultValue={editingAddress?.postal_code}
+                required
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              <label>کد پستی</label>
+            </div>
+            <div className="addr-field sm:col-span-2">
+              <input
+                name="addressLine"
+                placeholder=" "
+                defaultValue={editingAddress?.address_line}
+                required
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:col-span-2"
+              />
+              <label>آدرس کامل</label>
+            </div>
 
             {addressError && <p className="text-red-600 text-sm sm:col-span-2">{addressError}</p>}
 

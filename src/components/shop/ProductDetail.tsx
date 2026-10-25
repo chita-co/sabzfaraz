@@ -1,5 +1,6 @@
 "use client";
 
+import { minOrderQty, cleanIntInput } from "@/lib/intQuantity";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Share2, ShoppingCart, Check, ChevronDown, ChevronLeft, ChevronRight, Ship, Clock, AlertTriangle, Store, Scale } from "lucide-react";
@@ -33,9 +34,7 @@ const isDraggingRef = useRef(false);
 const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name ?? null);
   const [selectedSize, setSelectedSize] = useState<string | null>(product.sizes?.[0] ?? null);
-  const minQuantity = product.has_min_order_quantity && product.min_order_quantity
-    ? product.min_order_quantity
-    : (product.is_sold_by_unit ? 0.1 : 1);
+  const minQuantity = minOrderQty(product);
   const [quantity, setQuantity] = useState(minQuantity);
   const [quantityInput, setQuantityInput] = useState(String(minQuantity));
   const [added, setAdded] = useState(false);
@@ -112,9 +111,7 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
       stock: product.stock,
       weightGrams: product.weight_grams,
       unitLabel: product.is_sold_by_unit ? unitLabel : null,
-      minQuantity: product.has_min_order_quantity && product.min_order_quantity
-        ? product.min_order_quantity
-        : (product.is_sold_by_unit ? 0.1 : 1),
+      minQuantity,
       isChinaOrder: false,
     });
     setAdded(true);
@@ -493,19 +490,19 @@ const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
                   </button>
                   <input
                     type="number"
-                    step={product.is_sold_by_unit ? "0.1" : "1"}
+                    step="1"
                     value={quantityInput}
                     onChange={(e) => {
-                      const raw = e.target.value;
+                      const raw = cleanIntInput(e.target.value);
                       setQuantityInput(raw);
-                      const val = product.is_sold_by_unit ? parseFloat(raw) : parseInt(raw, 10);
+                      const val = parseInt(raw, 10);
                       if (!isNaN(val) && val > 0) {
                         const clamped = product.stock !== null ? Math.min(val, product.stock) : val;
                         setQuantity(clamped);
                       }
                     }}
                     onBlur={() => {
-                      let val = product.is_sold_by_unit ? parseFloat(quantityInput) : parseInt(quantityInput, 10);
+                      let val = parseInt(quantityInput, 10);
                       if (isNaN(val) || val < minQuantity) val = minQuantity;
                       if (product.stock !== null && val > product.stock) val = product.stock;
                       setQuantity(val);

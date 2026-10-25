@@ -7,6 +7,7 @@ import { Pencil, Trash2, Layers, Copy, Check, X as XIcon, History } from "lucide
 import { deleteProduct, copyProduct, quickUpdateProduct, getProductPriceHistory } from "@/app/admin/products/actions";
 import BulkEditModal from "./BulkEditModal";
 import { Category } from "@/types";
+import { cleanIntInput, toIntOrNull } from "@/lib/intQuantity";
 
 interface Row {
   id: string; name: string; slug: string; sku: string; price: number; stock: number | null;
@@ -68,7 +69,7 @@ export default function ProductsTable({
 
   async function saveEdit() {
     if (!editingCell) return;
-    const value = editValue === "" ? null : Number(editValue);
+    const value = editValue === "" ? null : (editingCell.field === "stock" ? toIntOrNull(editValue) : Number(editValue));
     const changes = editingCell.field === "price" ? { price: value ?? 0 } : { stock: value };
     const result = await quickUpdateProduct(editingCell.id, changes);
     if (!result?.error) {
@@ -192,7 +193,7 @@ export default function ProductsTable({
                 <td onDoubleClick={() => startEdit(p.id, "stock", p.stock)} className="inline-edit-cell">
                   {editingCell?.id === p.id && editingCell.field === "stock" ? (
                     <div className="flex items-center gap-1">
-                      <input autoFocus type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="admin-input" style={{ width: 80 }} />
+                      <input autoFocus type="number" value={editValue} onChange={(e) => setEditValue(editingCell?.field === "stock" ? cleanIntInput(e.target.value) : e.target.value)} className="admin-input" style={{ width: 80 }} />
                       <button onClick={saveEdit}><Check size={14} className="text-green-600" /></button>
                       <button onClick={() => setEditingCell(null)}><XIcon size={14} className="text-red-500" /></button>
                     </div>

@@ -3,7 +3,6 @@
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
-
 interface BulkChanges {
   price?: number;
   discountPrice?: number | null;
@@ -35,7 +34,7 @@ export async function bulkUpdateProducts(ids: string[], changes: BulkChanges, qu
     await supabase.from("product_quantity_tiers").delete().in("product_id", ids);
     if (quantityTiers.length > 0) {
       const rows = ids.flatMap((productId) =>
-        quantityTiers.map((t) => ({ product_id: productId, min_qty: t.minQty, max_qty: t.maxQty, unit_price: t.unitPrice }))
+        quantityTiers.map((t) => ({ product_id: productId, min_qty: Math.trunc(t.minQty), max_qty: Math.trunc(t.maxQty), unit_price: t.unitPrice }))
       );
       const { error } = await supabase.from("product_quantity_tiers").insert(rows);
       if (error) return { error: error.message };

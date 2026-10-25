@@ -11,6 +11,7 @@ import {
   type StoreItemInput,
   type MarketItemInput,
 } from "@/app/(shop)/bulk-order/actions";
+import { cleanIntInput } from "@/lib/intQuantity";
 
 interface StoreRow extends StoreItemInput { id: string; }
 interface MarketRow extends MarketItemInput { id: string; }
@@ -69,7 +70,7 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
 
   function handleAddStoreItem() {
     if (!selectedProduct) return;
-    const qty = Number(addQty) || 1;
+    const qty = Math.max(1, Math.trunc(Number(addQty)) || 1);
     setStoreItems((prev) => [
       ...prev,
       {
@@ -187,7 +188,7 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
           )}
         </div>
         <div className="flex gap-2 mb-4">
-          <input type="number" min={1} value={addQty} onChange={(e) => setAddQty(e.target.value)} className="admin-input" style={{ width: 100 }} placeholder="تعداد" />
+          <input type="number" min={1} value={addQty} onChange={(e) => setAddQty(cleanIntInput(e.target.value))} className="admin-input" style={{ width: 100 }} placeholder="تعداد" />
           <button type="button" onClick={handleAddStoreItem} disabled={!selectedProduct} className="admin-btn admin-btn-primary flex items-center gap-1 disabled:opacity-40">
             <Plus size={14} /> افزودن کالا
           </button>
@@ -217,7 +218,7 @@ export default function BulkOrderForm({ addresses }: { addresses: AddressRow[] }
           {marketItems.map((item) => (
             <div key={item.id} className="grid grid-cols-12 gap-2 items-start border-b border-gray-100 pb-3">
               <input type="text" placeholder="نام کالا *" value={item.name} onChange={(e) => updateMarketRow(item.id, "name", e.target.value)} className="col-span-4 admin-input" />
-              <input type="number" placeholder="تعداد *" min={1} value={item.quantity} onChange={(e) => updateMarketRow(item.id, "quantity", Number(e.target.value))} className="col-span-2 admin-input" />
+              <input type="number" placeholder="تعداد *" min={1} value={item.quantity} onChange={(e) => updateMarketRow(item.id, "quantity", Math.trunc(Number(e.target.value)) || 0)} className="col-span-2 admin-input" />
               <input type="number" placeholder="از قیمت (اختیاری)" value={item.minPrice ?? ""} onChange={(e) => updateMarketRow(item.id, "minPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />
               <input type="number" placeholder="تا قیمت (اختیاری)" value={item.maxPrice ?? ""} onChange={(e) => updateMarketRow(item.id, "maxPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-3 admin-input" />
               <button onClick={() => removeMarketRow(item.id)} className="col-span-1 admin-btn admin-btn-danger" type="button"><Trash2 size={13} /></button>

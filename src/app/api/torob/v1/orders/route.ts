@@ -95,6 +95,7 @@ interface OrderRow {
   payment_status: string;
   total_amount: number;
   shipping_cost: number | null;
+  packaging_cost: number | null;
   torob_clid: string | null;
   address: { phone: string | null } | { phone: string | null }[] | null;
   items: { price: number; quantity: number; product_id: string | null }[] | null;
@@ -153,7 +154,7 @@ export async function GET(request: NextRequest) {
   const { data: orders, error } = await supabase
     .from("orders")
     .select(
-      "id, created_at, updated_at, status, payment_status, total_amount, shipping_cost, torob_clid, address:addresses(phone), items:order_items(price, quantity, product_id)"
+      "id, created_at, updated_at, status, payment_status, total_amount, shipping_cost, packaging_cost, torob_clid, address:addresses(phone), items:order_items(price, quantity, product_id)"
     )
     .not("torob_clid", "is", null)
     .is("deleted_at", null)
@@ -199,7 +200,7 @@ export async function GET(request: NextRequest) {
       last_updated_timestamp: new Date(o.updated_at).toISOString(),
       torob_clid: o.torob_clid,
       status,
-      order_value: o.total_amount - shippingCost,
+      order_value: o.total_amount - shippingCost - (o.packaging_cost ?? 0),
       shipping_amount: shippingCost,
     };
 

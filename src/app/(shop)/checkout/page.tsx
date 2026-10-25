@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import CheckoutClient from "@/components/shop/CheckoutClient";
 import Breadcrumb from "@/components/shop/Breadcrumb";
 import LightfallBackground from "@/components/backgrounds/LightfallBackground";
@@ -18,6 +19,12 @@ export default async function CheckoutPage() {
     supabase.from("bank_accounts").select("id, bank_name, account_holder_name, card_number, sheba_number, logo_slug").eq("is_active", true).order("sort_order"),
     supabase.from("profiles").select("wallet_balance").eq("id", user.id).single(),
   ]);
+
+  // بازه‌های وزنی هزینه بسته‌بندی (فقط سمت سرور و با کلاینت ادمین خوانده می‌شود)
+  const { data: packagingTiers } = await createAdminClient()
+    .from("packaging_weight_tiers")
+    .select("min_weight_grams, max_weight_grams, cost")
+    .order("min_weight_grams");
 
   const phones = Array.from(
     new Set(
@@ -42,6 +49,7 @@ export default async function CheckoutPage() {
         addresses={addresses ?? []}
         shippingMethods={visibleMethods}
         shippingTiers={tiers ?? []}
+        packagingTiers={packagingTiers ?? []}
         storeInfo={{
           name: settings?.store_name ?? "سبزفراز",
           phones: phones.length > 0 ? phones : ["—"],

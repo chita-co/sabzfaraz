@@ -8,6 +8,7 @@ import { deleteImageByUrl } from "@/lib/arvan";
 import { buildProductCode } from "@/lib/sku";
 import { generateUniqueSlug, generateUniqueProductSlug  } from "@/lib/slug";
 import { submitUrlToIndexNow } from "@/lib/indexNow";
+import { toIntOrNull } from "@/lib/intQuantity";
 
 interface QuantityTierInput {
   minQty: number;
@@ -106,8 +107,8 @@ async function saveQuantityTiers(
     await supabase.from("product_quantity_tiers").insert(
       tiers.map((t) => ({
         product_id: productId,
-        min_qty: t.minQty,
-        max_qty: t.maxQty,
+        min_qty: Math.trunc(t.minQty),
+        max_qty: Math.trunc(t.maxQty),
         unit_price: t.unitPrice,
       }))
     );
@@ -181,7 +182,7 @@ export async function createProduct(input: ProductInput) {
       description: input.description,
       price: input.price,
       discount_price: input.discountPrice,
-      stock: input.stock,
+      stock: toIntOrNull(input.stock),
       brand: input.brand,
       category_id: input.categoryId,
       is_active: input.isActive,
@@ -193,7 +194,7 @@ export async function createProduct(input: ProductInput) {
       is_sold_by_unit: input.isSoldByUnit,
       unit_label: input.unitLabel,
       has_min_order_quantity: input.hasMinOrderQty,
-      min_order_quantity: input.minOrderQuantity,
+      min_order_quantity: toIntOrNull(input.minOrderQuantity),
       images: input.images,
       description_images: input.descriptionImages,
       colors: input.colors,
@@ -205,7 +206,7 @@ export async function createProduct(input: ProductInput) {
       focus_keyword: input.focusKeyword ?? null,
       image_alt_texts: input.imageAltTexts ?? [],
       display_priority: input.displayPriority ?? 0,
-      max_purchase_qty: input.maxPurchaseQty ?? null,
+      max_purchase_qty: toIntOrNull(input.maxPurchaseQty),
       package_length_cm: input.packageLengthCm ?? null,
       package_width_cm: input.packageWidthCm ?? null,
       package_height_cm: input.packageHeightCm ?? null,
@@ -269,7 +270,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       description: input.description,
       price: input.price,
       discount_price: input.discountPrice,
-      stock: input.stock,
+      stock: toIntOrNull(input.stock),
       brand: input.brand,
       category_id: input.categoryId,
       is_active: input.isActive,
@@ -281,7 +282,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       is_sold_by_unit: input.isSoldByUnit,
       unit_label: input.unitLabel,
       has_min_order_quantity: input.hasMinOrderQty,
-      min_order_quantity: input.minOrderQuantity,
+      min_order_quantity: toIntOrNull(input.minOrderQuantity),
       images: input.images,
       description_images: input.descriptionImages,
       colors: input.colors,
@@ -293,7 +294,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       focus_keyword: input.focusKeyword ?? null,
       image_alt_texts: input.imageAltTexts ?? [],
       display_priority: input.displayPriority ?? 0,
-      max_purchase_qty: input.maxPurchaseQty ?? null,
+      max_purchase_qty: toIntOrNull(input.maxPurchaseQty),
       package_length_cm: input.packageLengthCm ?? null,
       package_width_cm: input.packageWidthCm ?? null,
       package_height_cm: input.packageHeightCm ?? null,
@@ -449,7 +450,7 @@ export async function createProductsBulk(
           description: base.description,
           price: base.price,
           discount_price: base.discountPrice,
-          stock: variant.stock,
+          stock: toIntOrNull(variant.stock),
           brand: base.brand,
           category_id: base.categoryId,
           is_active: base.isActive,
@@ -465,7 +466,7 @@ export async function createProductsBulk(
           is_sold_by_unit: base.isSoldByUnit ?? false,
           unit_label: base.unitLabel ?? null,
           has_min_order_quantity: base.hasMinOrderQty ?? false,
-          min_order_quantity: base.minOrderQuantity ?? null,
+          min_order_quantity: toIntOrNull(base.minOrderQuantity),
           short_description: base.shortDescription ?? null,
           tags: base.tags ?? [],
           meta_title: base.metaTitle ?? null,
@@ -473,7 +474,7 @@ export async function createProductsBulk(
           focus_keyword: base.focusKeyword ?? null,
           image_alt_texts: base.imageAltTexts ?? [],
           display_priority: base.displayPriority ?? 0,
-          max_purchase_qty: base.maxPurchaseQty ?? null,
+          max_purchase_qty: toIntOrNull(base.maxPurchaseQty),
           package_length_cm: base.packageLengthCm ?? null,
           package_width_cm: base.packageWidthCm ?? null,
           package_height_cm: base.packageHeightCm ?? null,
@@ -654,7 +655,7 @@ export async function quickUpdateProduct(
   const supabase = await createClient();
   const payload: Record<string, unknown> = {};
   if (changes.price !== undefined) payload.price = changes.price;
-  if (changes.stock !== undefined) payload.stock = changes.stock;
+  if (changes.stock !== undefined) payload.stock = toIntOrNull(changes.stock);
   if (changes.isActive !== undefined) payload.is_active = changes.isActive;
 
   const { error } = await supabase.from("products").update(payload).eq("id", id);

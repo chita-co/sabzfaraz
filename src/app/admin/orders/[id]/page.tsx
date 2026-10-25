@@ -170,6 +170,11 @@ export default async function AdminOrderDetailPage({
               تخفیف کد تخفیف: {order.discount_code_amount.toLocaleString("fa-IR")} تومان
             </div>
           )}
+          {(order.packaging_cost ?? 0) > 0 && (
+            <div className="text-left mt-2 text-sm text-gray-600">
+              هزینه آماده‌سازی و بسته‌بندی: {order.packaging_cost.toLocaleString("fa-IR")} تومان
+            </div>
+          )}
           <div className="text-left mt-4 font-bold text-gray-900">
             مبلغ کل: {order.total_amount.toLocaleString("fa-IR")} تومان
           </div>

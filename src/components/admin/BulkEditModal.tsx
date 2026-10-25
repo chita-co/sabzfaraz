@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Plus, Trash2 } from "lucide-react";
 import { bulkUpdateProducts } from "@/app/admin/products/bulk-actions";
 import { Category } from "@/types";
+import { cleanIntInput } from "@/lib/intQuantity";
 
 export default function BulkEditModal({
   productIds, categories, onClose, onDone,
@@ -42,7 +43,7 @@ export default function BulkEditModal({
     if (enableWeight) changes.weightGrams = weightGrams ? Number(weightGrams) : null;
 
     const quantityTiers = enableTiers
-      ? tiers.filter((t) => t.minQty && t.maxQty && t.unitPrice).map((t) => ({ minQty: Number(t.minQty), maxQty: Number(t.maxQty), unitPrice: Number(t.unitPrice) }))
+      ? tiers.filter((t) => t.minQty && t.maxQty && t.unitPrice).map((t) => ({ minQty: Math.trunc(Number(t.minQty)), maxQty: Math.trunc(Number(t.maxQty)), unitPrice: Number(t.unitPrice) }))
       : undefined;
 
     if (Object.keys(changes).length === 0 && !enableTiers) { setError("حداقل یک فیلد را فعال کنید."); return; }
@@ -91,8 +92,8 @@ export default function BulkEditModal({
             <div className="space-y-2">
               {tiers.map((t) => (
                 <div key={t.id} className="grid grid-cols-4 gap-2">
-                  <input type="number" placeholder="از" value={t.minQty} onChange={(e) => updateTier(t.id, "minQty", e.target.value)} className="admin-input" disabled={!enableTiers} />
-                  <input type="number" placeholder="تا" value={t.maxQty} onChange={(e) => updateTier(t.id, "maxQty", e.target.value)} className="admin-input" disabled={!enableTiers} />
+                  <input type="number" placeholder="از" value={t.minQty} onChange={(e) => updateTier(t.id, "minQty", cleanIntInput(e.target.value))} className="admin-input" disabled={!enableTiers} />
+                  <input type="number" placeholder="تا" value={t.maxQty} onChange={(e) => updateTier(t.id, "maxQty", cleanIntInput(e.target.value))} className="admin-input" disabled={!enableTiers} />
                   <input type="number" placeholder="قیمت واحد" value={t.unitPrice} onChange={(e) => updateTier(t.id, "unitPrice", e.target.value)} className="admin-input" disabled={!enableTiers} />
                   <button type="button" onClick={() => removeTier(t.id)} className="admin-btn admin-btn-danger" disabled={!enableTiers}><Trash2 size={14} /></button>
                 </div>

@@ -180,7 +180,7 @@ export default function ManualInvoiceBuilder({
               type="number"
               placeholder="تعداد"
               value={r.qty}
-              onChange={(e) => updateRow(r.id, "qty", Number(e.target.value))}
+              onChange={(e) => updateRow(r.id, "qty", Math.trunc(Number(e.target.value)) || 0)}
               className="col-span-2 admin-input"
             />
             <input

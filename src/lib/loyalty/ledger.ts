@@ -36,13 +36,13 @@ export async function earnPointsForOrder(orderId: string) {
 
   const { data: order } = await admin
     .from("orders")
-    .select("id, user_id, total_amount, shipping_cost, loyalty_earned_processed, profile:profiles(full_name, phone), address:addresses(phone)")
+    .select("id, user_id, total_amount, shipping_cost, packaging_cost, loyalty_earned_processed, profile:profiles(full_name, phone), address:addresses(phone)")
     .eq("id", orderId)
     .single();
 
   if (!order || order.loyalty_earned_processed) return;
 
-  const subtotal = order.total_amount - (order.shipping_cost ?? 0);
+  const subtotal = order.total_amount - (order.shipping_cost ?? 0) - (order.packaging_cost ?? 0);
   const multiplier = await getUserTierMultiplier(order.user_id);
   const points = calculatePointsToEarn(subtotal, settings.tomanPerPoint, multiplier);
 

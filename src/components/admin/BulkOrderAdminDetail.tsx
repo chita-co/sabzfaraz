@@ -133,7 +133,7 @@ export default function BulkOrderAdminDetail({
         {storeItems.map((it, i) => (
           <div key={i} className="grid grid-cols-12 gap-2 items-center mb-2">
             <input value={it.productName} onChange={(e) => updateStoreItem(i, "productName", e.target.value)} className="col-span-5 admin-input" />
-            <input type="number" value={it.quantity} onChange={(e) => updateStoreItem(i, "quantity", Number(e.target.value))} className="col-span-2 admin-input" />
+            <input type="number" value={it.quantity} onChange={(e) => updateStoreItem(i, "quantity", Math.trunc(Number(e.target.value)) || 0)} className="col-span-2 admin-input" />
             <input type="number" value={it.unitPrice} onChange={(e) => updateStoreItem(i, "unitPrice", Number(e.target.value))} className="col-span-3 admin-input" />
             <button onClick={() => removeStoreItem(i)} className="col-span-2 admin-btn admin-btn-danger"><Trash2 size={13} /></button>
           </div>
@@ -143,7 +143,7 @@ export default function BulkOrderAdminDetail({
         {marketItems.map((it, i) => (
           <div key={i} className="grid grid-cols-12 gap-2 items-center mb-2">
             <input value={it.name} onChange={(e) => updateMarketItem(i, "name", e.target.value)} className="col-span-3 admin-input" placeholder="نام" />
-            <input type="number" value={it.quantity} onChange={(e) => updateMarketItem(i, "quantity", Number(e.target.value))} className="col-span-2 admin-input" placeholder="تعداد" />
+            <input type="number" value={it.quantity} onChange={(e) => updateMarketItem(i, "quantity", Math.trunc(Number(e.target.value)) || 0)} className="col-span-2 admin-input" placeholder="تعداد" />
             <input type="number" placeholder="از" value={it.minPrice ?? ""} onChange={(e) => updateMarketItem(i, "minPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />
             <input type="number" placeholder="تا" value={it.maxPrice ?? ""} onChange={(e) => updateMarketItem(i, "maxPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />
             <input type="number" placeholder="قیمت نهایی" value={it.finalUnitPrice ?? ""} onChange={(e) => updateMarketItem(i, "finalUnitPrice", e.target.value ? Number(e.target.value) : null)} className="col-span-2 admin-input" />

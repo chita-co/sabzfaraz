@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { splitQuantity, type TierLike } from "@/lib/pricing/bubbleSplit";
 import { getFreeShippingSettings } from "@/lib/checkout/freeShipping";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/checkout/freeShippingConfig";
+import { calcPackagingCost, type PackagingTier } from "@/lib/checkout/packaging";
 
 type InputItem = {
   productId: string;
@@ -23,7 +24,7 @@ type Tier = { product_id: string; min_qty: number; max_qty: number; unit_price: 
 export async function priceCheckoutItems<T extends InputItem>(
   items: T[],
   shippingMethodId: string | null
-): Promise<{ error: string } | { items: T[]; shippingCost: number; isFreeShipping: boolean }> {
+): Promise<{ error: string } | { items: T[]; shippingCost: number; packagingCost: number; isFreeShipping: boolean }> {
   if (!Array.isArray(items) || items.length === 0) return { error: "سبد خرید شما خالی است." };
   if (items.length > 100) return { error: "تعداد اقلام سبد خرید بیش از حد مجاز است." };
   if (!shippingMethodId) return { error: "لطفاً یک روش ارسال انتخاب کنید." };
@@ -33,21 +34,22 @@ export async function priceCheckoutItems<T extends InputItem>(
   await admin.rpc("refresh_bubble_deals");
   const ids = [...new Set(items.map((i) => String(i.productId)))];
 
-  const [productsRes, tiersRes, methodRes, shipTiersRes] = await Promise.all([
+  const [productsRes, tiersRes, methodRes, shipTiersRes, packTiersRes] = await Promise.all([
     admin
       .from("products")
       .select("id, name, images, price, discount_price, china_price, fulfillment_type, weight_grams, is_sold_by_unit, stock, flash_applied, flash_stock, flash_price, flash_base_discount_price")
       .in("id", ids),
     admin.from("product_quantity_tiers").select("product_id, min_qty, max_qty, unit_price").in("product_id", ids),
-    admin.from("shipping_methods").select("id, is_free_shipping").eq("id", shippingMethodId).eq("is_active", true).maybeSingle(),
+    admin.from("shipping_methods").select("id, is_free_shipping, charge_packaging").eq("id", shippingMethodId).eq("is_active", true).maybeSingle(),
     admin
       .from("shipping_weight_tiers")
       .select("min_weight_grams, max_weight_grams, cost")
       .eq("method_id", shippingMethodId)
       .order("min_weight_grams", { ascending: true }),
+    admin.from("packaging_weight_tiers").select("min_weight_grams, max_weight_grams, cost"),
   ]);
 
-  if (productsRes.error || tiersRes.error || shipTiersRes.error) {
+  if (productsRes.error || tiersRes.error || shipTiersRes.error || packTiersRes.error) {
     return { error: "خطا در دریافت قیمت‌ها. لطفاً دوباره تلاش کنید." };
   }
   if (!methodRes.data) return { error: "روش ارسال انتخابی معتبر نیست." };
@@ -62,11 +64,8 @@ export async function priceCheckoutItems<T extends InputItem>(
     const product = products.get(String(item.productId));
     if (!product) return { error: "یکی از محصولات سبد خرید دیگر موجود نیست. لطفاً سبد را بررسی کنید." };
 
-    const qty = Number(item.quantity);
+    const qty = Math.trunc(Number(item.quantity));
     if (!Number.isFinite(qty) || qty <= 0 || qty > 100000) {
-      return { error: "تعداد یکی از اقلام سبد خرید معتبر نیست." };
-    }
-    if (!product.is_sold_by_unit && !Number.isInteger(qty)) {
       return { error: "تعداد یکی از اقلام سبد خرید معتبر نیست." };
     }
 
@@ -152,5 +151,11 @@ export async function priceCheckoutItems<T extends InputItem>(
     shippingCost = Number((matched ?? shipTiers[shipTiers.length - 1]).cost);
   }
 
-  return { items: safeItems, shippingCost: isFreeShipping ? 0 : shippingCost, isFreeShipping };
+  // هزینه بسته‌بندی جدا از ارسال است و حتی با ارسال رایگان هم همیشه اعمال می‌شود
+  const chargePackaging = methodRes.data.charge_packaging !== false;
+  const packagingCost = chargePackaging
+    ? calcPackagingCost((packTiersRes.data ?? []) as PackagingTier[], totalWeight)
+    : 0;
+
+  return { items: safeItems, shippingCost: isFreeShipping ? 0 : shippingCost, packagingCost, isFreeShipping };
 }

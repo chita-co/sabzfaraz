@@ -84,13 +84,14 @@ export async function createOrderAndPay(
   if ("error" in priced) return { error: priced.error };
   items = priced.items;
   shippingCost = priced.shippingCost;
+  const packagingCost = priced.packagingCost;
   const chosenFree = priced.isFreeShipping;
 
   const cookieStore = await cookies();
   const torobClid = cookieStore.get("torob_clid")?.value ?? null;
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
-  const totalAmount = subtotal + shippingCost;
+  const totalAmount = subtotal + shippingCost + packagingCost;
   const isChinaOrder = items.some((i) => i.isChinaOrder);
   const chinaDeliveryText = items.find((i) => i.isChinaOrder)?.chinaDeliveryText ?? null;
   const chinaTermsText = items.find((i) => i.isChinaOrder)?.chinaTermsText ?? null;
@@ -106,6 +107,7 @@ export async function createOrderAndPay(
       total_amount: totalAmount,
       shipping_cost: shippingCost,
       shipping_method_id: shippingMethodId,
+      packaging_cost: packagingCost,
       status: "PENDING",
       payment_status: "PENDING",
       customer_note: customerNote || null,
@@ -267,6 +269,7 @@ export async function createOfflineOrder(
   if ("error" in priced) return { error: priced.error };
   items = priced.items;
   shippingCost = priced.shippingCost;
+  const packagingCost = priced.packagingCost;
   const chosenFree = priced.isFreeShipping;
 
   const { data: bankAccount } = await supabase
@@ -277,7 +280,7 @@ export async function createOfflineOrder(
   const torobClid = cookieStore.get("torob_clid")?.value ?? null;
 
   const subtotal = items.reduce((sum, i) => sum + (i.discountPrice ?? i.price) * i.quantity, 0);
-  const totalAmount = subtotal + shippingCost;
+  const totalAmount = subtotal + shippingCost + packagingCost;
   const isChinaOrder = items.some((i) => i.isChinaOrder);
   const chinaDeliveryText = items.find((i) => i.isChinaOrder)?.chinaDeliveryText ?? null;
   const chinaTermsText = items.find((i) => i.isChinaOrder)?.chinaTermsText ?? null;
@@ -293,6 +296,7 @@ export async function createOfflineOrder(
       total_amount: totalAmount,
       shipping_cost: shippingCost,
       shipping_method_id: shippingMethodId,
+      packaging_cost: packagingCost,
       status: "PENDING",
       payment_status: "PENDING",
       payment_method: paymentMethod,

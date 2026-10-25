@@ -23,6 +23,7 @@ export default function InvoiceDownloadButton({
   items,
   subtotal,
   shippingCost,
+  packagingCost,
   discountAmount,
   shippingLabel,
   logoUrl,
@@ -43,6 +44,7 @@ export default function InvoiceDownloadButton({
   items: InvoiceLineItem[];
   subtotal: number;
   shippingCost: number;
+  packagingCost?: number;
   discountAmount?: number;
   shippingLabel?: string;
   total: number;
@@ -81,6 +83,7 @@ export default function InvoiceDownloadButton({
         subtotal,
         discountAmount,
         shippingCost,
+        packagingCost,
         shippingLabel,
       });
 

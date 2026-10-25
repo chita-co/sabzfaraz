@@ -12,6 +12,7 @@ import {
   autofillProductWithAiAction, createPartnerProductAction, updatePartnerProductAction,
   autofillBulkProductsWithAiAction, createPartnerBulkProductsAction,
 } from "@/app/partner/products/actions";
+import { cleanIntInput, toIntOrNull } from "@/lib/intQuantity";
 
 const NAMED_COLORS = [
   { name: "مشکی", hex: "#111827" }, { name: "سفید", hex: "#ffffff" }, { name: "طوسی روشن", hex: "#d1d5db" },
@@ -364,16 +365,16 @@ product?: any;
       suggestedCategoryName: suggestingNewCategory ? newCategoryName.trim() : null,
       sellPrice: Number(sellPrice), discountSellPrice: discountSellPrice ? Number(discountSellPrice) : null,
       partnerCostPrice: Number(partnerCostPrice),
-      stock: Number(stock) || 0, stockUnlimited, brand: brand || null,
+      stock: toIntOrNull(stock) ?? 0, stockUnlimited, brand: brand || null,
       weightGrams: weightGrams ? Number(weightGrams) : null,
       isSoldByUnit, unitLabel: isSoldByUnit ? unitLabel : null,
-      hasMinOrderQty, minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
-      quantityTiers: tiers.filter((t: { minQty: string; maxQty: string; unitPrice: string }) => t.minQty && t.maxQty && t.unitPrice).map((t: { minQty: string; maxQty: string; unitPrice: string }) => ({ minQty: Number(t.minQty), maxQty: Number(t.maxQty), unitPrice: Number(t.unitPrice) })),
+      hasMinOrderQty, minOrderQuantity: hasMinOrderQty && minOrderQuantity ? toIntOrNull(minOrderQuantity) : null,
+      quantityTiers: tiers.filter((t: { minQty: string; maxQty: string; unitPrice: string }) => t.minQty && t.maxQty && t.unitPrice).map((t: { minQty: string; maxQty: string; unitPrice: string }) => ({ minQty: Math.trunc(Number(t.minQty)), maxQty: Math.trunc(Number(t.maxQty)), unitPrice: Number(t.unitPrice) })),
       metaTitle: metaTitle || null, metaDescription: metaDescription || null, focusKeyword: focusKeyword || null,
       colors, sizes,
       attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
       showInNewest, isPopular, isStock, showInFeed, reviewsEnabled,
-      displayPriority: Number(displayPriority) || 0, maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
+      displayPriority: Number(displayPriority) || 0, maxPurchaseQty: toIntOrNull(maxPurchaseQty),
       packageLengthCm: packageLength ? Number(packageLength) : null, packageWidthCm: packageWidth ? Number(packageWidth) : null, packageHeightCm: packageHeight ? Number(packageHeight) : null,
       gtin: gtin || null, modelVersion: modelVersion || null,
       fulfillmentType, chinaPrice: chinaPrice ? Number(chinaPrice) : null,
@@ -415,13 +416,13 @@ product?: any;
       stock: 0, stockUnlimited: false, brand: brand || null,
       weightGrams: weightGrams ? Number(weightGrams) : null,
       isSoldByUnit, unitLabel: isSoldByUnit ? unitLabel : null,
-      hasMinOrderQty, minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
-      quantityTiers: tiers.filter((t: { minQty: string; maxQty: string; unitPrice: string }) => t.minQty && t.maxQty && t.unitPrice).map((t: { minQty: string; maxQty: string; unitPrice: string }) => ({ minQty: Number(t.minQty), maxQty: Number(t.maxQty), unitPrice: Number(t.unitPrice) })),
+      hasMinOrderQty, minOrderQuantity: hasMinOrderQty && minOrderQuantity ? toIntOrNull(minOrderQuantity) : null,
+      quantityTiers: tiers.filter((t: { minQty: string; maxQty: string; unitPrice: string }) => t.minQty && t.maxQty && t.unitPrice).map((t: { minQty: string; maxQty: string; unitPrice: string }) => ({ minQty: Math.trunc(Number(t.minQty)), maxQty: Math.trunc(Number(t.maxQty)), unitPrice: Number(t.unitPrice) })),
       metaTitle: metaTitle || null, metaDescription: metaDescription || null, focusKeyword: focusKeyword || null,
       colors, sizes,
       attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
       showInNewest, isPopular, isStock, showInFeed, reviewsEnabled,
-      displayPriority: Number(displayPriority) || 0, maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
+      displayPriority: Number(displayPriority) || 0, maxPurchaseQty: toIntOrNull(maxPurchaseQty),
       packageLengthCm: packageLength ? Number(packageLength) : null, packageWidthCm: packageWidth ? Number(packageWidth) : null, packageHeightCm: packageHeight ? Number(packageHeight) : null,
       gtin: gtin || null, modelVersion: modelVersion || null,
       fulfillmentType, chinaPrice: chinaPrice ? Number(chinaPrice) : null,
@@ -436,7 +437,7 @@ product?: any;
     try {
       const res = await createPartnerBulkProductsAction(common, validRows.map((r) => ({
         name: r.name.trim(), nameEn: r.nameEn.trim() || null,
-        stock: Number(r.stock) || 0, stockUnlimited: r.stockUnlimited,
+        stock: toIntOrNull(r.stock) ?? 0, stockUnlimited: r.stockUnlimited,
       })));
       setBulkSaving(false);
       if (res.error) return toast.error(res.error);
@@ -479,7 +480,7 @@ product?: any;
                       {row.stockUnlimited ? (
                         <span style={{ fontSize: 11, color: "#9ca3af", textAlign: "center" }}>نامحدود</span>
                       ) : (
-                        <input className="partner-input" type="number" placeholder="موجودی" value={row.stock} onChange={(e) => updateVariantRow(row.id, "stock", e.target.value)} />
+                        <input className="partner-input" type="number" placeholder="موجودی" value={row.stock} onChange={(e) => updateVariantRow(row.id, "stock", cleanIntInput(e.target.value))} />
                       )}
                       <label style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap" }}>
                         <input type="checkbox" checked={row.stockUnlimited} onChange={() => toggleVariantUnlimited(row.id)} /> نامحدود
@@ -619,7 +620,7 @@ product?: any;
               <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, marginBottom: 8 }}>
                 <input type="checkbox" checked={stockUnlimited} onChange={(e) => setStockUnlimited(e.target.checked)} /> موجودی نامحدود
               </label>
-              {!stockUnlimited && <input className="partner-input" type="number" placeholder="تعداد موجودی" value={stock} onChange={(e) => setStock(e.target.value)} style={{ width: 200 }} />}
+              {!stockUnlimited && <input className="partner-input" type="number" placeholder="تعداد موجودی" value={stock} onChange={(e) => setStock(cleanIntInput(e.target.value))} style={{ width: 200 }} />}
               <p style={{ fontSize: 10.5, color: "#b45309", marginTop: 6 }}>لطفاً فقط موجودی واقعی و مطمئن را وارد کنید. در صورت لغو سفارش به دلیل نبود کالا، جریمه اعمال می‌شود.</p>
             </div>
           )}
@@ -640,7 +641,7 @@ product?: any;
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
               <input type="checkbox" checked={hasMinOrderQty} onChange={(e) => setHasMinOrderQty(e.target.checked)} /> حداقل تعداد/مقدار خرید الزامی است
             </label>
-            {hasMinOrderQty && <input className="partner-input" type="number" step="0.1" placeholder="حداقل مقدار" value={minOrderQuantity} onChange={(e) => setMinOrderQuantity(e.target.value)} style={{ width: 220 }} />}
+            {hasMinOrderQty && <input className="partner-input" type="number" step="1" placeholder="حداقل مقدار" value={minOrderQuantity} onChange={(e) => setMinOrderQuantity(cleanIntInput(e.target.value))} style={{ width: 220 }} />}
           </div>
         </div>
 
@@ -650,8 +651,8 @@ product?: any;
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
             {tiers.map((t) => (
               <div key={t.id} className="partner-grid-4">
-                <input className="partner-input" type="number" placeholder="از" value={t.minQty} onChange={(e) => updateTier(t.id, "minQty", e.target.value)} />
-                <input className="partner-input" type="number" placeholder="تا" value={t.maxQty} onChange={(e) => updateTier(t.id, "maxQty", e.target.value)} />
+                <input className="partner-input" type="number" placeholder="از" value={t.minQty} onChange={(e) => updateTier(t.id, "minQty", cleanIntInput(e.target.value))} />
+                <input className="partner-input" type="number" placeholder="تا" value={t.maxQty} onChange={(e) => updateTier(t.id, "maxQty", cleanIntInput(e.target.value))} />
                 <input className="partner-input" type="number" placeholder="قیمت واحد" value={t.unitPrice} onChange={(e) => updateTier(t.id, "unitPrice", e.target.value)} />
                 <button type="button" onClick={() => removeTier(t.id)} className="partner-btn" style={{ background: "#fee2e2", color: "#dc2626" }}><X size={13} /></button>
               </div>
@@ -758,7 +759,7 @@ product?: any;
           </div>
           <div className="partner-grid-2" style={{ marginTop: 14 }}>
             <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>اولویت نمایش (اختیاری)</label><input className="partner-input" type="number" value={displayPriority} onChange={(e) => setDisplayPriority(e.target.value)} style={{ width: "100%" }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>حداکثر تعداد مجاز خرید هر سفارش</label><input className="partner-input" type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(e.target.value)} style={{ width: "100%" }} /></div>
+            <div><label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>حداکثر تعداد مجاز خرید هر سفارش</label><input className="partner-input" type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(cleanIntInput(e.target.value))} style={{ width: "100%" }} /></div>
           </div>
           <div style={{ marginTop: 14 }}>
             <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>ابعاد بسته‌بندی (سانتی‌متر — برای هزینه پست دقیق‌تر)</label>

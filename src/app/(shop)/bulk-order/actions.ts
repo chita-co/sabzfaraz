@@ -107,8 +107,8 @@ export async function submitBulkOrderRequest(
   const cost = await getBaseShippingCost(method.id as string);
   if (cost === null) return { error: "هزینه‌ی این روش ارسال تعریف نشده است." };
 
-  const validStoreItems = storeItems.filter((i) => i.productId && i.quantity > 0);
-  const validMarketItems = marketItems.filter((i) => i.name.trim() && i.quantity > 0);
+  const validStoreItems = storeItems.map((i) => ({ ...i, quantity: Math.trunc(i.quantity) })).filter((i) => i.productId && i.quantity > 0);
+  const validMarketItems = marketItems.map((i) => ({ ...i, quantity: Math.trunc(i.quantity) })).filter((i) => i.name.trim() && i.quantity > 0);
   if (validStoreItems.length === 0 && validMarketItems.length === 0) {
     return { error: "حداقل یک کالا (از فروشگاه یا از بازار) اضافه کنید." };
   }

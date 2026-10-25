@@ -14,21 +14,22 @@ import PriceSyncEffect from "./PriceSyncEffect";
 import ProductPriceRealtimeSync from "@/components/shop/ProductPriceRealtimeSync";
 import { cartItemTotal } from "@/lib/pricing/bubbleSplit";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/checkout/freeShippingConfig";
+import { calcPackagingCost, type PackagingTier } from "@/lib/checkout/packaging";
 
 interface AddressRow {
   id: string; full_name: string; phone: string;
   province: string; city: string; postal_code: string; address_line: string;
 }
-interface ShippingMethod { id: string; name: string; is_free_shipping: boolean; }
+interface ShippingMethod { id: string; name: string; is_free_shipping: boolean; charge_packaging?: boolean; }
 interface ShippingTier { id: string; method_id: string; min_weight_grams: number; max_weight_grams: number; cost: number; }
 
 export default function CheckoutClient({
-  addresses, shippingMethods, shippingTiers, storeInfo,
+  addresses, shippingMethods, shippingTiers, packagingTiers = [], storeInfo,
   bankAccounts,
   walletBalance = 0,
   freeShipping = { enabled: false, text: "" },
 }: {
-  addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[];
+  addresses: AddressRow[]; shippingMethods: ShippingMethod[]; shippingTiers: ShippingTier[]; packagingTiers?: PackagingTier[];
   storeInfo: { name: string; phones: string[]; address: string; logoUrl: string | null; email?: string | null };
   bankAccounts: BankAccountInfo[];
   walletBalance?: number;
@@ -81,7 +82,14 @@ export default function CheckoutClient({
     return methodTiers[methodTiers.length - 1].cost;
   }, [selectedMethodId, shippingTiers, cartWeightGrams]);
 
-  const totalBeforeWallet = Math.max(subtotal + shippingCost - loyaltyDiscount - discountAmount, 0);
+   // هزینه بسته‌بندی: مستقل از روش ارسال، فقط بر اساس وزن سبد
+  const packagingApplies = shippingMethods.find((m) => m.id === selectedMethodId)?.charge_packaging !== false;
+  const packagingCost = useMemo(
+    () => (packagingApplies ? calcPackagingCost(packagingTiers, cartWeightGrams) : 0),
+    [packagingApplies, packagingTiers, cartWeightGrams]
+  );
+
+  const totalBeforeWallet = Math.max(subtotal + shippingCost + packagingCost - loyaltyDiscount - discountAmount, 0);
   const walletUseAmount = useWallet ? Math.min(walletBalance, totalBeforeWallet) : 0;
   const remainderAmount = Math.max(totalBeforeWallet - walletUseAmount, 0);
   const fullyCoveredByWallet = useWallet && remainderAmount === 0 && totalBeforeWallet > 0;
@@ -249,6 +257,15 @@ export default function CheckoutClient({
       )}
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+        {packagingCost > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 px-6 py-4 mb-6 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-bold text-gray-800">هزینه بسته‌بندی</h2>
+            <p className="text-xs text-gray-500 mt-1">هزینه بسته بندی سفارش شما به‌صورت خودکار محاسبه شده است.</p>
+          </div>
+          <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{packagingCost.toLocaleString("fa-IR")} تومان</span>
+        </div>
+      )}
         <h2 className="font-bold text-gray-800 mb-4">خلاصه سفارش</h2>
         {displayItems.map((item) => (
           <div key={`${item.productId}-${item.selectedColor}-${item.selectedSize}`} className="flex justify-between text-sm py-2 border-b last:border-0">
@@ -257,7 +274,10 @@ export default function CheckoutClient({
           </div>
         ))}
         <div className="flex justify-between text-sm py-2 border-b"><span>جمع کالاها</span><span>{subtotal.toLocaleString("fa-IR")} تومان</span></div>
-        <div className="flex justify-between text-sm py-2 border-b"><span>هزینه ارسال و بسته‌بندی</span><span>{shippingCost.toLocaleString("fa-IR")} تومان</span></div>
+       <div className="flex justify-between text-sm py-2 border-b"><span>هزینه ارسال</span><span>{shippingCost.toLocaleString("fa-IR")} تومان</span></div>
+        {packagingCost > 0 && (
+          <div className="flex justify-between text-sm py-2 border-b"><span>هزینه آماده‌سازی و بسته‌بندی</span><span>{packagingCost.toLocaleString("fa-IR")} تومان</span></div>
+        )}
         {loyaltyDiscount > 0 && (
           <div className="flex justify-between text-sm py-2 border-b text-green-600"><span>تخفیف امتیاز وفاداری</span><span>- {loyaltyDiscount.toLocaleString("fa-IR")} تومان</span></div>
         )}
@@ -279,6 +299,7 @@ export default function CheckoutClient({
             items={displayItems}
             subtotal={subtotal}
             shippingCost={shippingCost}
+            packagingCost={packagingCost}
             storeInfo={storeInfo}
             buyer={(() => {
               const addr = addresses.find((a) => a.id === selectedAddress)!;
@@ -343,7 +364,7 @@ export default function CheckoutClient({
       </div>
 
       <DiscountCodeBox
-        orderTotal={Math.max(subtotal + shippingCost - loyaltyDiscount, 0)}
+        orderTotal={Math.max(subtotal + shippingCost + packagingCost - loyaltyDiscount, 0)}
         onChange={(discount, codeId) => {
           setDiscountAmount(discount);
           setDiscountCodeId(codeId);

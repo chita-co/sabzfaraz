@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Plus, X, Upload, Loader2, Layers, GripVertical } from "lucide-react";
 import { createProduct, updateProduct, createProductsBulk } from "@/app/admin/products/actions";
+import { cleanIntInput, toIntOrNull } from "@/lib/intQuantity";
 import { Category, Product, ProductColor, ProductQuantityTier } from "@/types";
 import CategoryMultiSelect from "./CategoryMultiSelect";
 import ProductAttributesEditor, { type AttributeRow } from "./ProductAttributesEditor";
@@ -335,8 +336,8 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
     const parsedTiers = tiers
       .filter((t) => t.minQty && t.maxQty && t.unitPrice)
       .map((t) => ({
-        minQty: Number(t.minQty),
-        maxQty: Number(t.maxQty),
+        minQty: Math.trunc(Number(t.minQty)),
+        maxQty: Math.trunc(Number(t.maxQty)),
         unitPrice: Number(t.unitPrice),
       }));
 
@@ -365,7 +366,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
           isSoldByUnit,
           unitLabel: isSoldByUnit ? unitLabel : null,
           hasMinOrderQty,
-          minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
+          minOrderQuantity: hasMinOrderQty && minOrderQuantity ? toIntOrNull(minOrderQuantity) : null,
           images,
           descriptionImages: descImages,
           colors,
@@ -380,7 +381,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
           extraCategoryIds,
           attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
           displayPriority: Number(displayPriority) || 0,
-          maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
+          maxPurchaseQty: toIntOrNull(maxPurchaseQty),
           packageLengthCm: packageLength ? Number(packageLength) : null,
           packageWidthCm: packageWidth ? Number(packageWidth) : null,
           packageHeightCm: packageHeight ? Number(packageHeight) : null,
@@ -401,7 +402,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
         validRows.map((r) => ({
           name: r.name.trim(),
           nameEn: r.nameEn.trim() || null,
-          stock: r.stock ? Number(r.stock) : null,
+          stock: toIntOrNull(r.stock),
         }))
       );
       setSaving(false);
@@ -421,7 +422,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
       description,
       price: Number(price),
       discountPrice: discountPrice ? Number(discountPrice) : null,
-      stock: stock ? Number(stock) : null,
+      stock: toIntOrNull(stock),
       brand: brand || null,
       categoryId,
       isActive,
@@ -433,7 +434,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
       isSoldByUnit,
       unitLabel: isSoldByUnit ? unitLabel : null,
       hasMinOrderQty,
-      minOrderQuantity: hasMinOrderQty && minOrderQuantity ? Number(minOrderQuantity) : null,
+      minOrderQuantity: hasMinOrderQty && minOrderQuantity ? toIntOrNull(minOrderQuantity) : null,
       images,
       descriptionImages: descImages,
       colors,
@@ -448,7 +449,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
       extraCategoryIds,
       attributes: attributes.filter((a) => a.key.trim() && a.value.trim()).map((a) => ({ key: a.key.trim(), value: a.value.trim() })),
       displayPriority: Number(displayPriority) || 0,
-      maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : null,
+      maxPurchaseQty: toIntOrNull(maxPurchaseQty),
       packageLengthCm: packageLength ? Number(packageLength) : null,
       packageWidthCm: packageWidth ? Number(packageWidth) : null,
       packageHeightCm: packageHeight ? Number(packageHeight) : null,
@@ -534,7 +535,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
                       placeholder="موجودی"
                       value={row.stock}
                       onChange={(e) =>
-                        updateVariantRow(row.id, "stock", e.target.value)
+                        updateVariantRow(row.id, "stock", cleanIntInput(e.target.value))
                       }
                       className="admin-input"
                     />
@@ -603,7 +604,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
                 <input
                   type="number"
                   value={stock}
-                  onChange={(e) => setStock(e.target.value)}
+                  onChange={(e) => setStock(cleanIntInput(e.target.value))}
                   min={0}
                   placeholder="مثلاً: 10"
                 />
@@ -831,7 +832,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
           {hasMinOrderQty && (
             <div className="admin-form-group">
               <label>حداقل تعداد/مقدار سفارش (مثلاً 5 متر یا 2 عدد)</label>
-              <input type="number" step="0.1" value={minOrderQuantity} onChange={(e) => setMinOrderQuantity(e.target.value)} min={0.1} placeholder="مثلاً: 5" />
+              <input type="number" step="1" value={minOrderQuantity} onChange={(e) => setMinOrderQuantity(cleanIntInput(e.target.value))} min={1} placeholder="مثلاً: 5" />
             </div>
           )}
 
@@ -856,7 +857,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
             </div>
             <div className="admin-form-group">
               <label>حداکثر تعداد مجاز خرید هر سفارش (اختیاری)</label>
-              <input type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(e.target.value)} min={1} />
+              <input type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(cleanIntInput(e.target.value))} min={1} />
             </div>
           </div>
 
@@ -1144,7 +1145,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
                       placeholder="از"
                       value={t.minQty}
                       onChange={(e) =>
-                        updateTier(t.id, "minQty", e.target.value)
+                        updateTier(t.id, "minQty", cleanIntInput(e.target.value))
                       }
                       className="admin-input"
                     />
@@ -1153,7 +1154,7 @@ const [partnerCostPrice, setPartnerCostPrice] = useState(product?.partner_cost_p
                       placeholder="تا"
                       value={t.maxQty}
                       onChange={(e) =>
-                        updateTier(t.id, "maxQty", e.target.value)
+                        updateTier(t.id, "maxQty", cleanIntInput(e.target.value))
                       }
                       className="admin-input"
                     />

@@ -77,6 +77,7 @@ export default async function InvoicePage({
     subtotal: rawSubtotal,
     discountAmount: totalDiscount,
     shippingCost: order.shipping_cost ?? 0,
+    packagingCost: order.packaging_cost ?? 0,
     shippingLabel: order.shipping_method?.invoice_label || undefined,
   });
 

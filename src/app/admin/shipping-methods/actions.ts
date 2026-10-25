@@ -73,3 +73,18 @@ export async function deleteWeightTier(id: string) {
   revalidatePath("/admin/shipping-methods");
   return { success: true };
 }
+
+
+
+export async function setShippingMethodPackaging(id: string, chargePackaging: boolean) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("shipping_methods")
+    .update({ charge_packaging: chargePackaging })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/shipping-methods");
+  revalidatePath("/checkout");
+  return { success: true };
+}

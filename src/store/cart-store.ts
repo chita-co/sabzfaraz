@@ -71,7 +71,12 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       orderNote: "",
-      addItem: (item) => {
+      addItem: (rawItem) => {
+  const item = {
+    ...rawItem,
+    quantity: Math.max(1, Math.trunc(rawItem.quantity)),
+    minQuantity: rawItem.minQuantity ? Math.max(1, Math.trunc(rawItem.minQuantity)) : rawItem.minQuantity,
+  };
         const existing = get().items.find((i) => sameLine(i, item.productId, item.selectedColor, item.selectedSize));
         if (existing) {
           set({
@@ -100,7 +105,7 @@ export const useCartStore = create<CartState>()(
         let changed = false;
         const next = get().items.map((i) => {
           if (!sameLine(i, productId, color, size)) return i;
-          const updated = withTierPrice({ ...i, quantity: Math.max(1, Math.min(quantity, i.stock ?? Infinity)) });
+          const updated = withTierPrice({ ...i, quantity: Math.max(1, Math.min(Math.trunc(quantity), i.stock ?? Infinity)) });
           if (updated.quantity === i.quantity && updated.discountPrice === i.discountPrice) return i;
           changed = true;
           return updated;

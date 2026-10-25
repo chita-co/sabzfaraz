@@ -4,19 +4,20 @@ import { useState } from "react";
 import { Minus, Plus, ShoppingCart, Check } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import type { BubbleItem } from "./types";
+import { minOrderQty } from "@/lib/intQuantity";
 
 export default function BubbleAddToCart({ item }: { item: BubbleItem }) {
   const addItem = useCartStore((s) => s.addItem);
 
-  const minQty = item.has_min_order_quantity && item.min_order_quantity ? Number(item.min_order_quantity) : 1;
-  const step = item.is_sold_by_unit ? 0.1 : 1;
+  const minQty = minOrderQty(item);
+  const step = 1;
   const maxQty = item.stock ?? Infinity;
   const outOfStock = item.stock !== null && item.stock <= 0;
 
   const [qty, setQty] = useState(minQty);
   const [added, setAdded] = useState(false);
 
-  const clamp = (v: number) => Math.round(Math.min(maxQty, Math.max(minQty, v)) * 10) / 10;
+  const clamp = (v: number) => Math.trunc(Math.min(maxQty, Math.max(minQty, v)));
 
   function handleAdd() {
     if (outOfStock) return;

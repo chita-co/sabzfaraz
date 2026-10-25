@@ -57,7 +57,7 @@ export default async function MyOrderDetailPage({
     ? getTrackingMessage(order.tracking_started_at, settings)
     : null;
   const stage = getTrackingStageNumber(order.tracking_started_at);
-  const subtotal = order.total_amount - order.shipping_cost;
+  const subtotal = order.total_amount - order.shipping_cost - (order.packaging_cost ?? 0);
   const totalDiscount = (order.loyalty_discount_amount ?? 0) + (order.discount_code_amount ?? 0);
 
   return (
@@ -99,6 +99,12 @@ export default async function MyOrderDetailPage({
           <span>هزینه ارسال</span>
           <span>{order.shipping_cost.toLocaleString("fa-IR")} تومان</span>
         </div>
+        {(order.packaging_cost ?? 0) > 0 && (
+          <div className="flex justify-between text-sm py-2 border-b">
+            <span>هزینه آماده‌سازی و بسته‌بندی</span>
+            <span>{order.packaging_cost.toLocaleString("fa-IR")} تومان</span>
+          </div>
+        )}
         <div className="flex justify-between font-bold text-gray-900 mt-3 pt-3 border-t">
           <span>مبلغ کل</span>
           <span>{order.total_amount.toLocaleString("fa-IR")} تومان</span>
@@ -127,6 +133,7 @@ export default async function MyOrderDetailPage({
             subtotal={subtotal}
             discountAmount={totalDiscount}
             shippingCost={order.shipping_cost}
+            packagingCost={order.packaging_cost ?? 0}
             total={order.total_amount}
             logoUrl={settings?.logo_url ?? null}
           />

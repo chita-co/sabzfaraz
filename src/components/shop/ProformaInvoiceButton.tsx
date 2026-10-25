@@ -12,9 +12,9 @@ interface StoreInfo { name: string; phones: string[]; address: string; logoUrl: 
 interface BuyerInfo { fullName: string; phone: string; province: string; city: string; addressLine: string; postalCode?: string; }
 
 export default function ProformaInvoiceButton({
-  items, subtotal, shippingCost, storeInfo, buyer,
+  items, subtotal, shippingCost, packagingCost = 0, storeInfo, buyer,
 }: {
-  items: CartItem[]; subtotal: number; shippingCost: number; storeInfo: StoreInfo; buyer: BuyerInfo; shippingMethodId?: string | null;
+  items: CartItem[]; subtotal: number; shippingCost: number; packagingCost?: number; storeInfo: StoreInfo; buyer: BuyerInfo; shippingMethodId?: string | null;
 }) {
   const [generating, setGenerating] = useState(false);
 
@@ -61,6 +61,7 @@ export default function ProformaInvoiceButton({
         }),
         subtotal,
         shippingCost,
+        packagingCost,
       });
 
       await renderInvoiceToPdf(html, `proforma-${proformaNumber}.pdf`);
